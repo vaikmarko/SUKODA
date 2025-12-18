@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="et" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUKODA | Kingi aega</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['Playfair Display', 'serif'],
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        black: '#111111',
+                        paper: '#f5f5f5',
+                        accent: '#333333',
+                    },
+                    spacing: {
+                        '128': '32rem',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f5f5f5;
+            color: #111111;
+        }
+        .grid-line {
+            border-right: 1px solid #e5e5e5;
+        }
+        .grid-line-b {
+            border-bottom: 1px solid #e5e5e5;
+        }
+        ::selection {
+            background: #111;
+            color: #fff;
+        }
+        [x-cloak] {
+            display: none !important;
+        }
+    </style>
+    <script type="module" src="assets/js/firebase.js"></script>
+</head>
+<body class="antialiased" x-data="{ lang: 'et' }">
+
+    <!-- Grid Container -->
+    <div class="max-w-[1440px] mx-auto bg-paper min-h-screen border-x border-[#e5e5e5]">
+        
+        <!-- Navigation -->
+        <nav class="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm grid-line-b" x-data="{ mobileMenu: false }">
+            <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12">
+                <a href="index.html" class="font-serif text-xl md:text-2xl tracking-tight font-medium">
+                    SUKODA.
+                </a>
+                
+                <div class="hidden md:flex gap-12 text-sm uppercase tracking-widest font-medium">
+                    <a href="index.html#standardid" class="hover:text-gray-600 transition-colors" x-text="lang === 'et' ? 'Paketid' : (lang === 'en' ? 'Packages' : 'Пакеты')">Paketid</a>
+                    <a href="kingitus.html" class="text-black border-b border-black pb-0.5 transition-colors" x-text="lang === 'et' ? 'Kingitus' : (lang === 'en' ? 'Gift' : 'Подарок')">Kingitus</a>
+                    <a href="partnerlus.html" class="hover:text-gray-600 transition-colors" x-text="lang === 'et' ? 'Koostöö' : (lang === 'en' ? 'Partnership' : 'Сотрудничество')">Koostöö</a>
+                </div>
+
+                <div class="flex items-center gap-4 md:gap-8">
+                    <!-- Language Switcher -->
+                    <div class="flex text-xs md:text-sm uppercase tracking-widest font-bold gap-1">
+                        <button @click="lang = 'et'" :class="lang === 'et' ? 'text-black border-b border-black' : 'text-gray-400 hover:text-gray-600'">ET</button>
+                        <span class="text-gray-300">/</span>
+                        <button @click="lang = 'en'" :class="lang === 'en' ? 'text-black border-b border-black' : 'text-gray-400 hover:text-gray-600'">EN</button>
+                        <span class="text-gray-300">/</span>
+                        <button @click="lang = 'ru'" :class="lang === 'ru' ? 'text-black border-b border-black' : 'text-gray-400 hover:text-gray-600'">RU</button>
+                    </div>
+
+                    <a href="#telli" class="hidden md:inline-block text-sm uppercase tracking-widest font-bold border-b border-black pb-0.5 hover:border-gray-400 hover:text-gray-600 transition-all" x-text="lang === 'et' ? 'Telli kingitus' : (lang === 'en' ? 'Order gift' : 'Заказать')">
+                        Telli kingitus
+                    </a>
+
+                    <!-- Mobile Menu Button -->
+                    <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2">
+                        <svg x-show="!mobileMenu" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                        <svg x-show="mobileMenu" x-cloak class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Menu -->
+            <div x-show="mobileMenu" x-cloak class="md:hidden bg-paper border-t border-[#e5e5e5]">
+                <div class="flex flex-col px-4 py-6 space-y-4 text-sm uppercase tracking-widest font-medium">
+                    <a href="index.html#standardid" class="py-2" x-text="lang === 'et' ? 'Paketid' : (lang === 'en' ? 'Packages' : 'Пакеты')">Paketid</a>
+                    <a href="kingitus.html" class="py-2 font-bold" x-text="lang === 'et' ? 'Kingitus' : (lang === 'en' ? 'Gift' : 'Подарок')">Kingitus</a>
+                    <a href="partnerlus.html" class="py-2" x-text="lang === 'et' ? 'Koostöö' : (lang === 'en' ? 'Partnership' : 'Сотрудничество')">Koostöö</a>
+                    <a href="#telli" @click="mobileMenu = false" class="py-2 font-bold" x-text="lang === 'et' ? 'Telli kingitus' : (lang === 'en' ? 'Order gift' : 'Заказать')">Telli kingitus</a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <header class="grid md:grid-cols-12 min-h-[60vh] md:min-h-[70vh] grid-line-b">
+            <!-- Left: Text -->
+            <div class="md:col-span-7 px-4 md:px-12 py-12 md:py-24 flex flex-col justify-between grid-line order-2 md:order-1">
+                <div>
+                    <h1 class="font-serif text-4xl md:text-7xl lg:text-8xl leading-[1.1] mb-8 md:mb-12">
+                        <span x-show="lang === 'et'">Kingi aega,<br>mitte asju.</span>
+                        <span x-show="lang === 'en'" x-cloak>Gift time,<br>not things.</span>
+                        <span x-show="lang === 'ru'" x-cloak>Подарите время,<br>а не вещи.</span>
+                    </h1>
+                    <p class="text-base md:text-xl text-gray-600 max-w-lg font-light leading-relaxed">
+                        <span x-show="lang === 'et'">Kõige väärtuslikum, mida saad kinkida, on vabadus kohustustest. Puhas kodu, värsked lilled ja tunne, et kõik on hästi.</span>
+                        <span x-show="lang === 'en'" x-cloak>The most valuable thing you can give is freedom from obligations. A clean home, fresh flowers, and the feeling that everything is alright.</span>
+                        <span x-show="lang === 'ru'" x-cloak>Самое ценное, что можно подарить — свобода от забот. Чистый дом, свежие цветы и ощущение, что всё хорошо.</span>
+                    </p>
+                </div>
+                <div class="mt-8 md:mt-16">
+                    <a href="#paketid" class="inline-block bg-black text-white px-6 md:px-8 py-3 md:py-4 text-xs md:text-sm uppercase tracking-widest hover:bg-gray-900 transition-colors" x-text="lang === 'et' ? 'Vaata kingitusi' : (lang === 'en' ? 'View gifts' : 'Смотреть подарки')">
+                        Vaata kingitusi
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Right: Minimal Visual -->
+            <div class="md:col-span-5 relative h-[300px] md:h-full md:min-h-auto order-1 md:order-2">
+                <img src="assets/images/flowers.jpg" alt="Fresh Flowers" class="absolute inset-0 w-full h-full object-cover filter grayscale hover:grayscale-0 transition-all duration-700">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+            </div>
+        </header>
+
+        <!-- Value Prop -->
+        <section class="grid md:grid-cols-12 grid-line-b">
+            <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-[#e5e5e5]">
+                <span class="text-xs uppercase tracking-widest text-gray-500 block mb-2 md:mb-4">( 01 )</span>
+                <h2 class="font-serif text-2xl md:text-3xl" x-text="lang === 'et' ? 'Miks just see' : (lang === 'en' ? 'Why this gift' : 'Почему именно это')">Miks just see</h2>
+            </div>
+            <div class="md:col-span-8 p-6 md:p-24">
+                <p class="text-xl md:text-3xl font-serif leading-relaxed mb-8 md:mb-12">
+                    <span x-show="lang === 'et'">Sest parim kingitus on aeg. <br><span class="text-gray-400">Aeg, mida ei pea kulutama tolmuimejale.</span></span>
+                    <span x-show="lang === 'en'" x-cloak>Because the best gift is time. <br><span class="text-gray-400">Time not spent on the vacuum cleaner.</span></span>
+                    <span x-show="lang === 'ru'" x-cloak>Потому что лучший подарок — время. <br><span class="text-gray-400">Время, которое не нужно тратить на пылесос.</span></span>
+                </p>
+                <div class="grid md:grid-cols-2 gap-8 md:gap-12 font-sans text-sm leading-relaxed text-gray-600">
+                    <div>
+                        <h4 class="uppercase tracking-widest text-black mb-2 md:mb-4" x-text="lang === 'et' ? 'Igaühele' : (lang === 'en' ? 'For anyone' : 'Для каждого')">Igaühele</h4>
+                        <p x-show="lang === 'et'">Emale, sõbrale, kallimale. Igaüks väärib hetke, mil kodu lihtsalt ootab.</p>
+                        <p x-show="lang === 'en'" x-cloak>For mother, friend, loved one. Everyone deserves a moment when home simply awaits.</p>
+                        <p x-show="lang === 'ru'" x-cloak>Маме, другу, любимому. Каждый заслуживает момент, когда дом просто ждёт.</p>
+                    </div>
+                    <div>
+                        <h4 class="uppercase tracking-widest text-black mb-2 md:mb-4" x-text="lang === 'et' ? 'Kaunilt pakitud' : (lang === 'en' ? 'Beautifully wrapped' : 'Красиво оформлен')">Kaunilt pakitud</h4>
+                        <p x-show="lang === 'et'">Ilus kaart, käsitsi kirjutatud sõnum. Või digitaalselt, kohe.</p>
+                        <p x-show="lang === 'en'" x-cloak>A beautiful card, handwritten message. Or digitally, right away.</p>
+                        <p x-show="lang === 'ru'" x-cloak>Красивая открытка, написанное от руки послание. Или в цифровом виде, сразу.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gift Options -->
+        <section id="paketid" class="grid-line-b bg-white" x-data="{ 
+            size: 'medium',
+            prices: {
+                small: { one: 99, month: 249, three: 649 },
+                medium: { one: 149, month: 299, three: 799 },
+                large: { one: 199, month: 399, three: 999 },
+                xlarge: { one: 249, month: 499, three: 1199 }
+            }
+        }">
+             <div class="grid md:grid-cols-12 grid-line-b border-[#e5e5e5]">
+                <div class="md:col-span-4 p-6 md:p-12 grid-line flex items-center border-b md:border-b-0 border-[#e5e5e5]">
+                    <h2 class="font-serif text-2xl md:text-3xl" x-text="lang === 'et' ? 'Vali kingitus' : (lang === 'en' ? 'Choose a gift' : 'Выберите подарок')">Vali kingitus</h2>
+                </div>
+                <div class="md:col-span-8 p-4 md:p-12 flex flex-col md:flex-row md:items-center gap-3 md:gap-6 overflow-x-auto">
+                    <span class="text-xs uppercase tracking-widest text-gray-500 whitespace-nowrap" x-text="lang === 'et' ? 'Saaja kodu suurus:' : (lang === 'en' ? 'Recipient\'s home size:' : 'Площадь дома:')">Saaja kodu suurus:</span>
+                    <div class="flex gap-3 md:gap-4 font-sans text-xs md:text-sm whitespace-nowrap overflow-x-auto pb-2 md:pb-0">
+                        <button @click="size = 'small'" :class="size === 'small' ? 'text-black border-b border-black' : 'text-gray-400 hover:text-black transition-colors'" class="pb-1" x-text="lang === 'et' ? 'Kuni 50m²' : (lang === 'en' ? 'Up to 50m²' : 'До 50м²')">Kuni 50m²</button>
+                        <button @click="size = 'medium'" :class="size === 'medium' ? 'text-black border-b border-black' : 'text-gray-400 hover:text-black transition-colors'" class="pb-1">51-90m²</button>
+                        <button @click="size = 'large'" :class="size === 'large' ? 'text-black border-b border-black' : 'text-gray-400 hover:text-black transition-colors'" class="pb-1">91-120m²</button>
+                        <button @click="size = 'xlarge'" :class="size === 'xlarge' ? 'text-black border-b border-black' : 'text-gray-400 hover:text-black transition-colors'" class="pb-1">121-150m²</button>
+                        <button @click="size = 'estate'" :class="size === 'estate' ? 'text-black border-b border-black' : 'text-gray-400 hover:text-black transition-colors'" class="pb-1">151m²+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-3">
+                <!-- Värske algus -->
+                <div class="p-6 md:p-16 grid-line border-b md:border-b-0 border-[#e5e5e5] hover:bg-paper transition-colors group relative flex flex-col">
+                    <h3 class="font-sans text-xs uppercase tracking-widest text-gray-500 mb-4 md:mb-6" x-text="lang === 'et' ? 'Ühekordne · 1 koristus' : (lang === 'en' ? 'One-time · 1 cleaning' : 'Разово · 1 уборка')">Ühekordne · 1 koristus</h3>
+                    <div class="font-serif text-3xl md:text-4xl mb-2">
+                        <span x-show="size !== 'estate'" x-text="lang === 'et' ? 'Värske algus' : (lang === 'en' ? 'Fresh Start' : 'Свежий старт')">Värske algus</span>
+                        <span x-show="size === 'estate'" x-text="lang === 'et' ? 'Rätseplahendus' : (lang === 'en' ? 'Bespoke' : 'Индивидуально')">Rätseplahendus</span>
+                    </div>
+                    <div class="flex items-baseline gap-1 mb-6" x-show="size !== 'estate'">
+                        <span class="text-xl">€</span>
+                        <span class="text-2xl" x-text="prices[size].one">149</span>
+                    </div>
+                    <div class="mb-6" x-show="size === 'estate'" x-cloak>
+                        <p class="font-serif text-xl italic" x-text="lang === 'et' ? 'Räägime läbi' : (lang === 'en' ? 'Let\'s talk' : 'Обсудим')">Räägime läbi</p>
+                    </div>
+                    
+                    <p class="text-gray-600 mb-8 flex-grow">
+                        <span x-show="lang === 'et'">Üks põhjalik koristus. Lilled laual. Ja tunne, et keegi hoolis.</span>
+                        <span x-show="lang === 'en'" x-cloak>One thorough cleaning. Flowers on the table. And the feeling that someone cared.</span>
+                        <span x-show="lang === 'ru'" x-cloak>Одна тщательная уборка. Цветы на столе. И ощущение, что кто-то позаботился.</span>
+                    </p>
+
+                    <ul class="space-y-4 font-sans text-sm text-gray-700 mb-12 border-t border-gray-200 pt-8">
+                        <li class="flex justify-between">
+                            <span x-text="lang === 'et' ? 'Koristus' : (lang === 'en' ? 'Cleaning' : 'Уборка')">Koristus</span>
+                            <span class="font-medium" x-text="lang === 'et' ? 'Põhjalik, 1x' : (lang === 'en' ? 'Thorough, 1x' : 'Тщательная, 1x')">Põhjalik, 1x</span>
+                        </li>
+                        <li class="flex justify-between">
+                            <span x-text="lang === 'et' ? 'Värsked lilled' : (lang === 'en' ? 'Fresh flowers' : 'Свежие цветы')">Värsked lilled</span>
+                            <span class="font-medium" x-text="lang === 'et' ? 'Ilus kimp lauale' : (lang === 'en' ? 'Beautiful bouquet' : 'Красивый букет')">Ilus kimp lauale</span>
+                        </li>
+                        <li class="flex justify-between">
+                            <span x-text="lang === 'et' ? 'Tervitus' : (lang === 'en' ? 'Greeting' : 'Приветствие')">Tervitus</span>
+                            <span class="font-medium" x-text="lang === 'et' ? 'Käsitsi kirjutatud kaart' : (lang === 'en' ? 'Handwritten card' : 'Открытка от руки')">Käsitsi kirjutatud kaart</span>
+                        </li>
+                        <li class="flex justify-between">
+                            <span x-text="lang === 'et' ? 'Voodipesu' : (lang === 'en' ? 'Bed linens' : 'Постельное')">Voodipesu</span>
+                            <span class="font-medium text-gray-400">—</span>
+                        </li>
+                    </ul>
+
+                    <a href="#telli" @click="$dispatch('select-gift', { gift: size === 'estate' ? 'Rätseplahendus' : 'Värske algus (' + (size==='small'?'kuni 50m²':size==='medium'?'51-90m²':size==='large'?'91-120m²':'121-150m²') + ')' })" class="block w-full text-center border border-black py-4 text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors">
+                        <span x-text="lang === 'et' ? (size === 'estate' ? 'Räägi meiega' : 'Vali see') : (lang === 'en' ? (size === 'estate' ? 'Talk to us' : 'Select this') : (size === 'estate' ? 'Связаться' : 'Выбрать'))">Vali see</span>
+                    </a>
+                </div>
+
+                <!-- Kuu hoolitsust -->
+                <div class="p-6 md:p-16 grid-line border-b md:border-b-0 border-[#e5e5e5] hover:bg-paper transition-colors group relative flex flex-col bg-[#f0f0f0]">
+                    <div class="absolute top-4 right-4">
+                        <span class="text-xs uppercase tracking-widest border border-black px-2 py-1" x-text="lang === 'et' ? 'Populaarne' : (lang === 'en' ? 'Popular' : 'Популярный')">Populaarne</span>
+                    </div>
+                    <h3 class="font-sans text-xs uppercase tracking-widest text-gray-500 mb-4 md:mb-6" x-text="lang === 'et' ? 'Ühe kuu kingitus · 2 koristust' : (lang === 'en' ? 'One month gift · 2 cleanings' : 'На месяц · 2 уборки')">Ühe kuu kingitus · 2 koristust</h3>
+                    <div class="font-serif text-3xl md:text-4xl mb-2">
+                         <span x-show="size !== 'estate'" x-text="lang === 'et' ? 'Kuu hoolitsust' : (lang === 'en' ? 'Month of Care' : 'Месяц заботы')">Kuu hoolitsust</span>
+                         <span x-show="size === 'estate'" x-text="lang === 'et' ? 'Rätseplahendus' : (lang === 'en' ? 'Bespoke' : 'Индивидуально')">Rätseplahendus</span>
+                    </div>
+                    <div class="flex items-baseline gap-1 mb-6" x-show="size !== 'estate'">
+                        <span class="text-xl">€</span>
+                        <span class="text-2xl" x-text="prices[size].month">299</span>
+                    </div>
+                    <div class="mb-6" x-show="size === 'estate'" x-cloak>
+                        <p class="font-serif text-xl italic" x-text="lang === 'et' ? 'Räägime läbi' : (lang === 'en' ? 'Let\'s talk' : 'Обсудим')">Räägime läbi</p>
+                    </div>
+                    
+                    <p class="text-gray-600 mb-8 flex-grow">
+                        <span x-show="lang === 'et'">Terve kuu, mil kodu lihtsalt ootab. Iga kord lilled ja see hea tunne.</span>
+                        <span x-show="lang === 'en'" x-cloak>A whole month when home simply awaits. Flowers every time and that good feeling.</span>
+                        <span x-show="lang === 'ru'" x-cloak>Целый месяц, когда дом просто ждёт. Цветы каждый раз и это приятное чувство.</span>
+                    </p>
+
+                    <ul class="space-y-4 font-sans text-sm text-gray-700 mb-12 border-t border-gray-200 pt-8">
+                        <li class="flex justify-between">
+                            <span x-text="lang === 'et' ? 'Koristusi' : (lang === 'en' ? 'Cleanings' : 'Уборок')">Koristusi</span>
+                            <span class="font-medium" x-text="lang === 'et' ? '2x kuu jooksul' : (lang === 'en' ? '2x during the month' : '2x за месяц')">2x kuu jooksul</span>
+                        </li>
+                        <li class="flex justify-between">
+                            <span x-text="lang === 'et' ? 'Värsked lilled' : (lang === 'en' ? 'Fresh flowers' : 'Свежие цветы')">Värsked lilled</span>
+                            <span class="font-medium" x-text="lang === 'et' ? 'Igal külastusel' : (lang === 'en' ? 'Every visit' : 'Каждый визит')">Igal külastusel</span>
+                        </li>
+                        <li class="flex justify-between">
+                            <span x-text="lang === 'et' ? 'Tervitus' : (lang === 'en' ? 'Greeting' : 'Приветствие')">Tervitus</span>
+                            <span class="font-medium" x-text="lang === 'et' ? 'Käsitsi kirjutatud kaart' : (lang === 'en' ? 'Handwritten card' : 'Открытка от руки')">Käsitsi kirjutatud kaart</span>
+                        </li>
+                        <li class="flex justify-between">
+                            <span x-text="lang === 'et' ? 'Voodipesu' : (lang === 'en' ? 'Bed linens' : 'Постельное')">Voodipesu</span>
+                            <span class="font-medium" x-text="lang === 'et' ? 'Vahetame, sätame kenasti' : (lang === 'en' ? 'Changed and made' : 'Сменим и заправим')">Vahetame, sätame kenasti</span>
+                        </li>
+                    </ul>
+
+                    <a href="#telli" @click="$dispatch('select-gift', { gift: size === 'estate' ? 'Rätseplahendus' : 'Kuu hoolitsust (' + (size==='small'?'kuni 50m²':size==='medium'?'51-90m²':size==='large'?'91-120m²':'121-150m²') + ')' })" class="block w-full text-center bg-black text-white py-4 text-xs uppercase tracking-widest hover:bg-gray-800 transition-colors">
+                        <span x-text="lang === 'et' ? (size === 'estate' ? 'Räägi meiega' : 'Vali see') : (lang === 'en' ? (size === 'estate' ? 'Talk to us' : 'Select this') : (size === 'estate' ? 'Связаться' : 'Выбрать'))">Vali see</span>
+                    </a>
+                </div>
+
+                <!-- Eriline hoolitsus -->
+                <div class="p-6 md:p-16 hover:bg-paper transition-colors relative flex flex-col bg-[#e8e8e8]">
+                    <h3 class="font-sans text-xs uppercase tracking-widest text-gray-500 mb-4 md:mb-6" x-text="lang === 'et' ? 'Kolme kuu kingitus · 6 koristust' : (lang === 'en' ? 'Three month gift · 6 cleanings' : 'На 3 месяца · 6 уборок')">Kolme kuu kingitus · 6 koristust</h3>
+                    <div class="font-serif text-3xl md:text-4xl mb-2">
+                        <span x-show="size !== 'estate'" x-text="lang === 'et' ? 'Eriline hoolitsus' : (lang === 'en' ? 'Special Care' : 'Особая забота')">Eriline hoolitsus</span>
+                        <span x-show="size === 'estate'" x-text="lang === 'et' ? 'Rätseplahendus' : (lang === 'en' ? 'Bespoke' : 'Индивидуально')">Rätseplahendus</span>
+                    </div>
+                    <div class="flex items-baseline gap-1 mb-6" x-show="size !== 'estate'">
+                        <span class="text-xl">€</span>
+                        <span class="text-2xl" x-text="prices[size].three">799</span>
+                    </div>
+                    <div class="mb-6" x-show="size === 'estate'" x-cloak>
+                        <p class="font-serif text-xl italic" x-text="lang === 'et' ? 'Räägime läbi' : (lang === 'en' ? 'Let\'s talk' : 'Обсудим')">Räägime läbi</p>
+                    </div>
+                    
+                    <p class="text-gray-600 mb-8 flex-grow">
+                        <span x-show="lang === 'et'">Kolm kuud muretust. Lilled, puuviljad, ja aeg enda jaoks.</span>
+                        <span x-show="lang === 'en'" x-cloak>Three months of ease. Flowers, fruits, and time for oneself.</span>
+                        <span x-show="lang === 'ru'" x-cloak>Три месяца без забот. Цветы, фрукты и время для себя.</span>
+                    </p>
+
+                    <ul class="space-y-4 font-sans text-sm text-gray-700 mb-12 border-t border-gray-200 pt-8">
+                        <li class="flex justify-between">
+                            <span x-text="lang === 'et' ? 'Koristusi' : (lang === 'en' ? 'Cleanings' : 'Уборок')">Koristusi</span>
+                            <span class="font-medium" x-text="lang === 'et' ? '6x (2x kuus)' : (lang === 'en' ? '6x (2x monthly)' : '6x (2x в месяц)')">6x (2x kuus)</span>
+                        </li>
+                        <li class="flex justify-between">
+                            <span x-text="lang === 'et' ? 'Värsked lilled' : (lang === 'en' ? 'Fresh flowers' : 'Свежие цветы')">Värsked lilled</span>
+                            <span class="font-medium" x-text="lang === 'et' ? 'Igal külastusel' : (lang === 'en' ? 'Every visit' : 'Каждый визит')">Igal külastusel</span>
+                        </li>
+                        <li class="flex justify-between">
+                            <span x-text="lang === 'et' ? 'Puuviljad' : (lang === 'en' ? 'Fresh fruits' : 'Фрукты')">Puuviljad</span>
+                            <span class="font-medium" x-text="lang === 'et' ? 'Hooajalised, igal külastusel' : (lang === 'en' ? 'Seasonal, every visit' : 'Сезонные, каждый визит')">Hooajalised, igal külastusel</span>
+                        </li>
+                        <li class="flex justify-between">
+                            <span x-text="lang === 'et' ? 'Voodipesu' : (lang === 'en' ? 'Bed linens' : 'Постельное')">Voodipesu</span>
+                            <span class="font-medium" x-text="lang === 'et' ? 'Vahetame, sätame kenasti' : (lang === 'en' ? 'Changed and made' : 'Сменим и заправим')">Vahetame, sätame kenasti</span>
+                        </li>
+                    </ul>
+
+                    <a href="#telli" @click="$dispatch('select-gift', { gift: size === 'estate' ? 'Rätseplahendus' : 'Eriline hoolitsus (' + (size==='small'?'kuni 50m²':size==='medium'?'51-90m²':size==='large'?'91-120m²':'121-150m²') + ')' })" class="block w-full text-center bg-black text-white py-4 text-xs uppercase tracking-widest hover:bg-gray-800 transition-colors">
+                        <span x-text="lang === 'et' ? (size === 'estate' ? 'Räägi meiega' : 'Vali see') : (lang === 'en' ? (size === 'estate' ? 'Talk to us' : 'Select this') : (size === 'estate' ? 'Связаться' : 'Выбрать'))">Vali see</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Delivery Info -->
+        <section class="grid md:grid-cols-12 grid-line-b border-b border-[#e5e5e5]">
+            <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-[#e5e5e5]">
+                <span class="text-xs uppercase tracking-widest text-gray-500 block mb-2 md:mb-4">( 02 )</span>
+                <h2 class="font-serif text-2xl md:text-3xl" x-text="lang === 'et' ? 'Kuidas kingitus saabub' : (lang === 'en' ? 'How it arrives' : 'Как дойдёт')">Kuidas kingitus saabub</h2>
+            </div>
+            <div class="md:col-span-8 p-6 md:p-24 bg-white">
+                <div class="grid md:grid-cols-2 gap-8 md:gap-16">
+                    <div>
+                        <h3 class="font-serif text-xl mb-4" x-text="lang === 'et' ? 'Postiga' : (lang === 'en' ? 'By post' : 'Почтой')">Postiga</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed">
+                            <span x-show="lang === 'et'">Ilus kaart paksul paberil. Ümbrik, mis juba ise on kingitus.</span>
+                            <span x-show="lang === 'en'" x-cloak>Beautiful card on thick paper. An envelope that's already a gift.</span>
+                            <span x-show="lang === 'ru'" x-cloak>Красивая открытка на плотной бумаге. Конверт, который сам по себе подарок.</span>
+                        </p>
+                    </div>
+                    <div>
+                        <h3 class="font-serif text-xl mb-4" x-text="lang === 'et' ? 'E-postiga' : (lang === 'en' ? 'By email' : 'По почте')">E-postiga</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed">
+                            <span x-show="lang === 'et'">Stiilne PDF kohe sinu postkasti. Prindi või saada edasi.</span>
+                            <span x-show="lang === 'en'" x-cloak>Stylish PDF straight to your inbox. Print or forward.</span>
+                            <span x-show="lang === 'ru'" x-cloak>Стильный PDF сразу на почту. Распечатайте или перешлите.</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Order Form -->
+        <section id="telli" class="grid md:grid-cols-12" x-data="{ gift: '', name: '', email: '', recipient: '', message: '' }" @select-gift.window="gift = $event.detail.gift; $el.scrollIntoView({behavior: 'smooth'})">
+            <div class="md:col-span-5 bg-black text-white p-6 md:p-24 flex flex-col justify-between">
+                <div>
+                    <h2 class="font-serif text-3xl md:text-4xl mb-4 md:mb-6" x-text="lang === 'et' ? 'Kingi see tunne.' : (lang === 'en' ? 'Give that feeling.' : 'Подарите это чувство.')">Kingi see tunne.</h2>
+                    <p class="text-gray-400 font-light leading-relaxed mb-12">
+                        <span x-show="lang === 'et'">Kirjuta ja lepime kokku. Vastame kiiresti.</span>
+                        <span x-show="lang === 'en'" x-cloak>Write and we'll arrange it. We reply quickly.</span>
+                        <span x-show="lang === 'ru'" x-cloak>Напишите, и договоримся. Ответим быстро.</span>
+                    </p>
+                    <div class="space-y-2 text-sm text-gray-500 font-mono">
+                        <p>SUKODA Kingitused</p>
+                        <p>kingitus@sukoda.ee</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="md:col-span-7 p-6 md:p-24 bg-white">
+                <form class="max-w-md space-y-8 md:space-y-12" @submit.prevent="alert(lang === 'et' ? 'Aitäh! Sinu kingisoov on edastatud. Võtame ühendust.' : (lang === 'en' ? 'Thank you! Your gift request has been sent. We will be in touch.' : 'Спасибо! Ваша заявка отправлена. Мы свяжемся с вами.'))">
+                    <div class="border-b border-gray-200 pb-2">
+                        <label class="block text-xs uppercase tracking-widest text-gray-500 mb-2" x-text="lang === 'et' ? 'Valitud kingitus' : (lang === 'en' ? 'Selected gift' : 'Выбранный подарок')">Valitud kingitus</label>
+                        <input type="text" x-model="gift" :placeholder="lang === 'et' ? 'Vali ülevalt...' : (lang === 'en' ? 'Select from above...' : 'Выберите выше...')" class="w-full text-xl font-serif py-2 outline-none bg-transparent placeholder-gray-300" readonly>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-8">
+                        <div class="border-b border-gray-200 pb-2">
+                            <label class="block text-xs uppercase tracking-widest text-gray-500 mb-2" x-text="lang === 'et' ? 'Sinu nimi' : (lang === 'en' ? 'Your name' : 'Ваше имя')">Sinu nimi</label>
+                            <input type="text" x-model="name" required class="w-full text-xl font-serif py-2 outline-none bg-transparent">
+                        </div>
+                        <div class="border-b border-gray-200 pb-2">
+                            <label class="block text-xs uppercase tracking-widest text-gray-500 mb-2" x-text="lang === 'et' ? 'Sinu e-post' : (lang === 'en' ? 'Your email' : 'Ваш e-mail')">Sinu e-post</label>
+                            <input type="email" x-model="email" required class="w-full text-xl font-serif py-2 outline-none bg-transparent">
+                        </div>
+                    </div>
+
+                    <div class="border-b border-gray-200 pb-2">
+                        <label class="block text-xs uppercase tracking-widest text-gray-500 mb-2" x-text="lang === 'et' ? 'Kingisaaja eesnimi' : (lang === 'en' ? 'Recipient\'s first name' : 'Имя получателя')">Kingisaaja eesnimi</label>
+                        <input type="text" x-model="recipient" required class="w-full text-xl font-serif py-2 outline-none bg-transparent" :placeholder="lang === 'et' ? 'Kellele kinkida?' : (lang === 'en' ? 'Who is this for?' : 'Кому подарить?')">
+                    </div>
+
+                    <div class="border-b border-gray-200 pb-2">
+                        <label class="block text-xs uppercase tracking-widest text-gray-500 mb-2" x-text="lang === 'et' ? 'Sõnum kaardile (soovi korral)' : (lang === 'en' ? 'Message on card (optional)' : 'Сообщение на открытке (по желанию)')">Sõnum kaardile (soovi korral)</label>
+                        <textarea x-model="message" rows="2" class="w-full text-xl font-serif py-2 outline-none bg-transparent resize-none" :placeholder="lang === 'et' ? 'Mida soovid kaardile kirjutada?' : (lang === 'en' ? 'What would you like written on the card?' : 'Что написать на открытке?')"></textarea>
+                    </div>
+
+                    <button type="submit" class="bg-black text-white px-12 py-5 text-sm uppercase tracking-widest hover:bg-gray-800 transition-colors w-full md:w-auto" x-text="lang === 'et' ? 'Saada kingisoov' : (lang === 'en' ? 'Send gift request' : 'Отправить заявку')">
+                        Saada kingisoov
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="bg-black text-white py-8 px-4 md:px-12">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <a href="index.html" class="font-serif text-lg">SUKODA.</a>
+                <div class="text-xs uppercase tracking-widest text-gray-400">
+                    <span>kingitus@sukoda.ee</span>
+                </div>
+                <div class="text-xs text-gray-500">© 2025 SUKODA</div>
+            </div>
+        </footer>
+
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="et" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUKODA | Arendajatele</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['Playfair Display', 'serif'],
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        black: '#111111',
+                        paper: '#f5f5f5',
+                        accent: '#333333',
+                    },
+                    spacing: {
+                        '128': '32rem',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #111111;
+            color: #ffffff;
+        }
+        .grid-line {
+            border-right: 1px solid #333;
+        }
+        .grid-line-b {
+            border-bottom: 1px solid #333;
+        }
+        ::selection {
+            background: #fff;
+            color: #111;
+        }
+        [x-cloak] { display: none !important; }
+    </style>
+    <script type="module" src="assets/js/firebase.js"></script>
+</head>
+<body class="antialiased" x-data="{ lang: 'et' }">
+
+    <!-- Grid Container -->
+    <div class="max-w-[1440px] mx-auto min-h-screen border-x border-[#333]">
+        
+        <!-- Navigation -->
+        <nav class="sticky top-0 z-50 bg-[#111]/95 backdrop-blur-sm grid-line-b border-b border-[#333]" x-data="{ mobileMenu: false }">
+            <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12">
+                <a href="index.html" class="font-serif text-xl md:text-2xl tracking-tight font-medium text-white">
+                    SUKODA.
+                </a>
+                
+                <div class="hidden md:flex gap-12 text-sm uppercase tracking-widest font-medium text-gray-400">
+                    <a href="index.html#filosoofia" class="hover:text-white transition-colors" x-text="lang === 'et' ? 'Meist' : 'About'">Meist</a>
+                    <a href="index.html#standardid" class="hover:text-white transition-colors" x-text="lang === 'et' ? 'Paketid' : 'Packages'">Paketid</a>
+                    <a href="kingitus.html" class="hover:text-white transition-colors" x-text="lang === 'et' ? 'Kingitus' : 'Gift'">Kingitus</a>
+                    <a href="#" class="text-white border-b border-white pb-0.5" x-text="lang === 'et' ? 'Arendajale' : 'For developers'">Arendajale</a>
+                </div>
+
+                <div class="flex items-center gap-4 md:gap-8">
+                    <!-- Language Switcher -->
+                    <div class="flex text-xs md:text-sm uppercase tracking-widest font-bold gap-2 text-gray-400">
+                        <button @click="lang = 'et'" :class="lang === 'et' ? 'text-white border-b border-white' : 'hover:text-white'">ET</button>
+                        <span class="text-gray-600">/</span>
+                        <button @click="lang = 'en'" :class="lang === 'en' ? 'text-white border-b border-white' : 'hover:text-white'">EN</button>
+                    </div>
+
+                    <a href="mailto:partner@sukoda.ee" class="hidden md:inline-block text-sm uppercase tracking-widest font-bold border-b border-white pb-0.5 hover:text-gray-300 transition-all text-white" x-text="lang === 'et' ? 'Räägi meiega' : 'Talk to us'">
+                        Räägi meiega
+                    </a>
+
+                    <!-- Mobile Menu Button -->
+                    <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2 text-white">
+                        <svg x-show="!mobileMenu" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                        <svg x-show="mobileMenu" x-cloak class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Menu -->
+            <div x-show="mobileMenu" x-cloak class="md:hidden bg-[#111] border-t border-[#333]">
+                <div class="flex flex-col px-4 py-6 space-y-4 text-sm uppercase tracking-widest font-medium text-gray-400">
+                    <a href="index.html#filosoofia" class="py-2 hover:text-white" x-text="lang === 'et' ? 'Meist' : 'About'">Meist</a>
+                    <a href="index.html#standardid" class="py-2 hover:text-white" x-text="lang === 'et' ? 'Paketid' : 'Packages'">Paketid</a>
+                    <a href="kingitus.html" class="py-2 hover:text-white" x-text="lang === 'et' ? 'Kingitus' : 'Gift'">Kingitus</a>
+                    <a href="#" class="py-2 text-white" x-text="lang === 'et' ? 'Arendajale' : 'For developers'">Arendajale</a>
+                    <a href="mailto:partner@sukoda.ee" @click="mobileMenu = false" class="py-2 text-white font-bold" x-text="lang === 'et' ? 'Räägi meiega' : 'Talk to us'">Räägi meiega</a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <header class="grid md:grid-cols-12 min-h-[60vh] md:min-h-[85vh] grid-line-b">
+            <!-- Left: Text -->
+            <div class="md:col-span-8 px-4 md:px-12 py-12 md:py-24 flex flex-col justify-between grid-line border-r border-[#333] order-2 md:order-1">
+                <div>
+                    <span class="text-xs uppercase tracking-widest text-gray-500 block mb-4 md:mb-8 border border-gray-700 inline-block px-3 py-1 rounded-full" x-text="lang === 'et' ? 'Arendajatele' : 'For Developers'">Arendajatele</span>
+                    <h1 class="font-serif text-4xl md:text-7xl lg:text-8xl leading-[1.1] mb-8 md:mb-12 text-white">
+                        <span x-show="lang === 'et'">Lisa oma<br>projektile hing.</span>
+                        <span x-show="lang === 'en'" x-cloak>Add soul to<br>your project.</span>
+                    </h1>
+                    <p class="text-base md:text-xl text-gray-400 max-w-xl font-light leading-relaxed">
+                        <span x-show="lang === 'et'">Uus kodu on rohkem kui seinad ja põrand. Kui omanik esimest korda sisse astub, ootavad teda värsked lilled, puuviljad ja käsitsi kirjutatud tervitus.</span>
+                        <span x-show="lang === 'en'" x-cloak>A new home is more than walls and floors. When the owner steps in for the first time, fresh flowers, fruits and a handwritten welcome await.</span>
+                    </p>
+                </div>
+                <div class="mt-8 md:mt-16 flex gap-6">
+                    <a href="#kontakt" class="inline-block bg-white text-black px-6 md:px-8 py-3 md:py-4 text-xs md:text-sm uppercase tracking-widest hover:bg-gray-200 transition-colors" x-text="lang === 'et' ? 'Räägime' : 'Let\'s talk'">
+                        Räägime
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Right: Visual -->
+            <div class="md:col-span-4 relative h-[200px] md:h-full md:min-h-[400px] order-1 md:order-2">
+                <img src="assets/images/interior.jpg" alt="Luxury Interior" class="absolute inset-0 w-full h-full object-cover filter brightness-75 grayscale">
+                <div class="absolute inset-0 bg-gradient-to-t from-[#111] via-transparent to-transparent"></div>
+            </div>
+        </header>
+
+        <!-- Value Prop -->
+        <section class="grid md:grid-cols-12 grid-line-b border-b border-[#333]">
+            <div class="md:col-span-4 p-6 md:p-12 grid-line border-r border-[#333] border-b md:border-b-0">
+                <h2 class="font-serif text-2xl md:text-3xl text-white mb-4 md:mb-6" x-text="lang === 'et' ? 'Mida me pakume' : 'What we offer'">Mida me pakume</h2>
+                <p class="text-gray-400 text-sm leading-relaxed">
+                    <span x-show="lang === 'et'">Teie projektile lisaväärtus, mis eristab teid teistest. Ja mis paneb ostjad rääkima.</span>
+                    <span x-show="lang === 'en'" x-cloak>Added value that sets your project apart. And gets buyers talking.</span>
+                </p>
+            </div>
+            <div class="md:col-span-8 p-6 md:p-24 bg-[#1a1a1a]">
+                <div class="grid md:grid-cols-2 gap-8 md:gap-16">
+                    <div>
+                        <h3 class="font-serif text-xl mb-4 text-white" x-text="lang === 'et' ? 'Esimene aasta kingituseks' : 'First year as a gift'">Esimene aasta kingituseks</h3>
+                        <p class="text-gray-500 text-sm leading-relaxed">
+                            <span x-show="lang === 'et'">Lisa korteri hinnale väike marginaal ja paku ostjale esimene aasta koduhooldust kingituseks. Müügiargument, mis töötab.</span>
+                            <span x-show="lang === 'en'" x-cloak>Add a small margin to apartment price and offer the buyer first year of home care as a gift. A sales argument that works.</span>
+                        </p>
+                    </div>
+                    <div>
+                        <h3 class="font-serif text-xl mb-4 text-white" x-text="lang === 'et' ? 'Võtmete üleandmine' : 'Key handover'">Võtmete üleandmine</h3>
+                        <p class="text-gray-500 text-sm leading-relaxed">
+                            <span x-show="lang === 'et'">Enne üleandmist teeme viimase lihvi. Uut omanikku tervitavad lilled, puuviljad ja käsitsi kirjutatud kaart. Unustamatu esmamulje.</span>
+                            <span x-show="lang === 'en'" x-cloak>Before handover, we add the final polish. Fresh flowers, fruits and a handwritten card welcome the new owner. An unforgettable first impression.</span>
+                        </p>
+                    </div>
+                    <div>
+                        <h3 class="font-serif text-xl mb-4 text-white" x-text="lang === 'et' ? 'Hoone väärtus' : 'Building value'">Hoone väärtus</h3>
+                        <p class="text-gray-500 text-sm leading-relaxed">
+                            <span x-show="lang === 'et'">Regulaarne professionaalne hooldus hoiab viimistluse kauem värskena. Vähem garantiijuhtumeid, rohkem rahulolu.</span>
+                            <span x-show="lang === 'en'" x-cloak>Regular professional care keeps finishes fresh longer. Fewer warranty claims, more satisfaction.</span>
+                        </p>
+                    </div>
+                    <div>
+                        <h3 class="font-serif text-xl mb-4 text-white" x-text="lang === 'et' ? 'Lihtne korraldus' : 'Simple setup'">Lihtne korraldus</h3>
+                        <p class="text-gray-500 text-sm leading-relaxed">
+                            <span x-show="lang === 'et'">Meie hoolitseme kõige eest. Teie jaoks üks kontakt, üks arve, null muret.</span>
+                            <span x-show="lang === 'en'" x-cloak>We take care of everything. For you, one contact, one invoice, zero worries.</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="kontakt" class="grid md:grid-cols-12">
+            <div class="md:col-span-6 p-6 md:p-24 border-r border-[#333]">
+                <h2 class="font-serif text-3xl md:text-4xl mb-6 md:mb-8 text-white" x-text="lang === 'et' ? 'Räägime' : 'Let\'s talk'">Räägime</h2>
+                <p class="text-gray-400 mb-12">
+                    <span x-show="lang === 'et'">Kirjuta meile oma projektist. Vaatame koos läbi, kuidas saame aidata ja mida see teie ostjatele tähendab.</span>
+                    <span x-show="lang === 'en'" x-cloak>Write to us about your project. Let's look together at how we can help and what it means for your buyers.</span>
+                </p>
+                
+                <a href="mailto:partner@sukoda.ee" class="text-2xl md:text-3xl font-serif text-white hover:text-gray-400 transition-colors border-b border-white/20 pb-2 inline-block mb-12">
+                    partner@sukoda.ee
+                </a>
+
+                <div class="space-y-2 text-sm text-gray-600 font-mono">
+                    <p>SUKODA</p>
+                    <p>Tallinn, Eesti</p>
+                </div>
+            </div>
+            <div class="md:col-span-6 bg-[#1a1a1a] p-6 md:p-24 flex items-center justify-center text-center">
+                <div>
+                    <h3 class="font-serif text-3xl text-white mb-4" x-text="lang === 'et' ? 'Kohtume?' : 'Shall we meet?'">Kohtume?</h3>
+                    <p class="text-gray-500 text-sm mb-8">
+                        <span x-show="lang === 'et'">Lühike vestlus, suur pilt. Ilma kohustusteta.</span>
+                        <span x-show="lang === 'en'" x-cloak>Short conversation, big picture. No obligations.</span>
+                    </p>
+                    <span class="text-xs uppercase tracking-widest text-gray-600">partner@sukoda.ee</span>
+                </div>
+            </div>
+        </section>
+
+    </div>
+</body>
+</html>
