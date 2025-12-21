@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SUKODA | Arendajatele</title>
+    <title>SUKODA | Koostöö</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -62,9 +62,9 @@
                 
                 <div class="hidden md:flex gap-12 text-sm uppercase tracking-widest font-medium text-gray-400">
                     <a href="index.html#filosoofia" class="hover:text-white transition-colors" x-text="lang === 'et' ? 'Meist' : 'About'">Meist</a>
-                    <a href="index.html#standardid" class="hover:text-white transition-colors" x-text="lang === 'et' ? 'Paketid' : 'Packages'">Paketid</a>
+                    <a href="index.html#hoolitsus" class="hover:text-white transition-colors" x-text="lang === 'et' ? 'Hoolitsus' : 'Care'">Hoolitsus</a>
                     <a href="kingitus.html" class="hover:text-white transition-colors" x-text="lang === 'et' ? 'Kingitus' : 'Gift'">Kingitus</a>
-                    <a href="#" class="text-white border-b border-white pb-0.5" x-text="lang === 'et' ? 'Arendajale' : 'For developers'">Arendajale</a>
+                    <a href="#" class="text-white border-b border-white pb-0.5" x-text="lang === 'et' ? 'Koostöö' : 'Partnership'">Koostöö</a>
                 </div>
 
                 <div class="flex items-center gap-4 md:gap-8">
@@ -94,10 +94,10 @@
             <!-- Mobile Menu -->
             <div x-show="mobileMenu" x-cloak class="md:hidden bg-[#111] border-t border-[#333]">
                 <div class="flex flex-col px-4 py-6 space-y-4 text-sm uppercase tracking-widest font-medium text-gray-400">
-                    <a href="index.html#filosoofia" class="py-2 hover:text-white" x-text="lang === 'et' ? 'Meist' : 'About'">Meist</a>
-                    <a href="index.html#standardid" class="py-2 hover:text-white" x-text="lang === 'et' ? 'Paketid' : 'Packages'">Paketid</a>
+                    <a href="index.html#filosoofia" @click="mobileMenu = false" class="py-2 hover:text-white" x-text="lang === 'et' ? 'Meist' : 'About'">Meist</a>
+                    <a href="index.html#hoolitsus" class="py-2 hover:text-white" x-text="lang === 'et' ? 'Hoolitsus' : 'Care'">Hoolitsus</a>
                     <a href="kingitus.html" class="py-2 hover:text-white" x-text="lang === 'et' ? 'Kingitus' : 'Gift'">Kingitus</a>
-                    <a href="#" class="py-2 text-white" x-text="lang === 'et' ? 'Arendajale' : 'For developers'">Arendajale</a>
+                    <a href="#" class="py-2 text-white" x-text="lang === 'et' ? 'Koostöö' : 'Partnership'">Koostöö</a>
                     <a href="mailto:partner@sukoda.ee" @click="mobileMenu = false" class="py-2 text-white font-bold" x-text="lang === 'et' ? 'Räägi meiega' : 'Talk to us'">Räägi meiega</a>
                 </div>
             </div>
@@ -158,10 +158,10 @@
                         </p>
                     </div>
                     <div>
-                        <h3 class="font-serif text-xl mb-4 text-white" x-text="lang === 'et' ? 'Hoone väärtus' : 'Building value'">Hoone väärtus</h3>
+                        <h3 class="font-serif text-xl mb-4 text-white" x-text="lang === 'et' ? 'Lihtne struktuur' : 'Simple structure'">Lihtne struktuur</h3>
                         <p class="text-gray-500 text-sm leading-relaxed">
-                            <span x-show="lang === 'et'">Regulaarne professionaalne hooldus hoiab viimistluse kauem värskena. Vähem garantiijuhtumeid, rohkem rahulolu.</span>
-                            <span x-show="lang === 'en'" x-cloak>Regular professional care keeps finishes fresh longer. Fewer warranty claims, more satisfaction.</span>
+                            <span x-show="lang === 'et'">Üks pakett, kolm rütmi: kord kuus, üle nädala, iga nädal. Iga külastusega lilled, kaart ja magus üllatus.</span>
+                            <span x-show="lang === 'en'" x-cloak>One package, three rhythms: once a month, biweekly, weekly. Every visit includes flowers, a card and a sweet surprise.</span>
                         </p>
                     </div>
                     <div>
@@ -170,6 +170,47 @@
                             <span x-show="lang === 'et'">Meie hoolitseme kõige eest. Teie jaoks üks kontakt, üks arve, null muret.</span>
                             <span x-show="lang === 'en'" x-cloak>We take care of everything. For you, one contact, one invoice, zero worries.</span>
                         </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works for Developers -->
+        <section class="grid md:grid-cols-12 grid-line-b border-b border-[#333]">
+            <div class="md:col-span-4 p-6 md:p-12 grid-line border-r border-[#333] border-b md:border-b-0">
+                <h2 class="font-serif text-2xl md:text-3xl text-white" x-text="lang === 'et' ? 'Kuidas see käib' : 'How it works'">Kuidas see käib</h2>
+            </div>
+            <div class="md:col-span-8 p-6 md:p-24">
+                <div class="space-y-12">
+                    <div class="flex gap-6">
+                        <div class="text-2xl font-serif text-gray-600">01</div>
+                        <div>
+                            <h3 class="font-serif text-xl mb-2 text-white" x-text="lang === 'et' ? 'Lepime kokku' : 'We agree'">Lepime kokku</h3>
+                            <p class="text-gray-500 text-sm leading-relaxed">
+                                <span x-show="lang === 'et'">Räägime läbi, mitu korterit, milline pakett, millal algab. Koostame teile hinnapakkumise.</span>
+                                <span x-show="lang === 'en'" x-cloak>We discuss how many apartments, which package, when to start. We prepare a quote for you.</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex gap-6">
+                        <div class="text-2xl font-serif text-gray-600">02</div>
+                        <div>
+                            <h3 class="font-serif text-xl mb-2 text-white" x-text="lang === 'et' ? 'Võtmete üleandmisel' : 'At key handover'">Võtmete üleandmisel</h3>
+                            <p class="text-gray-500 text-sm leading-relaxed">
+                                <span x-show="lang === 'et'">Korter on särav. Lilled vaasis, puuviljad kausis, käsitsi kirjutatud tervitus laual. Uus omanik saab ka SUKODA kingikaardi.</span>
+                                <span x-show="lang === 'en'" x-cloak>The apartment is sparkling. Flowers in a vase, fruits in a bowl, handwritten greeting on the table. New owner also receives a SUKODA gift card.</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex gap-6">
+                        <div class="text-2xl font-serif text-gray-600">03</div>
+                        <div>
+                            <h3 class="font-serif text-xl mb-2 text-white" x-text="lang === 'et' ? 'Esimene aasta' : 'First year'">Esimene aasta</h3>
+                            <p class="text-gray-500 text-sm leading-relaxed">
+<span x-show="lang === 'et'">Omanik valib oma rütmi – kord kuus, üle nädala või iga nädal. Iga külastusega lilled, kaart ja magus üllatus. Ja kohvipaus hubases kohvikus.</span>
+                            <span x-show="lang === 'en'" x-cloak>Owner chooses their rhythm – monthly, biweekly, or weekly. Every visit includes flowers, card, and sweet surprise. And a coffee break at a cozy café.</span>
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -204,6 +245,19 @@
                 </div>
             </div>
         </section>
+
+        <!-- Footer -->
+        <footer class="border-t border-[#333] py-8 px-4 md:px-12">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <a href="index.html" class="font-serif text-lg text-white">SUKODA.</a>
+                <div class="flex gap-6 md:gap-8 text-xs text-gray-400">
+                    <a href="tingimused.html" class="hover:text-white transition-colors" x-text="lang === 'et' ? 'Tingimused' : 'Terms'">Tingimused</a>
+                    <a href="privaatsus.html" class="hover:text-white transition-colors" x-text="lang === 'et' ? 'Privaatsuspoliitika' : 'Privacy'">Privaatsuspoliitika</a>
+                    <a href="mailto:partner@sukoda.ee" class="hover:text-white transition-colors">partner@sukoda.ee</a>
+                </div>
+                <div class="text-xs text-gray-600">© 2025 SUKODA</div>
+            </div>
+        </footer>
 
     </div>
 </body>

@@ -66,9 +66,9 @@
                 
                 <div class="hidden md:flex gap-12 text-sm uppercase tracking-widest font-medium">
                     <a href="#filosoofia" class="hover:text-gray-600 transition-colors" x-text="lang === 'et' ? 'Meist' : 'About'">Meist</a>
-                    <a href="#standardid" class="hover:text-gray-600 transition-colors" x-text="lang === 'et' ? 'Paketid' : 'Packages'">Paketid</a>
+                    <a href="#hoolitsus" class="hover:text-gray-600 transition-colors" x-text="lang === 'et' ? 'Hoolitsus' : 'Care'">Hoolitsus</a>
                     <a href="kingitus.html" class="hover:text-gray-600 transition-colors" x-text="lang === 'et' ? 'Kingitus' : 'Gift'">Kingitus</a>
-                    <a href="partnerlus.html" class="hover:text-gray-600 transition-colors" x-text="lang === 'et' ? 'Arendajale' : 'For developers'">Arendajale</a>
+                    <a href="partnerlus.html" class="hover:text-gray-600 transition-colors" x-text="lang === 'et' ? 'Koostöö' : 'Partnership'">Koostöö</a>
                 </div>
 
                 <div class="flex items-center gap-4 md:gap-8">
@@ -79,8 +79,8 @@
                         <button @click="lang = 'en'" :class="lang === 'en' ? 'text-black border-b border-black' : 'text-gray-400 hover:text-gray-600'">EN</button>
                     </div>
 
-                    <a href="#liitu" class="hidden md:inline-block text-sm uppercase tracking-widest font-bold border-b border-black pb-0.5 hover:border-gray-400 hover:text-gray-600 transition-all" x-text="lang === 'et' ? 'Võta ühendust' : 'Get in touch'">
-                        Võta ühendust
+                    <a href="#liitu" class="hidden md:inline-block text-sm uppercase tracking-widest font-bold border-b border-black pb-0.5 hover:border-gray-400 hover:text-gray-600 transition-all" x-text="lang === 'et' ? 'Alusta' : 'Start'">
+                        Alusta
                     </a>
 
                     <!-- Mobile Menu Button -->
@@ -99,10 +99,10 @@
             <div x-show="mobileMenu" x-cloak class="md:hidden bg-paper border-t border-[#e5e5e5]">
                 <div class="flex flex-col px-4 py-6 space-y-4 text-sm uppercase tracking-widest font-medium">
                     <a href="#filosoofia" @click="mobileMenu = false" class="py-2" x-text="lang === 'et' ? 'Meist' : 'About'">Meist</a>
-                    <a href="#standardid" @click="mobileMenu = false" class="py-2" x-text="lang === 'et' ? 'Paketid' : 'Packages'">Paketid</a>
+                    <a href="#hoolitsus" @click="mobileMenu = false" class="py-2" x-text="lang === 'et' ? 'Hoolitsus' : 'Care'">Hoolitsus</a>
                     <a href="kingitus.html" class="py-2" x-text="lang === 'et' ? 'Kingitus' : 'Gift'">Kingitus</a>
-                    <a href="partnerlus.html" class="py-2" x-text="lang === 'et' ? 'Arendajale' : 'For developers'">Arendajale</a>
-                    <a href="#liitu" @click="mobileMenu = false" class="py-2 font-bold" x-text="lang === 'et' ? 'Võta ühendust' : 'Get in touch'">Võta ühendust</a>
+                    <a href="partnerlus.html" class="py-2" x-text="lang === 'et' ? 'Koostöö' : 'Partnership'">Koostöö</a>
+                    <a href="#liitu" @click="mobileMenu = false" class="py-2 font-bold" x-text="lang === 'et' ? 'Alusta' : 'Start'">Alusta</a>
                 </div>
             </div>
         </nav>
@@ -117,13 +117,13 @@
                         <span x-show="lang === 'en'" x-cloak>A home that<br>awaits you.</span>
                     </h1>
                     <p class="text-base md:text-xl text-gray-600 max-w-lg font-light leading-relaxed">
-                        <span x-show="lang === 'et'">Astud sisse ja kõik on paigas. Linad lõhnavad, lilled on värsked, ja laual ootab käsitsi kirjutatud tervitus. Nii lihtsalt see käibki.</span>
-                        <span x-show="lang === 'en'" x-cloak>You walk in and everything is in place. Fresh linens, fresh flowers, and a handwritten note waiting on the table. It's simply how it works.</span>
+                        <span x-show="lang === 'et'">Astud sisse ja kõik on paigas. Lilled vaasis, puuviljad kausis, ja laual ootab käsitsi kirjutatud tervitus. Nii lihtsalt see käibki.</span>
+                        <span x-show="lang === 'en'" x-cloak>You walk in and everything is in place. Flowers in a vase, fruits in a bowl, and a handwritten note waiting on the table. It's simply how it works.</span>
                     </p>
                 </div>
                 <div class="mt-8 md:mt-16">
-                    <a href="#standardid" class="inline-block bg-black text-white px-6 md:px-8 py-3 md:py-4 text-xs md:text-sm uppercase tracking-widest hover:bg-gray-900 transition-colors" x-text="lang === 'et' ? 'Vaata pakette' : 'View packages'">
-                        Vaata pakette
+                    <a href="#hoolitsus" class="inline-block bg-black text-white px-6 md:px-8 py-3 md:py-4 text-xs md:text-sm uppercase tracking-widest hover:bg-gray-900 transition-colors" x-text="lang === 'et' ? 'Vali oma rütm' : 'Choose your rhythm'">
+                        Vali oma rütm
                     </a>
                 </div>
             </div>
@@ -137,8 +137,8 @@
                         <span x-show="lang === 'en'" x-cloak>A small gift every time.</span>
                     </p>
                     <p class="text-xs md:text-sm font-light opacity-80">
-                        <span x-show="lang === 'et'">Värsked lilled vaasis. Hooajalised puuviljad kausis. Ja käsitsi kirjutatud kaart.</span>
-                        <span x-show="lang === 'en'" x-cloak>Fresh flowers in a vase. Seasonal fruits in a bowl. And a handwritten card.</span>
+                        <span x-show="lang === 'et'">Värsked lilled. Hooajalised puuviljad. Käsitsi kirjutatud kaart. Ja väike magus üllatus.</span>
+                        <span x-show="lang === 'en'" x-cloak>Fresh flowers. Seasonal fruits. A handwritten card. And a small sweet surprise.</span>
                     </p>
                 </div>
                 <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
@@ -175,14 +175,14 @@
             </div>
         </section>
 
-        <!-- Standards (Pricing) -->
-        <section id="standardid" class="grid-line-b" x-data="{ 
+        <!-- SUKODA Hoolitsus -->
+        <section id="hoolitsus" class="grid-line-b" x-data="{ 
             size: 'medium',
             prices: {
-                small: { core: 179, signature: 299, housekeeper: 649 },
-                medium: { core: 229, signature: 349, housekeeper: 699 },
-                large: { core: 299, signature: 449, housekeeper: 799 },
-                xlarge: { core: 349, signature: 549, housekeeper: 899 }
+                small: { once: 119, twice: 199, weekly: 379 },
+                medium: { once: 149, twice: 249, weekly: 449 },
+                large: { once: 189, twice: 319, weekly: 579 },
+                xlarge: { once: 229, twice: 389, weekly: 699 }
             }
         }">
             <!-- Controls -->
@@ -191,7 +191,7 @@
                     <h2 class="font-serif text-2xl md:text-3xl" x-text="lang === 'et' ? 'Vali oma rütm' : 'Choose your rhythm'">Vali oma rütm</h2>
                 </div>
                 <div class="md:col-span-8 p-4 md:p-12 flex flex-col md:flex-row md:items-center gap-3 md:gap-6 overflow-x-auto">
-                    <span class="text-xs uppercase tracking-widest text-gray-500 whitespace-nowrap" x-text="lang === 'et' ? 'Elamispinna suurus:' : 'Living space size:'">Elamispinna suurus:</span>
+                    <span class="text-xs uppercase tracking-widest text-gray-500 whitespace-nowrap" x-text="lang === 'et' ? 'Sinu kodu:' : 'Your home:'">Sinu kodu:</span>
                     <div class="flex gap-3 md:gap-4 font-sans text-xs md:text-sm whitespace-nowrap overflow-x-auto pb-2 md:pb-0">
                         <button @click="size = 'small'" :class="size === 'small' ? 'text-black border-b border-black' : 'text-gray-400 hover:text-black transition-colors'" class="pb-1" x-text="lang === 'et' ? 'Kuni 50m²' : 'Up to 50m²'">Kuni 50m²</button>
                         <button @click="size = 'medium'" :class="size === 'medium' ? 'text-black border-b border-black' : 'text-gray-400 hover:text-black transition-colors'" class="pb-1">51-90m²</button>
@@ -202,167 +202,153 @@
                 </div>
             </div>
 
-            <!-- Tiers -->
-            <div class="grid md:grid-cols-3">
-                <!-- Custom Quote Logic Script -->
-                <script>
-                    function getPrice(size, tier) {
-                        if (size === 'estate') return 'Personal';
-                        const prices = {
-                            small: { core: 179, signature: 299, housekeeper: 649 },
-                            medium: { core: 229, signature: 349, housekeeper: 699 },
-                            large: { core: 299, signature: 449, housekeeper: 799 },
-                            xlarge: { core: 349, signature: 549, housekeeper: 899 }
-                        };
-                        return prices[size][tier];
-                    }
-                </script>
+            <!-- Always Included Banner -->
+            <div class="bg-black text-white p-6 md:p-12">
+                <p class="text-xs uppercase tracking-widest text-gray-400 mb-4" x-text="lang === 'et' ? 'Iga külastusega alati kaasas' : 'Always included with every visit'">Iga külastusega alati kaasas</p>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+                    <div>
+                        <p class="font-serif text-lg md:text-xl mb-1" x-text="lang === 'et' ? 'Värsked lilled' : 'Fresh flowers'">Värsked lilled</p>
+                        <p class="text-xs text-gray-400" x-text="lang === 'et' ? 'Ilus kimp vaasis' : 'Beautiful bouquet in a vase'">Ilus kimp vaasis</p>
+                    </div>
+                    <div>
+                        <p class="font-serif text-lg md:text-xl mb-1" x-text="lang === 'et' ? 'Tervituskaart' : 'Greeting card'">Tervituskaart</p>
+                        <p class="text-xs text-gray-400" x-text="lang === 'et' ? 'Käsitsi kirjutatud' : 'Handwritten'">Käsitsi kirjutatud</p>
+                    </div>
+                    <div>
+                        <p class="font-serif text-lg md:text-xl mb-1" x-text="lang === 'et' ? 'Väike üllatus' : 'Small surprise'">Väike üllatus</p>
+                        <p class="text-xs text-gray-400" x-text="lang === 'et' ? 'Magus tervitus voodil' : 'Sweet greeting on the bed'">Magus tervitus voodil</p>
+                    </div>
+                    <div>
+                        <p class="font-serif text-lg md:text-xl mb-1" x-text="lang === 'et' ? 'Puhas voodipesu' : 'Fresh linens'">Puhas voodipesu</p>
+                        <p class="text-xs text-gray-400" x-text="lang === 'et' ? 'Vahetatud ja sätitud' : 'Changed and made'">Vahetatud ja sätitud</p>
+                    </div>
+                </div>
+            </div>
 
-                <!-- VÄRSKUS Tier -->
-                <div class="p-6 md:p-16 grid-line border-b md:border-b-0 border-[#e5e5e5] hover:bg-white transition-colors group relative">
-                    <h3 class="font-sans text-xs uppercase tracking-widest text-gray-500 mb-4 md:mb-6" x-text="lang === 'et' ? 'Kaks korda kuus' : 'Twice a month'">Kaks korda kuus</h3>
-                    <div class="font-serif text-4xl mb-2" :class="size === 'estate' ? 'text-2xl' : 'text-4xl'">
-                        <span x-show="size !== 'estate'" x-text="lang === 'et' ? 'Värskus' : 'Freshness'">Värskus</span>
-                        <span x-show="size === 'estate'" x-text="lang === 'et' ? 'Rätseplahendus' : 'Bespoke'">Rätseplahendus</span>
+            <!-- Three Rhythms -->
+            <div class="grid md:grid-cols-3">
+                
+                <!-- Kord kuus -->
+                <div class="p-6 md:p-16 grid-line border-b md:border-b-0 border-[#e5e5e5] hover:bg-white transition-colors group relative flex flex-col">
+                    <h3 class="font-sans text-xs uppercase tracking-widest text-gray-500 mb-4 md:mb-6" x-text="lang === 'et' ? 'Üks kord kuus' : 'Once a month'">Üks kord kuus</h3>
+                    <div class="font-serif text-4xl md:text-5xl mb-2">
+                        <span x-show="size !== 'estate'" x-text="lang === 'et' ? 'Kord kuus' : 'Monthly'">Kord kuus</span>
+                        <span x-show="size === 'estate'" class="text-2xl" x-text="lang === 'et' ? 'Rätseplahendus' : 'Bespoke'">Rätseplahendus</span>
                     </div>
                     <div class="flex items-baseline gap-1 mb-8" x-show="size !== 'estate'">
                         <span class="text-xl">€</span>
-                        <span class="text-2xl" x-text="prices[size].core">199</span>
+                        <span class="text-2xl" x-text="prices[size].once">149</span>
                         <span class="text-sm text-gray-500">/kuu</span>
                     </div>
                     <div class="mb-8" x-show="size === 'estate'" x-cloak>
                         <p class="font-serif text-xl italic" x-text="lang === 'et' ? 'Räägime läbi' : 'Let\'s talk'">Räägime läbi</p>
                     </div>
                     
-                    <p class="text-gray-600 mb-12 min-h-[3rem]">
-                        <span x-show="lang === 'et'">Üle nädala saabub sinu koju tuttav nägu. Lahkudes jätab ta kaardi: "Ilusat nädalat!"</span>
-                        <span x-show="lang === 'en'" x-cloak>Every other week, a familiar face arrives. When leaving, they leave a card: "Have a lovely week!"</span>
+                    <p class="text-gray-600 mb-12 flex-grow">
+                        <span x-show="lang === 'et'">Üks täiuslik külastus kuus. Koju tulles ootavad lilled, kaart ja see eriline tunne.</span>
+                        <span x-show="lang === 'en'" x-cloak>One perfect visit per month. Flowers, a card, and that special feeling await when you come home.</span>
                     </p>
 
-                    <ul class="space-y-4 font-sans text-sm text-gray-700 mb-12 border-t border-gray-200 pt-8">
-                        <li class="flex justify-between">
-                            <span x-text="lang === 'et' ? 'Sinu inimene' : 'Your person'">Sinu inimene</span>
-                            <span class="font-medium" x-text="lang === 'et' ? 'Alati sama tuttav nägu' : 'Always the same face'">Alati sama tuttav nägu</span>
-                        </li>
-                        <li class="flex justify-between">
-                            <span x-text="lang === 'et' ? 'Tervituskaart' : 'Greeting card'">Tervituskaart</span>
-                            <span class="font-medium" x-text="lang === 'et' ? 'Käsitsi kirjutatud' : 'Handwritten'">Käsitsi kirjutatud</span>
-                        </li>
-                        <li class="flex justify-between">
-                            <span x-text="lang === 'et' ? 'Kogu kodu' : 'Entire home'">Kogu kodu</span>
-                            <span class="font-medium" x-text="lang === 'et' ? 'Põrandast laeni' : 'Top to bottom'">Põrandast laeni</span>
-                        </li>
-                        <li class="flex justify-between">
-                            <span x-text="lang === 'et' ? 'Voodipesu' : 'Bed linens'">Voodipesu</span>
-                            <span class="font-medium" x-text="lang === 'et' ? 'Vahetatud ja sätitud' : 'Changed and made'">Vahetatud ja sätitud</span>
-                        </li>
-                    </ul>
+                    <div class="mb-8 p-4 bg-gray-50 rounded">
+                        <p class="text-xs uppercase tracking-widest text-gray-500 mb-2" x-text="lang === 'et' ? 'Sinu hetk' : 'Your moment'">Sinu hetk</p>
+                        <p class="text-sm" x-text="lang === 'et' ? 'Kohv ja kook hubases kohvikus, kuni me hoolitseme' : 'Coffee and cake at a cozy café while we care'">Kohv ja kook hubases kohvikus, kuni me hoolitseme</p>
+                    </div>
 
-                    <a href="#liitu" @click="$dispatch('select-plan', { plan: size === 'estate' ? 'RÄTSEPLAHENDUS' : 'VÄRSKUS' })" class="block w-full text-center border border-black py-4 text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors" x-text="lang === 'et' ? (size === 'estate' ? 'Räägi meiega' : 'Vali Värskus') : (size === 'estate' ? 'Talk to us' : 'Select Freshness')">
-                        Vali Värskus
+                    <a href="#liitu" @click="$dispatch('select-plan', { plan: size === 'estate' ? 'RÄTSEPLAHENDUS' : 'KORD KUUS (' + (size==='small'?'kuni 50m²':size==='medium'?'51-90m²':size==='large'?'91-120m²':'121-150m²') + ')' })" class="block w-full text-center border border-black py-4 text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors" x-text="lang === 'et' ? (size === 'estate' ? 'Räägi meiega' : 'Vali see rütm') : (size === 'estate' ? 'Talk to us' : 'Choose this rhythm')">
+                        Vali see rütm
                     </a>
                 </div>
 
-                <!-- HOOLITSUS Tier -->
-                <div class="p-6 md:p-16 hover:bg-white transition-colors relative bg-[#f0f0f0]">
+                <!-- Üle nädala -->
+                <div class="p-6 md:p-16 hover:bg-white transition-colors relative flex flex-col bg-[#f0f0f0]">
                     <div class="absolute top-4 right-4 md:top-6 md:right-6">
                         <span class="text-xs uppercase tracking-widest border border-black px-2 py-1" x-text="lang === 'et' ? 'Populaarne' : 'Popular'">Populaarne</span>
                     </div>
-                    <h3 class="font-sans text-xs uppercase tracking-widest text-gray-500 mb-4 md:mb-6" x-text="lang === 'et' ? 'Iga nädal' : 'Every week'">Iga nädal</h3>
-                    <div class="font-serif text-4xl mb-2" :class="size === 'estate' ? 'text-2xl' : 'text-4xl'">
-                        <span x-show="size !== 'estate'" x-text="lang === 'et' ? 'Hoolitsus' : 'Care'">Hoolitsus</span>
-                        <span x-show="size === 'estate'" x-text="lang === 'et' ? 'Rätseplahendus' : 'Bespoke'">Rätseplahendus</span>
+                    <h3 class="font-sans text-xs uppercase tracking-widest text-gray-500 mb-4 md:mb-6" x-text="lang === 'et' ? 'Kaks korda kuus' : 'Twice a month'">Kaks korda kuus</h3>
+                    <div class="font-serif text-4xl md:text-5xl mb-2">
+                        <span x-show="size !== 'estate'" x-text="lang === 'et' ? 'Üle nädala' : 'Biweekly'">Üle nädala</span>
+                        <span x-show="size === 'estate'" class="text-2xl" x-text="lang === 'et' ? 'Rätseplahendus' : 'Bespoke'">Rätseplahendus</span>
                     </div>
                     <div class="flex items-baseline gap-1 mb-8" x-show="size !== 'estate'">
                         <span class="text-xl">€</span>
-                        <span class="text-2xl" x-text="prices[size].signature">299</span>
+                        <span class="text-2xl" x-text="prices[size].twice">249</span>
                         <span class="text-sm text-gray-500">/kuu</span>
                     </div>
                     <div class="mb-8" x-show="size === 'estate'" x-cloak>
                         <p class="font-serif text-xl italic" x-text="lang === 'et' ? 'Räägime läbi' : 'Let\'s talk'">Räägime läbi</p>
                     </div>
 
-                    <p class="text-gray-600 mb-12 min-h-[3rem]">
-                        <span x-show="lang === 'et'">Koju tulles ootavad sind värsked lilled ja puuviljad. Ja see tunne, et keegi hoolib.</span>
-                        <span x-show="lang === 'en'" x-cloak>Fresh flowers and fruits await when you come home. And the feeling that someone cares.</span>
+                    <p class="text-gray-600 mb-12 flex-grow">
+                        <span x-show="lang === 'et'">Iga kahe nädala tagant värskus. Lilled, puuviljad ja tunne, et keegi hoolib. Pidevalt.</span>
+                        <span x-show="lang === 'en'" x-cloak>Freshness every two weeks. Flowers, fruits, and the feeling that someone cares. Continuously.</span>
                     </p>
 
-                    <ul class="space-y-4 font-sans text-sm text-gray-700 mb-12 border-t border-gray-200 pt-8">
-                        <li class="flex justify-between">
-                            <span x-text="lang === 'et' ? 'Kõik Värskusest' : 'Everything from Freshness'">Kõik Värskusest</span>
-                            <span class="font-medium" x-text="lang === 'et' ? '✓' : '✓'">✓</span>
-                        </li>
-                        <li class="flex justify-between">
-                            <span x-text="lang === 'et' ? 'Lilled ja puuviljad' : 'Flowers and fruits'">Lilled ja puuviljad</span>
-                            <span class="font-medium" x-text="lang === 'et' ? 'Igal külastusel' : 'Every visit'">Igal külastusel</span>
-                        </li>
-                        <li class="flex justify-between">
-                            <span x-text="lang === 'et' ? 'Triigitud linad' : 'Ironed linens'">Triigitud linad</span>
-                            <span class="font-medium" x-text="lang === 'et' ? 'Nagu hotellis' : 'Hotel-style'">Nagu hotellis</span>
-                        </li>
-                        <li class="flex justify-between">
-                            <span x-text="lang === 'et' ? 'Süvapuhastus' : 'Deep clean'">Süvapuhastus</span>
-                            <span class="font-medium" x-text="lang === 'et' ? 'Aknad, kardinad (kvartalis)' : 'Windows, curtains (quarterly)'">Aknad, kardinad (kvartalis)</span>
-                        </li>
-                    </ul>
+                    <div class="mb-8 p-4 bg-white rounded">
+                        <p class="text-xs uppercase tracking-widest text-gray-500 mb-2" x-text="lang === 'et' ? 'Lisaks põhiteenusele' : 'In addition'">Lisaks põhiteenusele</p>
+                        <p class="text-sm font-medium" x-text="lang === 'et' ? '+ Hooajalised puuviljad kausis' : '+ Seasonal fruits in a bowl'">+ Hooajalised puuviljad kausis</p>
+                    </div>
 
-                    <a href="#liitu" @click="$dispatch('select-plan', { plan: size === 'estate' ? 'RÄTSEPLAHENDUS' : 'HOOLITSUS' })" class="block w-full text-center bg-black text-white py-4 text-xs uppercase tracking-widest hover:bg-gray-800 transition-colors" x-text="lang === 'et' ? (size === 'estate' ? 'Räägi meiega' : 'Vali Hoolitsus') : (size === 'estate' ? 'Talk to us' : 'Select Care')">
-                        Vali Hoolitsus
+                    <a href="#liitu" @click="$dispatch('select-plan', { plan: size === 'estate' ? 'RÄTSEPLAHENDUS' : 'ÜLE NÄDALA (' + (size==='small'?'kuni 50m²':size==='medium'?'51-90m²':size==='large'?'91-120m²':'121-150m²') + ')' })" class="block w-full text-center bg-black text-white py-4 text-xs uppercase tracking-widest hover:bg-gray-800 transition-colors" x-text="lang === 'et' ? (size === 'estate' ? 'Räägi meiega' : 'Vali see rütm') : (size === 'estate' ? 'Talk to us' : 'Choose this rhythm')">
+                        Vali see rütm
                     </a>
                 </div>
 
-                <!-- VABADUS Tier -->
-                <div class="p-6 md:p-16 hover:bg-white transition-colors relative bg-[#e8e8e8]">
-                    <h3 class="font-sans text-xs uppercase tracking-widest text-gray-500 mb-4 md:mb-6" x-text="lang === 'et' ? 'Kõik meie hoole all' : 'Everything in our care'">Kõik meie hoole all</h3>
-                    <div class="font-serif text-4xl mb-2" :class="size === 'estate' ? 'text-2xl' : 'text-4xl'">
-                        <span x-show="size !== 'estate'" x-text="lang === 'et' ? 'Vabadus' : 'Freedom'">Vabadus</span>
-                        <span x-show="size === 'estate'" x-text="lang === 'et' ? 'Rätseplahendus' : 'Bespoke'">Rätseplahendus</span>
+                <!-- Iga nädal -->
+                <div class="p-6 md:p-16 hover:bg-white transition-colors relative flex flex-col bg-[#e8e8e8]">
+                    <h3 class="font-sans text-xs uppercase tracking-widest text-gray-500 mb-4 md:mb-6" x-text="lang === 'et' ? 'Neli korda kuus' : 'Four times a month'">Neli korda kuus</h3>
+                    <div class="font-serif text-4xl md:text-5xl mb-2">
+                        <span x-show="size !== 'estate'" x-text="lang === 'et' ? 'Iga nädal' : 'Weekly'">Iga nädal</span>
+                        <span x-show="size === 'estate'" class="text-2xl" x-text="lang === 'et' ? 'Rätseplahendus' : 'Bespoke'">Rätseplahendus</span>
                     </div>
                     <div class="flex items-baseline gap-1 mb-8" x-show="size !== 'estate'">
                         <span class="text-xl">€</span>
-                        <span class="text-2xl" x-text="prices[size].housekeeper">599</span>
+                        <span class="text-2xl" x-text="prices[size].weekly">449</span>
                         <span class="text-sm text-gray-500">/kuu</span>
                     </div>
                     <div class="mb-8" x-show="size === 'estate'" x-cloak>
                         <p class="font-serif text-xl italic" x-text="lang === 'et' ? 'Räägime läbi' : 'Let\'s talk'">Räägime läbi</p>
                     </div>
 
-                    <p class="text-gray-600 mb-12 min-h-[3rem]">
-                        <span x-show="lang === 'et'">Täielik vabadus. Sa ei mõtle enam kodutöödele. Mitte kunagi.</span>
-                        <span x-show="lang === 'en'" x-cloak>Complete freedom. You never think about housework again. Ever.</span>
+                    <p class="text-gray-600 mb-12 flex-grow">
+                        <span x-show="lang === 'et'">Täielik vabadus. Iga nädal värske kodu, lilled, puuviljad. Sa ei mõtle enam kodutöödele.</span>
+                        <span x-show="lang === 'en'" x-cloak>Complete freedom. Every week a fresh home, flowers, fruits. You never think about housework again.</span>
                     </p>
 
-                    <ul class="space-y-4 font-sans text-sm text-gray-700 mb-12 border-t border-gray-200 pt-8">
-                        <li class="flex justify-between">
-                            <span x-text="lang === 'et' ? 'Kõik Hoolitsusest' : 'Everything from Care'">Kõik Hoolitsusest</span>
-                            <span class="font-medium" x-text="lang === 'et' ? '✓' : '✓'">✓</span>
-                        </li>
-                        <li class="flex justify-between">
-                            <span x-text="lang === 'et' ? 'Pesumajandus' : 'Laundry service'">Pesumajandus</span>
-                            <span class="font-medium" x-text="lang === 'et' ? 'Viime, toome, paneme kappi' : 'We handle it all'">Viime, toome, paneme kappi</span>
-                        </li>
-                        <li class="flex justify-between">
-                            <span x-text="lang === 'et' ? 'Sinu taimed' : 'Your plants'">Sinu taimed</span>
-                            <span class="font-medium" x-text="lang === 'et' ? 'Kastame, hooldame' : 'Watered and cared for'">Kastame, hooldame</span>
-                        </li>
-                        <li class="flex justify-between">
-                            <span x-text="lang === 'et' ? 'Kiirabi' : 'Emergency'">Kiirabi</span>
-                            <span class="font-medium" x-text="lang === 'et' ? 'Ootamatu külastus 24h jooksul' : 'Unexpected visit within 24h'">Ootamatu külastus 24h jooksul</span>
-                        </li>
-                    </ul>
+                    <div class="mb-8 p-4 bg-white rounded">
+                        <p class="text-xs uppercase tracking-widest text-gray-500 mb-2" x-text="lang === 'et' ? 'Lisaks põhiteenusele' : 'In addition'">Lisaks põhiteenusele</p>
+                        <p class="text-sm font-medium" x-text="lang === 'et' ? '+ Puuviljad + Taimede kastmine' : '+ Fruits + Plant watering'">+ Puuviljad + Taimede kastmine</p>
+                    </div>
 
-                    <a href="#liitu" @click="$dispatch('select-plan', { plan: size === 'estate' ? 'RÄTSEPLAHENDUS' : 'VABADUS' })" class="block w-full text-center bg-black text-white py-4 text-xs uppercase tracking-widest hover:bg-gray-800 transition-colors" x-text="lang === 'et' ? (size === 'estate' ? 'Räägi meiega' : 'Vali Vabadus') : (size === 'estate' ? 'Talk to us' : 'Select Freedom')">
-                        Vali Vabadus
+                    <a href="#liitu" @click="$dispatch('select-plan', { plan: size === 'estate' ? 'RÄTSEPLAHENDUS' : 'IGA NÄDAL (' + (size==='small'?'kuni 50m²':size==='medium'?'51-90m²':size==='large'?'91-120m²':'121-150m²') + ')' })" class="block w-full text-center bg-black text-white py-4 text-xs uppercase tracking-widest hover:bg-gray-800 transition-colors" x-text="lang === 'et' ? (size === 'estate' ? 'Räägi meiega' : 'Vali see rütm') : (size === 'estate' ? 'Talk to us' : 'Choose this rhythm')">
+                        Vali see rütm
                     </a>
                 </div>
             </div>
         </section>
 
-        <!-- Trust / Peace of Mind -->
+        <!-- Café Bonus -->
+        <section class="grid md:grid-cols-12 grid-line-b bg-white">
+            <div class="md:col-span-5 p-6 md:p-24 grid-line border-b md:border-b-0 border-[#e5e5e5]">
+                <span class="text-xs uppercase tracking-widest text-gray-500 block mb-4">( 03 )</span>
+                <h2 class="font-serif text-2xl md:text-4xl mb-6" x-text="lang === 'et' ? 'Sinu hetk' : 'Your moment'">Sinu hetk</h2>
+                <p class="text-gray-600 leading-relaxed">
+                    <span x-show="lang === 'et'">Kuni meie sinu kodu eest hoolitseme, ootab sind tass kohvi ja värske kook ühes Tallinna hubases kohvikus. Võta see aeg. See kuulub sulle.</span>
+                    <span x-show="lang === 'en'" x-cloak>While we care for your home, a cup of coffee and fresh cake await you at a cozy Tallinn café. Take this time. It belongs to you.</span>
+                </p>
+            </div>
+            <div class="md:col-span-7 p-6 md:p-24 flex items-center justify-center">
+                <p class="font-serif text-2xl md:text-4xl text-center text-gray-400 italic leading-relaxed">
+                    <span x-show="lang === 'et'">"Kohv. Kook. <br class="md:hidden">Ja mitte midagi teha."</span>
+                    <span x-show="lang === 'en'" x-cloak>"Coffee. Cake. <br class="md:hidden">And nothing to do."</span>
+                </p>
+            </div>
+        </section>
+
+        <!-- Trust Section -->
         <section id="protsess" class="grid md:grid-cols-12 grid-line-b">
             <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-[#e5e5e5]">
-                <span class="text-xs uppercase tracking-widest text-gray-500 block mb-2 md:mb-4">( 02 )</span>
-                <h2 class="font-serif text-2xl md:text-3xl" x-text="lang === 'et' ? 'Kuidas see käib' : 'How it works'">Kuidas see käib</h2>
+                <span class="text-xs uppercase tracking-widest text-gray-500 block mb-2 md:mb-4">( 04 )</span>
+                <h2 class="font-serif text-2xl md:text-3xl" x-text="lang === 'et' ? 'Meie lubadused' : 'Our promises'">Meie lubadused</h2>
             </div>
             <div class="md:col-span-8 p-6 md:p-24">
                 <div class="grid md:grid-cols-2 gap-8 md:gap-16">
@@ -374,17 +360,17 @@
                         </p>
                     </div>
                     <div>
-                        <h3 class="font-serif text-xl mb-4" x-text="lang === 'et' ? 'Sinu võtmed, sinu rahu' : 'Your keys, your peace'">Sinu võtmed, sinu rahu</h3>
+                        <h3 class="font-serif text-xl mb-4" x-text="lang === 'et' ? 'Sinu rütm' : 'Your rhythm'">Sinu rütm</h3>
                         <p class="text-gray-600 text-sm leading-relaxed">
-                            <span x-show="lang === 'et'">Enamik kliente usaldab meile võtme või uksekoodi. Sa ei pea kodus olema, ei pea midagi organiseerima. Tuled koju – ja kõik on tehtud.</span>
-                            <span x-show="lang === 'en'" x-cloak>Most clients trust us with their key or door code. You don't need to be home, don't need to organize anything. You come home – and everything is done.</span>
+                            <span x-show="lang === 'et'">Lepime kokku ajakohaselt – kas oled kodus või ei. Oluline on, et tuled koju ja kõik on tehtud.</span>
+                            <span x-show="lang === 'en'" x-cloak>We agree on timing – whether you're home or not. What matters is that you come home and everything is done.</span>
                         </p>
                     </div>
                     <div>
                         <h3 class="font-serif text-xl mb-4" x-text="lang === 'et' ? 'Meie sõna' : 'Our word'">Meie sõna</h3>
                         <p class="text-gray-600 text-sm leading-relaxed">
-                            <span x-show="lang === 'et'">Kui miski pole päris nii nagu peaks – ütle meile. Tuleme tagasi ja teeme korda. Tasuta, ilma küsimusteta. See on lubadus.</span>
-                            <span x-show="lang === 'en'" x-cloak>If something isn't quite right – tell us. We'll come back and fix it. Free, no questions asked. That's a promise.</span>
+                            <span x-show="lang === 'et'">Kui miski pole päris nii nagu peaks – ütle meile. Tuleme tagasi ja teeme korda. Tasuta, ilma küsimusteta.</span>
+                            <span x-show="lang === 'en'" x-cloak>If something isn't quite right – tell us. We'll come back and fix it. Free, no questions asked.</span>
                         </p>
                     </div>
                     <div>
@@ -398,51 +384,206 @@
             </div>
         </section>
 
-        <!-- Application Form -->
-        <section id="liitu" class="grid md:grid-cols-12" x-data="{ plan: '', name: '', contact: '' }" @select-plan.window="plan = $event.detail.plan; $el.scrollIntoView({behavior: 'smooth'})">
-            <div class="md:col-span-5 bg-black text-white p-6 md:p-24 flex flex-col justify-between">
-                <div>
-                    <h2 class="font-serif text-3xl md:text-4xl mb-4 md:mb-6" x-text="lang === 'et' ? 'Alustame vestlust.' : 'Let\'s start a conversation.'">Alustame vestlust.</h2>
-                    <p class="text-gray-400 font-light leading-relaxed mb-12">
-                        <span x-show="lang === 'et'">Kirjuta meile ja räägime, kuidas saame aidata. Esimene kohtumine on alati kohvi ja jutuga – ilma kohustusteta.</span>
-                        <span x-show="lang === 'en'" x-cloak>Write to us and let's talk about how we can help. First meeting is always over coffee – no obligations.</span>
-                    </p>
-                    <div class="space-y-2 text-sm text-gray-500 font-mono">
-                        <p>Tallinn, Eesti</p>
-                        <p>Kesklinn · Kadriorg · Kalamaja · Pirita</p>
-                        <p>tere@sukoda.ee</p>
+        <!-- Step-by-step Process -->
+        <section id="liitu" class="grid md:grid-cols-12 grid-line-b bg-white" x-data="{ 
+            step: 1,
+            selectedPackage: '',
+            selectedSize: 'medium',
+            selectedRhythm: '',
+            name: '', 
+            email: '', 
+            phone: '', 
+            address: '',
+            emailError: false,
+            phoneError: false,
+            prices: {
+                small: { once: 119, twice: 199, weekly: 379 },
+                medium: { once: 149, twice: 249, weekly: 449 },
+                large: { once: 189, twice: 319, weekly: 579 },
+                xlarge: { once: 229, twice: 389, weekly: 699 }
+            },
+            validateEmail() {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                this.emailError = this.email && !emailRegex.test(this.email);
+                return !this.emailError;
+            },
+            validatePhone() {
+                const phoneRegex = /^[+]?[0-9\s-]{8,}$/;
+                this.phoneError = this.phone && !phoneRegex.test(this.phone);
+                return !this.phoneError;
+            },
+            nextStep() {
+                if (this.step === 1 && this.selectedPackage) {
+                    this.step = 2;
+                } else if (this.step === 2) {
+                    if (this.validateEmail() && this.validatePhone() && this.name && this.email && this.phone && this.address) {
+                        this.step = 3;
+                    }
+                }
+            },
+            prevStep() {
+                if (this.step > 1) this.step--;
+            },
+            getTotalPrice() {
+                if (!this.selectedRhythm || !this.selectedSize) return 0;
+                return this.prices[this.selectedSize][this.selectedRhythm] || 0;
+            }
+        }" @select-plan.window="
+            selectedPackage = $event.detail.plan;
+            const rhythmMatch = $event.detail.plan.match(/(KORD KUUS|ÜLE NÄDALA|IGA NÄDAL)/i);
+            if (rhythmMatch) {
+                if (rhythmMatch[0].includes('KORD')) selectedRhythm = 'once';
+                else if (rhythmMatch[0].includes('ÜLE')) selectedRhythm = 'twice';
+                else if (rhythmMatch[0].includes('IGA')) selectedRhythm = 'weekly';
+            }
+            const sizeMatch = $event.detail.plan.match(/(kuni 50m²|51-90m²|91-120m²|121-150m²)/i);
+            if (sizeMatch) {
+                if (sizeMatch[0].includes('50')) selectedSize = 'small';
+                else if (sizeMatch[0].includes('51')) selectedSize = 'medium';
+                else if (sizeMatch[0].includes('91')) selectedSize = 'large';
+                else if (sizeMatch[0].includes('121')) selectedSize = 'xlarge';
+            }
+            step = 2;
+            $el.scrollIntoView({behavior: 'smooth'})
+        ">
+            
+            <!-- Progress Steps -->
+            <div class="md:col-span-12 px-6 md:px-24 pt-12 pb-8 border-b border-gray-200">
+                <div class="flex items-center justify-center gap-4 md:gap-8 max-w-2xl mx-auto">
+                    <div class="flex items-center gap-3">
+                        <div :class="step >= 1 ? 'bg-black text-white' : 'bg-gray-200 text-gray-400'" class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">1</div>
+                        <span class="text-xs uppercase tracking-widest hidden md:inline" :class="step >= 1 ? 'text-black' : 'text-gray-400'" x-text="lang === 'et' ? 'Vali rütm' : 'Choose rhythm'">Vali rütm</span>
+                    </div>
+                    <div class="h-0.5 flex-1 bg-gray-200" :class="step >= 2 ? 'bg-black' : ''"></div>
+                    <div class="flex items-center gap-3">
+                        <div :class="step >= 2 ? 'bg-black text-white' : 'bg-gray-200 text-gray-400'" class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">2</div>
+                        <span class="text-xs uppercase tracking-widest hidden md:inline" :class="step >= 2 ? 'text-black' : 'text-gray-400'" x-text="lang === 'et' ? 'Kontaktandmed' : 'Contact'">Kontaktandmed</span>
+                    </div>
+                    <div class="h-0.5 flex-1 bg-gray-200" :class="step >= 3 ? 'bg-black' : ''"></div>
+                    <div class="flex items-center gap-3">
+                        <div :class="step >= 3 ? 'bg-black text-white' : 'bg-gray-200 text-gray-400'" class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">3</div>
+                        <span class="text-xs uppercase tracking-widest hidden md:inline" :class="step >= 3 ? 'text-black' : 'text-gray-400'" x-text="lang === 'et' ? 'Maksmine' : 'Payment'">Maksmine</span>
                     </div>
                 </div>
             </div>
 
-            <div class="md:col-span-7 p-6 md:p-24 bg-white">
-                <form class="max-w-md space-y-8 md:space-y-12" @submit.prevent="alert(lang === 'et' ? 'Aitäh! Võtame ühendust ühe tööpäeva jooksul.' : 'Thank you! We will contact you within one business day.')">
-                    <div class="border-b border-gray-200 pb-2">
-                        <label class="block text-xs uppercase tracking-widest text-gray-500 mb-2" x-text="lang === 'et' ? 'Sind huvitab' : 'You\'re interested in'">Sind huvitab</label>
-                        <input type="text" x-model="plan" :placeholder="lang === 'et' ? 'Vali ülevalt või kirjuta siia' : 'Select above or type here'" class="w-full text-xl font-serif py-2 outline-none bg-transparent placeholder-gray-300">
+            <!-- Step 1: Rhythm Selection -->
+            <div class="md:col-span-12 p-6 md:p-24" x-show="step === 1">
+                <div class="max-w-3xl mx-auto text-center">
+                    <h2 class="font-serif text-3xl md:text-4xl mb-4" x-text="lang === 'et' ? 'Vali oma rütm' : 'Choose your rhythm'">Vali oma rütm</h2>
+                    <p class="text-gray-600 mb-12" x-text="lang === 'et' ? 'Vali ülevalt pakett, mille soovid' : 'Select the package you want above'">Vali ülevalt pakett, mille soovid</p>
+                    <a href="#hoolitsus" class="inline-block bg-black text-white px-8 py-4 text-sm uppercase tracking-widest hover:bg-gray-800 transition-colors" x-text="lang === 'et' ? 'Vaata pakette' : 'View packages'">Vaata pakette</a>
+                </div>
+            </div>
+
+            <!-- Step 2: Contact Information -->
+            <div class="md:col-span-12 p-6 md:p-24" x-show="step === 2">
+                <div class="max-w-2xl mx-auto">
+                    <h2 class="font-serif text-3xl md:text-4xl mb-2" x-text="lang === 'et' ? 'Kontaktandmed' : 'Contact information'">Kontaktandmed</h2>
+                    <p class="text-gray-600 mb-8" x-text="lang === 'et' ? 'Vajame neid andmeid, et alustada' : 'We need this to get started'">Vajame neid andmeid, et alustada</p>
+
+                    <!-- Selected Package Summary -->
+                    <div class="bg-gray-50 p-6 mb-8 border border-gray-200" x-show="selectedPackage">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="text-xs uppercase tracking-widest text-gray-500 mb-1" x-text="lang === 'et' ? 'Valitud pakett' : 'Selected package'">Valitud pakett</p>
+                                <p class="font-serif text-xl" x-text="selectedPackage || '-'"></p>
+                            </div>
+                        </div>
+                        <a href="#hoolitsus" @click="step = 1" class="text-xs uppercase tracking-widest text-gray-600 hover:text-black mt-4 inline-block" x-text="lang === 'et' ? 'Muuda paketti' : 'Change package'">Muuda paketti</a>
                     </div>
 
-                    <div class="border-b border-gray-200 pb-2">
-                        <label class="block text-xs uppercase tracking-widest text-gray-500 mb-2" x-text="lang === 'et' ? 'Sinu nimi' : 'Your name'">Sinu nimi</label>
-                        <input type="text" required class="w-full text-xl font-serif py-2 outline-none bg-transparent" :placeholder="lang === 'et' ? 'Eesnimi on piisav' : 'First name is enough'">
+                    <form @submit.prevent="nextStep()" class="space-y-6">
+                        <div class="border-b border-gray-200 pb-3">
+                            <label class="block text-xs uppercase tracking-widest text-gray-500 mb-2" x-text="lang === 'et' ? 'Sinu nimi' : 'Your name'">Sinu nimi</label>
+                            <input type="text" x-model="name" required class="w-full text-lg font-serif py-2 outline-none bg-transparent" :placeholder="lang === 'et' ? 'Eesnimi ja perenimi' : 'First and last name'">
+                        </div>
+
+                        <div class="border-b border-gray-200 pb-3" :class="emailError ? 'border-red-500' : ''">
+                            <label class="block text-xs uppercase tracking-widest text-gray-500 mb-2" x-text="lang === 'et' ? 'E-post' : 'Email'">E-post</label>
+                            <input type="email" x-model="email" @blur="validateEmail()" required class="w-full text-lg font-serif py-2 outline-none bg-transparent" :placeholder="lang === 'et' ? 'sinu@email.com' : 'your@email.com'">
+                            <p x-show="emailError" x-cloak class="mt-2 text-sm text-red-600 font-serif" x-text="lang === 'et' ? 'Palun sisesta kehtiv e-posti aadress' : 'Please enter a valid email address'">Palun sisesta kehtiv e-posti aadress</p>
+                        </div>
+
+                        <div class="border-b border-gray-200 pb-3" :class="phoneError ? 'border-red-500' : ''">
+                            <label class="block text-xs uppercase tracking-widest text-gray-500 mb-2" x-text="lang === 'et' ? 'Telefon' : 'Phone'">Telefon</label>
+                            <input type="tel" x-model="phone" @blur="validatePhone()" required class="w-full text-lg font-serif py-2 outline-none bg-transparent" :placeholder="lang === 'et' ? '+372 5xxx xxxx' : '+372 5xxx xxxx'">
+                            <p x-show="phoneError" x-cloak class="mt-2 text-sm text-red-600 font-serif" x-text="lang === 'et' ? 'Palun sisesta kehtiv telefoninumber' : 'Please enter a valid phone number'">Palun sisesta kehtiv telefoninumber</p>
+                        </div>
+
+                        <div class="border-b border-gray-200 pb-3">
+                            <label class="block text-xs uppercase tracking-widest text-gray-500 mb-2" x-text="lang === 'et' ? 'Kodu aadress' : 'Address'">Kodu aadress</label>
+                            <input type="text" x-model="address" required class="w-full text-lg font-serif py-2 outline-none bg-transparent" :placeholder="lang === 'et' ? 'Tänav, majanumber, linn' : 'Street, number, city'">
+                        </div>
+
+                        <div class="flex gap-4 pt-4">
+                            <button type="button" @click="prevStep()" class="px-8 py-4 text-sm uppercase tracking-widest border border-black hover:bg-black hover:text-white transition-colors" x-text="lang === 'et' ? 'Tagasi' : 'Back'">Tagasi</button>
+                            <button type="submit" class="flex-1 bg-black text-white px-8 py-4 text-sm uppercase tracking-widest hover:bg-gray-800 transition-colors" x-text="lang === 'et' ? 'Järgmine samm' : 'Next step'">Järgmine samm</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Step 3: Payment -->
+            <div class="md:col-span-12 p-6 md:p-24" x-show="step === 3">
+                <div class="max-w-2xl mx-auto">
+                    <h2 class="font-serif text-3xl md:text-4xl mb-2" x-text="lang === 'et' ? 'Maksmine' : 'Payment'">Maksmine</h2>
+                    <p class="text-gray-600 mb-8" x-text="lang === 'et' ? 'Viimane samm – maksmine' : 'Last step – payment'">Viimane samm – maksmine</p>
+
+                    <!-- Order Summary -->
+                    <div class="bg-black text-white p-8 mb-6">
+                        <div class="mb-6">
+                            <p class="text-xs uppercase tracking-widest text-gray-400 mb-2" x-text="lang === 'et' ? 'Pakett' : 'Package'">Pakett</p>
+                            <p class="font-serif text-xl mb-1" x-text="selectedPackage"></p>
+                            <p class="text-sm text-gray-400" x-text="lang === 'et' ? 'Makstakse igakuiselt automaatselt' : 'Charged monthly automatically'">Makstakse igakuiselt automaatselt</p>
+                        </div>
+                        <div class="border-t border-gray-700 pt-6 flex justify-between items-center">
+                            <span class="text-sm uppercase tracking-widest text-gray-400" x-text="lang === 'et' ? 'Kokku' : 'Total'">Kokku</span>
+                            <span class="font-serif text-4xl">€<span x-text="getTotalPrice()">0</span><span class="text-lg">/kuu</span></span>
+                        </div>
                     </div>
 
-                    <div class="border-b border-gray-200 pb-2">
-                        <label class="block text-xs uppercase tracking-widest text-gray-500 mb-2" x-text="lang === 'et' ? 'Telefon või e-post' : 'Phone or email'">Telefon või e-post</label>
-                        <input type="text" required class="w-full text-xl font-serif py-2 outline-none bg-transparent" :placeholder="lang === 'et' ? 'Sinu kontakt' : 'Your contact'">
-                    </div>
+                    <form @submit.prevent="alert(lang === 'et' ? 'Suuname sind maksule...' : 'Redirecting to payment...')" class="space-y-6">
+                        <div class="bg-gray-50 p-6 text-sm text-gray-600">
+                            <p class="mb-3 font-medium" x-text="lang === 'et' ? 'Pärast makset:' : 'After payment:'">Pärast makset:</p>
+                            <ul class="space-y-2 list-none">
+                                <li class="flex items-start gap-2">
+                                    <span class="text-black">•</span>
+                                    <span x-text="lang === 'et' ? 'Saad kinnituse e-postile' : 'You\'ll receive confirmation by email'">Saad kinnituse e-postile</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="text-black">•</span>
+                                    <span x-text="lang === 'et' ? 'Võtame ühendust 1-2 tööpäeva jooksul' : 'We\'ll contact you within 1-2 business days'">Võtame ühendust 1-2 tööpäeva jooksul</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="text-black">•</span>
+                                    <span x-text="lang === 'et' ? 'Lepime kokku esimese külastuse aja' : 'We\'ll schedule your first visit'">Lepime kokku esimese külastuse aja</span>
+                                </li>
+                            </ul>
+                        </div>
 
-                    <button type="submit" class="bg-black text-white px-12 py-5 text-sm uppercase tracking-widest hover:bg-gray-800 transition-colors w-full md:w-auto" x-text="lang === 'et' ? 'Saada sõnum' : 'Send message'">
-                        Saada sõnum
-                    </button>
-                    
-                    <p class="text-xs text-gray-400 mt-6">
-                        <span x-show="lang === 'et'">Vastame ühe tööpäeva jooksul. Tavaliselt kiiremini.</span>
-                        <span x-show="lang === 'en'" x-cloak>We reply within one business day. Usually faster.</span>
-                    </p>
-                </form>
+                        <div class="flex gap-4 pt-4">
+                            <button type="button" @click="prevStep()" class="px-8 py-4 text-sm uppercase tracking-widest border border-black hover:bg-black hover:text-white transition-colors" x-text="lang === 'et' ? 'Tagasi' : 'Back'">Tagasi</button>
+                            <button type="submit" class="flex-1 bg-black text-white px-8 py-4 text-sm uppercase tracking-widest hover:bg-gray-800 transition-colors" x-text="lang === 'et' ? 'Maksa nüüd' : 'Pay now'">Maksa nüüd</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </section>
+
+        <!-- Footer -->
+        <footer class="bg-black text-white py-8 px-4 md:px-12">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4 md:gap-8">
+                <div class="font-serif text-xl">SUKODA.</div>
+                <div class="flex gap-6 md:gap-8 text-xs text-gray-400">
+                    <a href="tingimused.html" class="hover:text-white transition-colors" x-text="lang === 'et' ? 'Tingimused' : 'Terms'">Tingimused</a>
+                    <a href="privaatsus.html" class="hover:text-white transition-colors" x-text="lang === 'et' ? 'Privaatsuspoliitika' : 'Privacy'">Privaatsuspoliitika</a>
+                </div>
+                <div class="text-xs text-gray-400">
+                    <a href="mailto:tere@sukoda.ee" class="hover:text-white transition-colors">tere@sukoda.ee</a>
+                </div>
+            </div>
+        </footer>
 
     </div>
 

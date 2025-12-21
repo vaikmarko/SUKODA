@@ -23,3 +23,11 @@ node_modules/
 
 # Firebase
 .firebase/
+assets/js/firebase.js
+
+# API keys and secrets
+**/firebase.js
+**/firebaseConfig.js
+*.secret.js
+
+

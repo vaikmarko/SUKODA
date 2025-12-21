@@ -2,7 +2,79 @@
 
 ## Ärimudel
 
-**Platvorm + partnerlus** – SUKODA ei pea ise koristajaid, vaid pakub brändi, kliente ja süsteeme partneritele (väikefirmad, FIE-d).
+**Platvorm + partnerlus** – SUKODA pakub brändi, kliente ja süsteeme partneritele (väikefirmad, FIE-d).
+
+---
+
+## Toode
+
+### Üks pakett, kolm rütmi
+
+SUKODA Hoolitsus – lihtne valik, selge väärtus.
+
+| Rütm | Külastusi kuus | Hind (51-90m²) |
+|------|----------------|----------------|
+| **Kord kuus** | 1× | €149/kuu |
+| **Üle nädala** | 2× | €249/kuu |
+| **Iga nädal** | 4× | €449/kuu |
+
+### Iga külastusega kaasas
+
+- Värsked lilled vaasis
+- Käsitsi kirjutatud tervituskaart
+- Väike magus üllatus voodil
+- Voodipesu vahetatud ja sätitud
+
+### Lisad sagedasematel rütmidel
+
+| Rütm | Lisaks põhiteenusele |
+|------|---------------------|
+| **Üle nädala** (2×) | + Hooajalised puuviljad kausis |
+| **Iga nädal** (4×) | + Puuviljad + Taimede kastmine |
+
+### Kliendi boonus
+
+**Kohv ja kook** – kuni meie sinu kodu eest hoolitseme, ootab sind tass kohvi ja värske kook hubases kohvikus. Sinu hetk.
+
+---
+
+## Hinnad ruutmeetrite järgi
+
+| Elamispind | 1× kuus | 2× kuus | 4× kuus |
+|------------|---------|---------|---------|
+| Kuni 50m² | €119 | €199 | €379 |
+| 51-90m² | €149 | €249 | €449 |
+| 91-120m² | €189 | €319 | €579 |
+| 121-150m² | €229 | €389 | €699 |
+| 151m²+ | Rätseplahendus | Rätseplahendus | Rätseplahendus |
+
+---
+
+## Kingikaardid
+
+### Struktuur
+
+| Kingitus | Sisu | Eriline boonus |
+|----------|------|----------------|
+| **Üks Hetk** | 1× hoolitsus kõige kaasnevaga | Kohv & kook partnerkohvikus |
+| **Kuu Aega** | 2× hoolitsust (kuu jooksul) | + Spaa- või massaažikutse |
+| **Kvartal Vabadust** | 6× hoolitsust (3 kuud) | + Premium wellness kogemus |
+
+### Kingikaartide hinnad (51-90m² näitel)
+
+| Kingitus | Hind | SUKODA marginaal |
+|----------|------|------------------|
+| Üks Hetk | €179 | ~35% |
+| Kuu Aega | €349 | ~30% |
+| Kvartal Vabadust | €899 | ~25% |
+
+### Kampaaniakalender
+
+- 💝 Valentinipäev (14. veebr)
+- 💐 Naistepäev (8. märts)
+- 🌷 Emadepäev (mai)
+- 👔 Isadepäev (juuni)
+- 🎄 Jõulud (dets)
 
 ---
 
@@ -10,32 +82,13 @@
 
 ### Püsikliendid (põhitulu)
 
-| | Klient maksab | Partner saab (70%) | SUKODA saab (30%) |
-|---|---------------|-------------------|-------------------|
-| Värskus | €229 | €160 | €69 |
-| Hoolitsus | €349 | €244 | €105 |
-| Vabadus | €699 | €489 | €210 |
+| Rütm | Klient maksab | Partner saab (70%) | SUKODA saab (30%) |
+|------|---------------|-------------------|-------------------|
+| 1× kuus | €149 | €104 | €45 |
+| 2× kuus | €249 | €174 | €75 |
+| 4× kuus | €449 | €314 | €135 |
 
-**Keskmine SUKODA tulu kliendi kohta:** ~€100/kuu
-
-### Kingikaardid (lisatulu)
-
-Müüme kingikaarte tähtpäevadeks – kõrge marginaal, hooajaline tulu.
-
-| Kingitus | Hind | SUKODA marginaal |
-|----------|------|------------------|
-| Värske Algus (1x süvapuhastus) | €149+ | ~40% |
-| Kuu Hoolitsust (2x koristus) | €249+ | ~35% |
-| Eriline Hoolitsus (3 kuud) | €799+ | ~30% |
-
-**Kampaaniakalender:**
-- 💝 Valentinipäev (14. veebr)
-- 💐 Naistepäev (8. märts)
-- 🌷 Emadepäev (mai)
-- 👔 Isadepäev (juuni)
-- 🎄 Jõulud (dets)
-
-**Potentsiaal:** 20-50 kingikaarti/kampaania × €50 marginaal = €1,000-2,500 lisatulu
+**Keskmine SUKODA tulu kliendi kohta:** ~€85/kuu
 
 ---
 
@@ -47,10 +100,10 @@ Müüme kingikaarte tähtpäevadeks – kõrge marginaal, hooajaline tulu.
 |---------|------|
 | Partnerid | 2-3 |
 | Kliendid | 50 |
-| Käive | €17,000/kuu |
-| SUKODA tulu | €5,000/kuu |
+| Käive | €12,500/kuu |
+| SUKODA tulu | €3,750/kuu |
 | Püsikulud | €1,300/kuu |
-| **Kasum** | **€3,700/kuu** |
+| **Kasum** | **€2,450/kuu** |
 
 ### Faas 2: Kasv (kuud 7-18)
 
@@ -58,10 +111,10 @@ Müüme kingikaarte tähtpäevadeks – kõrge marginaal, hooajaline tulu.
 |---------|------|
 | Partnerid | 6-8 |
 | Kliendid | 200 |
-| Käive | €68,000/kuu |
-| SUKODA tulu | €20,000/kuu |
+| Käive | €50,000/kuu |
+| SUKODA tulu | €15,000/kuu |
 | Püsikulud | €6,500/kuu |
-| **Kasum** | **€13,500/kuu** |
+| **Kasum** | **€8,500/kuu** |
 
 ### Faas 3: Skaleerimine (kuud 19-36)
 
@@ -69,42 +122,57 @@ Müüme kingikaarte tähtpäevadeks – kõrge marginaal, hooajaline tulu.
 |---------|------|
 | Partnerid | 15-20 |
 | Kliendid | 500 |
-| Käive | €170,000/kuu |
-| SUKODA tulu | €50,000/kuu |
+| Käive | €125,000/kuu |
+| SUKODA tulu | €37,500/kuu |
 | Püsikulud | €18,000/kuu |
-| **Kasum** | **€32,000/kuu** |
+| **Kasum** | **€19,500/kuu** |
 
 ---
 
-## Stardiinvesteering (Platvormimudel)
+## Partnerite võrgustik
+
+### Koristuspartnerid
+
+Väikefirmad ja FIE-d, kes pakuvad teenust SUKODA brändi all.
+
+### Kohvikud
+
+Valitud hubased kohvikud Tallinnas, kus SUKODA kliendid saavad nautida kohvi ja kooki, kuni nende kodu korrastatakse.
+
+### Wellness-partnerid (kingitustele)
+
+Spaad ja massaažisalongid, kelle kutseid pakume kingitustega kaasa.
+
+---
+
+## Stardiinvesteering
 
 | Kulu | Summa |
 |------|-------|
 | Domeen (sukoda.ee) | €15 |
 | Bränd, disain, materjalid | €500 |
 | Turundus (6 kuud) | €2,000 |
-| Brändimaterjal partneritele (kaardid, juhendid) | €300 |
+| Partnerite materjalid | €300 |
 | Juriidiline (lepingud, tingimused) | €500 |
 | Käibekapital | €2,000 |
 | **KOKKU** | **€5,300** |
 
-*Tehniline arendus: ise (Firebase, Stripe, veeb – tasuta tööriistad)*
+---
 
-### Tehniline infrastruktuur (kinnitatud)
+## Tehniline infrastruktuur
 
 | Komponent | Lahendus | Kulu |
 |-----------|----------|------|
-| Domeen | sukoda.ee | ✅ €15/aasta |
+| Domeen | sukoda.ee | €15/aasta |
 | Hosting | Firebase Hosting | €0 (free tier) |
 | Andmebaas | Firebase Firestore | €0 (free tier) |
-| Maksed | Stripe | 1.4% + €0.25 makse kohta |
+| Maksed | Stripe | 1.4% + €0.25/makse |
 | Kliendi arved | Stripe automaatne | €0 |
-| Partneri arved | Manuaalne | €0 |
 | E-mailid | SendGrid | €0 (free tier) |
 
 ---
 
-## Püsikulud kuus (Platvormimudel)
+## Püsikulud kuus
 
 ### Faas 1 (50 klienti)
 
@@ -112,11 +180,11 @@ Müüme kingikaarte tähtpäevadeks – kõrge marginaal, hooajaline tulu.
 |------|-------|
 | Turundus | €500 |
 | Tarkvara, süsteemid | €100 |
-| Lilled, puuviljad (partneritele hüvitis) | €400 |
-| Brändimaterjal (kaardid jms) | €50 |
+| Lilled, puuviljad, kommid | €400 |
+| Kohvikute hüvitis | €200 |
+| Brändimaterjal | €50 |
 | Raamatupidamine | €150 |
-| Muud | €100 |
-| **KOKKU** | **~€1,300** |
+| **KOKKU** | **~€1,400** |
 
 ### Faas 2 (200 klienti)
 
@@ -124,101 +192,39 @@ Müüme kingikaarte tähtpäevadeks – kõrge marginaal, hooajaline tulu.
 |------|-------|
 | Turundus | €1,500 |
 | Tarkvara, süsteemid | €300 |
-| Lilled, puuviljad | €1,500 |
+| Lilled, puuviljad, kommid | €1,500 |
+| Kohvikute hüvitis | €800 |
 | Brändimaterjal | €150 |
-| 1 töötaja (admin/koordinaator) | €2,500 |
+| 1 töötaja (koordinaator) | €2,500 |
 | Raamatupidamine | €200 |
-| Muud | €350 |
-| **KOKKU** | **~€6,500** |
-
-*Partnerid kasutavad oma autosid ja vahendeid – meie kulud on minimaalsed*
+| **KOKKU** | **~€6,950** |
 
 ---
 
-## Tasuvuspunkt
+## Kvaliteedisüsteem
 
-| Näitaja | Arv |
-|---------|-----|
-| Kliendid tasuvuseks | ~15 |
-| Aeg tasuvuseni | 1-2 kuud |
-| Investeeringu tasuvus | 3-6 kuud |
+### Fotodokumentatsioon
 
----
+Partner teeb enne/pärast fotod igast külastusest.
 
-## Kvaliteedisüsteem: Kaamera
+- **Kliendile:** Näeb pilte, usaldus, läbipaistvus
+- **Partnerile:** Tõestus tehtud tööst
+- **SUKODA-le:** Kvaliteedikontroll
+- **Turundusele:** Enne/pärast fotod = parim reklaam
 
-### Idee
+### Tervituskaart
 
-Partner kannab väikest kaamerat (rinnal/jakil) või kasutab äppi, mis **automaatselt dokumenteerib** iga koristuse.
-
-### Kuidas töötab?
-
-```
-ENNE                          PÄRAST
-┌─────────────┐              ┌─────────────┐
-│ 📸 Foto     │              │ 📸 Foto     │
-│ Köök       │     →→→      │ Köök       │
-│ (räpane)    │              │ (puhas!)    │
-└─────────────┘              └─────────────┘
-         ↓                           ↓
-         └───────── SUKODA äpp ──────┘
-                      ↓
-              Automaatne kvaliteedimärk ✓
-```
-
-### Mida see annab?
-
-| Kellele | Kasu |
-|---------|------|
-| **Kliendile** | Näeb pilte, usaldus, läbipaistvus |
-| **Partnerile** | Kaitse ("ma tegin ära!"), tõestus |
-| **SUKODA-le** | Kvaliteedikontroll, andmed, eristumine |
-| **Turundusele** | Enne/pärast fotod = parim reklaam |
-
-### Tehnilised variandid
-
-| Variant | Kirjeldus | Hind |
-|---------|-----------|------|
-| **A: Äpp + telefon** | Partner teeb fotod äpis (checklist) | €0-500 arendus |
-| **B: Kehakaamera** | GoPro-stiilis kaamera jakil | €100-200/tk |
-| **C: AI kvaliteedikontroll** | Äpp hindab automaatselt "puhas/mitte" | €5,000+ arendus |
-
-### Soovitus: Alusta A-ga
-
-1. **Faas 1:** Partner teeb käsitsi fotod (telefon)
-2. **Faas 2:** Lihtne äpp checklistiga
-3. **Faas 3:** Kehakaamera + AI analüüs
-
-### Turundussõnum
-
-> *"Iga SUKODA koristus on dokumenteeritud. Sa näed täpselt, mis tehti. See on meie kvaliteedilubadus."*
-
-### Konkurentsieelis
-
-❌ Teised: "Usaldage meid"  
-✅ SUKODA: "Vaadake ise – siin on fotod"
+Iga koristuse järel jääb lauale käsitsi kirjutatud SUKODA kaart.
 
 ---
 
-## Soovitusprogramm (tasuta turundus)
+## Soovitusprogramm
 
-### Tervituskaart QR-koodiga
+### Kuidas töötab
 
-Iga koristuse järel jätab partner kliendi lauale SUKODA kaardi:
-
-```
-ESIKÜLG: Käsitsi kirjutatud tervitus
-TAGAKÜLG: "Kas jäid rahule? Soovita meid sõbrale!"
-          + QR-kood → sukoda.ee/soovita
-          + Mõlemad saavad -20%
-```
-
-### Soovituse voog
-
-1. Klient skaneerib QR-koodi
-2. Täidab vormi (sõbra nimi + kontakt)
-3. Meie võtame sõbraga ühendust
-4. Sõber liitub → mõlemad saavad soodustuse
+1. Klient skaneerib QR-koodi kaardilt
+2. Soovitab sõpra
+3. Sõber liitub → mõlemad saavad soodustuse
 
 ### Eesmärk
 
@@ -226,7 +232,23 @@ TAGAKÜLG: "Kas jäid rahule? Soovita meid sõbrale!"
 |---------|------|
 | Soovituste konversioon | 10-15% klientidest soovitab |
 | Uued kliendid soovitustest | 30-50% uutest |
-| Kliendi hankimiskulu soovitusest | ~€30 (vs €100-150 reklaamist) |
+
+---
+
+## Kindlustus
+
+### Nõuded partnerile
+
+- ✅ Vastutuskindlustus (vähemalt €10,000 kate)
+- ✅ Kehtiv FIE / OÜ registreering
+- ✅ Maksuvõlgade puudumine
+
+### SUKODA kindlustus
+
+| Kindlustus | Hinnang |
+|------------|---------|
+| Üldine vastutuskindlustus | €300-500/aasta |
+| Küberriskide kindlustus | €200-400/aasta |
 
 ---
 
@@ -242,90 +264,9 @@ TAGAKÜLG: "Kas jäid rahule? Soovita meid sõbrale!"
 
 ---
 
-## Partneri ökonoomika
-
-**Üks partner (16 klienti):**
-
-| | Summa |
-|---|-------|
-| Tulu partnerile | €3,800/kuu |
-| Tema kulud (palk, vahendid) | €2,500/kuu |
-| Tema kasum | €1,300/kuu |
-
-Partner on motiveeritud – teenib hästi, meie bränd toob kliendid.
-
----
-
-## Kindlustus
-
-### Kes vastutab mille eest?
-
-| Olukord | Vastutab | Kindlustus |
-|---------|----------|------------|
-| Partner lõhub vaasi | **Partner** | Partneri vastutuskindlustus |
-| Partner libiseb, vigastab end | **Partner** | Partneri õnnetusjuhtumi kindlustus |
-| Klient väidab, et midagi varastati | **Partner** | Partneri vastutuskindlustus + fotod |
-| Andmeleke (kliendi info) | **SUKODA** | SUKODA vastutuskindlustus |
-
-### Nõuded partnerile
-
-Partnerilepingus nõuame:
-- ✅ **Vastutuskindlustus** (vähemalt €10,000 kate)
-- ✅ Kehtiv FIE / OÜ registreering
-- ✅ Maksuvõlgade puudumine
-
-### SUKODA kindlustus
-
-| Kindlustus | Miks | Hinnang |
-|------------|------|---------|
-| Üldine vastutuskindlustus | Platvormi tegevus | €300-500/aasta |
-| Küberriskide kindlustus | Andmed, veeb | €200-400/aasta |
-
-### Kliendile kommunikatsioon
-
-Veebilehel / tingimustes:
-> *"Kõik SUKODA partnerid on kindlustatud. Kui midagi juhtub, oled kaitstud."*
-
-### Kust saada?
-
-- **If Kindlustus** – ettevõtte vastutuskindlustus
-- **ERGO** – väikeettevõtja pakett
-- **Swedbank Kindlustus** – FIE kindlustus
-- **Seesam** – vastutuskindlustus
-
-**Hind partnerile:** ~€100-300/aasta (nende kulu, mitte sinu)
-
----
-
-## Riskid
-
-| Risk | Maandamine |
-|------|------------|
-| Partneri kvaliteet | **Kaamerasüsteem**, rating, koolitused, lepingu lõpetamine |
-| Konkurents | Tugev bränd, **fotodokumentatsioon**, lilled, isiklik lähenemine |
-| Klientide kadu | Kvaliteet, sama inimene alati, soovitusprogramm |
-| Partnerite lahkumine | Mitu partnerit, hea partnerleping, atraktiivne jaotus |
-| "Ta ei teinud korralikult" | **Enne/pärast fotod** = tõestus mõlemale poolele |
-| Kahju kliendi varale | **Partneri vastutuskindlustus** (nõuame lepingus) |
-
----
-
 ## Kokkuvõte
 
-- **Investeering:** ~€5,000 (platvormimudel, ise arendades)
-- **Tasuvus:** 1-3 kuud
-- **Kasum 3. aastal:** €30,000+/kuu
-- **Exit-võimalus:** Müük suuremale teenusplatvormile (Bolt, Wolt, vms)
-
-### Automatiseeritud süsteemid
-
-| Protsess | Automaatne? | Märkused |
-|----------|-------------|----------|
-| Kliendi broneerimine | ✅ | Veebivorm → Firebase |
-| Kliendi makse | ✅ | Stripe Subscriptions |
-| Kliendi arve | ✅ | Stripe Invoicing (PDF e-mailile) |
-| Päevaaruanne | ✅ | Cloud Function → e-mail |
-| Kuuaruanne | ✅ | Cloud Function → e-mail |
-| Partneri makse | ❌ | Manuaalne (esialgu) |
-| Partneri arve | ❌ | Manuaalne (esialgu) |
-
+- **Investeering:** ~€5,300
+- **Tasuvus:** 2-4 kuud
+- **Kasum 3. aastal:** €19,500+/kuu
+- **Eristumine:** Üks lihtne pakett + eksklusiivne kogemus (lilled, kohvik, wellness)
