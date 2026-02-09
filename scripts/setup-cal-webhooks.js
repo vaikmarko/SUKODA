@@ -9,7 +9,8 @@
  * - Firebase functions deployed (need the webhook URL)
  */
 
-const CAL_API_KEY = 'cal_live_de5598a1c37bf66a13cf59074c0a704c';
+const CAL_API_KEY = process.env.CAL_API_KEY;
+if (!CAL_API_KEY) { console.error('Puudu: CAL_API_KEY env variable. Käivita: CAL_API_KEY=cal_live_xxx node scripts/setup-cal-webhooks.js'); process.exit(1); }
 const CAL_API_BASE = 'https://api.cal.eu/v2';
 const CAL_API_VERSION = '2024-08-13';
 
