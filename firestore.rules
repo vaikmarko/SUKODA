@@ -1,0 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Orders - only Cloud Functions can write
+    match /orders/{orderId} {
+      allow read: if false;  // Only via Cloud Functions
+      allow write: if false; // Only via Cloud Functions
+      
+      match /payments/{paymentId} {
+        allow read: if false;
+        allow write: if false;
+      }
+    }
+    
+    // Bookings - only Cloud Functions can read/write
+    match /bookings/{bookingId} {
+      allow read: if false;
+      allow write: if false;
+    }
+    
+    // Mail collection for email sending
+    match /mail/{mailId} {
+      allow read: if false;
+      allow write: if false; // Only Cloud Functions
+    }
+    
+    // Waitlist - expansion interest from non-Tallinn areas
+    match /waitlist/{entryId} {
+      allow read: if false;
+      allow write: if false; // Only Cloud Functions
+    }
+  }
+}

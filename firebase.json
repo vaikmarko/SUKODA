@@ -6,7 +6,109 @@
       "**/.*",
       "**/node_modules/**",
       "**/*.md",
-      "**/*.txt"
+      "**/*.txt",
+      "functions/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/api/create-checkout",
+        "function": {
+          "functionId": "createCheckoutSession",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/webhook",
+        "function": {
+          "functionId": "stripeWebhook",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/order",
+        "function": {
+          "functionId": "getOrder",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/cal-webhook",
+        "function": {
+          "functionId": "calWebhook",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/admin/bookings",
+        "function": {
+          "functionId": "getAdminBookings",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/admin/orders",
+        "function": {
+          "functionId": "getAdminOrders",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/admin/complete",
+        "function": {
+          "functionId": "markVisitComplete",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/admin/cancel",
+        "function": {
+          "functionId": "cancelVisit",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/admin/slots",
+        "function": {
+          "functionId": "getAdminSlots",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/admin/reschedule",
+        "function": {
+          "functionId": "rescheduleVisit",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/admin/cancel-order",
+        "function": {
+          "functionId": "cancelOrder",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/admin/order-bookings",
+        "function": {
+          "functionId": "getOrderBookings",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/waitlist",
+        "function": {
+          "functionId": "waitlist",
+          "region": "europe-west1"
+        }
+      }
     ]
+  },
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs20"
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
   }
 }

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SUKODA Kingituskaart</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+      background: #FAF8F5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      color: #2C2824;
+    }
+    
+    .card {
+      width: 100%;
+      max-width: 520px;
+      background: #F5F0EB;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.08);
+    }
+    
+    .header {
+      padding: 48px 40px 40px;
+      text-align: center;
+      border-bottom: 1px solid #E8E3DD;
+    }
+    
+    .logo {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 28px;
+      font-weight: 300;
+      color: #2C2824;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+    }
+    
+    .accent-line {
+      width: 40px;
+      height: 1px;
+      background: #B8976A;
+      margin: 0 auto;
+    }
+    
+    .content {
+      background: #FFFFFF;
+      margin: 28px;
+      padding: 44px 36px;
+      text-align: center;
+    }
+    
+    .gift-label {
+      font-size: 10px;
+      letter-spacing: 4px;
+      color: #B8976A;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      font-weight: 500;
+    }
+    
+    .gift-name {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 34px;
+      font-weight: 300;
+      color: #2C2824;
+      margin-bottom: 12px;
+    }
+    
+    .gift-description {
+      font-size: 14px;
+      font-weight: 300;
+      color: #8A8578;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+    
+    .divider {
+      width: 40px;
+      height: 1px;
+      background: #B8976A;
+      margin: 0 auto 32px;
+    }
+    
+    .recipient-label {
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: #B8976A;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+    
+    .recipient-name {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 26px;
+      font-weight: 300;
+      color: #2C2824;
+      margin-bottom: 32px;
+    }
+    
+    .message-box {
+      background: #FAF8F5;
+      padding: 28px;
+      margin-bottom: 32px;
+      border-left: 2px solid #B8976A;
+      text-align: left;
+    }
+    
+    .message-text {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 16px;
+      font-style: italic;
+      color: #2C2824;
+      line-height: 1.7;
+      margin-bottom: 12px;
+    }
+    
+    .message-from {
+      font-size: 12px;
+      color: #8A8578;
+      letter-spacing: 1px;
+    }
+    
+    .code-section {
+      margin-top: 32px;
+      padding-top: 32px;
+      border-top: 1px solid #E8E3DD;
+    }
+    
+    .code-label {
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: #B8976A;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      font-weight: 500;
+    }
+    
+    .code {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 20px;
+      font-weight: 300;
+      letter-spacing: 5px;
+      color: #2C2824;
+      background: #FAF8F5;
+      padding: 18px 28px;
+      display: inline-block;
+    }
+    
+    .footer {
+      padding: 32px 28px;
+      text-align: center;
+      border-top: 1px solid #E8E3DD;
+    }
+    
+    .footer-text {
+      font-size: 12px;
+      color: #8A8578;
+      margin-bottom: 10px;
+    }
+    
+    .footer-email {
+      font-size: 14px;
+      font-weight: 400;
+      color: #2C2824;
+      text-decoration: none;
+      margin-bottom: 16px;
+      display: block;
+    }
+    
+    .footer-url {
+      font-size: 11px;
+      color: #B8976A;
+      letter-spacing: 2px;
+    }
+    
+    /* Includes section */
+    .includes {
+      background: #FAF8F5;
+      padding: 28px;
+      margin-top: 20px;
+      text-align: left;
+    }
+    
+    .includes-title {
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: #B8976A;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      text-align: center;
+      font-weight: 500;
+    }
+    
+    .includes-list {
+      list-style: none;
+    }
+    
+    .includes-list li {
+      font-size: 14px;
+      color: #8A8578;
+      padding: 10px 0;
+      padding-left: 24px;
+      position: relative;
+      border-bottom: 1px solid #E8E3DD;
+    }
+    
+    .includes-list li:last-child {
+      border-bottom: none;
+    }
+    
+    .includes-list li::before {
+      content: "\2713";
+      position: absolute;
+      left: 0;
+      color: #B8976A;
+      font-weight: 500;
+    }
+    
+    /* Print styles */
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      .card {
+        box-shadow: none;
+        max-width: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">SUKODA.</div>
+      <div class="accent-line"></div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="content">
+      <div class="gift-label">Kingikaart</div>
+      
+      <div class="gift-name">{{GIFT_NAME}}</div>
+      
+      <div class="gift-description">{{GIFT_DESCRIPTION}}</div>
+      
+      <div class="divider"></div>
+      
+      <div class="recipient-label">Kingisaaja</div>
+      <div class="recipient-name">{{RECIPIENT_NAME}}</div>
+      
+      <!-- Message from giver -->
+      <div class="message-box">
+        <div class="message-text">"{{MESSAGE}}"</div>
+        <div class="message-from">– {{GIVER_NAME}}</div>
+      </div>
+      
+      <!-- What's included -->
+      <div class="includes">
+        <div class="includes-title">Kingitus sisaldab</div>
+        <ul class="includes-list">
+          {{INCLUDES_LIST}}
+        </ul>
+      </div>
+      
+      <!-- Code -->
+      <div class="code-section">
+        <div class="code-label">Kingituse kood</div>
+        <div class="code">{{CODE}}</div>
+      </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+      <div class="footer-text">Küsimuste korral kirjuta meile:</div>
+      <a href="mailto:tere@sukoda.ee" class="footer-email">tere@sukoda.ee</a>
+      <div class="footer-url">sukoda.ee</div>
+    </div>
+  </div>
+</body>
+</html>

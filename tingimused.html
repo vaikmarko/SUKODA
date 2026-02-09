@@ -4,23 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SUKODA | Tingimused</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="assets/logo/icon-s-black.svg">
+    <link rel="apple-touch-icon" href="assets/logo/icon-square.svg">
+    
+    <!-- Meta Pixel -->
+    <script src="assets/js/tracking.js"></script>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: {
-                        serif: ['Playfair Display', 'serif'],
-                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Cormorant Garamond', 'Georgia', 'serif'],
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
                     },
                     colors: {
                         black: '#111111',
-                        paper: '#f5f5f5',
-                        accent: '#333333',
+                        paper: '#FAF8F5',
+                        cream: '#F5F0EB',
+                        accent: '#B8976A',
+                        muted: '#8A8578',
                     }
                 }
             }
@@ -28,125 +38,170 @@
     </script>
     <style>
         body {
-            background-color: #f5f5f5;
+            background-color: #FAF8F5;
             color: #111111;
+        }
+        .grid-line {
+            border-right: 1px solid #E8E3DD;
+        }
+        .grid-line-b {
+            border-bottom: 1px solid #E8E3DD;
         }
         ::selection {
             background: #111;
-            color: #fff;
+            color: #FAF8F5;
         }
         [x-cloak] {
             display: none !important;
+        }
+        .accent-line {
+            width: 40px;
+            height: 1px;
+            background: #B8976A;
         }
     </style>
 </head>
 <body class="antialiased" x-data="{ lang: 'et' }">
 
-    <div class="max-w-[1440px] mx-auto bg-paper min-h-screen border-x border-[#e5e5e5]">
+    <div class="max-w-[1440px] mx-auto bg-paper min-h-screen border-x border-[#E8E3DD]">
         
         <!-- Navigation -->
-        <nav class="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm border-b border-[#e5e5e5]" x-data="{ mobileMenu: false }">
+        <nav class="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm grid-line-b" x-data="{ mobileMenu: false }">
             <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12">
-                <a href="index.html" class="font-serif text-xl md:text-2xl tracking-tight font-medium">
-                    SUKODA.
+                <a href="index.html" class="font-serif text-2xl md:text-3xl tracking-[0.08em] font-light">
+                    SUKODA
                 </a>
                 
-                <div class="flex items-center gap-4 md:gap-8">
-                    <div class="flex text-xs md:text-sm uppercase tracking-widest font-bold gap-2">
-                        <button @click="lang = 'et'" :class="lang === 'et' ? 'text-black border-b border-black' : 'text-gray-400 hover:text-gray-600'">ET</button>
-                        <span class="text-gray-300">/</span>
-                        <button @click="lang = 'en'" :class="lang === 'en' ? 'text-black border-b border-black' : 'text-gray-400 hover:text-gray-600'">EN</button>
+                <div class="hidden md:flex gap-10 text-[11px] uppercase tracking-[0.2em] font-sans font-medium text-muted">
+                    <a href="kingitus.html" class="hover:text-black transition-colors" x-text="lang === 'et' ? 'Kingitus' : 'Gift'">Kingitus</a>
+                    <a href="partnerlus.html" class="hover:text-black transition-colors" x-text="lang === 'et' ? 'Koostöö' : 'Partnership'">Koostöö</a>
+                </div>
+
+                <div class="flex items-center gap-4 md:gap-6">
+                    <div class="flex text-[10px] uppercase tracking-[0.2em] font-sans font-medium gap-2">
+                        <button @click="lang = 'et'" :class="lang === 'et' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">ET</button>
+                        <span class="text-[#D4CFC8]">/</span>
+                        <button @click="lang = 'en'" :class="lang === 'en' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">EN</button>
                     </div>
 
                     <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2">
-                        <svg x-show="!mobileMenu" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        <svg x-show="!mobileMenu" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path>
                         </svg>
-                        <svg x-show="mobileMenu" x-cloak class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        <svg x-show="mobileMenu" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                     </button>
+                </div>
+            </div>
+
+            <div x-show="mobileMenu" x-cloak class="md:hidden bg-paper border-t border-[#E8E3DD]">
+                <div class="flex flex-col px-4 py-8 space-y-5 text-[11px] uppercase tracking-[0.2em] font-sans font-medium text-muted">
+                    <a href="kingitus.html" class="py-2 hover:text-black">Kingitus</a>
+                    <a href="partnerlus.html" class="py-2 hover:text-black">Koostöö</a>
                 </div>
             </div>
         </nav>
 
         <!-- Content -->
         <section class="max-w-3xl mx-auto p-6 md:p-24">
-            <h1 class="font-serif text-4xl md:text-5xl mb-8" x-text="lang === 'et' ? 'Tingimused' : 'Terms of Service'">Tingimused</h1>
+            <div class="accent-line mb-6"></div>
+            <h1 class="font-serif text-4xl md:text-5xl font-light mb-10" x-text="lang === 'et' ? 'Tingimused' : 'Terms of Service'">Tingimused</h1>
             
-            <div class="prose prose-lg max-w-none space-y-8 text-gray-700 leading-relaxed">
+            <div class="space-y-10 text-muted font-sans font-light leading-relaxed text-sm">
                 
                 <div>
-                    <h2 class="font-serif text-2xl mb-4 text-black" x-text="lang === 'et' ? '1. Teenuse kirjeldus' : '1. Service Description'">1. Teenuse kirjeldus</h2>
-                    <p x-show="lang === 'et'">SUKODA pakub korduvat kodukoristusteenust. Iga külastus sisaldab põhjalikku koristust, värsked lilled vaasis, käsitsi kirjutatud tervituskaarti ja väikest magusat üllatust. Lisaks võivad sisalduda puuviljad, taimede kastmine ja muud paketti kuuluvad teenused.</p>
-                    <p x-show="lang === 'en'" x-cloak>SUKODA provides recurring home cleaning services. Each visit includes thorough cleaning, fresh flowers in a vase, a handwritten greeting card, and a small sweet surprise. Additionally, fruits, plant watering, and other services included in the package may be provided.</p>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '1. Teenuse kirjeldus' : '1. Service Description'">1. Teenuse kirjeldus</h2>
+                    <p x-show="lang === 'et'">SUKODA pakub korduvat koduhoolduse teenust. Iga külastus sisaldab põhjalikku koristust, värsked lilled vaasis, käsitsi kirjutatud tervituskaarti ja väikest magusat üllatust. Lisaks võivad sisalduda puuviljad, taimede kastmine ja muud paketti kuuluvad teenused.</p>
+                    <p x-show="lang === 'en'" x-cloak>SUKODA provides recurring home care services. Each visit includes thorough cleaning, fresh flowers in a vase, a handwritten greeting card, and a small sweet surprise. Additionally, fruits, plant watering, and other services included in the package may be provided.</p>
                 </div>
 
                 <div>
-                    <h2 class="font-serif text-2xl mb-4 text-black" x-text="lang === 'et' ? '2. Tellimine ja makse' : '2. Ordering and Payment'">2. Tellimine ja makse</h2>
-                    <p x-show="lang === 'et'">Teenust saab tellida meie veebilehel valides paketi ja täites vajalikud andmed. Makse toimub automaatselt iga kuu arveldusperioodi alguses. Kui makse ebaõnnestub, võime teenust peatada kuni makse on lahendatud.</p>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '2. Tellimine ja makse' : '2. Ordering and Payment'">2. Tellimine ja makse</h2>
+                    <p x-show="lang === 'et'">Teenust saab tellida meie veebilehel, valides paketi ja täites vajalikud andmed. Makse toimub automaatselt iga kuu arveldusperioodi alguses. Kui makse ebaõnnestub, võime teenust peatada kuni makse on lahendatud.</p>
                     <p x-show="lang === 'en'" x-cloak>Services can be ordered on our website by selecting a package and filling in the required information. Payment is automatically processed at the beginning of each monthly billing period. If payment fails, we may suspend service until payment is resolved.</p>
                 </div>
 
                 <div>
-                    <h2 class="font-serif text-2xl mb-4 text-black" x-text="lang === 'et' ? '3. Külastuste ajakava' : '3. Visit Schedule'">3. Külastuste ajakava</h2>
-                    <p x-show="lang === 'et'">Lepime kokku esimese külastuse ajakohaselt. Järgnevad külastused toimuvad valitud rütmi järgi (kord kuus, üle nädala või iga nädal). Kui vajad ajakava muutmist, võta meiega vähemalt 48 tundi ette ühendust.</p>
-                    <p x-show="lang === 'en'" x-cloak>We arrange the first visit schedule. Subsequent visits follow the selected rhythm (monthly, biweekly, or weekly). If you need to change the schedule, please contact us at least 48 hours in advance.</p>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '3. Külastuste ajakava' : '3. Visit Schedule'">3. Külastuste ajakava</h2>
+                    <p x-show="lang === 'et'">Pärast tellimust valid ise sobiva aja meie online-kalendrist. Järgnevad külastused toimuvad valitud rütmi järgi (kord kuus, üle nädala või iga nädal). Ajakava saad muuta ise läbi oma kliendikonto vähemalt 48 tundi enne planeeritud külastust.</p>
+                    <p x-show="lang === 'en'" x-cloak>After placing an order, you choose a suitable time from our online calendar. Subsequent visits follow the selected rhythm (monthly, biweekly, or weekly). You can change the schedule yourself through your client account at least 48 hours before the scheduled visit.</p>
                 </div>
 
                 <div>
-                    <h2 class="font-serif text-2xl mb-4 text-black" x-text="lang === 'et' ? '4. Tühistamine ja tagasimakse' : '4. Cancellation and Refund'">4. Tühistamine ja tagasimakse</h2>
-                    <p x-show="lang === 'et'">Võid tellimuse tühistada igal ajal, kirjutades meile e-postile. Tellimus lõpeb jooksva arveldusperioodi lõpus. Juba tehtud külastuste eest tagasimakse ei tehta. Juba makstud, kuid veel tegemata külastuste eest tagastame proportsionaalse summa.</p>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '4. Tühistamine ja tagasimakse' : '4. Cancellation and Refund'">4. Tühistamine ja tagasimakse</h2>
+                    <p x-show="lang === 'et'">Võid tellimuse tühistada igal ajal, kirjutades meile e-postile. Tellimus lõpeb jooksva arveldusperioodi lõpus. Juba tehtud külastuste eest tagasimakset ei tehta. Juba makstud, kuid veel tegemata külastuste eest tagastame proportsionaalse summa.</p>
                     <p x-show="lang === 'en'" x-cloak>You may cancel your order at any time by writing to us. The order will end at the end of the current billing period. No refunds will be made for visits already completed. For paid but not yet completed visits, we will refund a proportional amount.</p>
                 </div>
 
                 <div>
-                    <h2 class="font-serif text-2xl mb-4 text-black" x-text="lang === 'et' ? '5. Kvaliteedi tagamine' : '5. Quality Assurance'">5. Kvaliteedi tagamine</h2>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '5. Kvaliteedi tagamine' : '5. Quality Assurance'">5. Kvaliteedi tagamine</h2>
                     <p x-show="lang === 'et'">Kui oled külastuse kvaliteediga rahulolematu, teavita meid kohe. Tuleme tagasi ja parandame tasuta, ilma küsimusteta. See on meie lubadus.</p>
                     <p x-show="lang === 'en'" x-cloak>If you are not satisfied with the quality of a visit, notify us immediately. We will return and fix it free of charge, no questions asked. This is our promise.</p>
                 </div>
 
                 <div>
-                    <h2 class="font-serif text-2xl mb-4 text-black" x-text="lang === 'et' ? '6. Vastutus ja kindlustus' : '6. Liability and Insurance'">6. Vastutus ja kindlustus</h2>
-                    <p x-show="lang === 'et'">Kõik meie partnerid on kindlustatud. Kui koristuse käigus tekib kahju, käsitleme seda eraldi. Partner on kindlustatud vastutuskindlustusega vähemalt €10,000 kattega.</p>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '6. Vastutus ja kindlustus' : '6. Liability and Insurance'">6. Vastutus ja kindlustus</h2>
+                    <p x-show="lang === 'et'">Kõik meie partnerid on kindlustatud. Kui koristuse käigus tekib kahju, käsitleme seda eraldi. Partner on kindlustatud vastutuskindlustusega vähemalt 10 000 € kattega.</p>
                     <p x-show="lang === 'en'" x-cloak>All our partners are insured. If damage occurs during cleaning, we will handle it separately. The partner is insured with liability insurance with at least €10,000 coverage.</p>
                 </div>
 
                 <div>
-                    <h2 class="font-serif text-2xl mb-4 text-black" x-text="lang === 'et' ? '7. Konfidentsiaalsus' : '7. Confidentiality'">7. Konfidentsiaalsus</h2>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '7. Konfidentsiaalsus' : '7. Confidentiality'">7. Konfidentsiaalsus</h2>
                     <p x-show="lang === 'et'">Sinu kodu on sinu eraasi. Me ei räägi sellest kellelegi. Mitte kunagi. Kõik meie partnerid kohustuvad konfidentsiaalsust säilitama.</p>
                     <p x-show="lang === 'en'" x-cloak>Your home is your private matter. We don't talk about it to anyone. Ever. All our partners are bound by confidentiality.</p>
                 </div>
 
                 <div>
-                    <h2 class="font-serif text-2xl mb-4 text-black" x-text="lang === 'et' ? '8. Muudatused tingimustes' : '8. Changes to Terms'">8. Muudatused tingimustes</h2>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '8. Muudatused tingimustes' : '8. Changes to Terms'">8. Muudatused tingimustes</h2>
                     <p x-show="lang === 'et'">Jätame endale õiguse muuta neid tingimusi. Olulistest muudatustest teavitame kliente e-posti teel vähemalt 30 päeva ette.</p>
                     <p x-show="lang === 'en'" x-cloak>We reserve the right to change these terms. We will notify clients of significant changes by email at least 30 days in advance.</p>
                 </div>
 
                 <div>
-                    <h2 class="font-serif text-2xl mb-4 text-black" x-text="lang === 'et' ? '9. Kontakt' : '9. Contact'">9. Kontakt</h2>
-                    <p x-show="lang === 'et'">Küsimuste korral võta meiega ühendust: <a href="mailto:tere@sukoda.ee" class="text-black underline">tere@sukoda.ee</a></p>
-                    <p x-show="lang === 'en'" x-cloak>For questions, please contact us: <a href="mailto:tere@sukoda.ee" class="text-black underline">tere@sukoda.ee</a></p>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '9. Kontakt' : '9. Contact'">9. Kontakt</h2>
+                    <p x-show="lang === 'et'">Küsimuste korral võta meiega ühendust: <a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a></p>
+                    <p x-show="lang === 'en'" x-cloak>For questions, please contact us: <a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a></p>
                 </div>
 
             </div>
 
-            <div class="mt-12 pt-8 border-t border-gray-200">
-                <p class="text-sm text-gray-500" x-text="lang === 'et' ? 'Viimati uuendatud: Jaanuar 2025' : 'Last updated: January 2025'">Viimati uuendatud: Jaanuar 2025</p>
+            <div class="mt-12 pt-8 border-t border-[#E8E3DD]">
+                <p class="text-xs text-muted/60 font-sans" x-text="lang === 'et' ? 'Viimati uuendatud: Veebruar 2026' : 'Last updated: February 2026'">Viimati uuendatud: Veebruar 2026</p>
             </div>
         </section>
 
         <!-- Footer -->
-        <footer class="bg-black text-white py-8 px-4 md:px-12 mt-24">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                <a href="index.html" class="font-serif text-lg">SUKODA.</a>
-                <div class="flex gap-6 md:gap-8 text-xs uppercase tracking-widest text-gray-400">
-                    <a href="tingimused.html" class="text-white">Tingimused</a>
-                    <a href="privaatsus.html" class="hover:text-white transition-colors" x-text="lang === 'et' ? 'Privaatsuspoliitika' : 'Privacy'">Privaatsuspoliitika</a>
-                    <a href="mailto:tere@sukoda.ee" class="hover:text-white transition-colors">tere@sukoda.ee</a>
+        <footer class="bg-black text-paper">
+            <div class="grid md:grid-cols-12 py-16 px-6 md:px-12">
+                <div class="md:col-span-4 mb-8 md:mb-0">
+                    <a href="index.html" class="font-serif text-2xl tracking-[0.08em] font-light block mb-4">SUKODA</a>
+                    <p class="text-muted text-xs font-sans font-light leading-relaxed max-w-xs">
+                        <span x-show="lang === 'et'">Sinu kodu, meie hoole all.<br>Tallinn, Eesti.</span>
+                        <span x-show="lang === 'en'" x-cloak>Your home, our care.<br>Tallinn, Estonia.</span>
+                    </p>
                 </div>
-                <div class="text-xs text-gray-500">© 2025 SUKODA</div>
+                <div class="md:col-span-4 mb-8 md:mb-0">
+                    <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-4">
+                        <span x-show="lang === 'et'">Lingid</span>
+                        <span x-show="lang === 'en'" x-cloak>Links</span>
+                    </p>
+                    <div class="flex flex-col gap-3 text-xs text-muted/70 font-sans font-light">
+                        <a href="tingimused.html" class="text-paper transition-colors" x-text="lang === 'et' ? 'Tingimused' : 'Terms'">Tingimused</a>
+                        <a href="privaatsus.html" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Privaatsuspoliitika' : 'Privacy'">Privaatsuspoliitika</a>
+                    </div>
+                </div>
+                <div class="md:col-span-4">
+                    <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-4">
+                        <span x-show="lang === 'et'">Kontakt</span>
+                        <span x-show="lang === 'en'" x-cloak>Contact</span>
+                    </p>
+                    <a href="mailto:tere@sukoda.ee" class="text-xs font-sans font-light text-muted/70 hover:text-paper transition-colors block mb-2">tere@sukoda.ee</a>
+                    <a href="mailto:partner@sukoda.ee" class="text-xs font-sans font-light text-muted/70 hover:text-paper transition-colors block">partner@sukoda.ee</a>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 py-6 px-6 md:px-12">
+                <p class="text-[10px] text-muted/40 font-sans text-center tracking-wide">© 2026 SUKODA. Kõik õigused kaitstud.</p>
             </div>
         </footer>
 
@@ -154,4 +209,3 @@
 
 </body>
 </html>
-

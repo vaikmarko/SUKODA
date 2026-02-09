@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUKODA | €1 Test Payment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="assets/js/checkout.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
+        <h1 class="text-2xl font-bold mb-2">🧪 SUKODA Test</h1>
+        <p class="text-gray-500 mb-6">€1 testtellimus päris rahaga</p>
+        
+        <div class="bg-black text-white p-6 rounded mb-6">
+            <p class="text-sm uppercase tracking-widest text-gray-400 mb-2">Testtellimus</p>
+            <p class="text-4xl font-bold">€1<span class="text-lg">/kuu</span></p>
+        </div>
+
+        <form id="testForm" class="space-y-4 text-left">
+            <div>
+                <label class="block text-sm text-gray-500 mb-1">Nimi</label>
+                <input type="text" id="name" value="Test Kasutaja" class="w-full border p-2 rounded" required>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-500 mb-1">Email</label>
+                <input type="email" id="email" value="tere@sukoda.ee" class="w-full border p-2 rounded" required>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-500 mb-1">Telefon</label>
+                <input type="text" id="phone" value="+372 5123 4567" class="w-full border p-2 rounded" required>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-500 mb-1">Aadress</label>
+                <input type="text" id="address" value="Test tänav 1, Tallinn" class="w-full border p-2 rounded" required>
+            </div>
+            
+            <button type="submit" id="payBtn" class="w-full bg-black text-white py-4 text-lg font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors">
+                MAKSA €1
+            </button>
+            
+            <p id="error" class="text-red-500 text-sm hidden"></p>
+        </form>
+        
+        <p class="text-xs text-gray-400 mt-6">
+            See on päris makse live Stripe'is.<br>
+            Pärast saab tellimuse Stripe'ist tühistada.
+        </p>
+    </div>
+
+    <script>
+        document.getElementById('testForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btn = document.getElementById('payBtn');
+            const error = document.getElementById('error');
+            
+            btn.textContent = 'TÖÖTLEN...';
+            btn.disabled = true;
+            error.classList.add('hidden');
+            
+            try {
+                await SUKODA.startSubscriptionCheckout({
+                    rhythm: 'test',  // This uses the €1 test price
+                    size: 'medium',
+                    customer: {
+                        name: document.getElementById('name').value,
+                        email: document.getElementById('email').value,
+                        phone: document.getElementById('phone').value,
+                        address: document.getElementById('address').value,
+                    },
+                    lang: 'et',
+                });
+            } catch (err) {
+                error.textContent = 'Viga: ' + err.message;
+                error.classList.remove('hidden');
+                btn.textContent = 'MAKSA €1';
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
