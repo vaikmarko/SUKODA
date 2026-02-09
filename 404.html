@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="et" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUKODA | 404</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/assets/logo/icon-s-black.svg">
+    <link rel="apple-touch-icon" href="/assets/logo/icon-square.svg">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['Cormorant Garamond', 'Georgia', 'serif'],
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        black: '#111111',
+                        paper: '#FAF8F5',
+                        cream: '#F5F0EB',
+                        accent: '#B8976A',
+                        muted: '#8A8578',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #FAF8F5;
+            color: #111111;
+        }
+        .grid-line-b {
+            border-bottom: 1px solid #E8E3DD;
+        }
+        ::selection {
+            background: #111;
+            color: #FAF8F5;
+        }
+        [x-cloak] {
+            display: none !important;
+        }
+        .accent-line {
+            width: 40px;
+            height: 1px;
+            background: #B8976A;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-in {
+            animation: fadeIn 0.8s ease-out forwards;
+            opacity: 0;
+        }
+        .animate-in-delay {
+            animation: fadeIn 0.8s ease-out 0.3s forwards;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body class="antialiased" x-data="{ lang: localStorage.getItem('sukoda_lang') || 'et' }" x-init="$watch('lang', val => localStorage.setItem('sukoda_lang', val))">
+
+    <div class="max-w-[1440px] mx-auto bg-paper min-h-screen border-x border-[#E8E3DD] flex flex-col">
+        
+        <!-- Navigation -->
+        <nav class="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm grid-line-b">
+            <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12">
+                <a href="/index.html" class="font-serif text-2xl md:text-3xl tracking-[0.08em] font-light">
+                    SUKODA
+                </a>
+                
+                <div class="hidden md:flex gap-10 text-[11px] uppercase tracking-[0.2em] font-sans font-medium text-muted">
+                    <a href="/kingitus.html" class="hover:text-black transition-colors" x-text="lang === 'et' ? 'Kingitus' : 'Gift'">Kingitus</a>
+                    <a href="/partnerlus.html" class="hover:text-black transition-colors" x-text="lang === 'et' ? 'Koostöö' : 'Partnership'">Koostöö</a>
+                </div>
+
+                <div class="flex items-center gap-4 md:gap-6">
+                    <div class="flex text-[10px] uppercase tracking-[0.2em] font-sans font-medium gap-2">
+                        <button @click="lang = 'et'" :class="lang === 'et' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">ET</button>
+                        <span class="text-[#D4CFC8]">/</span>
+                        <button @click="lang = 'en'" :class="lang === 'en' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">EN</button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 404 Content -->
+        <main class="flex-1 flex items-center justify-center px-6 py-24 md:py-32">
+            <div class="text-center max-w-lg">
+                
+                <div class="animate-in">
+                    <p class="text-[10px] uppercase tracking-[0.3em] text-accent font-sans mb-8">404</p>
+                    <div class="accent-line mx-auto mb-8"></div>
+                    <h1 class="font-serif text-5xl md:text-7xl font-light mb-6">
+                        <span x-show="lang === 'et'">Siin pole<br>midagi.</span>
+                        <span x-show="lang === 'en'" x-cloak>Nothing<br>here.</span>
+                    </h1>
+                </div>
+
+                <div class="animate-in-delay">
+                    <p class="text-base md:text-lg text-muted font-sans font-light leading-relaxed mb-12 max-w-sm mx-auto">
+                        <span x-show="lang === 'et'">Seda lehte ei leitud. Aga kodu ootab sind alati.</span>
+                        <span x-show="lang === 'en'" x-cloak>This page wasn't found. But home is always waiting for you.</span>
+                    </p>
+
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                        <a href="/index.html" class="inline-block bg-black text-paper px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-colors duration-500" x-text="lang === 'et' ? 'Avalehele' : 'Go home'">
+                            Avalehele
+                        </a>
+                        <a href="/kingitus.html" class="inline-block border border-black text-black px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-black hover:text-paper transition-all duration-500" x-text="lang === 'et' ? 'Vaata kingitusi' : 'View gifts'">
+                            Vaata kingitusi
+                        </a>
+                    </div>
+
+                    <p class="mt-12 text-xs text-muted/50 font-sans font-light">
+                        <span x-show="lang === 'et'">Küsimuste korral: </span>
+                        <span x-show="lang === 'en'" x-cloak>Questions? </span>
+                        <a href="mailto:tere@sukoda.ee" class="text-muted hover:text-black transition-colors border-b border-muted/30 hover:border-black">tere@sukoda.ee</a>
+                    </p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-black text-paper">
+            <div class="grid md:grid-cols-12 py-16 px-6 md:px-12">
+                <div class="md:col-span-4 mb-8 md:mb-0">
+                    <a href="/index.html" class="font-serif text-2xl tracking-[0.08em] font-light block mb-4">SUKODA</a>
+                    <p class="text-muted text-xs font-sans font-light leading-relaxed max-w-xs">
+                        <span x-show="lang === 'et'">Sinu kodu, meie hoole all.<br>Tallinn, Eesti.</span>
+                        <span x-show="lang === 'en'" x-cloak>Your home, our care.<br>Tallinn, Estonia.</span>
+                    </p>
+                </div>
+                <div class="md:col-span-4 mb-8 md:mb-0">
+                    <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-4">
+                        <span x-show="lang === 'et'">Lingid</span>
+                        <span x-show="lang === 'en'" x-cloak>Links</span>
+                    </p>
+                    <div class="flex flex-col gap-3 text-xs text-muted/70 font-sans font-light">
+                        <a href="/tingimused.html" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Tingimused' : 'Terms'">Tingimused</a>
+                        <a href="/privaatsus.html" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Privaatsuspoliitika' : 'Privacy'">Privaatsuspoliitika</a>
+                    </div>
+                </div>
+                <div class="md:col-span-4">
+                    <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-4">
+                        <span x-show="lang === 'et'">Kontakt</span>
+                        <span x-show="lang === 'en'" x-cloak>Contact</span>
+                    </p>
+                    <a href="mailto:tere@sukoda.ee" class="text-xs font-sans font-light text-muted/70 hover:text-paper transition-colors block mb-2">tere@sukoda.ee</a>
+                    <a href="mailto:partner@sukoda.ee" class="text-xs font-sans font-light text-muted/70 hover:text-paper transition-colors block">partner@sukoda.ee</a>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 py-6 px-6 md:px-12">
+                <p class="text-[10px] text-muted/40 font-sans text-center tracking-wide">
+                    <span x-show="lang === 'et'">© 2026 Epic Ship OÜ · Registrikood 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
+                    <span x-show="lang === 'en'" x-cloak>© 2026 Epic Ship OÜ · Reg. code 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
+                </p>
+            </div>
+        </footer>
+
+    </div>
+
+</body>
+</html>

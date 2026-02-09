@@ -113,7 +113,7 @@
     <script src="assets/js/checkout.js"></script>
 </head>
 <body class="antialiased" x-data="{ 
-    lang: 'et',
+    lang: localStorage.getItem('sukoda_lang') || 'et',
     order: null,
     loading: true,
     error: false,
@@ -242,8 +242,8 @@
                             </div>
                         </div>
 
-                        <!-- Calendar Booking -->
-                        <div class="bg-white border border-[#E8E3DD] p-6 text-left mb-8">
+                        <!-- Calendar Booking (only for subscriptions, not gifts) -->
+                        <div x-show="!order?.recipient" class="bg-white border border-[#E8E3DD] p-6 text-left mb-8">
                             <h3 class="font-serif text-xl font-light mb-2" x-text="lang === 'et' ? 'Vali esimese külastuse aeg' : 'Choose your first visit time'">Vali esimese külastuse aeg</h3>
                             <p class="text-sm text-muted font-sans font-light mb-6" x-text="lang === 'et' ? 'Vali allpool kalendrist sulle sobiv aeg.' : 'Select a convenient time from the calendar below.'">Vali allpool kalendrist sulle sobiv aeg.</p>
                             
@@ -267,8 +267,25 @@
                             </p>
                         </div>
 
-                        <!-- Next Steps -->
-                        <div class="bg-cream/40 p-8 text-left mb-8">
+                        <!-- Gift specific message -->
+                        <div x-show="order?.recipient" x-cloak class="bg-cream/60 border border-[#E8E3DD] p-8 text-left mb-8">
+                            <div class="flex items-center gap-4 mb-4">
+                                <div class="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-serif text-xl font-light" x-text="lang === 'et' ? 'Kingitus on teel!' : 'Gift is on its way!'">Kingitus on teel!</h3>
+                                    <p class="text-sm text-muted font-sans font-light" x-text="lang === 'et' ? 'Kingituskaart saadetakse kohe saaja e-postile' : 'The gift card will be sent to the recipient\'s email shortly'"></p>
+                                </div>
+                            </div>
+                            <p class="text-sm text-muted font-sans font-light">
+                                <span x-show="lang === 'et'">Kingisaaja saab e-kirja koos kingituskaardiga ja juhendiga, kuidas broneerida sobiv aeg meie kalendrist.</span>
+                                <span x-show="lang === 'en'" x-cloak>The recipient will receive an email with the gift card and instructions on how to book a suitable time from our calendar.</span>
+                            </p>
+                        </div>
+
+                        <!-- Next Steps for subscriptions -->
+                        <div x-show="!order?.recipient" class="bg-cream/40 p-8 text-left mb-8">
                             <h3 class="text-[10px] uppercase tracking-[0.2em] text-accent font-sans font-medium mb-6" x-text="lang === 'et' ? 'Mis edasi?' : 'What\'s next?'">Mis edasi?</h3>
                             <ul class="space-y-4 text-sm font-sans">
                                 <li class="flex items-start gap-3">
@@ -282,6 +299,25 @@
                                 <li class="flex items-start gap-3">
                                     <span class="text-accent font-medium mt-0.5">3.</span>
                                     <span class="text-muted font-light" x-text="lang === 'et' ? 'Saad automaatse meeldetuletuse enne külastust' : 'You\'ll get an automatic reminder before the visit'">Saad automaatse meeldetuletuse enne külastust</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Next Steps for gifts -->
+                        <div x-show="order?.recipient" x-cloak class="bg-cream/40 p-8 text-left mb-8">
+                            <h3 class="text-[10px] uppercase tracking-[0.2em] text-accent font-sans font-medium mb-6" x-text="lang === 'et' ? 'Mis edasi?' : 'What\'s next?'">Mis edasi?</h3>
+                            <ul class="space-y-4 text-sm font-sans">
+                                <li class="flex items-start gap-3">
+                                    <span class="text-accent font-medium mt-0.5">1.</span>
+                                    <span class="text-muted font-light" x-text="lang === 'et' ? 'Saatsime kinnituse sinu e-postile' : 'We\'ve sent a confirmation to your email'">Saatsime kinnituse sinu e-postile</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <span class="text-accent font-medium mt-0.5">2.</span>
+                                    <span class="text-muted font-light" x-text="lang === 'et' ? 'Kingisaaja saab kingituskaardi e-postile' : 'Recipient receives the gift card by email'">Kingisaaja saab kingituskaardi e-postile</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <span class="text-accent font-medium mt-0.5">3.</span>
+                                    <span class="text-muted font-light" x-text="lang === 'et' ? 'Kingisaaja valib ise sobiva aja meie kalendrist' : 'Recipient chooses a suitable time from our calendar'">Kingisaaja valib ise sobiva aja meie kalendrist</span>
                                 </li>
                             </ul>
                         </div>
@@ -334,10 +370,41 @@
                 </div>
             </div>
             <div class="border-t border-gray-800 py-6 px-6 md:px-12">
-                <p class="text-[10px] text-muted/40 font-sans text-center tracking-wide">&copy; 2026 SUKODA. Kõik õigused kaitstud.</p>
+                <p class="text-[10px] text-muted/40 font-sans text-center tracking-wide">
+                    <span x-show="lang === 'et'">© 2026 Epic Ship OÜ · Registrikood 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
+                    <span x-show="lang === 'en'" x-cloak>© 2026 Epic Ship OÜ · Reg. code 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
+                </p>
             </div>
         </footer>
 
+    </div>
+
+    <!-- Cookie Consent -->
+    <div x-data="{ show: !(document.cookie.includes('sukoda_consent=')) }" x-show="show" x-cloak
+         class="fixed bottom-0 left-0 right-0 z-[9999] bg-black/95 backdrop-blur-sm text-paper p-4 md:p-6"
+         x-transition:enter="transition ease-out duration-500"
+         x-transition:enter-start="translate-y-full opacity-0"
+         x-transition:enter-end="translate-y-0 opacity-100">
+        <div class="max-w-[1440px] mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="flex-1">
+                <p class="text-sm font-sans font-light" x-show="lang === 'et'">
+                    Kasutame küpsiseid veebilehe kasutuskogemuse parendamiseks ja turunduse tõhususe mõõtmiseks.
+                    <a href="privaatsus.html" class="text-accent hover:underline">Loe lähemalt</a>
+                </p>
+                <p class="text-sm font-sans font-light" x-show="lang === 'en'" x-cloak>
+                    We use cookies to improve your experience and measure marketing effectiveness.
+                    <a href="privaatsus.html" class="text-accent hover:underline">Learn more</a>
+                </p>
+            </div>
+            <div class="flex gap-3 shrink-0">
+                <button @click="SUKODA_TRACKING.declineCookies(); show = false"
+                        class="px-4 py-2 text-[10px] uppercase tracking-[0.2em] font-sans text-muted hover:text-paper transition-colors border border-muted/30 hover:border-paper/50"
+                        x-text="lang === 'et' ? 'Keeldu' : 'Decline'">Keeldu</button>
+                <button @click="SUKODA_TRACKING.acceptCookies(); show = false"
+                        class="px-6 py-2 text-[10px] uppercase tracking-[0.2em] font-sans bg-accent hover:bg-accent/80 text-paper transition-colors"
+                        x-text="lang === 'et' ? 'Nõustun' : 'Accept'">Nõustun</button>
+            </div>
+        </div>
     </div>
 
     <!-- Scripts -->

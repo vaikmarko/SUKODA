@@ -138,10 +138,9 @@
             transition: width 0.1s linear;
         }
     </style>
-    <script type="module" src="assets/js/firebase.js"></script>
-    <script src="assets/js/checkout.js"></script>
+    <script src="assets/js/checkout.js">
 </head>
-<body class="antialiased" x-data="{ lang: 'et' }">
+<body class="antialiased" x-data="{ lang: localStorage.getItem('sukoda_lang') || 'et' }" x-init="$watch('lang', val => localStorage.setItem('sukoda_lang', val))">
 
     <!-- Scroll Progress -->
     <div class="scroll-progress" id="scrollProgress"></div>
@@ -185,9 +184,9 @@
 
             <div x-show="mobileMenu" x-cloak class="md:hidden bg-paper border-t border-[#E8E3DD]">
                 <div class="flex flex-col px-4 py-8 space-y-5 text-[11px] uppercase tracking-[0.2em] font-sans font-medium text-muted">
-                    <a href="kingitus.html" class="py-2 text-black">Kingitus</a>
-                    <a href="partnerlus.html" class="py-2 hover:text-black">Koostöö</a>
-                    <a href="#telli" @click="mobileMenu = false" class="py-2 text-accent">Telli kingitus</a>
+                    <a href="kingitus.html" class="py-2 text-black" x-text="lang === 'et' ? 'Kingitus' : 'Gift'">Kingitus</a>
+                    <a href="partnerlus.html" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Koostöö' : 'Partnership'">Koostöö</a>
+                    <a href="#telli" @click="mobileMenu = false" class="py-2 text-accent" x-text="lang === 'et' ? 'Telli kingitus' : 'Order gift'">Telli kingitus</a>
                 </div>
             </div>
         </nav>
@@ -273,8 +272,9 @@
                 </div>
                 <div class="md:col-span-8 p-4 md:p-12 flex flex-col md:flex-row md:items-center gap-3 md:gap-6 overflow-x-auto">
                     <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans whitespace-nowrap" x-text="lang === 'et' ? 'Saaja kodu:' : 'Recipient\'s home:'">Saaja kodu:</span>
+                    <span class="text-[9px] text-muted/50 font-sans whitespace-nowrap ml-auto hidden md:inline" x-text="lang === 'et' ? 'Hinnad sis. KM' : 'Prices incl. VAT'">Hinnad sis. KM</span>
                     <div class="flex gap-3 md:gap-5 font-sans text-xs whitespace-nowrap overflow-x-auto pb-2 md:pb-0">
-                        <button @click="size = 'small'" :class="size === 'small' ? 'text-black border-b border-accent' : 'text-muted hover:text-black transition-colors'" class="pb-1">Kuni 50m²</button>
+                        <button @click="size = 'small'" :class="size === 'small' ? 'text-black border-b border-accent' : 'text-muted hover:text-black transition-colors'" class="pb-1" x-text="lang === 'et' ? 'Kuni 50m²' : 'Up to 50m²'">Kuni 50m²</button>
                         <button @click="size = 'medium'" :class="size === 'medium' ? 'text-black border-b border-accent' : 'text-muted hover:text-black transition-colors'" class="pb-1">51–90m²</button>
                         <button @click="size = 'large'" :class="size === 'large' ? 'text-black border-b border-accent' : 'text-muted hover:text-black transition-colors'" class="pb-1">91–120m²</button>
                         <button @click="size = 'xlarge'" :class="size === 'xlarge' ? 'text-black border-b border-accent' : 'text-muted hover:text-black transition-colors'" class="pb-1">121–150m²</button>
@@ -481,11 +481,28 @@
                 large: { moment: 229, month: 449, quarter: 1099 },
                 xlarge: { moment: 279, month: 549, quarter: 1299 }
             },
+            nameError: false,
             emailError: false,
+            recipientError: false,
+            recipientEmailError: false,
             validateEmail() {
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 this.emailError = this.email && !emailRegex.test(this.email);
                 return !this.emailError;
+            },
+            validateRecipientEmail() {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                this.recipientEmailError = this.recipientEmail && !emailRegex.test(this.recipientEmail);
+                return !this.recipientEmailError;
+            },
+            validateForm() {
+                this.nameError = !this.name.trim();
+                this.validateEmail();
+                if (!this.email.trim()) this.emailError = true;
+                this.recipientError = !this.recipient.trim();
+                this.validateRecipientEmail();
+                if (!this.recipientEmail.trim()) this.recipientEmailError = true;
+                return !this.nameError && !this.emailError && !this.recipientError && !this.recipientEmailError;
             },
             nextStep() {
                 if (this.step === 1 && this.selectedGift) {
@@ -499,7 +516,7 @@
                         });
                     }
                 } else if (this.step === 2) {
-                    if (this.validateEmail() && this.name && this.email && this.recipient && this.recipientEmail) {
+                    if (this.validateForm()) {
                         this.step = 3;
                         // Track InitiateCheckout
                         if (window.SUKODA_TRACKING) {
@@ -571,17 +588,17 @@
                 <div class="flex items-center justify-center gap-4 md:gap-8 max-w-2xl mx-auto">
                     <div class="flex items-center gap-3">
                         <div :class="step >= 1 ? 'bg-black text-paper' : 'bg-[#E8E3DD] text-muted'" class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-serif">1</div>
-                        <span class="text-[10px] uppercase tracking-[0.2em] font-sans hidden md:inline" :class="step >= 1 ? 'text-black' : 'text-muted'">Vali kingitus</span>
+                        <span class="text-[10px] uppercase tracking-[0.2em] font-sans hidden md:inline" :class="step >= 1 ? 'text-black' : 'text-muted'" x-text="lang === 'et' ? 'Vali kingitus' : 'Choose gift'">Vali kingitus</span>
                     </div>
                     <div class="h-[1px] flex-1" :class="step >= 2 ? 'bg-black' : 'bg-[#E8E3DD]'"></div>
                     <div class="flex items-center gap-3">
                         <div :class="step >= 2 ? 'bg-black text-paper' : 'bg-[#E8E3DD] text-muted'" class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-serif">2</div>
-                        <span class="text-[10px] uppercase tracking-[0.2em] font-sans hidden md:inline" :class="step >= 2 ? 'text-black' : 'text-muted'">Andmed</span>
+                        <span class="text-[10px] uppercase tracking-[0.2em] font-sans hidden md:inline" :class="step >= 2 ? 'text-black' : 'text-muted'" x-text="lang === 'et' ? 'Andmed' : 'Details'">Andmed</span>
                     </div>
                     <div class="h-[1px] flex-1" :class="step >= 3 ? 'bg-black' : 'bg-[#E8E3DD]'"></div>
                     <div class="flex items-center gap-3">
                         <div :class="step >= 3 ? 'bg-black text-paper' : 'bg-[#E8E3DD] text-muted'" class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-serif">3</div>
-                        <span class="text-[10px] uppercase tracking-[0.2em] font-sans hidden md:inline" :class="step >= 3 ? 'text-black' : 'text-muted'">Maksmine</span>
+                        <span class="text-[10px] uppercase tracking-[0.2em] font-sans hidden md:inline" :class="step >= 3 ? 'text-black' : 'text-muted'" x-text="lang === 'et' ? 'Maksmine' : 'Payment'">Maksmine</span>
                     </div>
                 </div>
             </div>
@@ -590,8 +607,8 @@
             <div class="md:col-span-12 p-6 md:p-24" x-show="step === 1">
                 <div class="max-w-3xl mx-auto text-center">
                     <h2 class="font-serif text-3xl md:text-4xl font-light mb-4" x-text="lang === 'et' ? 'Vali kingitus' : 'Choose a gift'">Vali kingitus</h2>
-                    <p class="text-muted font-sans font-light mb-12">Vali ülevalt kingitus, mille soovid kinkida</p>
-                    <a href="#paketid" class="inline-block bg-black text-paper px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-all duration-500">Vaata kingitusi</a>
+                    <p class="text-muted font-sans font-light mb-12" x-text="lang === 'et' ? 'Vali ülevalt kingitus, mille soovid kinkida' : 'Select the gift you want to give above'">Vali ülevalt kingitus, mille soovid kinkida</p>
+                    <a href="#paketid" class="inline-block bg-black text-paper px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-all duration-500" x-text="lang === 'et' ? 'Vaata kingitusi' : 'View gifts'">Vaata kingitusi</a>
                 </div>
             </div>
 
@@ -604,34 +621,35 @@
                     <div class="bg-cream/50 p-6 mb-8 border border-[#E8E3DD]">
                         <div class="flex justify-between items-center">
                             <div>
-                                <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-1">Valitud kingitus</p>
+                                <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Valitud kingitus' : 'Selected gift'">Valitud kingitus</p>
                                 <p class="font-serif text-xl font-light" x-text="selectedGift || '-'"></p>
                             </div>
                             <div class="text-right" x-show="giftPrice > 0">
                                 <p class="font-serif text-2xl font-light">€<span x-text="giftPrice">0</span></p>
                             </div>
                         </div>
-                        <a href="#paketid" @click="step = 1" class="text-[10px] uppercase tracking-[0.2em] text-muted font-sans hover:text-black mt-4 inline-block transition-colors">Muuda kingitust</a>
+                        <a href="#paketid" @click="step = 1" class="text-[10px] uppercase tracking-[0.2em] text-muted font-sans hover:text-black mt-4 inline-block transition-colors" x-text="lang === 'et' ? 'Muuda kingitust' : 'Change gift'">Muuda kingitust</a>
                     </div>
 
-                    <form @submit.prevent="nextStep()" class="space-y-6">
+                    <form @submit.prevent="nextStep()" class="space-y-6" novalidate>
                         <div>
                             <h3 class="font-serif text-lg font-light mb-4" x-text="lang === 'et' ? 'Sinu andmed' : 'Your information'">Sinu andmed</h3>
                             <div class="space-y-6">
-                                <div class="border-b border-[#E8E3DD] pb-3">
-                                    <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2">Sinu nimi</label>
-                                    <input type="text" x-model="name" required class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" placeholder="Ees- ja perenimi">
+                                <div class="border-b pb-3" :class="nameError ? 'border-red-400' : 'border-[#E8E3DD]'">
+                                    <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Sinu nimi' : 'Your name'">Sinu nimi</label>
+                                    <input type="text" x-model="name" @input="nameError = false" class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" :placeholder="lang === 'et' ? 'Eesnimi ja perenimi' : 'First and last name'">
+                                    <p x-show="nameError" x-cloak class="mt-2 text-sm text-accent font-sans font-light" x-text="lang === 'et' ? 'Palun sisesta oma nimi' : 'Please enter your name'"></p>
                                 </div>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2">E-post</label>
-                                        <div class="border-b" :class="emailError ? 'border-red-400' : 'border-[#E8E3DD]'">
-                                            <input type="text" x-model="email" @blur="validateEmail()" @input="emailError = false" required class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" placeholder="sinu@email.ee">
+                                        <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'E-post' : 'Email'">E-post</label>
+                                        <div class="border-b pb-3" :class="emailError ? 'border-red-400' : 'border-[#E8E3DD]'">
+                                            <input type="email" x-model="email" @blur="validateEmail()" @input="emailError = false" class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" :placeholder="lang === 'et' ? 'sinu@email.com' : 'your@email.com'">
                                         </div>
-                                        <p x-show="emailError" x-cloak class="mt-2 text-sm text-red-600 font-sans font-light">Palun sisesta kehtiv e-posti aadress</p>
+                                        <p x-show="emailError" x-cloak class="mt-2 text-sm text-accent font-sans font-light" x-text="lang === 'et' ? 'Palun sisesta kehtiv e-posti aadress' : 'Please enter a valid email address'"></p>
                                     </div>
                                     <div class="border-b border-[#E8E3DD] pb-3">
-                                        <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2">Telefon</label>
+                                        <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Telefon (valikuline)' : 'Phone (optional)'">Telefon (valikuline)</label>
                                         <input type="tel" x-model="phone" class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" placeholder="+372 5xxx xxxx">
                                     </div>
                                 </div>
@@ -641,24 +659,26 @@
                         <div class="border-t border-[#E8E3DD] pt-6">
                             <h3 class="font-serif text-lg font-light mb-4" x-text="lang === 'et' ? 'Kingisaaja andmed' : 'Recipient information'">Kingisaaja andmed</h3>
                             <div class="space-y-6">
-                                <div class="border-b border-[#E8E3DD] pb-3">
-                                    <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2">Kingisaaja nimi</label>
-                                    <input type="text" x-model="recipient" required class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" placeholder="Kellele kinkida?">
+                                <div class="border-b pb-3" :class="recipientError ? 'border-red-400' : 'border-[#E8E3DD]'">
+                                    <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Kingisaaja nimi' : 'Recipient name'">Kingisaaja nimi</label>
+                                    <input type="text" x-model="recipient" @input="recipientError = false" class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" :placeholder="lang === 'et' ? 'Kellele kinkida?' : 'Who is it for?'">
+                                    <p x-show="recipientError" x-cloak class="mt-2 text-sm text-accent font-sans font-light" x-text="lang === 'et' ? 'Palun sisesta kingisaaja nimi' : 'Please enter recipient name'"></p>
+                                </div>
+                                <div class="border-b pb-3" :class="recipientEmailError ? 'border-red-400' : 'border-[#E8E3DD]'">
+                                    <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Kingisaaja e-post' : 'Recipient email'">Kingisaaja e-post</label>
+                                    <input type="email" x-model="recipientEmail" @blur="validateRecipientEmail()" @input="recipientEmailError = false" class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" :placeholder="lang === 'et' ? 'kingisaaja@email.com' : 'recipient@email.com'">
+                                    <p x-show="recipientEmailError" x-cloak class="mt-2 text-sm text-accent font-sans font-light" x-text="lang === 'et' ? 'Palun sisesta kehtiv e-posti aadress' : 'Please enter a valid email address'"></p>
                                 </div>
                                 <div class="border-b border-[#E8E3DD] pb-3">
-                                    <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2">Kingisaaja e-post</label>
-                                    <input type="email" x-model="recipientEmail" required class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" placeholder="kingisaaja@email.ee">
-                                </div>
-                                <div class="border-b border-[#E8E3DD] pb-3">
-                                    <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2">Sõnum kaardile (soovi korral)</label>
-                                    <textarea x-model="message" rows="3" class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent resize-none" placeholder="Mida soovid kaardile kirjutada?"></textarea>
+                                    <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Sõnum kaardile (soovi korral)' : 'Message on card (optional)'">Sõnum kaardile (soovi korral)</label>
+                                    <textarea x-model="message" rows="3" class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent resize-none" :placeholder="lang === 'et' ? 'Mida soovid kaardile kirjutada?' : 'What would you like written on the card?'"></textarea>
                                 </div>
                             </div>
                         </div>
 
                         <div class="flex gap-4 pt-4">
-                            <button type="button" @click="prevStep()" class="px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans border border-black hover:bg-black hover:text-paper transition-all duration-500">Tagasi</button>
-                            <button type="submit" class="flex-1 bg-black text-paper px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-all duration-500">Järgmine samm</button>
+                            <button type="button" @click="prevStep()" class="px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans border border-black hover:bg-black hover:text-paper transition-all duration-500" x-text="lang === 'et' ? 'Tagasi' : 'Back'">Tagasi</button>
+                            <button type="submit" class="flex-1 bg-black text-paper px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-all duration-500" x-text="lang === 'et' ? 'Järgmine samm' : 'Next step'">Järgmine samm</button>
                         </div>
                     </form>
                 </div>
@@ -667,29 +687,32 @@
             <!-- Step 3 -->
             <div class="md:col-span-12 p-6 md:p-24" x-show="step === 3">
                 <div class="max-w-2xl mx-auto">
-                    <h2 class="font-serif text-3xl md:text-4xl font-light mb-2">Maksmine</h2>
-                    <p class="text-muted font-sans font-light mb-8">Viimane samm</p>
+                    <h2 class="font-serif text-3xl md:text-4xl font-light mb-2" x-text="lang === 'et' ? 'Maksmine' : 'Payment'">Maksmine</h2>
+                    <p class="text-muted font-sans font-light mb-8" x-text="lang === 'et' ? 'Viimane samm' : 'Last step'">Viimane samm</p>
 
                     <div class="bg-cream/50 border border-[#E8E3DD] p-8 mb-6">
                         <div class="mb-6">
-                            <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2">Kingitus</p>
+                            <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Kingitus' : 'Gift'">Kingitus</p>
                             <p class="font-serif text-xl font-light mb-1" x-text="selectedGift"></p>
-                            <p class="text-sm text-muted font-sans font-light mb-4" x-text="'Kingisaaja: ' + recipient"></p>
-                            <p class="text-[10px] text-muted/50 font-sans">Saadetakse e-postiga</p>
+                            <p class="text-sm text-muted font-sans font-light mb-4" x-text="(lang === 'et' ? 'Kingisaaja: ' : 'Recipient: ') + recipient"></p>
+                            <p class="text-[10px] text-muted/50 font-sans" x-text="lang === 'et' ? 'Saadetakse e-postiga' : 'Delivered by email'">Saadetakse e-postiga</p>
                         </div>
                         <div class="border-t border-[#E8E3DD] pt-6 flex justify-between items-center">
-                            <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans">Kokku</span>
+                            <div>
+                                <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block" x-text="lang === 'et' ? 'Kokku' : 'Total'">Kokku</span>
+                                <span class="text-[9px] text-muted/50 font-sans" x-text="lang === 'et' ? 'sis. käibemaks 20%' : 'incl. VAT 20%'">sis. käibemaks 20%</span>
+                            </div>
                             <span class="font-serif text-4xl font-light">€<span x-text="giftPrice">0</span></span>
                         </div>
                     </div>
 
                     <form @submit.prevent="startPayment()" class="space-y-6">
                         <div class="bg-cream/50 p-6 text-sm text-muted font-sans font-light">
-                            <p class="mb-3 font-medium text-black">Pärast makset:</p>
+                            <p class="mb-3 font-medium text-black" x-text="lang === 'et' ? 'Pärast makset:' : 'After payment:'">Pärast makset:</p>
                             <ul class="space-y-2 list-none">
-                                <li class="flex items-start gap-2"><span class="text-accent mt-0.5">—</span> Saad kinnituse e-postile</li>
-                                <li class="flex items-start gap-2"><span class="text-accent mt-0.5">—</span> Kingituskaart saadetakse kohe kingisaaja e-postile</li>
-                                <li class="flex items-start gap-2"><span class="text-accent mt-0.5">—</span> Kingisaaja saab kutse kasutada kingitust</li>
+                                <li class="flex items-start gap-2"><span class="text-accent mt-0.5">—</span> <span x-text="lang === 'et' ? 'Saad kinnituse e-postile' : 'You\'ll receive confirmation by email'">Saad kinnituse e-postile</span></li>
+                                <li class="flex items-start gap-2"><span class="text-accent mt-0.5">—</span> <span x-text="lang === 'et' ? 'Kingituskaart saadetakse kohe kingisaaja e-postile' : 'Gift card sent instantly to recipient\'s email'">Kingituskaart saadetakse kohe kingisaaja e-postile</span></li>
+                                <li class="flex items-start gap-2"><span class="text-accent mt-0.5">—</span> <span x-text="lang === 'et' ? 'Kingisaaja saab kutse kasutada kingitust' : 'Recipient receives invitation to use the gift'">Kingisaaja saab kutse kasutada kingitust</span></li>
                             </ul>
                         </div>
 
@@ -698,10 +721,10 @@
                         </div>
 
                         <div class="flex gap-4 pt-4">
-                            <button type="button" @click="prevStep()" :disabled="isProcessing" class="px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans border border-black hover:bg-black hover:text-paper transition-all duration-500 disabled:opacity-50">Tagasi</button>
+                            <button type="button" @click="prevStep()" :disabled="isProcessing" class="px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans border border-black hover:bg-black hover:text-paper transition-all duration-500 disabled:opacity-50" x-text="lang === 'et' ? 'Tagasi' : 'Back'">Tagasi</button>
                             <button type="submit" :disabled="isProcessing" class="flex-1 bg-black text-paper px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-all duration-500 disabled:opacity-50 flex items-center justify-center gap-2">
                                 <span x-show="isProcessing" class="w-4 h-4 border-2 border-paper border-t-transparent rounded-full animate-spin"></span>
-                                <span x-text="isProcessing ? 'Töötleme...' : 'Maksa nüüd'">Maksa nüüd</span>
+                                <span x-text="isProcessing ? (lang === 'et' ? 'Töötleme...' : 'Processing...') : (lang === 'et' ? 'Maksa nüüd' : 'Pay now')">Maksa nüüd</span>
                             </button>
                         </div>
                     </form>
@@ -714,26 +737,66 @@
             <div class="grid md:grid-cols-12 py-16 px-6 md:px-12">
                 <div class="md:col-span-4 mb-8 md:mb-0">
                     <a href="index.html" class="font-serif text-2xl tracking-[0.08em] font-light block mb-4">SUKODA</a>
-                    <p class="text-muted text-xs font-sans font-light leading-relaxed max-w-xs">Sinu kodu, meie hoole all.<br>Tallinn, Eesti.</p>
+                    <p class="text-muted text-xs font-sans font-light leading-relaxed max-w-xs">
+                        <span x-show="lang === 'et'">Sinu kodu, meie hoole all.<br>Tallinn, Eesti.</span>
+                        <span x-show="lang === 'en'" x-cloak>Your home, our care.<br>Tallinn, Estonia.</span>
+                    </p>
                 </div>
                 <div class="md:col-span-4 mb-8 md:mb-0">
-                    <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-4">Lingid</p>
+                    <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-4">
+                        <span x-show="lang === 'et'">Lingid</span>
+                        <span x-show="lang === 'en'" x-cloak>Links</span>
+                    </p>
                     <div class="flex flex-col gap-3 text-xs text-muted/70 font-sans font-light">
-                        <a href="tingimused.html" class="hover:text-paper transition-colors">Tingimused</a>
-                        <a href="privaatsus.html" class="hover:text-paper transition-colors">Privaatsuspoliitika</a>
+                        <a href="tingimused.html" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Tingimused' : 'Terms'">Tingimused</a>
+                        <a href="privaatsus.html" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Privaatsuspoliitika' : 'Privacy'">Privaatsuspoliitika</a>
                     </div>
                 </div>
                 <div class="md:col-span-4">
-                    <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-4">Kontakt</p>
+                    <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-4">
+                        <span x-show="lang === 'et'">Kontakt</span>
+                        <span x-show="lang === 'en'" x-cloak>Contact</span>
+                    </p>
                     <a href="mailto:tere@sukoda.ee" class="text-xs font-sans font-light text-muted/70 hover:text-paper transition-colors block mb-2">tere@sukoda.ee</a>
                     <a href="mailto:partner@sukoda.ee" class="text-xs font-sans font-light text-muted/70 hover:text-paper transition-colors block">partner@sukoda.ee</a>
                 </div>
             </div>
             <div class="border-t border-gray-800 py-6 px-6 md:px-12">
-                <p class="text-[10px] text-muted/40 font-sans text-center tracking-wide">© 2026 SUKODA. Kõik õigused kaitstud.</p>
+                <p class="text-[10px] text-muted/40 font-sans text-center tracking-wide">
+                    <span x-show="lang === 'et'">© 2026 Epic Ship OÜ · Registrikood 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
+                    <span x-show="lang === 'en'" x-cloak>© 2026 Epic Ship OÜ · Reg. code 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
+                </p>
             </div>
         </footer>
 
+    </div>
+
+    <!-- Cookie Consent -->
+    <div x-data="{ show: !(document.cookie.includes('sukoda_consent=')) }" x-show="show" x-cloak
+         class="fixed bottom-0 left-0 right-0 z-[9999] bg-black/95 backdrop-blur-sm text-paper p-4 md:p-6"
+         x-transition:enter="transition ease-out duration-500"
+         x-transition:enter-start="translate-y-full opacity-0"
+         x-transition:enter-end="translate-y-0 opacity-100">
+        <div class="max-w-[1440px] mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="flex-1">
+                <p class="text-sm font-sans font-light" x-show="lang === 'et'">
+                    Kasutame küpsiseid veebilehe kasutuskogemuse parendamiseks ja turunduse tõhususe mõõtmiseks.
+                    <a href="privaatsus.html" class="text-accent hover:underline">Loe lähemalt</a>
+                </p>
+                <p class="text-sm font-sans font-light" x-show="lang === 'en'" x-cloak>
+                    We use cookies to improve your experience and measure marketing effectiveness.
+                    <a href="privaatsus.html" class="text-accent hover:underline">Learn more</a>
+                </p>
+            </div>
+            <div class="flex gap-3 shrink-0">
+                <button @click="SUKODA_TRACKING.declineCookies(); show = false"
+                        class="px-4 py-2 text-[10px] uppercase tracking-[0.2em] font-sans text-muted hover:text-paper transition-colors border border-muted/30 hover:border-paper/50"
+                        x-text="lang === 'et' ? 'Keeldu' : 'Decline'">Keeldu</button>
+                <button @click="SUKODA_TRACKING.acceptCookies(); show = false"
+                        class="px-6 py-2 text-[10px] uppercase tracking-[0.2em] font-sans bg-accent hover:bg-accent/80 text-paper transition-colors"
+                        x-text="lang === 'et' ? 'Nõustun' : 'Accept'">Nõustun</button>
+            </div>
+        </div>
     </div>
 
     <!-- Scripts -->

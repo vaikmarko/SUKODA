@@ -7,7 +7,12 @@
       "**/node_modules/**",
       "**/*.md",
       "**/*.txt",
-      "functions/**"
+      "functions/**",
+      "test-payment.html",
+      "scripts/**",
+      "stripe-config.js",
+      "firestore.rules",
+      "firestore.indexes.json"
     ],
     "rewrites": [
       {

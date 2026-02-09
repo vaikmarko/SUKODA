@@ -33,8 +33,14 @@ async function createCheckout(orderData) {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to create checkout session');
+      let errorMessage = 'Failed to create checkout session';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      } catch (e) {
+        // Response is not JSON
+      }
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();

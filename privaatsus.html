@@ -61,7 +61,7 @@
         }
     </style>
 </head>
-<body class="antialiased" x-data="{ lang: 'et' }">
+<body class="antialiased" x-data="{ lang: localStorage.getItem('sukoda_lang') || 'et' }" x-init="$watch('lang', val => localStorage.setItem('sukoda_lang', val))">
 
     <div class="max-w-[1440px] mx-auto bg-paper min-h-screen border-x border-[#E8E3DD]">
         
@@ -97,8 +97,8 @@
 
             <div x-show="mobileMenu" x-cloak class="md:hidden bg-paper border-t border-[#E8E3DD]">
                 <div class="flex flex-col px-4 py-8 space-y-5 text-[11px] uppercase tracking-[0.2em] font-sans font-medium text-muted">
-                    <a href="kingitus.html" class="py-2 hover:text-black">Kingitus</a>
-                    <a href="partnerlus.html" class="py-2 hover:text-black">Koostöö</a>
+                    <a href="kingitus.html" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Kingitus' : 'Gift'">Kingitus</a>
+                    <a href="partnerlus.html" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Koostöö' : 'Partnership'">Koostöö</a>
                 </div>
             </div>
         </nav>
@@ -111,57 +111,95 @@
             <div class="space-y-10 text-muted font-sans font-light leading-relaxed text-sm">
                 
                 <div>
-                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '1. Andmete kogumine' : '1. Data Collection'">1. Andmete kogumine</h2>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '1. Vastutav töötleja' : '1. Data Controller'">1. Vastutav töötleja</h2>
+                    <div x-show="lang === 'et'">
+                        <p class="mb-1"><strong class="text-black font-normal">Epic Ship OÜ</strong> (kaubamärk SUKODA)</p>
+                        <p class="mb-1">Registrikood: 14713548</p>
+                        <p class="mb-1">Aadress: Kiikri tn 6/2, Tallinn 10159, Eesti</p>
+                        <p>E-post: <a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a></p>
+                    </div>
+                    <div x-show="lang === 'en'" x-cloak>
+                        <p class="mb-1"><strong class="text-black font-normal">Epic Ship OÜ</strong> (brand SUKODA)</p>
+                        <p class="mb-1">Registration code: 14713548</p>
+                        <p class="mb-1">Address: Kiikri tn 6/2, Tallinn 10159, Estonia</p>
+                        <p>Email: <a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a></p>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '2. Andmete kogumine' : '2. Data Collection'">2. Andmete kogumine</h2>
                     <p x-show="lang === 'et'">Kogume järgmisi isikuandmeid: nimi, e-posti aadress, telefoninumber, aadress. Neid andmeid kasutame teenuse osutamiseks, arvelduseks ja kommunikatsiooniks.</p>
                     <p x-show="lang === 'en'" x-cloak>We collect the following personal data: name, email address, phone number, address. We use this data to provide services, billing, and communication.</p>
                 </div>
 
                 <div>
-                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '2. Andmete kasutamine' : '2. Data Usage'">2. Andmete kasutamine</h2>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '3. Andmete kasutamine' : '3. Data Usage'">3. Andmete kasutamine</h2>
                     <p x-show="lang === 'et'">Teie isikuandmeid kasutame ainult teenuse osutamiseks ja seotud eesmärkidel: külastuste planeerimiseks, arvelduseks, klienditeeninduseks ja vajadusel teavitamiseks. Me ei müü ega jaga teie andmeid kolmandatele osapooltele.</p>
                     <p x-show="lang === 'en'" x-cloak>We use your personal data only for service provision and related purposes: scheduling visits, billing, customer service, and necessary notifications. We do not sell or share your data with third parties.</p>
                 </div>
 
                 <div>
-                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '3. Andmete säilitamine' : '3. Data Retention'">3. Andmete säilitamine</h2>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '4. Andmete säilitamine' : '4. Data Retention'">4. Andmete säilitamine</h2>
                     <p x-show="lang === 'et'">Säilitame teie andmeid seni, kuni teil on aktiivne tellimus, ja pärast tellimuse lõppemist seadusega sätestatud aja jooksul. Arveldusandmeid säilitame seadusega nõutud perioodi vältel.</p>
                     <p x-show="lang === 'en'" x-cloak>We retain your data for as long as you have an active order, and after the order ends, for the legally required period. We retain billing data for the legally required period.</p>
                 </div>
 
                 <div>
-                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '4. Teie õigused' : '4. Your Rights'">4. Teie õigused</h2>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '5. Teie õigused' : '5. Your Rights'">5. Teie õigused</h2>
                     <p x-show="lang === 'et'">Teil on õigus: vaadata oma isikuandmeid, nõuda andmete parandamist või kustutamist, piirata andmete töötlemist, esitada kaebus Andmekaitse Inspektsioonile. Nende õiguste kasutamiseks kirjutage meile: <a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a></p>
                     <p x-show="lang === 'en'" x-cloak>You have the right to: view your personal data, request correction or deletion of data, limit data processing, file a complaint with the Data Protection Inspectorate. To exercise these rights, please write to us: <a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a></p>
                 </div>
 
                 <div>
-                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '5. Küpsised' : '5. Cookies'">5. Küpsised</h2>
-                    <p x-show="lang === 'et'">Meie veebileht kasutab vajalikke küpsiseid teenuse toimimiseks. Me ei kasuta jälgimiseks mõeldud küpsiseid ega jaga teie andmeid reklaamivõrgustikele.</p>
-                    <p x-show="lang === 'en'" x-cloak>Our website uses necessary cookies for the service to function. We do not use tracking cookies or share your data with advertising networks.</p>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '6. Küpsised ja jälgimine' : '6. Cookies and Tracking'">6. Küpsised ja jälgimine</h2>
+                    <div x-show="lang === 'et'">
+                        <p class="mb-3">Meie veebileht kasutab järgmisi küpsiseid:</p>
+                        <ul class="list-disc list-inside space-y-2 mb-3">
+                            <li><strong class="text-black font-normal">Vajalikud küpsised</strong> — keele-eelistuse ja küpsiste nõusoleku salvestamiseks (localStorage, sukoda_consent).</li>
+                            <li><strong class="text-black font-normal">Analüütika- ja turundusküpsised</strong> — Meta Pixel (Facebook), mida kasutame turunduskampaaniate tõhususe mõõtmiseks. Need küpsised laetakse ainult teie selgesõnalise nõusoleku korral.</li>
+                        </ul>
+                        <p class="mb-3">Teil on võimalus küpsiseid keelata veebilehe esmakordsel külastamisel kuvatava küpsiste bänneri kaudu. Samuti saate küpsised oma brauseris igal ajal kustutada.</p>
+                        <p>Meta Pixeli privaatsuspoliitikaga saate tutvuda: <a href="https://www.facebook.com/privacy/policy/" target="_blank" rel="noopener" class="text-black border-b border-accent hover:text-accent transition-colors">facebook.com/privacy/policy</a></p>
+                    </div>
+                    <div x-show="lang === 'en'" x-cloak>
+                        <p class="mb-3">Our website uses the following cookies:</p>
+                        <ul class="list-disc list-inside space-y-2 mb-3">
+                            <li><strong class="text-black font-normal">Necessary cookies</strong> — for saving language preference and cookie consent (localStorage, sukoda_consent).</li>
+                            <li><strong class="text-black font-normal">Analytics and marketing cookies</strong> — Meta Pixel (Facebook), used to measure the effectiveness of marketing campaigns. These cookies are only loaded with your explicit consent.</li>
+                        </ul>
+                        <p class="mb-3">You can decline cookies via the cookie banner displayed on your first visit. You can also delete cookies in your browser at any time.</p>
+                        <p>You can view Meta Pixel's privacy policy: <a href="https://www.facebook.com/privacy/policy/" target="_blank" rel="noopener" class="text-black border-b border-accent hover:text-accent transition-colors">facebook.com/privacy/policy</a></p>
+                    </div>
                 </div>
 
                 <div>
-                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '6. Andmete turvalisus' : '6. Data Security'">6. Andmete turvalisus</h2>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '7. Andmete turvalisus' : '7. Data Security'">7. Andmete turvalisus</h2>
                     <p x-show="lang === 'et'">Teie andmeid hoitakse turvaliselt. Kasutame turvalisi andmebaase ja krüpteeritud ühendusi. Juurdepääs andmetele on piiratud ainult nendele töötajatele ja partneritele, kes vajavad neid teenuse osutamiseks.</p>
                     <p x-show="lang === 'en'" x-cloak>Your data is stored securely. We use secure databases and encrypted connections. Access to data is limited only to those employees and partners who need it to provide the service.</p>
                 </div>
 
                 <div>
-                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '7. Kolmandad osapooled' : '7. Third Parties'">7. Kolmandad osapooled</h2>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '8. Kolmandad osapooled' : '8. Third Parties'">8. Kolmandad osapooled</h2>
                     <p x-show="lang === 'et'">Kasutame teenuseid, mis võimaldavad meil teenust osutada: makseprotsessor (Stripe), e-posti teenused. Need teenused töötlevad andmeid vastavalt oma privaatsuspoliitikale ja GDPR-ile. Meie partnerid (koristajad) saavad ligipääsu ainult vajalikele andmetele (aadress, kontaktid) ja kohustuvad konfidentsiaalsust säilitama.</p>
                     <p x-show="lang === 'en'" x-cloak>We use services that enable us to provide the service: payment processor (Stripe), email services. These services process data according to their privacy policies and GDPR. Our partners (cleaners) only have access to necessary data (address, contacts) and are bound by confidentiality.</p>
                 </div>
 
                 <div>
-                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '8. Muudatused poliitikas' : '8. Changes to Policy'">8. Muudatused poliitikas</h2>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '9. Muudatused poliitikas' : '9. Changes to Policy'">9. Muudatused poliitikas</h2>
                     <p x-show="lang === 'et'">Jätame endale õiguse muuta seda privaatsuspoliitikat. Olulistest muudatustest teavitame kliente e-posti teel.</p>
                     <p x-show="lang === 'en'" x-cloak>We reserve the right to change this privacy policy. We will notify clients of significant changes by email.</p>
                 </div>
 
                 <div>
-                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '9. Kontakt' : '9. Contact'">9. Kontakt</h2>
-                    <p x-show="lang === 'et'">Küsimuste korral privaatsuspoliitika kohta võta meiega ühendust: <a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a></p>
-                    <p x-show="lang === 'en'" x-cloak>For questions about the privacy policy, please contact us: <a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a></p>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '10. Kontakt' : '10. Contact'">10. Kontakt</h2>
+                    <div x-show="lang === 'et'">
+                        <p class="mb-3">Küsimuste korral privaatsuspoliitika kohta võta meiega ühendust: <a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a></p>
+                        <p>Epic Ship OÜ · Registrikood 14713548 · Kiikri tn 6/2, Tallinn 10159</p>
+                    </div>
+                    <div x-show="lang === 'en'" x-cloak>
+                        <p class="mb-3">For questions about the privacy policy, please contact us: <a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a></p>
+                        <p>Epic Ship OÜ · Registration code 14713548 · Kiikri tn 6/2, Tallinn 10159</p>
+                    </div>
                 </div>
 
             </div>
@@ -201,10 +239,41 @@
                 </div>
             </div>
             <div class="border-t border-gray-800 py-6 px-6 md:px-12">
-                <p class="text-[10px] text-muted/40 font-sans text-center tracking-wide">© 2026 SUKODA. Kõik õigused kaitstud.</p>
+                <p class="text-[10px] text-muted/40 font-sans text-center tracking-wide">
+                    <span x-show="lang === 'et'">© 2026 Epic Ship OÜ · Registrikood 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
+                    <span x-show="lang === 'en'" x-cloak>© 2026 Epic Ship OÜ · Reg. code 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
+                </p>
             </div>
         </footer>
 
+    </div>
+
+    <!-- Cookie Consent -->
+    <div x-data="{ show: !(document.cookie.includes('sukoda_consent=')) }" x-show="show" x-cloak
+         class="fixed bottom-0 left-0 right-0 z-[9999] bg-black/95 backdrop-blur-sm text-paper p-4 md:p-6"
+         x-transition:enter="transition ease-out duration-500"
+         x-transition:enter-start="translate-y-full opacity-0"
+         x-transition:enter-end="translate-y-0 opacity-100">
+        <div class="max-w-[1440px] mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="flex-1">
+                <p class="text-sm font-sans font-light" x-show="lang === 'et'">
+                    Kasutame küpsiseid veebilehe kasutuskogemuse parendamiseks ja turunduse tõhususe mõõtmiseks.
+                    <a href="privaatsus.html" class="text-accent hover:underline">Loe lähemalt</a>
+                </p>
+                <p class="text-sm font-sans font-light" x-show="lang === 'en'" x-cloak>
+                    We use cookies to improve your experience and measure marketing effectiveness.
+                    <a href="privaatsus.html" class="text-accent hover:underline">Learn more</a>
+                </p>
+            </div>
+            <div class="flex gap-3 shrink-0">
+                <button @click="SUKODA_TRACKING.declineCookies(); show = false"
+                        class="px-4 py-2 text-[10px] uppercase tracking-[0.2em] font-sans text-muted hover:text-paper transition-colors border border-muted/30 hover:border-paper/50"
+                        x-text="lang === 'et' ? 'Keeldu' : 'Decline'">Keeldu</button>
+                <button @click="SUKODA_TRACKING.acceptCookies(); show = false"
+                        class="px-6 py-2 text-[10px] uppercase tracking-[0.2em] font-sans bg-accent hover:bg-accent/80 text-paper transition-colors"
+                        x-text="lang === 'et' ? 'Nõustun' : 'Accept'">Nõustun</button>
+            </div>
+        </div>
     </div>
 
 </body>

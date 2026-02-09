@@ -1,27 +1,43 @@
 /**
  * SUKODA Tracking & Analytics
  * Meta Pixel + UTM parameter capture + Conversion events
- * 
- * SETUP: Replace META_PIXEL_ID with your actual Pixel ID from Meta Business Suite
- * Go to: https://business.facebook.com/events_manager → Pixel → Settings → Pixel ID
+ * GDPR-compliant: Pixel loads ONLY after user consent
  */
 
 (function() {
     'use strict';
 
     // ============================================================
-    // CONFIGURATION — change this to your actual Meta Pixel ID
+    // CONFIGURATION
     // ============================================================
     const META_PIXEL_ID = '2178046653021231';
-    // ============================================================
-
-    // Skip if no real Pixel ID configured
     const pixelEnabled = META_PIXEL_ID && META_PIXEL_ID !== 'SINU_PIXEL_ID_SIIA';
 
-    // ----------------------------------------------------------
-    // 1. META PIXEL BASE CODE
-    // ----------------------------------------------------------
-    if (pixelEnabled) {
+    // ============================================================
+    // CONSENT MANAGEMENT
+    // ============================================================
+    function hasConsent() {
+        return document.cookie.split(';').some(function(c) {
+            return c.trim().startsWith('sukoda_consent=accepted');
+        });
+    }
+
+    function hasDeclined() {
+        return document.cookie.split(';').some(function(c) {
+            return c.trim().startsWith('sukoda_consent=declined');
+        });
+    }
+
+    function hasResponded() {
+        return hasConsent() || hasDeclined();
+    }
+
+    // ============================================================
+    // META PIXEL (loads only with consent)
+    // ============================================================
+    function initPixel() {
+        if (!pixelEnabled || window._sukodaPixelInitialized) return;
+
         !function(f,b,e,v,n,t,s)
         {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
         n.callMethod.apply(n,arguments):n.queue.push(arguments)};
@@ -33,45 +49,62 @@
 
         fbq('init', META_PIXEL_ID);
         fbq('track', 'PageView');
+        window._sukodaPixelInitialized = true;
     }
 
-    // ----------------------------------------------------------
-    // 2. UTM PARAMETER CAPTURE
-    // ----------------------------------------------------------
-    function captureUTM() {
-        const params = new URLSearchParams(window.location.search);
-        const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
-        const utm = {};
-        let hasUTM = false;
+    // Auto-initialize if consent already given
+    if (hasConsent()) {
+        initPixel();
+    }
 
-        utmKeys.forEach(key => {
-            const val = params.get(key);
+    // ============================================================
+    // UTM PARAMETER CAPTURE (no cookies, sessionStorage only)
+    // ============================================================
+    function captureUTM() {
+        var params = new URLSearchParams(window.location.search);
+        var utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+        var utm = {};
+        var hasUTM = false;
+
+        utmKeys.forEach(function(key) {
+            var val = params.get(key);
             if (val) {
                 utm[key] = val;
                 hasUTM = true;
             }
         });
 
-        // Also capture fbclid (Facebook Click ID) for better attribution
-        const fbclid = params.get('fbclid');
+        var fbclid = params.get('fbclid');
         if (fbclid) {
             utm.fbclid = fbclid;
             hasUTM = true;
         }
 
-        // Store in sessionStorage (persists across page navigation within session)
         if (hasUTM) {
             sessionStorage.setItem('sukoda_utm', JSON.stringify(utm));
         }
 
-        // Also store landing page
         if (!sessionStorage.getItem('sukoda_landing_page')) {
             sessionStorage.setItem('sukoda_landing_page', window.location.pathname + window.location.search);
         }
     }
 
-    // Get stored UTM data (for use in checkout)
+    // ============================================================
+    // PUBLIC API
+    // ============================================================
     window.SUKODA_TRACKING = {
+        // Consent
+        acceptCookies: function() {
+            document.cookie = 'sukoda_consent=accepted; path=/; max-age=' + (365 * 24 * 60 * 60) + '; SameSite=Lax';
+            initPixel();
+        },
+        declineCookies: function() {
+            document.cookie = 'sukoda_consent=declined; path=/; max-age=' + (365 * 24 * 60 * 60) + '; SameSite=Lax';
+        },
+        hasConsent: hasConsent,
+        hasResponded: hasResponded,
+
+        // UTM
         getUTM: function() {
             try {
                 return JSON.parse(sessionStorage.getItem('sukoda_utm')) || {};
@@ -82,11 +115,10 @@
         getLandingPage: function() {
             return sessionStorage.getItem('sukoda_landing_page') || '';
         },
-        // ----------------------------------------------------------
-        // 3. CONVERSION EVENTS
-        // ----------------------------------------------------------
+
+        // Conversion events (only fire with consent)
         trackViewContent: function(data) {
-            if (!pixelEnabled) return;
+            if (!pixelEnabled || !hasConsent()) return;
             fbq('track', 'ViewContent', {
                 content_name: data.name || '',
                 content_category: data.category || 'cleaning',
@@ -96,7 +128,7 @@
             });
         },
         trackInitiateCheckout: function(data) {
-            if (!pixelEnabled) return;
+            if (!pixelEnabled || !hasConsent()) return;
             fbq('track', 'InitiateCheckout', {
                 content_name: data.name || '',
                 content_category: data.category || 'cleaning',
@@ -106,7 +138,7 @@
             });
         },
         trackPurchase: function(data) {
-            if (!pixelEnabled) return;
+            if (!pixelEnabled || !hasConsent()) return;
             fbq('track', 'Purchase', {
                 content_name: data.name || '',
                 content_category: data.category || 'cleaning',
@@ -116,19 +148,17 @@
             });
         },
         trackLead: function(data) {
-            if (!pixelEnabled) return;
+            if (!pixelEnabled || !hasConsent()) return;
             fbq('track', 'Lead', {
                 content_name: data.name || '',
                 content_category: data.category || '',
             });
         },
         trackContact: function() {
-            if (!pixelEnabled) return;
+            if (!pixelEnabled || !hasConsent()) return;
             fbq('track', 'Contact');
         },
     };
 
-    // Run UTM capture on every page
     captureUTM();
-
 })();
