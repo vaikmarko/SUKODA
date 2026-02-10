@@ -30,6 +30,9 @@ const resend = resendApiKey ? new Resend(resendApiKey) : null;
 // Notification email
 const NOTIFICATION_EMAIL = process.env.NOTIFICATION_EMAIL || functions.config().notification?.email || 'tere@sukoda.ee';
 
+// Minimum booking lead time — customers must book at least 48h in advance
+const MIN_BOOKING_LEAD_HOURS = 48;
+
 // ============================================================
 // I18N — Email translations (ET / EN)
 // ============================================================
@@ -1120,6 +1123,127 @@ function generateAdminEmail(order, orderId, packageName, sizeName, isGift) {
 }
 
 /**
+ * Generate admin notification email for new BOOKING (not order — this is when someone actually picks a time)
+ * Always in Estonian since admin is Estonian-speaking.
+ */
+function generateAdminBookingEmail({ customerName, customerEmail, customerPhone, address, scheduledAt, size, type, orderId, giftCode, additionalInfo }) {
+  const dt = new Date(scheduledAt);
+  const dateStr = dt.toLocaleDateString('et-EE', {
+    timeZone: 'Europe/Tallinn',
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+  const timeStr = dt.toLocaleTimeString('et-EE', {
+    timeZone: 'Europe/Tallinn',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+  const sizeName = SIZE_NAMES[size] || size;
+  const typeLabel = type === 'gift' ? 'Kinkekaart' : 'Püsitellimus';
+
+  return `
+    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h1 style="color: #2C2824; border-bottom: 2px solid #B8976A; padding-bottom: 10px; font-weight: 300; font-family: Georgia, 'Times New Roman', serif;">
+        🗓️ Uus broneering
+      </h1>
+
+      <div style="background: #FAF8F5; padding: 20px; margin: 20px 0; border-left: 3px solid #B8976A;">
+        <p style="margin: 0 0 8px; font-size: 22px; color: #2C2824; font-family: Georgia, serif;">
+          ${dateStr}
+        </p>
+        <p style="margin: 0; font-size: 28px; color: #B8976A; font-weight: bold;">
+          kell ${timeStr}
+        </p>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+        <tr style="background: #FAF8F5;">
+          <td style="padding: 12px; border: 1px solid #E8E3DD;"><strong>Klient</strong></td>
+          <td style="padding: 12px; border: 1px solid #E8E3DD;">${customerName || '-'}</td>
+        </tr>
+        <tr>
+          <td style="padding: 12px; border: 1px solid #E8E3DD;"><strong>E-post</strong></td>
+          <td style="padding: 12px; border: 1px solid #E8E3DD;">${customerEmail || '-'}</td>
+        </tr>
+        <tr style="background: #FAF8F5;">
+          <td style="padding: 12px; border: 1px solid #E8E3DD;"><strong>Telefon</strong></td>
+          <td style="padding: 12px; border: 1px solid #E8E3DD;">${customerPhone || '-'}</td>
+        </tr>
+        <tr>
+          <td style="padding: 12px; border: 1px solid #E8E3DD;"><strong>Aadress</strong></td>
+          <td style="padding: 12px; border: 1px solid #E8E3DD;">${address || '-'}</td>
+        </tr>
+        <tr style="background: #FAF8F5;">
+          <td style="padding: 12px; border: 1px solid #E8E3DD;"><strong>Suurus</strong></td>
+          <td style="padding: 12px; border: 1px solid #E8E3DD;">${sizeName}</td>
+        </tr>
+        <tr>
+          <td style="padding: 12px; border: 1px solid #E8E3DD;"><strong>Tüüp</strong></td>
+          <td style="padding: 12px; border: 1px solid #E8E3DD;">${typeLabel}</td>
+        </tr>
+        ${giftCode ? `
+        <tr style="background: #FAF8F5;">
+          <td style="padding: 12px; border: 1px solid #E8E3DD;"><strong>Kinkekaardi kood</strong></td>
+          <td style="padding: 12px; border: 1px solid #E8E3DD; font-family: monospace; color: #B8976A;">${giftCode}</td>
+        </tr>
+        ` : ''}
+        ${additionalInfo ? `
+        <tr>
+          <td style="padding: 12px; border: 1px solid #E8E3DD;"><strong>Lisainfo</strong></td>
+          <td style="padding: 12px; border: 1px solid #E8E3DD;">${additionalInfo}</td>
+        </tr>
+        ` : ''}
+      </table>
+
+      ${orderId ? `
+      <p style="margin-top: 20px; padding: 15px; background: #FAF8F5; border-left: 2px solid #B8976A;">
+        <a href="https://console.firebase.google.com/project/sukoda-77b52/firestore/data/~2Forders~2F${orderId}" 
+           style="color: #2C2824;">Vaata tellimust Firebase'is →</a>
+      </p>
+      ` : ''}
+
+      <p style="color: #8A8578; font-size: 12px; margin-top: 30px;">
+        ⚡ Korraldage koristaja: ${dateStr} kell ${timeStr} · ${address || 'aadress puudub'} · ${sizeName}
+      </p>
+    </div>
+  `;
+}
+
+/**
+ * Send admin notification about a new booking (reusable helper)
+ */
+async function sendAdminBookingNotification({ customerName, customerEmail, customerPhone, address, scheduledAt, size, type, orderId, giftCode, additionalInfo }) {
+  try {
+    const dt = new Date(scheduledAt);
+    const dateStr = dt.toLocaleDateString('et-EE', {
+      timeZone: 'Europe/Tallinn',
+      day: 'numeric',
+      month: 'short',
+    });
+    const timeStr = dt.toLocaleTimeString('et-EE', {
+      timeZone: 'Europe/Tallinn',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    const typeLabel = type === 'gift' ? 'kinkekaart' : 'tellimus';
+
+    await sendEmail({
+      to: NOTIFICATION_EMAIL,
+      subject: `SUKODA | 🗓️ Uus broneering: ${customerName || 'Klient'} · ${dateStr} kell ${timeStr} (${typeLabel})`,
+      html: generateAdminBookingEmail({ customerName, customerEmail, customerPhone, address, scheduledAt, size, type, orderId, giftCode, additionalInfo }),
+    });
+    console.log('Admin booking notification sent for:', scheduledAt);
+  } catch (err) {
+    // Non-fatal — don't break the booking flow
+    console.error('Failed to send admin booking notification (non-fatal):', err);
+  }
+}
+
+/**
  * Generate customer confirmation email (i18n)
  * For gift orders: rich preview with gift code, message preview, and what-happens-next
  * For subscriptions: simple confirmation
@@ -1528,6 +1652,22 @@ async function handleCalBookingCreated(booking) {
   });
 
   console.log('Booking saved to Firestore:', bookingRef.id);
+
+  // Notify admin about the new booking (skip auto-scheduled — admin already knows about those)
+  const isAutoScheduled = booking.metadata?.source === 'sukoda-auto-scheduler';
+  if (!isAutoScheduled) {
+    await sendAdminBookingNotification({
+      customerName: attendeeName || orderData?.customer?.name || '',
+      customerEmail: attendeeEmail,
+      customerPhone: booking.responses?.phone || orderData?.customer?.phone || '',
+      address: booking.responses?.address || orderData?.customer?.address || '',
+      scheduledAt: booking.startTime,
+      size: size,
+      type: orderData?.type || 'unknown',
+      orderId: orderId,
+      giftCode: orderData?.giftCode || '',
+    });
+  }
 
   // Update the order with visit tracking and learn preferences
   if (orderId && orderData) {
@@ -3764,13 +3904,19 @@ exports.getPublicSlots = functions
 
         const allSlots = await calService.getAvailableSlots(slug, startDate, endDate);
 
+        // Minimum lead time: only show slots at least MIN_BOOKING_LEAD_HOURS ahead
+        const minBookingTime = new Date(Date.now() + MIN_BOOKING_LEAD_HOURS * 60 * 60 * 1000);
+
         // Group slots by date and extract just the time
         const grouped = {};
         for (const slot of allSlots) {
+          const dt = new Date(slot.time);
+          // Filter out slots that are too soon
+          if (dt < minBookingTime) continue;
+
           const date = slot.date || slot.time.split('T')[0];
           if (!grouped[date]) grouped[date] = [];
           // Convert to HH:MM in Tallinn timezone
-          const dt = new Date(slot.time);
           const timeStr = dt.toLocaleTimeString('et-EE', { 
             timeZone: 'Europe/Tallinn', 
             hour: '2-digit', 
@@ -3811,6 +3957,12 @@ exports.bookGiftVisit = functions
 
       if (!code || !startTime || !email || !address) {
         return res.status(400).json({ error: 'Missing required fields: code, startTime, email, address' });
+      }
+
+      // Validate minimum lead time (48h)
+      const minBookingTime = new Date(Date.now() + MIN_BOOKING_LEAD_HOURS * 60 * 60 * 1000);
+      if (new Date(startTime) < minBookingTime) {
+        return res.status(400).json({ error: `Broneerida saab vähemalt ${MIN_BOOKING_LEAD_HOURS} tundi ette. Palun valige hilisem aeg.` });
       }
 
       try {
@@ -3885,6 +4037,20 @@ exports.bookGiftVisit = functions
           console.error('Follow-up sequence creation failed (non-fatal):', followupError);
         }
 
+        // Notify admin about the new booking so they can arrange cleaners
+        await sendAdminBookingNotification({
+          customerName: recipientName,
+          customerEmail: email,
+          customerPhone: phone || '',
+          address: address,
+          scheduledAt: startTime,
+          size: effectiveSize,
+          type: 'gift',
+          orderId: doc.id,
+          giftCode: order.giftCode,
+          additionalInfo: additionalInfo || '',
+        });
+
         // Format date for response
         const bookingDate = new Date(startTime);
         const dateStr = bookingDate.toLocaleDateString('et-EE', {
@@ -3933,6 +4099,12 @@ exports.bookSubscriptionVisit = functions
         return res.status(400).json({ error: 'Missing required fields: orderId, startTime' });
       }
 
+      // Validate minimum lead time (48h)
+      const minBookingTime = new Date(Date.now() + MIN_BOOKING_LEAD_HOURS * 60 * 60 * 1000);
+      if (new Date(startTime) < minBookingTime) {
+        return res.status(400).json({ error: `Broneerida saab vähemalt ${MIN_BOOKING_LEAD_HOURS} tundi ette. Palun valige hilisem aeg.` });
+      }
+
       try {
         const orderDoc = await db.collection('orders').doc(orderId).get();
 
@@ -3977,6 +4149,19 @@ exports.bookSubscriptionVisit = functions
             startTime: startTime,
             createdAt: new Date().toISOString(),
           },
+        });
+
+        // Notify admin about the new booking so they can arrange cleaners
+        await sendAdminBookingNotification({
+          customerName: customer.name || 'Klient',
+          customerEmail: customer.email || '',
+          customerPhone: customer.phone || '',
+          address: customer.address || '',
+          scheduledAt: startTime,
+          size: order.size || 'medium',
+          type: 'subscription',
+          orderId: orderId,
+          additionalInfo: customer.additionalInfo || '',
         });
 
         // Format date for response
