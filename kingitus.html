@@ -41,7 +41,7 @@
                         paper: '#FAF8F5',
                         cream: '#F5F0EB',
                         accent: '#B8976A',
-                        muted: '#8A8578',
+                        muted: '#6B6560',
                     },
                     spacing: {
                         '128': '32rem',
@@ -138,7 +138,7 @@
             transition: width 0.1s linear;
         }
     </style>
-    <script src="assets/js/checkout.js">
+    <script src="assets/js/checkout.js"></script>
 </head>
 <body class="antialiased" x-data="{ lang: localStorage.getItem('sukoda_lang') || 'et' }" x-init="$watch('lang', val => localStorage.setItem('sukoda_lang', val))">
 
@@ -254,12 +254,12 @@
         <!-- Gift Options -->
         <section id="paketid" class="grid-line-b" x-data="{ 
             size: 'medium',
-            selectedGiftCard: 'month',
+            selectedGiftCard: 'test',
             prices: {
-                small: { moment: 149, month: 299, quarter: 749 },
-                medium: { moment: 179, month: 349, quarter: 899 },
-                large: { moment: 229, month: 449, quarter: 1099 },
-                xlarge: { moment: 279, month: 549, quarter: 1299 }
+                small: { moment: 169, month: 339, quarter: 849, test: 1 },
+                medium: { moment: 199, month: 389, quarter: 999, test: 1 },
+                large: { moment: 259, month: 499, quarter: 1249, test: 1 },
+                xlarge: { moment: 319, month: 619, quarter: 1449, test: 1 }
             }
         }">
             <div class="grid md:grid-cols-12 grid-line-b border-[#E8E3DD] reveal">
@@ -283,7 +283,41 @@
                 </div>
             </div>
 
-            <div class="grid md:grid-cols-3 items-stretch reveal">
+            <div class="grid md:grid-cols-4 items-stretch reveal">
+
+                <!-- Test €1 -->
+                <div class="p-6 md:p-14 lg:p-16 transition-all duration-500 group relative flex flex-col cursor-pointer border-b md:border-b-0 border-[#E8E3DD]"
+                     :class="selectedGiftCard === 'test' ? 'bg-cream/70 ring-1 ring-accent/30' : 'hover:bg-cream/30'"
+                     @click="selectedGiftCard = 'test'; $dispatch('select-gift', { gift: 'Test (' + (size==='small'?'kuni 50m²':size==='medium'?'51-90m²':size==='large'?'91-120m²':'121-150m²') + ')' })">
+                    <div class="absolute top-4 right-4 md:top-6 md:right-6">
+                        <span class="text-[10px] uppercase tracking-[0.25em] text-accent font-sans border border-accent/40 px-3 py-1">Test</span>
+                    </div>
+                    <span class="text-[10px] uppercase tracking-[0.25em] font-sans mb-6 md:mb-8 block" :class="selectedGiftCard === 'test' ? 'text-black' : 'text-muted'">Testimiseks</span>
+                    <div class="font-serif text-4xl md:text-5xl font-light mb-2">Test</div>
+                    <div class="flex items-baseline gap-1 mb-8 md:mb-10">
+                        <span class="font-serif text-lg text-muted">€</span>
+                        <span class="font-serif text-2xl">1</span>
+                    </div>
+                    
+                    <p class="font-sans text-sm font-light leading-relaxed mb-8" :class="selectedGiftCard === 'test' ? 'text-muted' : 'text-muted/70'">
+                        Testtellimus kogu makse flow kontrollimiseks. Päris 1€ makse Stripe'is.
+                    </p>
+
+                    <div class="mb-auto pb-10 py-3 border-t border-[#E8E3DD]">
+                        <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2">Testib</p>
+                        <p class="text-sm font-sans font-light">Makse, e-kiri, success leht</p>
+                    </div>
+
+                    <!-- Selected state -->
+                    <div x-show="selectedGiftCard === 'test'" class="flex items-center justify-center gap-2 w-full py-4 text-accent">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span class="text-[11px] uppercase tracking-[0.2em] font-sans">Valitud</span>
+                    </div>
+                    <!-- Unselected state -->
+                    <div x-show="selectedGiftCard !== 'test'" class="block w-full text-center border border-black/30 py-4 text-[11px] uppercase tracking-[0.2em] font-sans text-muted hover:border-black hover:text-black transition-all duration-500">
+                        Vali see
+                    </div>
+                </div>
                 
                 <!-- Üks Hetk -->
                 <div class="p-6 md:p-14 lg:p-16 grid-line border-b md:border-b-0 border-[#E8E3DD] transition-all duration-500 group relative flex flex-col cursor-pointer"
@@ -296,7 +330,7 @@
                     </div>
                     <div class="flex items-baseline gap-1 mb-8 md:mb-10" x-show="size !== 'estate'">
                         <span class="font-serif text-lg text-muted">€</span>
-                        <span class="font-serif text-2xl" x-text="prices[size].moment">179</span>
+                        <span class="font-serif text-2xl" x-text="prices[size].moment">199</span>
                     </div>
                     <div class="mb-8 md:mb-10" x-show="size === 'estate'" x-cloak>
                         <p class="font-serif text-xl italic text-accent" x-text="lang === 'et' ? 'Räägime läbi' : 'Let\'s talk'">Räägime läbi</p>
@@ -309,7 +343,7 @@
 
                     <div class="mb-auto pb-10 py-3 border-t border-[#E8E3DD]">
                         <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Sisaldab' : 'Includes'">Sisaldab</p>
-                        <p class="text-sm font-sans font-light" x-text="lang === 'et' ? 'Lilled, kaart, üllatus, voodipesu' : 'Flowers, card, surprise, fresh linens'">Lilled, kaart, üllatus, voodipesu</p>
+                        <p class="text-sm font-sans font-light" x-text="lang === 'et' ? 'Lilled, kaart, üllatus, voodipesu vahetus' : 'Flowers, card, surprise, bed linen change'">Lilled, kaart, üllatus, voodipesu vahetus</p>
                     </div>
 
                     <!-- Selected state -->
@@ -337,7 +371,7 @@
                     </div>
                     <div class="flex items-baseline gap-1 mb-8 md:mb-10" x-show="size !== 'estate'">
                         <span class="font-serif text-lg text-muted">€</span>
-                        <span class="font-serif text-2xl" x-text="prices[size].month">349</span>
+                        <span class="font-serif text-2xl" x-text="prices[size].month">389</span>
                     </div>
                     <div class="mb-8 md:mb-10" x-show="size === 'estate'" x-cloak>
                         <p class="font-serif text-xl italic text-accent" x-text="lang === 'et' ? 'Räägime läbi' : 'Let\'s talk'">Räägime läbi</p>
@@ -375,14 +409,14 @@
                     </div>
                     <div class="flex items-baseline gap-1 mb-8 md:mb-10" x-show="size !== 'estate'">
                         <span class="font-serif text-lg text-muted">€</span>
-                        <span class="font-serif text-2xl" x-text="prices[size].quarter">899</span>
+                        <span class="font-serif text-2xl" x-text="prices[size].quarter">999</span>
                     </div>
                     <div class="mb-8 md:mb-10" x-show="size === 'estate'" x-cloak>
                         <p class="font-serif text-xl italic text-accent" x-text="lang === 'et' ? 'Räägime läbi' : 'Let\'s talk'">Räägime läbi</p>
                     </div>
                     
                     <p class="font-sans text-sm font-light leading-relaxed mb-8" :class="selectedGiftCard === 'quarter' ? 'text-muted' : 'text-muted/70'">
-                        <span x-show="lang === 'et'">Kolm kuud täielikku vabadust. Lilled, puuviljad, hoolitsus. Iga nädal teine.</span>
+                        <span x-show="lang === 'et'">Kolm kuud täielikku vabadust. Lilled, puuviljad, hoolitsus. Üle nädala.</span>
                         <span x-show="lang === 'en'" x-cloak>Three months of complete freedom. Flowers, fruits, care. Every other week.</span>
                     </p>
 
@@ -463,10 +497,10 @@
         <!-- Step-by-step Process -->
         <section id="telli" class="grid md:grid-cols-12 grid-line-b bg-paper" x-data="{ 
             step: 2,
-            selectedGift: 'Kuu Aega (51-90m²)',
+            selectedGift: 'Test (51-90m²)',
             selectedSize: 'medium',
-            selectedGiftType: 'month',
-            giftPrice: 349,
+            selectedGiftType: 'test',
+            giftPrice: 1,
             name: '', 
             email: '', 
             phone: '',
@@ -476,10 +510,10 @@
             isProcessing: false,
             checkoutError: '',
             prices: {
-                small: { moment: 149, month: 299, quarter: 749 },
-                medium: { moment: 179, month: 349, quarter: 899 },
-                large: { moment: 229, month: 449, quarter: 1099 },
-                xlarge: { moment: 279, month: 549, quarter: 1299 }
+                small: { moment: 169, month: 339, quarter: 849, test: 1 },
+                medium: { moment: 199, month: 389, quarter: 999, test: 1 },
+                large: { moment: 259, month: 499, quarter: 1249, test: 1 },
+                xlarge: { moment: 319, month: 619, quarter: 1449, test: 1 }
             },
             nameError: false,
             emailError: false,
@@ -564,9 +598,10 @@
             }
         }" @select-gift.window="
             selectedGift = $event.detail.gift;
-            const giftMatch = $event.detail.gift.match(/(Üks Hetk|Kuu Aega|Kvartal Vabadust)/);
+            const giftMatch = $event.detail.gift.match(/(Test|Üks Hetk|Kuu Aega|Kvartal Vabadust)/);
             if (giftMatch) {
-                if (giftMatch[0] === 'Üks Hetk') selectedGiftType = 'moment';
+                if (giftMatch[0] === 'Test') selectedGiftType = 'test';
+                else if (giftMatch[0] === 'Üks Hetk') selectedGiftType = 'moment';
                 else if (giftMatch[0] === 'Kuu Aega') selectedGiftType = 'month';
                 else if (giftMatch[0] === 'Kvartal Vabadust') selectedGiftType = 'quarter';
             }
@@ -581,6 +616,7 @@
                 giftPrice = prices[selectedSize][selectedGiftType] || 0;
             }
             step = 2;
+            $nextTick(() => { document.getElementById('telli').scrollIntoView({ behavior: 'smooth', block: 'start' }) });
         ">
             
             <!-- Progress Steps -->

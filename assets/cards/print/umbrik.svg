@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SUKODA Premium Kinkekaardi Umbrik - C6 formaat
+     Formaat: C6 (162x114 mm) - mahutab A6 kaarti
+     Paber: 120-150g premium, sama toon (off-white / cream)
+     Trukk: Kuumfoolium kuldne logo umbriku klapi sees
+-->
+<svg width="162mm" height="114mm" viewBox="0 0 162 114" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&amp;family=Inter:wght@300;400;500&amp;display=swap');
+    </style>
+  </defs>
+
+  <!-- Envelope body -->
+  <rect width="162" height="114" fill="#FAF8F5"/>
+  <rect x="0.5" y="0.5" width="161" height="113" fill="none" stroke="#E8E3DD" stroke-width="0.3"/>
+
+  <!-- Flap fold line -->
+  <line x1="0" y1="38" x2="162" y2="38" stroke="#E8E3DD" stroke-width="0.2" stroke-dasharray="2,2"/>
+
+  <!-- Flap interior - gold SUKODA logo -->
+  <text x="81" y="22" 
+        font-family="'Cormorant Garamond', Georgia, serif" 
+        font-size="9"
+        font-weight="400"
+        letter-spacing="3"
+        fill="#B8976A" 
+        text-anchor="middle">SUKODA</text>
+
+  <!-- Small gold accent line -->
+  <line x1="72" y1="25" x2="90" y2="25" stroke="#B8976A" stroke-width="0.25"/>
+
+  <!-- Bottom: website URL -->
+  <text x="81" y="108" 
+        font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" 
+        font-size="2"
+        font-weight="300"
+        letter-spacing="1.5"
+        fill="#D4CFC8" 
+        text-anchor="middle">SUKODA.EE</text>
+
+</svg>

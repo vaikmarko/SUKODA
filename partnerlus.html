@@ -10,13 +10,13 @@
     <link rel="apple-touch-icon" href="assets/logo/icon-square.svg">
     
     <!-- Open Graph -->
-    <meta property="og:title" content="SUKODA — Koostöö arendajatele">
-    <meta property="og:description" content="Lisa oma projektile hing. Uus kodu, mis ootab omanikku lilledega.">
+    <meta property="og:title" content="SUKODA — Koostöö">
+    <meta property="og:description" content="Lisa kinnisvara tehingule hing. Premium koduhooldus arendajatele, maakleritele ja kinnisvarabüroodele.">
     <meta property="og:image" content="https://sukoda.ee/assets/images/hero-luxury.jpg">
     <meta property="og:url" content="https://sukoda.ee/partnerlus.html">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="description" content="SUKODA koostöö — lisa oma projektile hing. Premium koduhooldus arendajatele ja kinnisvarabüroodele.">
+    <meta name="description" content="SUKODA koostöö — lisa kinnisvara tehingule hing. Premium koduhooldus arendajatele, maakleritele ja kinnisvarabüroodele.">
     <meta property="og:locale" content="et_EE">
     <meta property="og:site_name" content="SUKODA">
     
@@ -41,7 +41,7 @@
                         paper: '#FAF8F5',
                         cream: '#F5F0EB',
                         accent: '#B8976A',
-                        muted: '#8A8578',
+                        muted: '#6B6560',
                     },
                     spacing: {
                         '128': '32rem',
@@ -198,16 +198,16 @@
             
             <div class="relative z-10 max-w-4xl px-6 md:px-16 py-24 md:py-32 flex flex-col justify-center min-h-[70vh] md:min-h-[85vh]">
                 <div class="mb-6 animate-fade-in" style="animation: fadeIn 0.8s ease-out forwards;">
-                    <span class="text-[10px] uppercase tracking-[0.25em] text-accent font-sans border border-accent/40 px-3 py-1" x-text="lang === 'et' ? 'Arendajatele' : 'For Developers'">Arendajatele</span>
+                    <span class="text-[10px] uppercase tracking-[0.25em] text-accent font-sans border border-accent/40 px-3 py-1" x-text="lang === 'et' ? 'Koostööpartneritele' : 'For Partners'">Koostööpartneritele</span>
                 </div>
                 <div class="accent-line mb-8 animate-fade-in" style="animation: fadeIn 0.8s ease-out forwards;"></div>
                 <h1 class="font-serif text-5xl md:text-7xl lg:text-[5.5rem] leading-[1.08] mb-8 md:mb-10 font-light animate-hero-title">
-                    <span x-show="lang === 'et'">Lisa oma<br>projektile hing.</span>
-                    <span x-show="lang === 'en'" x-cloak>Add soul to<br>your project.</span>
+                    <span x-show="lang === 'et'">Lisa kinnisvara<br>tehingule hing.</span>
+                    <span x-show="lang === 'en'" x-cloak>Add soul to every<br>real estate deal.</span>
                 </h1>
                 <p class="text-base md:text-lg text-muted max-w-md font-sans font-light leading-relaxed animate-hero-subtitle">
-                    <span x-show="lang === 'et'">Uus kodu on rohkem kui seinad ja põrand. Kui omanik esimest korda sisse astub, ootavad teda värsked lilled, puuviljad ja käsitsi kirjutatud tervitus.</span>
-                    <span x-show="lang === 'en'" x-cloak>A new home is more than walls and floors. When the owner steps in for the first time, fresh flowers, fruits and a handwritten welcome await.</span>
+                    <span x-show="lang === 'et'">Iga tehing väärib lõpetust, mis jääb meelde. Värsked lilled, puuviljad ja käsitsi kirjutatud tervitus muudavad võtmete üleandmise hetkeks, millest räägitakse edasi.</span>
+                    <span x-show="lang === 'en'" x-cloak>Every deal deserves a memorable finish. Fresh flowers, fruits and a handwritten greeting turn the key handover into a moment people talk about.</span>
                 </p>
                 <div class="mt-10 md:mt-14 animate-hero-cta">
                     <a href="#kontakt" class="inline-block bg-black text-paper px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-colors duration-500" x-text="lang === 'et' ? 'Räägime' : 'Let\'s talk'">
@@ -217,14 +217,31 @@
             </div>
         </header>
 
-        <!-- Value Prop -->
+        <!-- Partner Banner Strip -->
+        <section class="grid-line-b py-6 md:py-8 px-6 md:px-16 bg-cream/50 reveal">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <p class="font-serif text-xl md:text-2xl font-light italic text-muted">
+                        <span x-show="lang === 'et'">Rohkem kui tehing. See on kogemus.</span>
+                        <span x-show="lang === 'en'" x-cloak>More than a deal. It's an experience.</span>
+                    </p>
+                </div>
+                <p class="text-xs font-sans text-muted/60 tracking-wide max-w-sm">
+                    <span x-show="lang === 'et'">Iga SUKODA kinkekaart muudab korteri üleandmise hetkeks, mida klient ei unusta. Ja millest ta räägib edasi.</span>
+                    <span x-show="lang === 'en'" x-cloak>Every SUKODA gift card turns a key handover into a moment your client won't forget. And will tell others about.</span>
+                </p>
+            </div>
+        </section>
+
+        <!-- Section 01: Arendajatele -->
         <section class="grid md:grid-cols-12 grid-line-b">
             <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
                 <div class="accent-line mb-4"></div>
                 <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 01 )</span>
-                <h2 class="font-serif text-2xl md:text-3xl font-light" x-text="lang === 'et' ? 'Mida me pakume' : 'What we offer'">Mida me pakume</h2>
+                <span class="text-[10px] uppercase tracking-[0.25em] text-accent font-sans border border-accent/40 px-2 py-0.5 inline-block mb-4" x-text="lang === 'et' ? 'Arendajatele' : 'For Developers'">Arendajatele</span>
+                <h2 class="font-serif text-2xl md:text-3xl font-light" x-text="lang === 'et' ? 'Teie projektile hing' : 'Soul for your project'">Teie projektile hing</h2>
                 <p class="text-muted font-sans text-sm font-light leading-relaxed mt-4">
-                    <span x-show="lang === 'et'">Teie projektile lisaväärtus, mis eristab teid teistest. Ja mis paneb ostjad rääkima.</span>
+                    <span x-show="lang === 'et'">Lisaväärtus, mis eristab teid teistest. Ja mis paneb ostjad rääkima.</span>
                     <span x-show="lang === 'en'" x-cloak>Added value that sets your project apart. And gets buyers talking.</span>
                 </p>
             </div>
@@ -254,96 +271,153 @@
             </div>
         </section>
 
-        <!-- How It Works -->
+        <!-- Visual Break: Full-width Image -->
+        <section class="grid-line-b reveal">
+            <div class="relative h-[250px] md:h-[350px] w-full overflow-hidden">
+                <img src="assets/images/interior-luxury.jpg" alt="Luxury home interior" class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000">
+                <div class="absolute inset-0 bg-gradient-to-t from-paper/60 to-transparent"></div>
+                <div class="absolute bottom-6 left-6 md:bottom-10 md:left-16">
+                    <p class="font-serif text-2xl md:text-3xl text-black/80 font-light italic">
+                        <span x-show="lang === 'et'">"Esmamulje, mida ei unusta."</span>
+                        <span x-show="lang === 'en'" x-cloak>"A first impression you don't forget."</span>
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 02: Maakleritele ja büroodele -->
         <section class="grid md:grid-cols-12 grid-line-b">
             <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
                 <div class="accent-line mb-4"></div>
                 <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 02 )</span>
-                <h2 class="font-serif text-2xl md:text-3xl font-light" x-text="lang === 'et' ? 'Kuidas see käib' : 'How it works'">Kuidas see käib</h2>
+                <span class="text-[10px] uppercase tracking-[0.25em] text-accent font-sans border border-accent/40 px-2 py-0.5 inline-block mb-4" x-text="lang === 'et' ? 'Maakleritele ja büroodele' : 'For Agents & Agencies'">Maakleritele ja büroodele</span>
+                <h2 class="font-serif text-2xl md:text-3xl font-light" x-text="lang === 'et' ? 'Eristumine, mis jääb meelde' : 'Stand out memorably'">Eristumine, mis jääb meelde</h2>
+                <p class="text-muted font-sans text-sm font-light leading-relaxed mt-4">
+                    <span x-show="lang === 'et'">Klient, kes saab midagi enamat, räägib teist edasi. SUKODA kinkekaart on elegantseim viis tehingut lõpetada.</span>
+                    <span x-show="lang === 'en'" x-cloak>A client who receives something extra will talk about you. A SUKODA gift card is the most elegant way to close a deal.</span>
+                </p>
             </div>
             <div class="md:col-span-8 p-6 md:p-20 lg:p-24 reveal">
-                <div class="space-y-12">
-                    <div class="flex gap-6">
-                        <div class="text-2xl font-serif text-accent/50">01</div>
-                        <div>
-                            <h3 class="font-serif text-xl font-light mb-2" x-text="lang === 'et' ? 'Lepime kokku' : 'We agree'">Lepime kokku</h3>
-                            <p class="text-muted font-sans text-sm font-light leading-relaxed">
-                                <span x-show="lang === 'et'">Räägime läbi, mitu korterit, milline pakett, millal algab. Koostame teile hinnapakkumise.</span>
-                                <span x-show="lang === 'en'" x-cloak>We discuss how many apartments, which package, when to start. We prepare a quote for you.</span>
-                            </p>
-                        </div>
+                <div class="grid md:grid-cols-2 gap-8 md:gap-14 font-sans text-sm leading-relaxed text-muted">
+                    <div>
+                        <h4 class="text-[10px] uppercase tracking-[0.25em] text-black mb-3 font-medium" x-text="lang === 'et' ? 'Kingitus tehingu lõpetamisel' : 'Gift at deal closing'">Kingitus tehingu lõpetamisel</h4>
+                        <p class="font-light" x-show="lang === 'et'">Kingi kliendile SUKODA kinkekaart korteri üleandmisel. Personaalne, meeldejääv ja professionaalne zest.</p>
+                        <p class="font-light" x-show="lang === 'en'" x-cloak>Give your client a SUKODA gift card at the key handover. Personal, memorable, and professionally distinguished.</p>
                     </div>
-                    <div class="flex gap-6">
-                        <div class="text-2xl font-serif text-accent/50">02</div>
-                        <div>
-                            <h3 class="font-serif text-xl font-light mb-2" x-text="lang === 'et' ? 'Võtmete üleandmisel' : 'At key handover'">Võtmete üleandmisel</h3>
-                            <p class="text-muted font-sans text-sm font-light leading-relaxed">
-                                <span x-show="lang === 'et'">Korter on särav. Lilled vaasis, puuviljad kausis, käsitsi kirjutatud tervitus laual. Uus omanik saab ka SUKODA kingikaardi.</span>
-                                <span x-show="lang === 'en'" x-cloak>The apartment is sparkling. Flowers in a vase, fruits in a bowl, handwritten greeting on the table. New owner also receives a SUKODA gift card.</span>
-                            </p>
-                        </div>
+                    <div>
+                        <h4 class="text-[10px] uppercase tracking-[0.25em] text-black mb-3 font-medium" x-text="lang === 'et' ? 'Eristumine turul' : 'Stand out in the market'">Eristumine turul</h4>
+                        <p class="font-light" x-show="lang === 'et'">Maakler, kes pakub midagi enamat kui ainult tehingu. Kliendid mäletavad teid ja soovitavad edasi.</p>
+                        <p class="font-light" x-show="lang === 'en'" x-cloak>An agent who offers more than just the deal. Clients remember you and recommend you further.</p>
                     </div>
-                    <div class="flex gap-6">
-                        <div class="text-2xl font-serif text-accent/50">03</div>
-                        <div>
-                            <h3 class="font-serif text-xl font-light mb-2" x-text="lang === 'et' ? 'Esimene aasta' : 'First year'">Esimene aasta</h3>
-                            <p class="text-muted font-sans text-sm font-light leading-relaxed">
-                                <span x-show="lang === 'et'">Omanik valib oma rütmi — kord kuus, üle nädala või iga nädal. Iga külastusega lilled, kaart ja magus üllatus.</span>
-                                <span x-show="lang === 'en'" x-cloak>Owner chooses their rhythm — monthly, biweekly, or weekly. Every visit includes flowers, card, and sweet surprise.</span>
-                            </p>
-                        </div>
+                    <div>
+                        <h4 class="text-[10px] uppercase tracking-[0.25em] text-black mb-3 font-medium" x-text="lang === 'et' ? 'Lihtne tellida' : 'Easy to order'">Lihtne tellida</h4>
+                        <p class="font-light" x-show="lang === 'et'">Vali kinkekaart meie lehelt, maksa ja saada kliendile. Pole vaja ette planeerida — osta siis, kui vaja.</p>
+                        <p class="font-light" x-show="lang === 'en'" x-cloak>Choose a gift card on our site, pay, and send to your client. No need to plan ahead — buy when you need it.</p>
+                    </div>
+                    <div>
+                        <h4 class="text-[10px] uppercase tracking-[0.25em] text-black mb-3 font-medium" x-text="lang === 'et' ? 'Büroo jaoks' : 'For agencies'">Büroo jaoks</h4>
+                        <p class="font-light" x-show="lang === 'et'">Sobib ka büroo kingitusena meeskonnale või klientidele. Suurema koguse puhul kirjuta meile eripakkumise jaoks.</p>
+                        <p class="font-light" x-show="lang === 'en'" x-cloak>Also perfect as an agency gift for your team or clients. For larger orders, write to us for a custom offer.</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Emotional Quote -->
+        <!-- How It Works — 3-column cards -->
+        <section class="grid-line-b bg-cream/30 reveal">
+            <div class="p-6 md:p-12 lg:px-16 lg:py-14">
+                <div class="accent-line mb-4"></div>
+                <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 03 )</span>
+                <h2 class="font-serif text-2xl md:text-3xl font-light mb-10 md:mb-14" x-text="lang === 'et' ? 'Kuidas see käib' : 'How it works'">Kuidas see käib</h2>
+            </div>
+            <div class="grid md:grid-cols-3">
+                <div class="p-6 md:p-14 lg:p-16 border-t border-b md:border-b-0 border-r-0 md:border-r border-[#E8E3DD] reveal">
+                    <div class="font-serif text-5xl md:text-6xl text-accent/20 mb-6">01</div>
+                    <h3 class="font-serif text-xl md:text-2xl font-light mb-4" x-text="lang === 'et' ? 'Valige kinkekaart' : 'Choose a gift card'">Valige kinkekaart</h3>
+                    <p class="text-muted font-sans text-sm font-light leading-relaxed">
+                        <span x-show="lang === 'et'">Ostke kinkekaart meie lehelt või räägime läbi suurema koostöö. Arendajatele koostame eraldi pakkumise, maaklerid saavad osta kohe.</span>
+                        <span x-show="lang === 'en'" x-cloak>Purchase a gift card from our site or let's discuss a larger partnership. We prepare custom offers for developers; agents can buy instantly.</span>
+                    </p>
+                </div>
+                <div class="p-6 md:p-14 lg:p-16 border-t border-b md:border-b-0 border-r-0 md:border-r border-[#E8E3DD] reveal">
+                    <div class="font-serif text-5xl md:text-6xl text-accent/20 mb-6">02</div>
+                    <h3 class="font-serif text-xl md:text-2xl font-light mb-4" x-text="lang === 'et' ? 'Andke kliendile üle' : 'Hand it to your client'">Andke kliendile üle</h3>
+                    <p class="text-muted font-sans text-sm font-light leading-relaxed">
+                        <span x-show="lang === 'et'">Võtmete üleandmisel või tehingu lõpetamisel. Korter on särav, lilled vaasis ja laual ootab käsitsi kirjutatud tervitus. Unustamatu esmamulje.</span>
+                        <span x-show="lang === 'en'" x-cloak>At key handover or deal closing. The apartment is sparkling, flowers in a vase, and a handwritten greeting awaits. An unforgettable first impression.</span>
+                    </p>
+                </div>
+                <div class="p-6 md:p-14 lg:p-16 border-t border-[#E8E3DD] reveal">
+                    <div class="font-serif text-5xl md:text-6xl text-accent/20 mb-6">03</div>
+                    <h3 class="font-serif text-xl md:text-2xl font-light mb-4" x-text="lang === 'et' ? 'Klient naudib' : 'Client enjoys'">Klient naudib</h3>
+                    <p class="text-muted font-sans text-sm font-light leading-relaxed">
+                        <span x-show="lang === 'et'">Uus omanik lunastab kinkekaardi ja broneerib endale sobivad ajad. Iga külastusega lilled, kaart ja magus üllatus. Teist räägitakse edasi.</span>
+                        <span x-show="lang === 'en'" x-cloak>The new owner redeems the gift card and books convenient times. Every visit includes flowers, a card, and a sweet surprise. They'll talk about you.</span>
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Why It Works — Emotional Section -->
         <section class="grid md:grid-cols-12 grid-line-b reveal">
             <div class="md:col-span-5 p-6 md:p-20 lg:p-24 grid-line border-b md:border-b-0 border-[#E8E3DD]">
                 <div class="accent-line mb-4"></div>
-                <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 03 )</span>
+                <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 04 )</span>
                 <h2 class="font-serif text-2xl md:text-4xl font-light mb-6" x-text="lang === 'et' ? 'Miks see töötab' : 'Why it works'">Miks see töötab</h2>
                 <p class="text-muted font-sans font-light leading-relaxed text-sm">
                     <span x-show="lang === 'et'">Sest korter, kus ootavad lilled ja käsitsi kirjutatud tervitus, jääb meelde. Ja inimesed räägivad sellest edasi.</span>
                     <span x-show="lang === 'en'" x-cloak>Because an apartment with flowers and a handwritten greeting is memorable. And people talk about it.</span>
                 </p>
             </div>
-            <div class="md:col-span-7 p-6 md:p-20 lg:p-24 flex items-center justify-center bg-cream/30">
-                <p class="font-serif text-2xl md:text-4xl text-center text-muted/50 italic leading-relaxed font-light">
-                    <span x-show="lang === 'et'">"Esmamulje, <br class="md:hidden">mida ei unusta."</span>
-                    <span x-show="lang === 'en'" x-cloak>"A first impression <br class="md:hidden">you don't forget."</span>
-                </p>
+            <div class="md:col-span-7 p-6 md:p-20 lg:p-24 flex items-center justify-center">
+                <div class="grid grid-cols-2 gap-8 md:gap-12 text-center">
+                    <div>
+                        <p class="font-serif text-4xl md:text-5xl font-light text-accent mb-2">93%</p>
+                        <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans">
+                            <span x-show="lang === 'et'">soovitab edasi</span>
+                            <span x-show="lang === 'en'" x-cloak>recommend further</span>
+                        </p>
+                    </div>
+                    <div>
+                        <p class="font-serif text-4xl md:text-5xl font-light text-accent mb-2">4.9</p>
+                        <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans">
+                            <span x-show="lang === 'et'">keskmine hinnang</span>
+                            <span x-show="lang === 'en'" x-cloak>average rating</span>
+                        </p>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <!-- Contact Section -->
+        <!-- Contact / CTA Section -->
         <section id="kontakt" class="grid md:grid-cols-12 grid-line-b">
             <div class="md:col-span-6 p-6 md:p-20 lg:p-24 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
                 <div class="accent-line mb-4"></div>
-                <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 04 )</span>
-                <h2 class="font-serif text-3xl md:text-4xl font-light mb-6 md:mb-8" x-text="lang === 'et' ? 'Räägime' : 'Let\'s talk'">Räägime</h2>
-                <p class="text-muted font-sans font-light leading-relaxed text-sm mb-12">
-                    <span x-show="lang === 'et'">Kirjuta meile oma projektist. Vaatame koos läbi, kuidas saame aidata ja mida see teie ostjatele tähendab.</span>
-                    <span x-show="lang === 'en'" x-cloak>Write to us about your project. Let's look together at how we can help and what it means for your buyers.</span>
+                <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 05 )</span>
+                <span class="text-[10px] uppercase tracking-[0.25em] text-accent font-sans border border-accent/40 px-2 py-0.5 inline-block mb-4" x-text="lang === 'et' ? 'Maakleritele' : 'For Agents'">Maakleritele</span>
+                <h2 class="font-serif text-3xl md:text-4xl font-light mb-6 md:mb-8" x-text="lang === 'et' ? 'Osta kinkekaart' : 'Buy a gift card'">Osta kinkekaart</h2>
+                <p class="text-muted font-sans font-light leading-relaxed text-sm mb-10">
+                    <span x-show="lang === 'et'">Vali sobiv kinkekaart ja kingi oma kliendile unustamatu esmamulje. Ostmine võtab paar minutit.</span>
+                    <span x-show="lang === 'en'" x-cloak>Choose the right gift card and give your client an unforgettable first impression. Purchasing takes just a few minutes.</span>
                 </p>
                 
-                <a href="mailto:partner@sukoda.ee" @click="if(window.SUKODA_TRACKING) SUKODA_TRACKING.trackLead({name:'Partnership inquiry', category:'partnership'})" class="font-serif text-2xl md:text-3xl font-light hover:text-accent transition-colors border-b border-[#E8E3DD] pb-2 inline-block mb-12">
-                    partner@sukoda.ee
+                <a href="kingitus.html" @click="if(window.SUKODA_TRACKING) SUKODA_TRACKING.trackLead({name:'Partner gift card click', category:'partnership'})" class="inline-block bg-black text-paper px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-colors duration-500" x-text="lang === 'et' ? 'Vali kinkekaart' : 'Choose gift card'">
+                    Vali kinkekaart
                 </a>
-
-                <div class="space-y-1 text-xs text-muted font-sans font-light">
-                    <p>SUKODA</p>
-                    <p>Tallinn, Eesti</p>
-                </div>
             </div>
-            <div class="md:col-span-6 p-6 md:p-20 lg:p-24 flex items-center justify-center text-center bg-cream/30 reveal">
-                <div>
-                    <h3 class="font-serif text-3xl font-light mb-4" x-text="lang === 'et' ? 'Kohtume?' : 'Shall we meet?'">Kohtume?</h3>
-                    <p class="text-muted font-sans text-sm font-light mb-8">
-                        <span x-show="lang === 'et'">Lühike vestlus, suur pilt. Ilma kohustusteta.</span>
-                        <span x-show="lang === 'en'" x-cloak>Short conversation, big picture. No obligations.</span>
-                    </p>
-                    <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans">partner@sukoda.ee</span>
+            <div class="md:col-span-6 p-6 md:p-20 lg:p-24 flex flex-col justify-center bg-cream/30 reveal">
+                <span class="text-[10px] uppercase tracking-[0.25em] text-accent font-sans border border-accent/40 px-2 py-0.5 inline-block mb-4 self-start" x-text="lang === 'et' ? 'Arendajatele ja büroodele' : 'For Developers & Agencies'">Arendajatele ja büroodele</span>
+                <h3 class="font-serif text-3xl md:text-4xl font-light mb-6" x-text="lang === 'et' ? 'Räägime koostööst' : 'Let\'s talk partnership'">Räägime koostööst</h3>
+                <p class="text-muted font-sans text-sm font-light mb-10">
+                    <span x-show="lang === 'et'">Suurema projekti või büroo jaoks koostame eripakkumise. Lühike vestlus, suur pilt. Ilma kohustusteta.</span>
+                    <span x-show="lang === 'en'" x-cloak>For larger projects or agencies, we'll prepare a custom offer. Short conversation, big picture. No obligations.</span>
+                </p>
+                <a href="mailto:partner@sukoda.ee" @click="if(window.SUKODA_TRACKING) SUKODA_TRACKING.trackLead({name:'Partnership inquiry', category:'partnership'})" class="inline-block border border-black text-black px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-black hover:text-paper transition-colors duration-500 self-start" x-text="lang === 'et' ? 'Kirjuta meile' : 'Write to us'">
+                    Kirjuta meile
+                </a>
+                <div class="mt-10 space-y-1 text-xs text-muted font-sans font-light">
+                    <p>partner@sukoda.ee</p>
+                    <p>SUKODA · Tallinn, Eesti</p>
                 </div>
             </div>
         </section>

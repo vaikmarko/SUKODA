@@ -105,8 +105,82 @@ const EMAIL_TEXTS = {
     nextVisitPackageLabel: 'Pakett',
     nextVisitReschedule: 'Kui see aeg ei sobi, kirjuta meile ja leiame parema. Saadame meeldetuletuse päev enne külastust.',
 
+    // Calendar buttons
+    calendarAddLabel: 'Lisa kalendrisse',
+    calendarGoogle: 'Google Calendar',
+    calendarApple: 'Apple / Outlook',
+    calendarEventTitle: 'SUKODA koduhoolitsus',
+    calendarEventDesc: 'SUKODA koduhoolitsuse visiit',
+
     // Email footer
     footerQuestions: 'Küsimuste korral',
+
+    // Follow-up emails (gift recipient → subscriber conversion)
+    subjectFollowup24h: 'SUKODA | See tunne.',
+    subjectFollowup7d: 'SUKODA | Kas mäletad?',
+    subjectFollowup30d: 'SUKODA | Mõtlesime sinu peale',
+
+    // Subscriber post-visit email (after first visit)
+    subjectSubscriberFirstVisit: 'SUKODA | Tere tulemast koju',
+    subscriberFirstVisitTitle: 'Tere tulemast koju.',
+    subscriberFirstVisitIntro: (name) => name
+      ? `${name}, loodame, et astusid eile uksest sisse ja tundsid — keegi on sinu eest hoolitsenud.`
+      : 'Loodame, et astusid eile uksest sisse ja tundsid — keegi on sinu eest hoolitsenud.',
+    subscriberFirstVisitBody: 'See ongi SUKODA mõte. Mitte lihtsalt koristus, vaid tunne. Et kodu ootab sind. Et keegi hoolib.\n\nMe anname alati parima. Ja kui midagi polnud päris nii, nagu ootasid — kirjuta meile. Soovime, et iga külastus oleks just selline, nagu väärid.',
+    subscriberFirstVisitNextLabel: 'Sinu järgmine külastus',
+    subscriberFirstVisitNextNote: 'Me hoolitseme selle eest, et see tunne kordub. Saadame meeldetuletuse päev enne järgmist külastust.',
+    subscriberFirstVisitFeedback: 'Tahaksid midagi öelda? Vasta sellele kirjale — sinu sõnum jõuab otse meie meeskonnale. Iga mõte loeb.',
+
+    // Gift recipient → subscriber follow-up: 24h after visit
+    followup24hTitle: 'See tunne.',
+    followup24hIntro: (name) => name
+      ? `${name} — mäletad eilset? Astusid uksest sisse ja kõik oli lihtsalt... paigas.`
+      : 'Mäletad eilset? Astusid uksest sisse ja kõik oli lihtsalt... paigas.',
+    followup24hBody: 'Lilled vaasis. Puhas kodu. See vaikne rahu, mis tuleb teadmisest, et keegi on sinu eest hoolitsenud.',
+    followup24hBody2: 'Kujuta ette, et see tunne ootab sind iga kord, kui koju jõuad.',
+    followup24hOfferTitle: 'Ainult sulle',
+    followup24hOfferText: 'Esimesed 3 kuud SUKODA püsiteenust -20%. Sest see tunne ei pea olema ühekordne.',
+    followup24hOfferCode: 'KINGITUS20',
+    followup24hOfferNote: 'Pakkumine kehtib 30 päeva.',
+    followup24hCta: 'ALUSTA SIIT',
+
+    // Gift recipient → subscriber follow-up: 7 days after visit
+    followup7dTitle: 'Kas mäletad seda tunnet?',
+    followup7dIntro: (name) => name
+      ? `${name}, nädal tagasi oli sinu kodu teistsugune.`
+      : 'Nädal tagasi oli sinu kodu teistsugune.',
+    followup7dBody: 'Puhas. Lilled vaasis. Väike üllatus laual. See pole lihtsalt koristus — see on hoolitsus. Ja sa väärid seda rohkem kui korra.',
+    followup7dOfferReminder: 'Sinu isiklik -20% pakkumine ootab endiselt:',
+    followup7dCta: 'JAH, MA TAHAN SEDA',
+
+    // Gift recipient → subscriber follow-up: 30 days after visit
+    followup30dTitle: 'Mõtlesime sinu peale.',
+    followup30dIntro: (name) => name
+      ? `${name}, kuu on möödas sellest päevast, mil tulid koju ja kõik oli paigas.`
+      : 'Kuu on möödas sellest päevast, mil tulid koju ja kõik oli paigas.',
+    followup30dBody: 'Lilled on ammu närtsinud. Aga see tunne — seda mäletad sa veel. Puhas kodu, mis sind ootas. Keegi, kes hoolib.',
+    followup30dUrgency: 'Sinu isiklik -20% pakkumine lõppeb peagi. Seejärel kehtib tavahind.',
+    followup30dCta: 'VALI OMA PAKETT',
+    followup30dFinalNote: 'Kirjuta meile — aitame leida paketi, mis sobib just sinu elurütmiga.',
+
+    // Referral program — "Jaga seda tunnet"
+    referralTitle: 'Jaga seda tunnet.',
+    referralIntro: 'Tead kedagi, kes väärib sama kogemust? Jaga oma isiklikku koodi — sinu sõber saab -20% esimesed 3 kuud ja sina -20% järgmiselt kuult.',
+    referralYourCode: 'Sinu isiklik kood',
+    referralShareLink: 'Kopeeri jagamislink',
+    referralFriendGets: 'Sõber saab: -20% esimesed 3 kuud',
+    referralYouGet: 'Sina saad: -20% järgmiselt kuult',
+
+    // Referral notification email — "Sinu sõber liitus!"
+    subjectReferralSuccess: 'SUKODA | Keegi liitus sinu soovitusel',
+    referralSuccessTitle: 'Keegi liitus sinu soovitusel.',
+    referralSuccessIntro: (friendName) => friendName
+      ? `Hea uudis — ${friendName} liitus just SUKODA-ga sinu soovitusel.`
+      : 'Hea uudis — keegi liitus just SUKODA-ga sinu soovitusel.',
+    referralSuccessBody: 'See tähendab, et jagasid head. Ja selle eest oleme sulle tänulikud.',
+    referralSuccessReward: 'Sinu järgmine kuu on -20% soodsam.',
+    referralSuccessRewardNote: 'Allahindlus rakendub automaatselt sinu järgmisele arvele.',
+    referralSuccessOutro: 'Jätka jagamist — iga sõber, kes liitub, toob sulle uue allahindluse.',
 
     // Date formatting
     days: ['Pühapäev', 'Esmaspäev', 'Teisipäev', 'Kolmapäev', 'Neljapäev', 'Reede', 'Laupäev'],
@@ -190,7 +264,81 @@ const EMAIL_TEXTS = {
     nextVisitPackageLabel: 'Package',
     nextVisitReschedule: 'If this time doesn\'t work, contact us and we\'ll find a better one. We\'ll send a reminder the day before your visit.',
 
+    // Calendar buttons
+    calendarAddLabel: 'Add to calendar',
+    calendarGoogle: 'Google Calendar',
+    calendarApple: 'Apple / Outlook',
+    calendarEventTitle: 'SUKODA home care',
+    calendarEventDesc: 'SUKODA home care visit',
+
     footerQuestions: 'Questions?',
+
+    // Follow-up emails (gift recipient → subscriber conversion)
+    subjectFollowup24h: 'SUKODA | That feeling.',
+    subjectFollowup7d: 'SUKODA | Do you remember?',
+    subjectFollowup30d: 'SUKODA | We were thinking of you',
+
+    // Subscriber post-visit email (after first visit)
+    subjectSubscriberFirstVisit: 'SUKODA | Welcome home',
+    subscriberFirstVisitTitle: 'Welcome home.',
+    subscriberFirstVisitIntro: (name) => name
+      ? `${name}, we hope you walked through the door yesterday and felt it — someone had taken care of you.`
+      : 'We hope you walked through the door yesterday and felt it — someone had taken care of you.',
+    subscriberFirstVisitBody: 'That\'s what SUKODA is about. Not just cleaning, but a feeling. That your home is waiting for you. That someone cares.\n\nWe always give our best. And if something wasn\'t quite right — write to us. We want every visit to be exactly what you deserve.',
+    subscriberFirstVisitNextLabel: 'Your next visit',
+    subscriberFirstVisitNextNote: 'We\'ll make sure that feeling returns. We\'ll send a reminder the day before your next visit.',
+    subscriberFirstVisitFeedback: 'Want to share something? Reply to this email — your message goes straight to our team. Every thought matters.',
+
+    // Gift recipient → subscriber follow-up: 24h after visit
+    followup24hTitle: 'That feeling.',
+    followup24hIntro: (name) => name
+      ? `${name} — remember yesterday? You walked through the door and everything was simply... right.`
+      : 'Remember yesterday? You walked through the door and everything was simply... right.',
+    followup24hBody: 'Flowers in a vase. A clean home. That quiet peace of knowing someone took care of you.',
+    followup24hBody2: 'Imagine that feeling waiting for you every time you come home.',
+    followup24hOfferTitle: 'Just for you',
+    followup24hOfferText: 'Your first 3 months of SUKODA at 20% off. Because that feeling doesn\'t have to be a one-time thing.',
+    followup24hOfferCode: 'KINGITUS20',
+    followup24hOfferNote: 'Offer valid for 30 days.',
+    followup24hCta: 'START HERE',
+
+    // Gift recipient → subscriber follow-up: 7 days after visit
+    followup7dTitle: 'Do you remember that feeling?',
+    followup7dIntro: (name) => name
+      ? `${name}, a week ago your home was different.`
+      : 'A week ago, your home was different.',
+    followup7dBody: 'Clean. Flowers in a vase. A little surprise on the table. It\'s not just cleaning — it\'s care. And you deserve it more than once.',
+    followup7dOfferReminder: 'Your personal 20% offer is still waiting:',
+    followup7dCta: 'YES, I WANT THIS',
+
+    // Gift recipient → subscriber follow-up: 30 days after visit
+    followup30dTitle: 'We were thinking of you.',
+    followup30dIntro: (name) => name
+      ? `${name}, a month has passed since the day you came home and everything was in place.`
+      : 'A month has passed since the day you came home and everything was in place.',
+    followup30dBody: 'The flowers have long faded. But you still remember that feeling. A clean home waiting for you. Someone who cares.',
+    followup30dUrgency: 'Your personal 20% offer ends soon. After that, regular pricing applies.',
+    followup30dCta: 'CHOOSE YOUR PLAN',
+    followup30dFinalNote: 'Write to us — we\'ll help you find a plan that fits your rhythm.',
+
+    // Referral program — "Share this feeling"
+    referralTitle: 'Share this feeling.',
+    referralIntro: 'Know someone who deserves the same experience? Share your personal code — your friend gets -20% for the first 3 months, and you get -20% off your next month.',
+    referralYourCode: 'Your personal code',
+    referralShareLink: 'Copy sharing link',
+    referralFriendGets: 'Friend gets: -20% first 3 months',
+    referralYouGet: 'You get: -20% off next month',
+
+    // Referral notification email — "Someone joined through you!"
+    subjectReferralSuccess: 'SUKODA | Someone joined through you',
+    referralSuccessTitle: 'Someone joined through you.',
+    referralSuccessIntro: (friendName) => friendName
+      ? `Good news — ${friendName} just joined SUKODA through your recommendation.`
+      : 'Good news — someone just joined SUKODA through your recommendation.',
+    referralSuccessBody: 'It means you shared something good. And we\'re grateful for that.',
+    referralSuccessReward: 'Your next month is 20% off.',
+    referralSuccessRewardNote: 'The discount will be applied automatically to your next invoice.',
+    referralSuccessOutro: 'Keep sharing — every friend who joins brings you a new discount.',
 
     days: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
     months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
@@ -229,6 +377,65 @@ function formatTime(date) {
   return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
 }
 
+/** Format date for Google Calendar URL (YYYYMMDDTHHmmssZ) */
+function formatDateForCal(date) {
+  const d = date instanceof Date ? date : new Date(date);
+  return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+}
+
+/** Generate Google Calendar event URL */
+function generateGoogleCalUrl({ title, start, end, description, location }) {
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: title,
+    dates: `${formatDateForCal(start)}/${formatDateForCal(end)}`,
+    details: description || '',
+    location: location || '',
+  });
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+/**
+ * Generate calendar links HTML block for emails
+ * Includes Google Calendar link + .ics download link (Apple/Outlook)
+ */
+function generateCalendarLinksHtml({ scheduledAt, endTime, address, lang }) {
+  const t = tx(lang);
+  const start = scheduledAt instanceof Date ? scheduledAt : scheduledAt?.toDate ? scheduledAt.toDate() : new Date(scheduledAt);
+  // Default to 2 hours if no endTime
+  const end = endTime
+    ? (endTime instanceof Date ? endTime : endTime?.toDate ? endTime.toDate() : new Date(endTime))
+    : new Date(start.getTime() + 2 * 60 * 60 * 1000);
+
+  const title = t.calendarEventTitle;
+  const description = t.calendarEventDesc;
+
+  const googleUrl = generateGoogleCalUrl({ title, start, end, description, location: address || '' });
+
+  const icsParams = new URLSearchParams({
+    title,
+    start: start.toISOString(),
+    end: end.toISOString(),
+    description,
+    location: address || '',
+  });
+  const icsUrl = `https://sukoda.ee/api/calendar?${icsParams.toString()}`;
+
+  return `
+    <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #E8E3DD;">
+      <p style="color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500; margin: 0 0 14px 0;">${t.calendarAddLabel}</p>
+      <div>
+        <a href="${googleUrl}" target="_blank" rel="noopener" style="display: inline-block; padding: 10px 20px; background: #FFFFFF; border: 1px solid #E8E3DD; color: #2C2824; text-decoration: none; font-size: 13px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin-right: 8px; margin-bottom: 8px;">
+          ${t.calendarGoogle} &rarr;
+        </a>
+        <a href="${icsUrl}" target="_blank" rel="noopener" style="display: inline-block; padding: 10px 20px; background: #FFFFFF; border: 1px solid #E8E3DD; color: #2C2824; text-decoration: none; font-size: 13px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin-bottom: 8px;">
+          ${t.calendarApple} &rarr;
+        </a>
+      </div>
+    </div>
+  `;
+}
+
 /** Get localized package info */
 function getPackageInfo(packageType, lang) {
   const t = tx(lang);
@@ -252,42 +459,42 @@ const PRICE_IDS = {
   },
   gifts: {
     moment: {
-      small: 'price_1SmxJsEoH1b07UGQJE66La74',   // €149
-      medium: 'price_1SmxJsEoH1b07UGQX36mA618',  // €179
-      large: 'price_1SmxJtEoH1b07UGQ4SwWWs6q',   // €229
-      xlarge: 'price_1SmxJtEoH1b07UGQKv6RLkE3',  // €279
+      small: 'price_1SzHrDEoH1b07UGQYLVwCTbj',   // €169
+      medium: 'price_1SzHrDEoH1b07UGQFPUr3Nrl',  // €199
+      large: 'price_1SzHrDEoH1b07UGQ7zyKVds3',   // €259
+      xlarge: 'price_1SzHrEEoH1b07UGQ7xMOPZR2',  // €319
     },
     month: {
-      small: 'price_1SmxJuEoH1b07UGQkrO8y84Y',   // €299
-      medium: 'price_1SmxJuEoH1b07UGQ9Cq3DWux',  // €349
-      large: 'price_1SmxJuEoH1b07UGQdb3Le0c5',   // €449
-      xlarge: 'price_1SmxJvEoH1b07UGQsxzCQpMP',  // €549
+      small: 'price_1SzHrEEoH1b07UGQH22LSIF1',   // €339
+      medium: 'price_1SzHrFEoH1b07UGQMynqX4lz',  // €389
+      large: 'price_1SzHrFEoH1b07UGQXxj9kh6v',   // €499
+      xlarge: 'price_1SzHrFEoH1b07UGQWTkE1u8Z',  // €619
     },
     quarter: {
-      small: 'price_1SmxJvEoH1b07UGQWd8XUfi1',   // €749
-      medium: 'price_1SmxJwEoH1b07UGQoLqfIqgx',  // €899
-      large: 'price_1SmxJwEoH1b07UGQfIXfWm9T',   // €1099
-      xlarge: 'price_1SmxJwEoH1b07UGQMrEwjIws',  // €1299
+      small: 'price_1SzHrGEoH1b07UGQrHx6yk7G',   // €849
+      medium: 'price_1SzHrGEoH1b07UGQXIKyu61j',  // €999
+      large: 'price_1SzHrHEoH1b07UGQaIZyV5Ry',   // €1249
+      xlarge: 'price_1SzHrHEoH1b07UGQuIKAYkvf',  // €1449
     },
   },
   subscriptions: {
     once: {
-      small: 'price_1SmxJxEoH1b07UGQtWOEqgwf',   // €119/kuu
-      medium: 'price_1SmxJyEoH1b07UGQM4uN6a4k',  // €149/kuu
-      large: 'price_1SmxJyEoH1b07UGQuFshtsVs',   // €189/kuu
-      xlarge: 'price_1SmxJyEoH1b07UGQkA0j3qKC',  // €229/kuu
+      small: 'price_1SzHrIEoH1b07UGQFnwdDBCE',   // €135/kuu
+      medium: 'price_1SzHrIEoH1b07UGQuyc7y9Ap',  // €169/kuu
+      large: 'price_1SzHrIEoH1b07UGQdilTxd1D',   // €215/kuu
+      xlarge: 'price_1SzHrJEoH1b07UGQmoehZXBP',  // €259/kuu
     },
     twice: {
-      small: 'price_1SmxJzEoH1b07UGQD35r5QM6',   // €199/kuu
-      medium: 'price_1SmxJzEoH1b07UGQGDceTaA6',  // €249/kuu
-      large: 'price_1SmxK0EoH1b07UGQAv74hHRA',   // €319/kuu
-      xlarge: 'price_1SmxK0EoH1b07UGQDlRbDQit',  // €389/kuu
+      small: 'price_1SzHrKEoH1b07UGQdpPxm7D2',   // €225/kuu
+      medium: 'price_1SzHrKEoH1b07UGQV1TWjYqj',  // €279/kuu
+      large: 'price_1SzHrKEoH1b07UGQg4jBEvpg',   // €359/kuu
+      xlarge: 'price_1SzHrLEoH1b07UGQhTBbxKha',  // €439/kuu
     },
     weekly: {
-      small: 'price_1SmxK1EoH1b07UGQrYGCPcgo',   // €379/kuu
-      medium: 'price_1SmxK1EoH1b07UGQfziHkUr4',  // €449/kuu
-      large: 'price_1SmxK1EoH1b07UGQry098S09',   // €579/kuu
-      xlarge: 'price_1SmxK2EoH1b07UGQlUPVbHEh',  // €699/kuu
+      small: 'price_1SzHrLEoH1b07UGQiww4FasC',   // €429/kuu
+      medium: 'price_1SzHrMEoH1b07UGQJ8lm21hK',  // €499/kuu
+      large: 'price_1SzHrMEoH1b07UGQK3I9SwA9',   // €649/kuu
+      xlarge: 'price_1SzHrNEoH1b07UGQBXlmbysX',  // €789/kuu
     },
   },
 };
@@ -347,6 +554,19 @@ function generateGiftCode() {
 }
 
 /**
+ * Generate unique referral code for subscriber
+ * Format: SOOVITA-XXXXX (5 alphanumeric chars)
+ */
+function generateReferralCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = 'SOOVITA-';
+  for (let i = 0; i < 5; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
+/**
  * Create Stripe Checkout Session
  */
 exports.createCheckoutSession = functions
@@ -367,6 +587,8 @@ exports.createCheckoutSession = functions
           deliveryMethod,
           lang,
           tracking,
+          promoCode,
+          referralCode,
         } = req.body;
 
         if (!type || !packageType || !size || !customer) {
@@ -401,6 +623,7 @@ exports.createCheckoutSession = functions
           recipient: recipient || null,
           deliveryMethod: deliveryMethod || null,
           giftCode,
+          referredBy: referralCode || null,  // Track which referral code brought this order
           lang: lang || 'et',
           status: 'pending',
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -426,7 +649,7 @@ exports.createCheckoutSession = functions
           // Note: To disable Link, go to Stripe Dashboard → Settings → Payment methods → Link → Turn off
           payment_method_types: ['card'],
           line_items: [{ price: priceId, quantity: 1 }],
-          mode: type === 'gift' ? 'payment' : 'subscription',
+          mode: packageType === 'test' ? 'subscription' : (type === 'gift' ? 'payment' : 'subscription'),
           success_url: `${req.headers.origin || 'https://sukoda.ee'}/success.html?session_id={CHECKOUT_SESSION_ID}&order_id=${orderRef.id}&size=${sizeCode}`,
           cancel_url: `${req.headers.origin || 'https://sukoda.ee'}/${type === 'gift' ? 'kingitus' : 'index'}.html?cancelled=true`,
           customer_email: customer.email,
@@ -446,7 +669,7 @@ exports.createCheckoutSession = functions
             },
           }),
           // For one-time payments, enable receipt
-          ...(type === 'gift' && {
+          ...(type === 'gift' && packageType !== 'test' && {
             invoice_creation: {
               enabled: true,
               invoice_data: {
@@ -465,6 +688,8 @@ exports.createCheckoutSession = functions
             customer_name: customer.name,
             customer_phone: customer.phone || '',
             customer_address: customer.address || '',
+            // Referral tracking
+            ...(referralCode && { referral_code: referralCode }),
             // Campaign tracking for Stripe reports
             ...(tracking?.utm_source && { utm_source: tracking.utm_source }),
             ...(tracking?.utm_medium && { utm_medium: tracking.utm_medium }),
@@ -472,9 +697,62 @@ exports.createCheckoutSession = functions
             ...(tracking?.fbclid && { fbclid: tracking.fbclid }),
           },
           locale: lang === 'en' ? 'en' : 'et',
-          // Allow promo codes (can set up later)
-          allow_promotion_codes: true,
         };
+
+        // Handle referral code: friend gets -20% for 3 months via SOOVITA20 promo
+        // Referral discount takes priority over other promo codes
+        if (referralCode && type === 'subscription') {
+          try {
+            const promoCodes = await stripe.promotionCodes.list({
+              code: 'SOOVITA20',
+              active: true,
+              limit: 1,
+            });
+            if (promoCodes.data.length > 0) {
+              sessionParams.discounts = [{ promotion_code: promoCodes.data[0].id }];
+            } else {
+              // Fallback: try KINGITUS20 (same discount)
+              const fallbackCodes = await stripe.promotionCodes.list({
+                code: 'KINGITUS20',
+                active: true,
+                limit: 1,
+              });
+              if (fallbackCodes.data.length > 0) {
+                sessionParams.discounts = [{ promotion_code: fallbackCodes.data[0].id }];
+              } else {
+                sessionParams.allow_promotion_codes = true;
+              }
+            }
+          } catch (refPromoError) {
+            console.error('Referral promo lookup failed:', refPromoError.message);
+            sessionParams.allow_promotion_codes = true;
+          }
+        }
+        // Handle promo codes: if a promo code is provided, try to auto-apply it via Stripe
+        // Otherwise, allow manual promo code entry on the checkout page
+        else if (promoCode) {
+          try {
+            // Look up the promotion code in Stripe to get its ID
+            const promoCodes = await stripe.promotionCodes.list({
+              code: promoCode,
+              active: true,
+              limit: 1,
+            });
+            if (promoCodes.data.length > 0) {
+              // Auto-apply the discount — no manual entry needed
+              sessionParams.discounts = [{ promotion_code: promoCodes.data[0].id }];
+            } else {
+              // Promo code not found in Stripe, fall back to manual entry
+              sessionParams.allow_promotion_codes = true;
+            }
+          } catch (promoError) {
+            console.error('Promo code lookup failed:', promoError.message);
+            sessionParams.allow_promotion_codes = true;
+          }
+        } else {
+          // No promo code provided — allow manual entry
+          sessionParams.allow_promotion_codes = true;
+        }
 
         if (type === 'gift' && recipient) {
           sessionParams.metadata.recipient_name = recipient.name || '';
@@ -550,6 +828,24 @@ async function handleCheckoutComplete(session) {
   }
 
   try {
+    // Handle gift card size upgrades separately
+    if (session.metadata?.type === 'gift_upgrade') {
+      const newSize = session.metadata.new_size;
+      const oldSize = session.metadata.old_size;
+      const giftCode = session.metadata.gift_code;
+
+      await db.collection('orders').doc(orderId).update({
+        size: newSize,
+        sizeUpgraded: true,
+        sizeUpgradedFrom: oldSize,
+        sizeUpgradedAt: admin.firestore.FieldValue.serverTimestamp(),
+        upgradePaymentIntent: session.payment_intent,
+      });
+
+      console.log(`Gift card ${giftCode} upgraded: ${oldSize} → ${newSize} (order: ${orderId})`);
+      return;  // Done — no emails needed for upgrades
+    }
+
     const updateData = {
       status: 'paid',
       stripeCustomerId: session.customer,
@@ -558,7 +854,7 @@ async function handleCheckoutComplete(session) {
       paidAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    // For subscriptions, initialize visit tracking fields
+    // For subscriptions, initialize visit tracking fields + generate referral code
     if (session.subscription) {
       updateData.subscriptionStatus = 'active';
       updateData.totalVisits = 0;
@@ -566,12 +862,23 @@ async function handleCheckoutComplete(session) {
       updateData.lastVisitAt = null;
       updateData.preferredDay = null;
       updateData.preferredTime = null;
+      updateData.referralCode = generateReferralCode();
     }
 
     await db.collection('orders').doc(orderId).update(updateData);
 
     const orderDoc = await db.collection('orders').doc(orderId).get();
     const order = orderDoc.data();
+
+    // Process referral reward if this subscription was referred by someone
+    const referralCode = session.metadata?.referral_code;
+    if (referralCode && session.subscription) {
+      try {
+        await processReferralReward(referralCode, orderId, order, session.subscription);
+      } catch (refError) {
+        console.error('Referral reward processing failed (non-fatal):', refError);
+      }
+    }
 
     // Send all emails
     await sendAllEmails(order, orderId);
@@ -618,10 +925,22 @@ async function handleSubscriptionUpdate(subscription) {
       .get();
 
     if (!ordersSnapshot.empty) {
-      await ordersSnapshot.docs[0].ref.update({
+      const updateData = {
         subscriptionStatus: subscription.status,
         currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-      });
+      };
+
+      // Track cancel_at_period_end status
+      if (subscription.cancel_at_period_end) {
+        updateData.status = 'cancelling';
+        updateData.cancelAtPeriodEnd = true;
+      } else if (ordersSnapshot.docs[0].data().status === 'cancelling') {
+        // If cancel was reversed (re-activated), restore to paid
+        updateData.status = 'paid';
+        updateData.cancelAtPeriodEnd = false;
+      }
+
+      await ordersSnapshot.docs[0].ref.update(updateData);
     }
   } catch (error) {
     console.error('Error handling subscription update:', error);
@@ -667,12 +986,17 @@ async function sendAllEmails(order, orderId) {
   const packageName = getPackageInfo(order.package, lang).name || order.package;
   const sizeName = getSizeName(order.size, lang);
 
+  // Small delay helper to avoid Resend rate limit (2 req/sec)
+  const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
   // 1. Admin notification (always Estonian)
   await sendEmail({
     to: NOTIFICATION_EMAIL,
     subject: `SUKODA | Uus ${isGift ? 'kingitus' : 'tellimus'}: ${packageNameET}`,
     html: generateAdminEmail(order, orderId, packageNameET, sizeNameET, isGift),
   });
+
+  await wait(600);
 
   // 2. Customer confirmation (in customer's language)
   await sendEmail({
@@ -683,6 +1007,7 @@ async function sendAllEmails(order, orderId) {
 
   // 3. Gift card to recipient (if gift + email delivery, in customer's language)
   if (isGift && order.deliveryMethod === 'email' && order.recipient?.email) {
+    await wait(600);
     const pkg = getPackageInfo(order.package, lang);
     await sendEmail({
       to: order.recipient.email,
@@ -1020,17 +1345,21 @@ function generateGiftCardEmail(order, pkg, lang) {
         <!-- Book Now Button -->
         <div style="background: #FFFFFF; margin: 0 28px; padding: 32px; text-align: center; border-top: 1px solid #E8E3DD;">
           <p style="color: #8A8578; font-size: 14px; margin: 0 0 20px 0;">${t.giftChooseTime}</p>
-          <a href="https://cal.eu/sukoda/koristus-${SIZE_CALENDAR_CODES[order.size] || '90'}?${new URLSearchParams({ name: order.recipient?.name || '', notes: `Kingituse kood: ${order.giftCode || ''}` }).toString()}" 
+          <a href="https://sukoda.ee/lunasta.html?code=${encodeURIComponent(order.giftCode || '')}" 
              style="display: inline-block; background: #B8976A; color: #FFFFFF; padding: 16px 44px; text-decoration: none; font-size: 12px; letter-spacing: 3px; font-weight: 500;">
             ${t.giftBookBtn}
           </a>
         </div>
 
         <!-- Footer -->
-        <div style="padding: 32px 28px; text-align: center; border-top: 1px solid #E8E3DD;">
-          <p style="color: #8A8578; font-size: 12px; margin: 0 0 10px 0;">${t.questionsAt}:</p>
-          <a href="mailto:tere@sukoda.ee" style="color: #2C2824; font-size: 14px; text-decoration: none; font-weight: 400;">tere@sukoda.ee</a>
-          <p style="color: #B8976A; font-size: 11px; margin: 16px 0 0 0; letter-spacing: 2px;">sukoda.ee</p>
+        <div style="padding: 36px 28px 28px; text-align: center; border-top: 1px solid #E8E3DD;">
+          <p style="color: #2C2824; font-size: 18px; margin: 0 0 6px 0; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; letter-spacing: 3px;">SUKODA</p>
+          <div style="width: 24px; height: 1px; background: #B8976A; margin: 0 auto 18px;"></div>
+          <p style="color: #8A8578; font-size: 12px; margin: 0 0 6px 0;">${t.questionsAt}:</p>
+          <a href="mailto:tere@sukoda.ee" style="color: #2C2824; font-size: 13px; text-decoration: none; font-weight: 400; border-bottom: 1px solid #B8976A;">tere@sukoda.ee</a>
+          <p style="color: #B8976A; font-size: 10px; margin: 14px 0 0 0; letter-spacing: 2px;">
+            <a href="https://sukoda.ee" style="color: #B8976A; text-decoration: none;">sukoda.ee</a>
+          </p>
         </div>
       </div>
     </body>
@@ -1069,8 +1398,13 @@ exports.getOrder = functions
           customer: {
             name: order.customer?.name,
             email: order.customer?.email,
+            phone: order.customer?.phone,
+            address: order.customer?.address,
+            additionalInfo: order.customer?.additionalInfo,
           },
           recipient: order.recipient ? { name: order.recipient.name } : null,
+          giftCode: order.giftCode || null,
+          referralCode: order.referralCode || null,
         });
       } catch (error) {
         console.error('Error getting order:', error);
@@ -1529,9 +1863,13 @@ function emailHeader() {
 function emailFooter(lang) {
   const t = tx(lang);
   return `
-    <div style="padding: 28px 40px; text-align: center; border-top: 1px solid #E8E3DD;">
-      <p style="color: #8A8578; font-size: 12px; margin: 0 0 8px 0;">${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #2C2824; text-decoration: none; border-bottom: 1px solid #B8976A;">tere@sukoda.ee</a></p>
-      <p style="color: #B8976A; font-size: 11px; margin: 0; letter-spacing: 2px;">sukoda.ee</p>
+    <div style="padding: 36px 40px 28px; text-align: center; border-top: 1px solid #E8E3DD;">
+      <p style="color: #2C2824; font-size: 18px; margin: 0 0 6px 0; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; letter-spacing: 3px;">SUKODA</p>
+      <div style="width: 24px; height: 1px; background: #B8976A; margin: 0 auto 18px;"></div>
+      <p style="color: #8A8578; font-size: 12px; margin: 0 0 6px 0;">${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #2C2824; text-decoration: none; border-bottom: 1px solid #B8976A;">tere@sukoda.ee</a></p>
+      <p style="color: #B8976A; font-size: 10px; margin: 14px 0 0 0; letter-spacing: 2px;">
+        <a href="https://sukoda.ee" style="color: #B8976A; text-decoration: none;">sukoda.ee</a>
+      </p>
     </div>`;
 }
 
@@ -1589,7 +1927,9 @@ function generateReminderEmail(booking, lang) {
             </ul>
           </div>
 
-          <p style="color: #8A8578; font-size: 13px; line-height: 1.6;">
+          ${generateCalendarLinksHtml({ scheduledAt, endTime: booking.endTime, address: booking.address, lang })}
+
+          <p style="color: #8A8578; font-size: 13px; line-height: 1.6; margin-top: 24px;">
             ${t.reminderAccessNote}
           </p>
         </div>
@@ -1648,7 +1988,9 @@ function generateNextVisitEmail(booking, order, lang) {
             ` : ''}
           </div>
 
-          <p style="color: #8A8578; font-size: 13px; line-height: 1.6;">
+          ${generateCalendarLinksHtml({ scheduledAt, endTime: booking.endTime, address: booking.address, lang })}
+
+          <p style="color: #8A8578; font-size: 13px; line-height: 1.6; margin-top: 24px;">
             ${t.nextVisitReschedule}
           </p>
         </div>
@@ -1814,7 +2156,9 @@ function generateRescheduleEmail(booking, oldScheduledAt, newScheduledAt, lang) 
             ` : ''}
           </div>
 
-          <p style="color: #8A8578; font-size: 13px; line-height: 1.6;">
+          ${generateCalendarLinksHtml({ scheduledAt: newDate, endTime: booking.endTime, address: booking.address, lang })}
+
+          <p style="color: #8A8578; font-size: 13px; line-height: 1.6; margin-top: 24px;">
             ${t.rescheduledContactNote}
           </p>
         </div>
@@ -1825,6 +2169,731 @@ function generateRescheduleEmail(booking, oldScheduledAt, newScheduledAt, lang) 
     </html>
   `;
 }
+
+// ============================================================
+// FOLLOW-UP EMAIL SYSTEM (Gift Recipient → Subscriber Conversion)
+// ============================================================
+
+/**
+ * Follow-up promo URL builder
+ * Adds coupon code as URL parameter so landing page can auto-apply it
+ */
+function getFollowupOrderUrl(lang, promoCode) {
+  const base = 'https://sukoda.ee/index.html';
+  return `${base}?promo=${encodeURIComponent(promoCode)}&utm_source=followup&utm_medium=email&utm_campaign=gift_conversion`;
+}
+
+/**
+ * Generate follow-up email: 24h after visit — "Kuidas meeldis?" + -20% offer
+ */
+function generateFollowup24hEmail(followup, lang) {
+  const t = tx(lang);
+  const recipientName = followup.recipientName || '';
+  const orderUrl = getFollowupOrderUrl(lang, t.followup24hOfferCode);
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+      <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+        ${emailHeader()}
+        <div style="padding: 44px 40px;">
+          <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 24px 0;">
+            ${t.followup24hTitle}
+          </h2>
+          <p style="color: #8A8578; line-height: 1.8; margin: 0 0 20px 0; font-size: 15px;">
+            ${t.followup24hIntro(recipientName)}
+          </p>
+          <p style="color: #2C2824; line-height: 1.8; margin: 0 0 20px 0; font-size: 16px; font-family: Georgia, 'Times New Roman', serif; font-style: italic;">
+            ${t.followup24hBody}
+          </p>
+          <p style="color: #8A8578; line-height: 1.8; margin: 0 0 44px 0; font-size: 15px;">
+            ${t.followup24hBody2}
+          </p>
+
+          <!-- Elegant divider -->
+          <div style="text-align: center; margin-bottom: 44px;">
+            <span style="display: inline-block; width: 40px; height: 1px; background: #B8976A;"></span>
+          </div>
+
+          <!-- Special offer card — soft reveal, not a hard sell -->
+          <div style="background: #111111; padding: 44px 36px; text-align: center; margin-bottom: 32px;">
+            <p style="margin: 0 0 20px 0; color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 4px; font-weight: 500;">
+              ${t.followup24hOfferTitle}
+            </p>
+            <p style="margin: 0 0 12px 0; color: #FFFFFF; font-size: 48px; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; letter-spacing: -1px;">
+              -20%
+            </p>
+            <p style="margin: 0 0 28px 0; color: #999; font-size: 11px; text-transform: uppercase; letter-spacing: 3px;">
+              ${lang === 'et' ? 'esimesed 3 kuud' : 'first 3 months'}
+            </p>
+            <p style="margin: 0 0 28px 0; color: #CCCCCC; font-size: 14px; line-height: 1.7; max-width: 380px; display: inline-block;">
+              ${t.followup24hOfferText}
+            </p>
+            <div style="background: #222222; padding: 14px 28px; display: inline-block; margin-bottom: 28px;">
+              <p style="margin: 0; color: #B8976A; font-size: 18px; letter-spacing: 5px; font-family: Georgia, 'Times New Roman', serif;">
+                ${t.followup24hOfferCode}
+              </p>
+            </div>
+            <br>
+            <a href="${orderUrl}" style="display: inline-block; background: #B8976A; color: #FFFFFF; padding: 16px 48px; text-decoration: none; font-size: 12px; letter-spacing: 3px; font-weight: 500; margin-top: 4px;">
+              ${t.followup24hCta}
+            </a>
+            <p style="margin: 24px 0 0 0; color: #555555; font-size: 12px;">
+              ${t.followup24hOfferNote}
+            </p>
+          </div>
+
+          <p style="color: #8A8578; font-size: 14px;">
+            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #2C2824; text-decoration: none; border-bottom: 1px solid #B8976A;">tere@sukoda.ee</a>
+          </p>
+        </div>
+        ${emailFooter(lang)}
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+/**
+ * Generate follow-up email: 7 days after visit — "Sinu järgmine koristus ootab"
+ */
+function generateFollowup7dEmail(followup, lang) {
+  const t = tx(lang);
+  const recipientName = followup.recipientName || '';
+  const orderUrl = getFollowupOrderUrl(lang, t.followup24hOfferCode);
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+      <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+        ${emailHeader()}
+        <div style="padding: 44px 40px;">
+          <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 24px 0;">
+            ${t.followup7dTitle}
+          </h2>
+          <p style="color: #8A8578; line-height: 1.8; margin: 0 0 24px 0; font-size: 15px;">
+            ${t.followup7dIntro(recipientName)}
+          </p>
+          <p style="color: #2C2824; line-height: 1.8; margin: 0 0 40px 0; font-size: 16px; font-family: Georgia, 'Times New Roman', serif; font-style: italic;">
+            ${t.followup7dBody}
+          </p>
+
+          <!-- Offer — warm, inviting, not pushy -->
+          <div style="background: #FFFFFF; padding: 32px; border-left: 3px solid #B8976A; margin-bottom: 36px;">
+            <p style="margin: 0 0 16px 0; color: #8A8578; font-size: 14px; line-height: 1.7;">
+              ${t.followup7dOfferReminder}
+            </p>
+            <div style="background: #FAF8F5; padding: 14px 24px; display: inline-block; margin-bottom: 20px;">
+              <p style="margin: 0; color: #B8976A; font-size: 22px; letter-spacing: 5px; font-family: Georgia, 'Times New Roman', serif; font-weight: 300;">
+                ${t.followup24hOfferCode}
+              </p>
+            </div>
+            <br>
+            <a href="${orderUrl}" style="display: inline-block; background: #111111; color: #FFFFFF; padding: 16px 44px; text-decoration: none; font-size: 12px; letter-spacing: 3px; font-weight: 500;">
+              ${t.followup7dCta}
+            </a>
+          </div>
+
+          <p style="color: #8A8578; font-size: 14px;">
+            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #2C2824; text-decoration: none; border-bottom: 1px solid #B8976A;">tere@sukoda.ee</a>
+          </p>
+        </div>
+        ${emailFooter(lang)}
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+/**
+ * Generate follow-up email: 30 days after visit — Final reminder / urgency
+ */
+function generateFollowup30dEmail(followup, lang) {
+  const t = tx(lang);
+  const recipientName = followup.recipientName || '';
+  const orderUrl = getFollowupOrderUrl(lang, t.followup24hOfferCode);
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+      <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+        ${emailHeader()}
+        <div style="padding: 44px 40px;">
+          <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 24px 0;">
+            ${t.followup30dTitle}
+          </h2>
+          <p style="color: #8A8578; line-height: 1.8; margin: 0 0 24px 0; font-size: 15px;">
+            ${t.followup30dIntro(recipientName)}
+          </p>
+          <p style="color: #2C2824; line-height: 1.8; margin: 0 0 44px 0; font-size: 16px; font-family: Georgia, 'Times New Roman', serif; font-style: italic;">
+            ${t.followup30dBody}
+          </p>
+
+          <!-- Elegant divider -->
+          <div style="text-align: center; margin-bottom: 44px;">
+            <span style="display: inline-block; width: 40px; height: 1px; background: #B8976A;"></span>
+          </div>
+
+          <!-- Final offer — elegant urgency, not pressure -->
+          <div style="background: #111111; padding: 44px 36px; text-align: center; margin-bottom: 28px;">
+            <p style="margin: 0 0 24px 0; color: #CCCCCC; font-size: 15px; line-height: 1.7; max-width: 380px; display: inline-block;">
+              ${t.followup30dUrgency}
+            </p>
+            <div style="background: #222222; padding: 14px 28px; display: inline-block; margin-bottom: 28px;">
+              <p style="margin: 0; color: #B8976A; font-size: 18px; letter-spacing: 5px; font-family: Georgia, 'Times New Roman', serif;">
+                ${t.followup24hOfferCode}
+              </p>
+            </div>
+            <br>
+            <a href="${orderUrl}" style="display: inline-block; background: #B8976A; color: #FFFFFF; padding: 16px 48px; text-decoration: none; font-size: 12px; letter-spacing: 3px; font-weight: 500;">
+              ${t.followup30dCta}
+            </a>
+          </div>
+
+          <p style="color: #8A8578; font-size: 14px; line-height: 1.7; margin-bottom: 24px;">
+            ${t.followup30dFinalNote}
+          </p>
+
+          <p style="color: #8A8578; font-size: 14px;">
+            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #2C2824; text-decoration: none; border-bottom: 1px solid #B8976A;">tere@sukoda.ee</a>
+          </p>
+        </div>
+        ${emailFooter(lang)}
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+/**
+ * Generate subscriber first-visit follow-up email — "Kuidas meeldis esimene külastus?"
+ * Warm, personal, no upsell — just relationship building
+ */
+function generateSubscriberFirstVisitEmail(followup, lang) {
+  const t = tx(lang);
+  const recipientName = followup.recipientName || '';
+  const packageName = getPackageInfo(followup.packageType || 'twice', lang).name || '';
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+      <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+        ${emailHeader()}
+        <div style="padding: 44px 40px;">
+          <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 24px 0;">
+            ${t.subscriberFirstVisitTitle}
+          </h2>
+          <p style="color: #8A8578; line-height: 1.8; margin: 0 0 24px 0; font-size: 15px;">
+            ${t.subscriberFirstVisitIntro(recipientName)}
+          </p>
+          <p style="color: #2C2824; line-height: 1.8; margin: 0 0 40px 0; font-size: 16px; font-family: Georgia, 'Times New Roman', serif; font-style: italic;">
+            ${t.subscriberFirstVisitBody}
+          </p>
+
+          <!-- Elegant divider -->
+          <div style="text-align: center; margin-bottom: 40px;">
+            <span style="display: inline-block; width: 40px; height: 1px; background: #B8976A;"></span>
+          </div>
+
+          <!-- Package info — reinforcing their good decision -->
+          <div style="background: #FFFFFF; padding: 32px; border-left: 3px solid #B8976A; margin-bottom: 32px;">
+            <p style="margin: 0 0 8px 0; color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">
+              ${t.subscriberFirstVisitNextLabel}
+            </p>
+            <p style="margin: 0 0 4px 0; font-weight: 300; color: #2C2824; font-size: 18px; font-family: Georgia, 'Times New Roman', serif;">
+              ${packageName}
+            </p>
+            <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E8E3DD; color: #8A8578; font-size: 13px; line-height: 1.7;">
+              ${t.subscriberFirstVisitNextNote}
+            </p>
+          </div>
+
+          <!-- Feedback prompt — inviting, warm -->
+          <div style="background: #FAF8F5; padding: 28px; margin-bottom: 32px; border-left: 2px solid #E8E3DD;">
+            <p style="color: #8A8578; font-size: 14px; line-height: 1.7; font-style: italic; margin: 0;">
+              ${t.subscriberFirstVisitFeedback}
+            </p>
+          </div>
+
+          ${followup.referralCode ? `
+          <!-- Elegant divider -->
+          <div style="text-align: center; margin-bottom: 40px;">
+            <span style="display: inline-block; width: 40px; height: 1px; background: #B8976A;"></span>
+          </div>
+
+          <!-- Referral block — share the feeling -->
+          <div style="background: #111111; padding: 40px 32px; text-align: center; margin-bottom: 32px;">
+            <p style="margin: 0 0 16px 0; color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 4px; font-weight: 500;">
+              ${t.referralTitle}
+            </p>
+            <p style="margin: 0 0 28px 0; color: #CCCCCC; font-size: 14px; line-height: 1.7; max-width: 380px; display: inline-block;">
+              ${t.referralIntro}
+            </p>
+            <p style="margin: 0 0 8px 0; color: #666666; font-size: 10px; text-transform: uppercase; letter-spacing: 3px;">
+              ${t.referralYourCode}
+            </p>
+            <div style="background: #222222; padding: 16px 32px; display: inline-block; margin-bottom: 24px;">
+              <p style="margin: 0; color: #B8976A; font-size: 22px; letter-spacing: 5px; font-family: Georgia, 'Times New Roman', serif;">
+                ${followup.referralCode}
+              </p>
+            </div>
+            <br>
+            <a href="https://sukoda.ee/index.html?ref=${encodeURIComponent(followup.referralCode)}" style="display: inline-block; background: #B8976A; color: #FFFFFF; padding: 14px 40px; text-decoration: none; font-size: 11px; letter-spacing: 3px; font-weight: 500;">
+              ${t.referralShareLink}
+            </a>
+            <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #333333;">
+              <p style="margin: 0 0 4px 0; color: #888888; font-size: 12px;">${t.referralFriendGets}</p>
+              <p style="margin: 0; color: #888888; font-size: 12px;">${t.referralYouGet}</p>
+            </div>
+          </div>
+          ` : ''}
+
+          <p style="color: #8A8578; font-size: 14px;">
+            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #2C2824; text-decoration: none; border-bottom: 1px solid #B8976A;">tere@sukoda.ee</a>
+          </p>
+        </div>
+        ${emailFooter(lang)}
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+/**
+ * Create follow-up sequence for a gift recipient after booking
+ * Called when a gift recipient books their visit (bookGiftVisit)
+ * Creates 3 follow-up entries in Firestore that will be processed by the scheduler
+ * 
+ * @param {Object} params
+ * @param {string} params.orderId - The gift order ID
+ * @param {string} params.recipientEmail - Gift recipient's email
+ * @param {string} params.recipientName - Gift recipient's name
+ * @param {string} params.bookingStartTime - ISO string of the booked visit time
+ * @param {string} params.lang - Language (et/en)
+ * @param {string} params.size - Home size
+ */
+async function createFollowupSequence({ orderId, recipientEmail, recipientName, bookingStartTime, lang, size }) {
+  const visitDate = new Date(bookingStartTime);
+
+  // Schedule: 24h, 7 days, 30 days after the VISIT (not after booking)
+  const stages = [
+    { stage: '24h', delayDays: 1 },
+    { stage: '7d', delayDays: 7 },
+    { stage: '30d', delayDays: 30 },
+  ];
+
+  const batch = db.batch();
+
+  for (const { stage, delayDays } of stages) {
+    const sendAt = new Date(visitDate);
+    sendAt.setDate(sendAt.getDate() + delayDays);
+    // Send at 10:00 Tallinn time (UTC+2/+3 depending on DST)
+    sendAt.setHours(10, 0, 0, 0);
+
+    const ref = db.collection('followups').doc();
+    batch.set(ref, {
+      orderId,
+      recipientEmail,
+      recipientName: recipientName || '',
+      visitDate: admin.firestore.Timestamp.fromDate(visitDate),
+      sendAt: admin.firestore.Timestamp.fromDate(sendAt),
+      stage,
+      status: 'pending',  // pending → sent → converted / expired
+      lang: lang || 'et',
+      size: size || 'medium',
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  await batch.commit();
+  console.log(`Follow-up sequence created for order ${orderId}: ${recipientEmail}`);
+}
+
+/**
+ * Process follow-up emails — runs daily at 10:00 Europe/Tallinn
+ * Checks for pending follow-ups whose sendAt has passed and sends them
+ */
+exports.processFollowups = functions
+  .region('europe-west1')
+  .pubsub.schedule('0 10 * * *')
+  .timeZone('Europe/Tallinn')
+  .onRun(async (context) => {
+    console.log('Follow-up processor started');
+
+    try {
+      const now = new Date();
+
+      // Find pending follow-ups whose sendAt is in the past
+      const followupsSnapshot = await db.collection('followups')
+        .where('status', '==', 'pending')
+        .where('sendAt', '<=', admin.firestore.Timestamp.fromDate(now))
+        .limit(50) // Process in batches
+        .get();
+
+      if (followupsSnapshot.empty) {
+        console.log('No pending follow-ups to process');
+        return null;
+      }
+
+      console.log(`Processing ${followupsSnapshot.size} follow-ups`);
+
+      // Small delay helper to avoid Resend rate limit (2 req/sec)
+      const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+      for (const doc of followupsSnapshot.docs) {
+        const followup = doc.data();
+
+        try {
+          // For gift conversion follow-ups (24h/7d/30d), check if recipient already subscribed
+          // Skip this check for subscriber_first_visit — they're already subscribers
+          if (followup.stage !== 'subscriber_first_visit') {
+            const existingOrderSnapshot = await db.collection('orders')
+              .where('customer.email', '==', followup.recipientEmail)
+              .where('type', '==', 'subscription')
+              .where('status', '==', 'paid')
+              .limit(1)
+              .get();
+
+            if (!existingOrderSnapshot.empty) {
+              // Recipient already converted! Mark all their gift conversion follow-ups as converted
+              console.log(`Recipient ${followup.recipientEmail} already converted, skipping follow-up`);
+              const allFollowups = await db.collection('followups')
+                .where('recipientEmail', '==', followup.recipientEmail)
+                .where('status', '==', 'pending')
+                .where('stage', 'in', ['24h', '7d', '30d'])
+                .get();
+
+              const batch = db.batch();
+              allFollowups.docs.forEach(d => {
+                batch.update(d.ref, {
+                  status: 'converted',
+                  convertedAt: admin.firestore.FieldValue.serverTimestamp(),
+                });
+              });
+              await batch.commit();
+              continue;
+            }
+          }
+
+          // Generate and send the appropriate email
+          const lang = followup.lang || 'et';
+          const t = tx(lang);
+          let subject, html;
+
+          switch (followup.stage) {
+            case '24h':
+              subject = t.subjectFollowup24h;
+              html = generateFollowup24hEmail(followup, lang);
+              break;
+            case '7d':
+              subject = t.subjectFollowup7d;
+              html = generateFollowup7dEmail(followup, lang);
+              break;
+            case '30d':
+              subject = t.subjectFollowup30d;
+              html = generateFollowup30dEmail(followup, lang);
+              break;
+            case 'subscriber_first_visit':
+              subject = t.subjectSubscriberFirstVisit;
+              html = generateSubscriberFirstVisitEmail(followup, lang);
+              break;
+            default:
+              console.error('Unknown follow-up stage:', followup.stage);
+              continue;
+          }
+
+          await sendEmail({
+            to: followup.recipientEmail,
+            subject,
+            html,
+          });
+
+          // Mark as sent
+          await doc.ref.update({
+            status: 'sent',
+            sentAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+
+          console.log(`Follow-up ${followup.stage} sent to ${followup.recipientEmail}`);
+          await wait(600); // Rate limit: Resend 2 req/sec
+
+        } catch (error) {
+          console.error(`Error processing follow-up ${doc.id}:`, error);
+          // Mark as failed but don't retry endlessly
+          await doc.ref.update({
+            status: 'failed',
+            error: error.message,
+            failedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+        }
+      }
+
+      console.log('Follow-up processor completed');
+      return null;
+    } catch (error) {
+      console.error('Follow-up processor error:', error);
+      return null;
+    }
+  });
+
+// ============================================================
+// REFERRAL SYSTEM
+// ============================================================
+
+/**
+ * Validate a referral code — used by the frontend to show referrer's name on the banner
+ * GET /api/validate-referral?code=SOOVITA-XXXXX
+ */
+exports.validateReferral = functions
+  .region('europe-west1')
+  .https.onRequest((req, res) => {
+    cors(req, res, async () => {
+      const code = req.query.code;
+
+      if (!code) {
+        return res.status(400).json({ error: 'Missing code' });
+      }
+
+      try {
+        const ordersSnapshot = await db.collection('orders')
+          .where('referralCode', '==', code.toUpperCase())
+          .where('type', '==', 'subscription')
+          .where('status', 'in', ['paid', 'cancelling'])
+          .limit(1)
+          .get();
+
+        if (ordersSnapshot.empty) {
+          return res.status(404).json({ error: 'Referral code not found' });
+        }
+
+        const referrerOrder = ordersSnapshot.docs[0].data();
+        const firstName = (referrerOrder.customer?.name || '').split(' ')[0] || '';
+
+        res.status(200).json({
+          valid: true,
+          referrerName: firstName,
+        });
+      } catch (error) {
+        console.error('Error validating referral:', error);
+        res.status(500).json({ error: error.message });
+      }
+    });
+  });
+
+/**
+ * Process referral reward when a friend subscribes with a referral code
+ * - Creates a referral record in Firestore
+ * - Applies -20% to referrer's next billing cycle (Stripe coupon)
+ * - Sends notification email to referrer
+ */
+async function processReferralReward(referralCode, friendOrderId, friendOrder, friendSubscriptionId) {
+  console.log(`Processing referral reward for code: ${referralCode}`);
+
+  // Find the referrer's order
+  const referrerSnapshot = await db.collection('orders')
+    .where('referralCode', '==', referralCode)
+    .where('type', '==', 'subscription')
+    .where('status', 'in', ['paid', 'cancelling'])
+    .limit(1)
+    .get();
+
+  if (referrerSnapshot.empty) {
+    console.log(`Referral code ${referralCode} not found or referrer no longer active`);
+    return;
+  }
+
+  const referrerDoc = referrerSnapshot.docs[0];
+  const referrerOrder = referrerDoc.data();
+
+  // Don't reward self-referrals
+  if (referrerOrder.customer?.email === friendOrder.customer?.email) {
+    console.log('Self-referral detected, skipping reward');
+    return;
+  }
+
+  // Create referral record in Firestore
+  await db.collection('referrals').add({
+    referrerOrderId: referrerDoc.id,
+    referrerEmail: referrerOrder.customer?.email,
+    referrerName: referrerOrder.customer?.name || '',
+    friendOrderId: friendOrderId,
+    friendEmail: friendOrder.customer?.email,
+    friendName: friendOrder.customer?.name || '',
+    referralCode: referralCode,
+    referrerRewardApplied: false,
+    status: 'completed',
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // Apply -20% coupon to referrer's Stripe subscription (one month)
+  if (referrerOrder.stripeSubscriptionId) {
+    try {
+      // Look up or use the SOOVITAJA20 coupon ID
+      // The coupon must exist in Stripe (created manually: 20% off, duration "once")
+      const coupons = await stripe.coupons.list({ limit: 100 });
+      const referrerCoupon = coupons.data.find(c => c.name === 'SOOVITAJA20' || c.id === 'SOOVITAJA20');
+
+      if (referrerCoupon) {
+        await stripe.subscriptions.update(referrerOrder.stripeSubscriptionId, {
+          coupon: referrerCoupon.id,
+        });
+
+        // Update referral record
+        const referralSnap = await db.collection('referrals')
+          .where('friendOrderId', '==', friendOrderId)
+          .limit(1)
+          .get();
+        if (!referralSnap.empty) {
+          await referralSnap.docs[0].ref.update({
+            referrerRewardApplied: true,
+            status: 'rewarded',
+            rewardedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+        }
+
+        console.log(`Referrer reward applied: -20% to subscription ${referrerOrder.stripeSubscriptionId}`);
+      } else {
+        console.error('SOOVITAJA20 coupon not found in Stripe. Please create it in the Stripe dashboard.');
+      }
+    } catch (stripeError) {
+      console.error('Failed to apply referrer coupon:', stripeError.message);
+    }
+  }
+
+  // Send notification email to referrer
+  const lang = referrerOrder.lang || 'et';
+  const t = tx(lang);
+
+  try {
+    await sendEmail({
+      to: referrerOrder.customer?.email,
+      subject: t.subjectReferralSuccess,
+      html: generateReferralSuccessEmail(referrerOrder, friendOrder, lang),
+    });
+    console.log(`Referral notification sent to ${referrerOrder.customer?.email}`);
+  } catch (emailError) {
+    console.error('Failed to send referral notification email:', emailError);
+  }
+}
+
+/**
+ * Generate referral success email — "Keegi liitus sinu soovitusel"
+ */
+function generateReferralSuccessEmail(referrerOrder, friendOrder, lang) {
+  const t = tx(lang);
+  const friendFirstName = (friendOrder.customer?.name || '').split(' ')[0] || '';
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+      <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+        ${emailHeader()}
+        <div style="padding: 44px 40px;">
+          <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 24px 0;">
+            ${t.referralSuccessTitle}
+          </h2>
+          <p style="color: #8A8578; line-height: 1.8; margin: 0 0 24px 0; font-size: 15px;">
+            ${t.referralSuccessIntro(friendFirstName)}
+          </p>
+          <p style="color: #2C2824; line-height: 1.8; margin: 0 0 40px 0; font-size: 16px; font-family: Georgia, 'Times New Roman', serif; font-style: italic;">
+            ${t.referralSuccessBody}
+          </p>
+
+          <!-- Elegant divider -->
+          <div style="text-align: center; margin-bottom: 40px;">
+            <span style="display: inline-block; width: 40px; height: 1px; background: #B8976A;"></span>
+          </div>
+
+          <!-- Reward card -->
+          <div style="background: #111111; padding: 36px 32px; text-align: center; margin-bottom: 32px;">
+            <p style="margin: 0 0 12px 0; color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 4px; font-weight: 500;">
+              ${lang === 'et' ? 'Sinu tasu' : 'Your reward'}
+            </p>
+            <p style="margin: 0 0 16px 0; color: #FFFFFF; font-size: 40px; font-family: Georgia, 'Times New Roman', serif; font-weight: 300;">
+              -20%
+            </p>
+            <p style="margin: 0 0 8px 0; color: #CCCCCC; font-size: 14px; line-height: 1.6;">
+              ${t.referralSuccessReward}
+            </p>
+            <p style="margin: 0; color: #666666; font-size: 12px;">
+              ${t.referralSuccessRewardNote}
+            </p>
+          </div>
+
+          <p style="color: #8A8578; font-size: 14px; line-height: 1.7; margin-bottom: 24px;">
+            ${t.referralSuccessOutro}
+          </p>
+
+          <p style="color: #8A8578; font-size: 14px;">
+            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #2C2824; text-decoration: none; border-bottom: 1px solid #B8976A;">tere@sukoda.ee</a>
+          </p>
+        </div>
+        ${emailFooter(lang)}
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+/**
+ * Admin: Get follow-up stats and list
+ * GET /api/admin/followups?password=ADMIN_PASSWORD
+ */
+exports.getAdminFollowups = functions
+  .region('europe-west1')
+  .https.onRequest((req, res) => {
+    cors(req, res, async () => {
+      const adminPassword = process.env.ADMIN_PASSWORD || functions.config().admin?.password;
+      if (req.query.password !== adminPassword) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      try {
+        // Get stats
+        const pendingSnapshot = await db.collection('followups').where('status', '==', 'pending').get();
+        const sentSnapshot = await db.collection('followups').where('status', '==', 'sent').get();
+        const convertedSnapshot = await db.collection('followups').where('status', '==', 'converted').get();
+
+        // Get recent follow-ups
+        const recentSnapshot = await db.collection('followups')
+          .orderBy('createdAt', 'desc')
+          .limit(50)
+          .get();
+
+        const followups = recentSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          sendAt: doc.data().sendAt?.toDate?.()?.toISOString(),
+          visitDate: doc.data().visitDate?.toDate?.()?.toISOString(),
+          sentAt: doc.data().sentAt?.toDate?.()?.toISOString(),
+          createdAt: doc.data().createdAt?.toDate?.()?.toISOString(),
+        }));
+
+        res.status(200).json({
+          stats: {
+            pending: pendingSnapshot.size,
+            sent: sentSnapshot.size,
+            converted: convertedSnapshot.size,
+            total: pendingSnapshot.size + sentSnapshot.size + convertedSnapshot.size,
+          },
+          followups,
+        });
+      } catch (error) {
+        console.error('Get admin followups error:', error);
+        res.status(500).json({ error: error.message });
+      }
+    });
+  });
 
 // ============================================================
 // ADMIN API FUNCTIONS
@@ -1897,14 +2966,20 @@ exports.getAdminOrders = functions
 
         const ordersSnapshot = await query.get();
 
-        const orders = ordersSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate?.()?.toISOString(),
-          paidAt: doc.data().paidAt?.toDate?.()?.toISOString(),
-          nextVisitDue: doc.data().nextVisitDue?.toDate?.()?.toISOString(),
-          lastVisitAt: doc.data().lastVisitAt?.toDate?.()?.toISOString(),
-        }));
+        const orders = ordersSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            createdAt: data.createdAt?.toDate?.()?.toISOString(),
+            paidAt: data.paidAt?.toDate?.()?.toISOString(),
+            nextVisitDue: data.nextVisitDue?.toDate?.()?.toISOString(),
+            lastVisitAt: data.lastVisitAt?.toDate?.()?.toISOString(),
+            giftRedeemedAt: data.giftRedeemedAt?.toDate?.()?.toISOString() || null,
+            cancelledAt: data.cancelledAt?.toDate?.()?.toISOString() || null,
+            currentPeriodEnd: data.currentPeriodEnd?.toDate?.()?.toISOString() || null,
+          };
+        });
 
         res.status(200).json({ orders });
       } catch (error) {
@@ -1945,11 +3020,54 @@ exports.markVisitComplete = functions
           return res.status(404).json({ error: 'Booking not found' });
         }
 
+        const bookingData = bookingDoc.data();
+
         await bookingRef.update({
           status: 'completed',
           completedAt: admin.firestore.FieldValue.serverTimestamp(),
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
+
+        // Send subscriber post-first-visit follow-up email (24h after first visit)
+        try {
+          if (bookingData.orderId) {
+            const orderDoc = await db.collection('orders').doc(bookingData.orderId).get();
+            if (orderDoc.exists) {
+              const order = orderDoc.data();
+              const isSubscription = order.type === 'subscription' || order.type === 'test';
+              const isFirstVisit = (order.totalVisits || 0) <= 1;
+              const isGiftRedeemed = order.type === 'gift';
+
+              if (isSubscription && isFirstVisit) {
+                // Schedule subscriber first-visit email for ~24h later
+                const sendAt = new Date();
+                sendAt.setDate(sendAt.getDate() + 1);
+                sendAt.setHours(10, 0, 0, 0);
+
+                await db.collection('followups').add({
+                  orderId: bookingData.orderId,
+                  recipientEmail: bookingData.customerEmail || order.customer?.email,
+                  recipientName: bookingData.customerName || order.customer?.name || '',
+                  visitDate: bookingData.scheduledAt || admin.firestore.Timestamp.now(),
+                  sendAt: admin.firestore.Timestamp.fromDate(sendAt),
+                  stage: 'subscriber_first_visit',
+                  status: 'pending',
+                  lang: order.lang || 'et',
+                  size: order.size || 'medium',
+                  packageType: order.package,
+                  referralCode: order.referralCode || null,  // Include referral code for email
+                  createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                });
+                console.log(`Subscriber first-visit follow-up created for ${bookingData.customerEmail}`);
+              } else if (isGiftRedeemed) {
+                // Gift recipients already have their follow-up sequence from bookGiftVisit
+                console.log('Gift booking completed — follow-up sequence already exists');
+              }
+            }
+          }
+        } catch (followupErr) {
+          console.error('Post-visit follow-up creation failed (non-fatal):', followupErr);
+        }
 
         res.status(200).json({ success: true, bookingId });
       } catch (error) {
@@ -2252,16 +3370,39 @@ exports.cancelOrder = functions
         }
 
         const order = orderDoc.data();
+        const isSubscription = order.type === 'subscription';
 
-        // 1. Cancel any linked scheduled bookings (in Cal.com + Firestore)
+        // 1. Handle bookings
         let cancelledBookings = 0;
+        let keptBookings = 0;
         const bookingsSnapshot = await db.collection('bookings')
           .where('orderId', '==', orderId)
           .where('status', '==', 'scheduled')
           .get();
 
+        // For subscriptions: get current period end to decide which bookings to keep
+        let periodEnd = null;
+        if (isSubscription && order.stripeSubscriptionId) {
+          try {
+            const sub = await stripe.subscriptions.retrieve(order.stripeSubscriptionId);
+            periodEnd = new Date(sub.current_period_end * 1000);
+          } catch (e) {
+            console.error('Could not retrieve subscription period:', e);
+          }
+        }
+
         for (const bookingDoc of bookingsSnapshot.docs) {
           const booking = bookingDoc.data();
+          const bookingDate = booking.scheduledAt?.toDate?.() || null;
+
+          // For subscriptions with cancel_at_period_end:
+          // Keep bookings that are WITHIN the paid period, cancel the rest
+          if (isSubscription && periodEnd && bookingDate && bookingDate <= periodEnd) {
+            keptBookings++;
+            console.log(`Keeping booking ${bookingDoc.id} (within paid period, scheduled ${bookingDate.toISOString()})`);
+            continue; // Don't cancel - customer paid for this period
+          }
+
           // Cancel in Cal.com
           if (booking.calBookingUid) {
             try {
@@ -2281,21 +3422,26 @@ exports.cancelOrder = functions
         }
 
         // 2. Cancel Stripe subscription (if applicable)
-        if (order.stripeSubscriptionId && order.subscriptionStatus === 'active') {
+        if (isSubscription && order.stripeSubscriptionId && order.subscriptionStatus === 'active') {
+          // Subscriptions: cancel at period end (customer gets current paid period service)
           try {
-            await stripe.subscriptions.cancel(order.stripeSubscriptionId);
-            console.log('Stripe subscription cancelled:', order.stripeSubscriptionId);
+            await stripe.subscriptions.update(order.stripeSubscriptionId, {
+              cancel_at_period_end: true,
+            });
+            console.log('Stripe subscription set to cancel at period end:', order.stripeSubscriptionId);
           } catch (stripeError) {
             console.error('Stripe cancel failed (continuing):', stripeError);
           }
         }
+        // Note: gifts are one-time payments - no Stripe action needed (refund must be done manually)
 
         // 3. Update order status
         await orderRef.update({
-          status: 'cancelled',
-          subscriptionStatus: order.type === 'subscription' ? 'cancelled' : (order.subscriptionStatus || null),
+          status: isSubscription ? 'cancelling' : 'cancelled',
+          subscriptionStatus: isSubscription ? 'cancelling' : (order.subscriptionStatus || null),
           cancelReason: reason || null,
           cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
+          ...(periodEnd && { currentPeriodEnd: periodEnd }),
         });
 
         // 4. Send cancellation email to client
@@ -2316,7 +3462,14 @@ exports.cancelOrder = functions
           }
         }
 
-        res.status(200).json({ success: true, orderId, cancelledBookings });
+        res.status(200).json({
+          success: true,
+          orderId,
+          cancelledBookings,
+          keptBookings,
+          type: order.type,
+          periodEnd: periodEnd ? periodEnd.toISOString() : null,
+        });
       } catch (error) {
         console.error('Error cancelling order:', error);
         res.status(500).json({ error: error.message });
@@ -2367,6 +3520,64 @@ exports.getOrderBookings = functions
 
 // ============================================================
 // WAITLIST — Capture interest from non-Tallinn areas
+// ============================================================
+
+/**
+ * Calendar event download (.ics)
+ * Serves an iCalendar file for Apple Calendar, Outlook etc.
+ * GET /api/calendar?title=...&start=...&end=...&description=...&location=...
+ */
+exports.calendarEvent = functions
+  .region('europe-west1')
+  .https.onRequest((req, res) => {
+    cors(req, res, () => {
+      const { title, start, end, description, location } = req.query;
+
+      if (!start || !end) {
+        return res.status(400).send('Missing start or end parameter');
+      }
+
+      const startDate = new Date(start);
+      const endDate = new Date(end);
+
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        return res.status(400).send('Invalid date format');
+      }
+
+      const fmtICS = (d) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+      const uid = `sukoda-${startDate.getTime()}@sukoda.ee`;
+      const now = fmtICS(new Date());
+
+      const icsContent = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//SUKODA//Calendar//ET',
+        'CALSCALE:GREGORIAN',
+        'METHOD:PUBLISH',
+        'BEGIN:VEVENT',
+        `UID:${uid}`,
+        `DTSTAMP:${now}`,
+        `DTSTART:${fmtICS(startDate)}`,
+        `DTEND:${fmtICS(endDate)}`,
+        `SUMMARY:${(title || 'SUKODA koduhoolitsus').replace(/[,;]/g, '\\$&')}`,
+        `DESCRIPTION:${(description || '').replace(/\n/g, '\\n').replace(/[,;]/g, '\\$&')}`,
+        `LOCATION:${(location || '').replace(/[,;]/g, '\\$&')}`,
+        'STATUS:CONFIRMED',
+        'BEGIN:VALARM',
+        'TRIGGER:-PT1H',
+        'ACTION:DISPLAY',
+        'DESCRIPTION:SUKODA koduhoolitsus 1h pärast',
+        'END:VALARM',
+        'END:VEVENT',
+        'END:VCALENDAR',
+      ].join('\r\n');
+
+      res.set('Content-Type', 'text/calendar; charset=utf-8');
+      res.set('Content-Disposition', 'attachment; filename="sukoda-visit.ics"');
+      return res.status(200).send(icsContent);
+    });
+  });
+
 // ============================================================
 
 /**
@@ -2424,6 +3635,630 @@ exports.waitlist = functions
 
       } catch (error) {
         console.error('Waitlist error:', error);
+        res.status(500).json({ error: error.message });
+      }
+    });
+  });
+
+// ============================================================
+// GIFT REDEMPTION & PUBLIC BOOKING
+// ============================================================
+
+/**
+ * Redeem a gift code - returns order details for the gift recipient
+ * GET /api/redeem?code=SUKO-XXXX-XXXX
+ */
+exports.redeemGift = functions
+  .region('europe-west1')
+  .https.onRequest((req, res) => {
+    cors(req, res, async () => {
+      // Normalize confused characters: 0→O, 1→I (gift codes never use 0, 1, I, O in random part, but prefix is SUKO-)
+      const code = (req.query.code || '').trim().toUpperCase().replace(/0/g, 'O').replace(/1/g, 'I');
+
+      if (!code) {
+        return res.status(400).json({ error: 'Missing gift code' });
+      }
+
+      try {
+        // Search for order with this gift code
+        const snapshot = await db.collection('orders')
+          .where('giftCode', '==', code)
+          .where('type', '==', 'gift')
+          .limit(1)
+          .get();
+
+        if (snapshot.empty) {
+          return res.status(404).json({ error: 'Gift code not found' });
+        }
+
+        const doc = snapshot.docs[0];
+        const order = doc.data();
+
+        // Check if already redeemed (has a booking)
+        if (order.giftRedeemed) {
+          return res.status(400).json({ error: 'Gift already redeemed', alreadyRedeemed: true });
+        }
+
+        // Check if paid
+        if (order.status !== 'paid') {
+          return res.status(400).json({ error: 'Gift not yet paid' });
+        }
+
+        const lang = order.lang || 'et';
+        const sizeNames = {
+          et: { small: 'kuni 50m²', medium: '51–90m²', large: '91–120m²', xlarge: '121–150m²' },
+          en: { small: 'up to 50m²', medium: '51–90m²', large: '91–120m²', xlarge: '121–150m²' },
+        };
+        const packageNames = {
+          et: { moment: 'Üks Hetk', month: 'Kuu Aega', quarter: 'Kvartal Vabadust', harmony: 'Harmoonia', serenity: 'Täielik Rahulolu' },
+          en: { moment: 'One Moment', month: 'A Month of Care', quarter: 'Quarter of Freedom', harmony: 'Harmony', serenity: 'Complete Serenity' },
+        };
+        const packageDescriptions = {
+          et: {
+            moment: 'Üks täiuslik koduhoolitsus — koristus, värsked lilled, tervituskaart ja magus üllatus.',
+            month: 'Kaks koduhoolitsust ühe kuu jooksul — koristus, lilled, puuviljad ja tervituskaart.',
+            quarter: 'Kuus koduhoolitsust kolme kuu jooksul — koristus, lilled, puuviljad ja taimede kastmine.',
+          },
+          en: {
+            moment: 'One perfect home care — cleaning, fresh flowers, greeting card and a sweet surprise.',
+            month: 'Two home care visits over one month — cleaning, flowers, fruit and a greeting card.',
+            quarter: 'Six home care visits over three months — cleaning, flowers, fruit and plant watering.',
+          },
+        };
+
+        res.status(200).json({
+          orderId: doc.id,
+          package: order.package,
+          size: order.size,
+          physicalCard: order.physicalCard || false,
+          recipientName: order.recipient?.name || '',
+          giftCode: order.giftCode,
+          lang,
+          packageName: packageNames[lang]?.[order.package] || order.package,
+          packageDescription: packageDescriptions[lang]?.[order.package] || '',
+          sizeName: sizeNames[lang]?.[order.size] || order.size,
+          senderName: order.customer?.name || '',
+          message: order.recipient?.message || '',
+        });
+
+      } catch (error) {
+        console.error('Redeem gift error:', error);
+        res.status(500).json({ error: error.message });
+      }
+    });
+  });
+
+/**
+ * Get available time slots for public booking
+ * GET /api/slots?size=medium&month=2026-02
+ */
+exports.getPublicSlots = functions
+  .region('europe-west1')
+  .https.onRequest((req, res) => {
+    cors(req, res, async () => {
+      const size = req.query.size || 'medium';
+      const month = req.query.month; // e.g. '2026-02'
+
+      const slug = calService.EVENT_TYPE_SLUGS[size];
+      if (!slug) {
+        return res.status(400).json({ error: 'Invalid size' });
+      }
+
+      try {
+        // Calculate date range: current month or specified month, up to 4 weeks ahead
+        let startDate, endDate;
+        if (month) {
+          startDate = `${month}-01`;
+          // End of month + some buffer
+          const d = new Date(startDate);
+          d.setMonth(d.getMonth() + 1);
+          d.setDate(d.getDate() + 7); // 1 week into next month
+          endDate = d.toISOString().split('T')[0];
+        } else {
+          const now = new Date();
+          startDate = now.toISOString().split('T')[0];
+          const end = new Date(now);
+          end.setDate(end.getDate() + 28);
+          endDate = end.toISOString().split('T')[0];
+        }
+
+        const allSlots = await calService.getAvailableSlots(slug, startDate, endDate);
+
+        // Group slots by date and extract just the time
+        const grouped = {};
+        for (const slot of allSlots) {
+          const date = slot.date || slot.time.split('T')[0];
+          if (!grouped[date]) grouped[date] = [];
+          // Convert to HH:MM in Tallinn timezone
+          const dt = new Date(slot.time);
+          const timeStr = dt.toLocaleTimeString('et-EE', { 
+            timeZone: 'Europe/Tallinn', 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: false,
+          });
+          grouped[date].push(timeStr);
+        }
+
+        // Sort times within each date
+        for (const date of Object.keys(grouped)) {
+          grouped[date].sort();
+        }
+
+        res.status(200).json({ slots: grouped });
+
+      } catch (error) {
+        console.error('Get slots error:', error);
+        res.status(500).json({ error: error.message });
+      }
+    });
+  });
+
+/**
+ * Book a visit for a gift recipient
+ * POST /api/book-gift
+ * Body: { code, startTime, email, phone, address, additionalInfo }
+ */
+exports.bookGiftVisit = functions
+  .region('europe-west1')
+  .https.onRequest((req, res) => {
+    cors(req, res, async () => {
+      if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' });
+      }
+
+      const { code, startTime, email, phone, address, additionalInfo } = req.body;
+
+      if (!code || !startTime || !email || !address) {
+        return res.status(400).json({ error: 'Missing required fields: code, startTime, email, address' });
+      }
+
+      try {
+        // Find and validate gift order (normalize 0→O, 1→I to handle common typos)
+        const normalizedCode = code.trim().toUpperCase().replace(/0/g, 'O').replace(/1/g, 'I');
+        const snapshot = await db.collection('orders')
+          .where('giftCode', '==', normalizedCode)
+          .where('type', '==', 'gift')
+          .limit(1)
+          .get();
+
+        if (snapshot.empty) {
+          return res.status(404).json({ error: 'Gift code not found' });
+        }
+
+        const doc = snapshot.docs[0];
+        const order = doc.data();
+
+        if (order.giftRedeemed) {
+          return res.status(400).json({ error: 'Gift already redeemed' });
+        }
+
+        if (order.status !== 'paid') {
+          return res.status(400).json({ error: 'Gift not yet paid' });
+        }
+
+        // Size is always locked at purchase (both regular gifts and physical cards)
+        const effectiveSize = order.size || 'medium';
+        const slug = calService.EVENT_TYPE_SLUGS[effectiveSize] || 'koristus-90';
+        const recipientName = order.recipient?.name || 'Kingisaaja';
+
+        // Create booking via Cal.com
+        const booking = await calService.createBooking(slug, startTime, {
+          name: recipientName,
+          email: email,
+          phone: phone || '',
+          address: address,
+        }, {
+          source: 'sukoda-gift-redeem',
+          giftCode: code,
+          orderId: doc.id,
+          additionalInfo: additionalInfo || '',
+        });
+
+        // Update Firestore order
+        await doc.ref.update({
+          giftRedeemed: true,
+          giftRedeemedAt: admin.firestore.FieldValue.serverTimestamp(),
+          'recipient.email': email,
+          'recipient.phone': phone || '',
+          'recipient.address': address,
+          'recipient.additionalInfo': additionalInfo || '',
+          'booking': {
+            uid: booking.uid || booking.id,
+            startTime: startTime,
+            createdAt: new Date().toISOString(),
+          },
+        });
+
+        // Create follow-up email sequence for conversion (24h, 7d, 30d after visit)
+        try {
+          await createFollowupSequence({
+            orderId: doc.id,
+            recipientEmail: email,
+            recipientName: order.recipient?.name || '',
+            bookingStartTime: startTime,
+            lang: order.lang || 'et',
+            size: order.size || 'medium',
+          });
+        } catch (followupError) {
+          // Don't fail the booking if follow-up creation fails
+          console.error('Follow-up sequence creation failed (non-fatal):', followupError);
+        }
+
+        // Format date for response
+        const bookingDate = new Date(startTime);
+        const dateStr = bookingDate.toLocaleDateString('et-EE', {
+          timeZone: 'Europe/Tallinn',
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        });
+        const timeStr = bookingDate.toLocaleTimeString('et-EE', {
+          timeZone: 'Europe/Tallinn',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        });
+
+        res.status(200).json({
+          success: true,
+          bookingDate: dateStr,
+          bookingTime: timeStr,
+        });
+
+      } catch (error) {
+        console.error('Book gift visit error:', error);
+        res.status(500).json({ error: error.message });
+      }
+    });
+  });
+
+/**
+ * Book a visit for a subscription customer
+ * POST /api/book-subscription
+ * Body: { orderId, startTime }
+ */
+exports.bookSubscriptionVisit = functions
+  .region('europe-west1')
+  .https.onRequest((req, res) => {
+    cors(req, res, async () => {
+      if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' });
+      }
+
+      const { orderId, startTime } = req.body;
+
+      if (!orderId || !startTime) {
+        return res.status(400).json({ error: 'Missing required fields: orderId, startTime' });
+      }
+
+      try {
+        const orderDoc = await db.collection('orders').doc(orderId).get();
+
+        if (!orderDoc.exists) {
+          return res.status(404).json({ error: 'Order not found' });
+        }
+
+        const order = orderDoc.data();
+
+        if (order.status !== 'paid') {
+          return res.status(400).json({ error: 'Order not paid' });
+        }
+
+        if (order.type !== 'subscription' && order.type !== 'test') {
+          return res.status(400).json({ error: 'Not a subscription order' });
+        }
+
+        // Check if already booked
+        if (order.booking?.uid) {
+          return res.status(400).json({ error: 'Already booked', alreadyBooked: true });
+        }
+
+        const slug = calService.EVENT_TYPE_SLUGS[order.size] || 'koristus-90';
+        const customer = order.customer || {};
+
+        // Create booking via Cal.com
+        const booking = await calService.createBooking(slug, startTime, {
+          name: customer.name || 'Klient',
+          email: customer.email || '',
+          phone: customer.phone || '',
+          address: customer.address || '',
+        }, {
+          source: 'sukoda-subscription-booking',
+          orderId: orderId,
+          additionalInfo: customer.additionalInfo || '',
+        });
+
+        // Update Firestore order
+        await orderDoc.ref.update({
+          'booking': {
+            uid: booking.uid || booking.id,
+            startTime: startTime,
+            createdAt: new Date().toISOString(),
+          },
+        });
+
+        // Format date for response
+        const bookingDate = new Date(startTime);
+        const dateStr = bookingDate.toLocaleDateString('et-EE', {
+          timeZone: 'Europe/Tallinn',
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        });
+        const timeStr = bookingDate.toLocaleTimeString('et-EE', {
+          timeZone: 'Europe/Tallinn',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        });
+
+        res.status(200).json({
+          success: true,
+          bookingDate: dateStr,
+          bookingTime: timeStr,
+        });
+
+      } catch (error) {
+        console.error('Book subscription visit error:', error);
+        res.status(500).json({ error: error.message });
+      }
+    });
+  });
+
+// ============================================================
+// PHYSICAL GIFT CARD CODE GENERATION
+// ============================================================
+
+/**
+ * Admin: Generate physical gift card codes in bulk
+ * These create pre-paid order documents in Firestore that work
+ * with the existing /api/redeem and lunasta.html flow.
+ *
+ * Size is NOT locked at generation — the recipient chooses their
+ * home size when redeeming at sukoda.ee/lunasta. This makes cards
+ * universal: one "Üks Hetk" card works for any apartment size.
+ *
+ * POST /api/admin/generate-gift-cards
+ * Body: { password, count, package, batchName }
+ *
+ * - count: number of codes to generate (1-200)
+ * - package: 'moment' (default), 'month', 'quarter'
+ * - size: 'small', 'medium' (default), 'large', 'xlarge' — locked at purchase
+ * - batchName: optional label, e.g. 'Printon Feb 2026'
+ */
+exports.generatePhysicalGiftCards = functions
+  .region('europe-west1')
+  .https.onRequest((req, res) => {
+    cors(req, res, async () => {
+      if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' });
+      }
+
+      const adminPassword = process.env.ADMIN_PASSWORD || functions.config().admin?.password;
+      const { password, count = 10, package: pkg = 'moment', size = 'medium', batchName = '', buyer = {} } = req.body;
+      // buyer: { name, email, company } — who purchased these cards (agent/office)
+
+      if (password !== adminPassword) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const numCards = Math.min(Math.max(parseInt(count) || 10, 1), 200);
+      const validPackages = ['moment', 'month', 'quarter'];
+      const validSizes = ['small', 'medium', 'large', 'xlarge'];
+
+      if (!validPackages.includes(pkg)) {
+        return res.status(400).json({ error: `Invalid package. Must be one of: ${validPackages.join(', ')}` });
+      }
+      if (!validSizes.includes(size)) {
+        return res.status(400).json({ error: `Invalid size. Must be one of: ${validSizes.join(', ')}` });
+      }
+
+      try {
+        const batchId = `PRINT-${Date.now()}`;
+        const codes = [];
+        const batch = db.batch();
+
+        for (let i = 0; i < numCards; i++) {
+          // Generate unique code
+          let code;
+          let attempts = 0;
+          do {
+            code = generateGiftCode();
+            attempts++;
+            if (attempts > 50) throw new Error('Could not generate unique code');
+            const existing = await db.collection('orders')
+              .where('giftCode', '==', code)
+              .limit(1)
+              .get();
+            if (existing.empty) break;
+          } while (true);
+
+          const orderRef = db.collection('orders').doc();
+          batch.set(orderRef, {
+            type: 'gift',
+            package: pkg,
+            size: size,              // Size locked at purchase — determines service price
+            customer: {
+              name: 'SUKODA (Physical Card)',
+              email: 'tere@sukoda.ee',
+            },
+            recipient: {
+              name: '',
+              email: '',
+              message: '',
+            },
+            deliveryMethod: 'physical',
+            giftCode: code,
+            lang: 'et',
+            status: 'paid',
+            physicalCard: true,
+            batchId: batchId,
+            batchName: batchName || `Physical cards ${new Date().toISOString().slice(0, 10)}`,
+            buyer: {
+              name: buyer.name || '',
+              email: buyer.email || '',
+              company: buyer.company || '',
+            },
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            paidAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+
+          codes.push({
+            code: code,
+            orderId: orderRef.id,
+          });
+        }
+
+        await batch.commit();
+
+        console.log(`Generated ${codes.length} physical gift card codes (${pkg}, ${size}). Batch: ${batchId}`);
+
+        res.status(200).json({
+          success: true,
+          batchId,
+          package: pkg,
+          size: size,
+          buyer: buyer.name || buyer.company || 'N/A',
+          count: codes.length,
+          codes: codes,
+          redeemUrl: 'https://sukoda.ee/lunasta.html',
+        });
+
+      } catch (error) {
+        console.error('Generate physical gift cards error:', error);
+        res.status(500).json({ error: error.message });
+      }
+    });
+  });
+
+
+/**
+ * Gift Card Size Upgrade — creates a Stripe Checkout session for the price difference
+ * when a gift recipient's home is bigger than what was originally paid for.
+ *
+ * POST /api/gift-upgrade
+ * Body: { code, newSize }
+ *
+ * Returns: { url } — Stripe Checkout URL to pay the difference
+ */
+
+// Gift prices in cents for upgrade calculation
+const GIFT_PRICES_CENTS = {
+  moment: { small: 16900, medium: 19900, large: 25900, xlarge: 31900 },
+  month:  { small: 33900, medium: 38900, large: 49900, xlarge: 61900 },
+  quarter:{ small: 84900, medium: 99900, large: 124900, xlarge: 144900 },
+};
+
+// Size ordering for validation (can only upgrade UP)
+const SIZE_ORDER = { small: 0, medium: 1, large: 2, xlarge: 3 };
+const SIZE_LABELS = { small: 'kuni 50m²', medium: '51–90m²', large: '91–120m²', xlarge: '121–150m²' };
+
+exports.createGiftUpgrade = functions
+  .region('europe-west1')
+  .https.onRequest((req, res) => {
+    cors(req, res, async () => {
+      if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' });
+      }
+
+      const { code, newSize } = req.body;
+
+      if (!code || !newSize) {
+        return res.status(400).json({ error: 'Missing required fields: code, newSize' });
+      }
+
+      const validSizes = ['small', 'medium', 'large', 'xlarge'];
+      if (!validSizes.includes(newSize)) {
+        return res.status(400).json({ error: 'Invalid size' });
+      }
+
+      try {
+        // Find the gift order
+        const normalizedCode = code.trim().toUpperCase().replace(/0/g, 'O').replace(/1/g, 'I');
+        const snapshot = await db.collection('orders')
+          .where('giftCode', '==', normalizedCode)
+          .where('type', '==', 'gift')
+          .limit(1)
+          .get();
+
+        if (snapshot.empty) {
+          return res.status(404).json({ error: 'Gift code not found' });
+        }
+
+        const doc = snapshot.docs[0];
+        const order = doc.data();
+
+        if (order.status !== 'paid') {
+          return res.status(400).json({ error: 'Gift not active' });
+        }
+
+        if (order.giftRedeemed) {
+          return res.status(400).json({ error: 'Gift already redeemed — contact tere@sukoda.ee for help' });
+        }
+
+        const currentSize = order.size;
+        const pkg = order.package;
+
+        // Validate upgrade direction
+        if (SIZE_ORDER[newSize] <= SIZE_ORDER[currentSize]) {
+          return res.status(400).json({ error: 'New size must be larger than current size' });
+        }
+
+        // Calculate price difference
+        const currentPrice = GIFT_PRICES_CENTS[pkg]?.[currentSize];
+        const newPrice = GIFT_PRICES_CENTS[pkg]?.[newSize];
+
+        if (!currentPrice || !newPrice) {
+          return res.status(400).json({ error: 'Price not found for this package/size combination' });
+        }
+
+        const diffCents = newPrice - currentPrice;
+
+        if (diffCents <= 0) {
+          return res.status(400).json({ error: 'No upgrade needed' });
+        }
+
+        const pkgNames = { moment: 'Üks Hetk', month: 'Kuu Aega', quarter: 'Kvartal Vabadust' };
+
+        // Create Stripe Checkout session for the difference
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ['card'],
+          line_items: [{
+            price_data: {
+              currency: 'eur',
+              unit_amount: diffCents,
+              product_data: {
+                name: `SUKODA kinkekaardi suuruse täiendus`,
+                description: `${pkgNames[pkg] || pkg}: ${SIZE_LABELS[currentSize]} → ${SIZE_LABELS[newSize]}`,
+              },
+            },
+            quantity: 1,
+          }],
+          mode: 'payment',
+          success_url: `${req.headers.origin || 'https://sukoda.ee'}/lunasta.html?code=${encodeURIComponent(normalizedCode)}&upgraded=true`,
+          cancel_url: `${req.headers.origin || 'https://sukoda.ee'}/lunasta.html?code=${encodeURIComponent(normalizedCode)}&upgrade_cancelled=true`,
+          metadata: {
+            type: 'gift_upgrade',
+            order_id: doc.id,
+            gift_code: normalizedCode,
+            old_size: currentSize,
+            new_size: newSize,
+          },
+          locale: 'et',
+        });
+
+        res.status(200).json({
+          url: session.url,
+          diffEur: (diffCents / 100).toFixed(2),
+          oldSize: SIZE_LABELS[currentSize],
+          newSize: SIZE_LABELS[newSize],
+        });
+
+      } catch (error) {
+        console.error('Gift upgrade error:', error);
         res.status(500).json({ error: error.message });
       }
     });

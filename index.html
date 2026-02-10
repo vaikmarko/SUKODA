@@ -41,7 +41,7 @@
                         paper: '#FAF8F5',
                         cream: '#F5F0EB',
                         accent: '#B8976A',
-                        muted: '#8A8578',
+                        muted: '#6B6560',
                     },
                     spacing: {
                         '128': '32rem',
@@ -186,7 +186,7 @@
             transition: width 0.1s linear;
         }
     </style>
-    <script src="assets/js/checkout.js">
+    <script src="assets/js/checkout.js"></script>
 </head>
 <body class="antialiased" x-data="{ lang: localStorage.getItem('sukoda_lang') || 'et' }" x-init="$watch('lang', val => localStorage.setItem('sukoda_lang', val))">
 
@@ -249,6 +249,78 @@
         <!-- Test Mode Banner -->
         <div x-data="{ testMode: new URLSearchParams(window.location.search).get('test') === '1' }" x-show="testMode" x-cloak class="bg-accent/10 text-accent py-3 px-4 text-center border-b border-accent/20">
             <p class="text-xs font-sans tracking-widest uppercase">Test mode — €1 testtellimus saadaval</p>
+        </div>
+
+        <!-- Referral Banner (shown when arriving via ?ref=SOOVITA-XXXXX) -->
+        <div x-data="{
+                refCode: new URLSearchParams(window.location.search).get('ref'),
+                show: false,
+                referrerName: '',
+                async init() {
+                    if (!this.refCode) return;
+                    try {
+                        const res = await fetch('/api/validate-referral?code=' + encodeURIComponent(this.refCode));
+                        if (res.ok) {
+                            const data = await res.json();
+                            this.referrerName = data.referrerName || '';
+                            this.show = true;
+                        }
+                    } catch (e) { console.log('Referral validation failed:', e); }
+                }
+             }" x-show="show" x-cloak
+             x-transition:enter="transition ease-out duration-700"
+             x-transition:enter-start="opacity-0 -translate-y-2"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             class="bg-black text-paper py-5 px-6 border-b border-accent/10 relative">
+            <div class="max-w-3xl mx-auto flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 text-center md:text-left">
+                <div class="flex items-center gap-4">
+                    <div class="flex flex-col items-center">
+                        <span class="text-accent text-3xl font-serif font-light leading-none">-20%</span>
+                        <span class="text-white/30 text-[9px] uppercase tracking-[0.2em] mt-1" x-text="lang === 'et' ? '3 kuud' : '3 months'">3 kuud</span>
+                    </div>
+                    <div class="border-l border-white/10 pl-4">
+                        <p class="text-sm font-sans font-light leading-relaxed">
+                            <span x-show="lang === 'et'"><span x-text="referrerName" class="text-paper font-normal"></span> soovitab sulle SUKODA-t. <span class="text-accent">Esimesed 3 kuud soodsamalt.</span></span>
+                            <span x-show="lang === 'en'" x-cloak><span x-text="referrerName" class="text-paper font-normal"></span> recommends SUKODA. <span class="text-accent">First 3 months at a discount.</span></span>
+                        </p>
+                    </div>
+                </div>
+                <a href="#liitu" class="bg-accent text-white px-6 py-2.5 text-[10px] uppercase tracking-[0.25em] font-sans hover:bg-accent/80 transition-all duration-300 whitespace-nowrap"
+                   x-text="lang === 'et' ? 'Alusta siit' : 'Start here'">Alusta siit</a>
+            </div>
+            <button @click="show = false" class="absolute top-3 right-3 text-white/20 hover:text-paper transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <!-- Promo Banner (shown when arriving from follow-up email with ?promo=KINGITUS20) -->
+        <div x-data="{ promoCode: new URLSearchParams(window.location.search).get('promo'), show: !!new URLSearchParams(window.location.search).get('promo') }" x-show="show" x-cloak
+             x-transition:enter="transition ease-out duration-700"
+             x-transition:enter-start="opacity-0 -translate-y-2"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             class="bg-black text-paper py-5 px-6 border-b border-accent/10 relative">
+            <div class="max-w-3xl mx-auto flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 text-center md:text-left">
+                <div class="flex items-center gap-4">
+                    <div class="flex flex-col items-center">
+                        <span class="text-accent text-3xl font-serif font-light leading-none">-20%</span>
+                        <span class="text-white/30 text-[9px] uppercase tracking-[0.2em] mt-1" x-text="lang === 'et' ? '3 kuud' : '3 months'">3 kuud</span>
+                    </div>
+                    <div class="border-l border-white/10 pl-4">
+                        <p class="text-sm font-sans font-light leading-relaxed">
+                            <span x-show="lang === 'et'">See tunne, kui tuled koju ja kõik on paigas. <span class="text-accent">Sinu pakkumine ootab.</span></span>
+                            <span x-show="lang === 'en'" x-cloak>That feeling when you come home and everything is right. <span class="text-accent">Your offer awaits.</span></span>
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="bg-white/5 border border-white/10 px-4 py-2 text-accent font-mono text-sm tracking-[0.25em]" x-text="promoCode"></span>
+                    <a href="#liitu" class="bg-accent text-white px-6 py-2.5 text-[10px] uppercase tracking-[0.25em] font-sans hover:bg-accent/80 transition-all duration-300 whitespace-nowrap"
+                       x-text="lang === 'et' ? 'Alusta siit' : 'Start here'">Alusta siit</a>
+                </div>
+            </div>
+            <button @click="show = false" class="absolute top-3 right-3 text-white/20 hover:text-paper transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
         </div>
 
         <!-- Hero Section -->
@@ -330,10 +402,10 @@
             size: 'medium',
             rhythm: 'twice',
             prices: {
-                small: { once: 119, twice: 199, weekly: 379 },
-                medium: { once: 149, twice: 249, weekly: 449 },
-                large: { once: 189, twice: 319, weekly: 579 },
-                xlarge: { once: 229, twice: 389, weekly: 699 }
+                small: { once: 135, twice: 225, weekly: 429 },
+                medium: { once: 169, twice: 279, weekly: 499 },
+                large: { once: 215, twice: 359, weekly: 649 },
+                xlarge: { once: 259, twice: 439, weekly: 789 }
             }
         }">
             <!-- Controls -->
@@ -372,7 +444,7 @@
                     </div>
                     <div class="flex items-baseline gap-1 mb-8 md:mb-10" x-show="size !== 'estate'">
                         <span class="font-serif text-lg text-muted">€</span>
-                        <span class="font-serif text-2xl" x-text="prices[size].once">149</span>
+                        <span class="font-serif text-2xl" x-text="prices[size].once">169</span>
                         <span class="text-xs text-muted font-sans" x-text="lang === 'et' ? '/kuu' : '/mo'">/kuu</span>
                     </div>
                     <div class="mb-8 md:mb-10" x-show="size === 'estate'" x-cloak>
@@ -409,7 +481,7 @@
                     </div>
                     <div class="flex items-baseline gap-1 mb-8 md:mb-10" x-show="size !== 'estate'">
                         <span class="font-serif text-lg text-muted">€</span>
-                        <span class="font-serif text-2xl" x-text="prices[size].twice">249</span>
+                        <span class="font-serif text-2xl" x-text="prices[size].twice">279</span>
                         <span class="text-xs text-muted font-sans" x-text="lang === 'et' ? '/kuu' : '/mo'">/kuu</span>
                     </div>
                     <div class="mb-8 md:mb-10" x-show="size === 'estate'" x-cloak>
@@ -448,7 +520,7 @@
                     </div>
                     <div class="flex items-baseline gap-1 mb-8 md:mb-10" x-show="size !== 'estate'">
                         <span class="font-serif text-lg text-muted">€</span>
-                        <span class="font-serif text-2xl" x-text="prices[size].weekly">449</span>
+                        <span class="font-serif text-2xl" x-text="prices[size].weekly">499</span>
                         <span class="text-xs text-muted font-sans" x-text="lang === 'et' ? '/kuu' : '/mo'">/kuu</span>
                     </div>
                     <div class="mb-8 md:mb-10" x-show="size === 'estate'" x-cloak>
@@ -590,10 +662,10 @@
             addressSearchTimer: null,
             testMode: new URLSearchParams(window.location.search).get('test') === '1',
             prices: {
-                small: { once: 119, twice: 199, weekly: 379, test: 1 },
-                medium: { once: 149, twice: 249, weekly: 449, test: 1 },
-                large: { once: 189, twice: 319, weekly: 579, test: 1 },
-                xlarge: { once: 229, twice: 389, weekly: 699, test: 1 }
+                small: { once: 135, twice: 225, weekly: 429, test: 1 },
+                medium: { once: 169, twice: 279, weekly: 499, test: 1 },
+                large: { once: 215, twice: 359, weekly: 649, test: 1 },
+                xlarge: { once: 259, twice: 439, weekly: 789, test: 1 }
             },
             validateEmail() {
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -803,6 +875,7 @@
             }
             step = 2;
             inquirySent = false;
+            $nextTick(() => { document.getElementById('liitu').scrollIntoView({ behavior: 'smooth', block: 'start' }) });
         ">
             
             <!-- Progress Steps -->

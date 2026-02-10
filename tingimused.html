@@ -30,7 +30,7 @@
                         paper: '#FAF8F5',
                         cream: '#F5F0EB',
                         accent: '#B8976A',
-                        muted: '#8A8578',
+                        muted: '#6B6560',
                     }
                 }
             }
@@ -136,26 +136,56 @@
 
                 <div>
                     <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '3. Tellimine ja makse' : '3. Ordering and Payment'">3. Tellimine ja makse</h2>
-                    <p x-show="lang === 'et'">Teenust saab tellida meie veebilehel, valides paketi ja täites vajalikud andmed. Makse toimub automaatselt iga kuu arveldusperioodi alguses. Kui makse ebaõnnestub, võime teenust peatada kuni makse on lahendatud. Makse töötlemisel kasutame turvalist makseteenust Stripe.</p>
-                    <p x-show="lang === 'en'" x-cloak>Services can be ordered on our website by selecting a package and filling in the required information. Payment is automatically processed at the beginning of each monthly billing period. If payment fails, we may suspend service until payment is resolved. We use the secure payment service Stripe for payment processing.</p>
+                    <div x-show="lang === 'et'">
+                        <p class="mb-3"><strong class="text-black font-normal">Püsitellimus:</strong> Teenust saab tellida meie veebilehel, valides paketi ja täites vajalikud andmed. Makse toimub automaatselt iga kuu arveldusperioodi alguses. Makse võetakse enne teenuse osutamist — see tähendab, et iga makse katab eeloleva perioodi teenuse. Kui makse ebaõnnestub, võime teenust peatada kuni makse on lahendatud.</p>
+                        <p class="mb-3"><strong class="text-black font-normal">Kinkekaart:</strong> Kinkekaardi ost on ühekordne makse. Kinkekaart saadetakse saajale e-kirjaga ja sisaldab unikaalset koodi, mille abil saab teenuse lunastada ja aja broneerida.</p>
+                        <p>Kõigi maksete töötlemisel kasutame turvalist makseteenust Stripe. Meie ei salvesta ega töötle sinu kaardandmeid.</p>
+                    </div>
+                    <div x-show="lang === 'en'" x-cloak>
+                        <p class="mb-3"><strong class="text-black font-normal">Subscription:</strong> Services can be ordered on our website by selecting a package and filling in the required information. Payment is automatically processed at the beginning of each monthly billing period. Each payment covers the upcoming service period. If payment fails, we may suspend service until payment is resolved.</p>
+                        <p class="mb-3"><strong class="text-black font-normal">Gift card:</strong> Gift card purchase is a one-time payment. The gift card is sent to the recipient by email and contains a unique code to redeem the service and book a visit.</p>
+                        <p>We use the secure payment service Stripe for all payment processing. We do not store or process your card details.</p>
+                    </div>
                 </div>
 
                 <div>
                     <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '4. Külastuste ajakava' : '4. Visit Schedule'">4. Külastuste ajakava</h2>
-                    <p x-show="lang === 'et'">Pärast tellimust valid ise sobiva aja meie online-kalendrist. Järgnevad külastused toimuvad valitud rütmi järgi (kord kuus, üle nädala või iga nädal). Ajakava saad muuta ise läbi oma kliendikonto vähemalt 48 tundi enne planeeritud külastust.</p>
-                    <p x-show="lang === 'en'" x-cloak>After placing an order, you choose a suitable time from our online calendar. Subsequent visits follow the selected rhythm (monthly, biweekly, or weekly). You can change the schedule yourself through your client account at least 48 hours before the scheduled visit.</p>
+                    <div x-show="lang === 'et'">
+                        <p class="mb-3">Pärast tellimust valid ise sobiva aja meie online-kalendrist. Aja muutmiseks võta meiega ühendust vähemalt 48 tundi enne planeeritud külastust.</p>
+                        <p><strong class="text-black font-normal">Kinkekaart:</strong> Kinkekaardi saaja valib sobiva aja ise, sisestades saadud koodi meie veebilehel. Broneeringu tegemisel sisestab saaja oma kontaktandmed ja aadressi.</p>
+                    </div>
+                    <div x-show="lang === 'en'" x-cloak>
+                        <p class="mb-3">After placing an order, you choose a suitable time from our online calendar. To change the time, contact us at least 48 hours before the scheduled visit.</p>
+                        <p><strong class="text-black font-normal">Gift card:</strong> The gift card recipient chooses a suitable time by entering the received code on our website. When making a booking, the recipient enters their contact details and address.</p>
+                    </div>
                 </div>
 
                 <div>
                     <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '5. Taganemisõigus' : '5. Right of Withdrawal'">5. Taganemisõigus</h2>
-                    <p x-show="lang === 'et'">Vastavalt võlaõigusseaduse §-le 56 on teil õigus sidevahendi abil sõlmitud lepingust taganeda 14 päeva jooksul alates lepingu sõlmimisest, teatades sellest meile e-posti teel (<a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a>). Taganemisõigus ei kehti, kui teenuse osutamine on teie nõusolekul juba alanud enne taganemistähtaja lõppu. Kingituskaartide puhul kehtib taganemisõigus, kui kingituskaarti ei ole veel aktiveeritud.</p>
-                    <p x-show="lang === 'en'" x-cloak>In accordance with the Law of Obligations Act §56, you have the right to withdraw from a contract concluded via means of communication within 14 days of the conclusion of the contract, by notifying us by email (<a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a>). The right of withdrawal does not apply if the provision of the service has already begun with your consent before the end of the withdrawal period. For gift cards, the right of withdrawal applies if the gift card has not yet been activated.</p>
+                    <div x-show="lang === 'et'">
+                        <p class="mb-3">Vastavalt võlaõigusseaduse §-le 56 on teil õigus sidevahendi abil sõlmitud lepingust taganeda 14 päeva jooksul alates lepingu sõlmimisest, teatades sellest meile e-posti teel (<a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a>).</p>
+                        <p class="mb-3"><strong class="text-black font-normal">Püsitellimus:</strong> Taganemisõigus ei kehti, kui teenuse osutamine on teie nõusolekul juba alanud enne taganemistähtaja lõppu (s.t esimene külastus on toimunud).</p>
+                        <p><strong class="text-black font-normal">Kinkekaart:</strong> Taganemisõigus kehtib, kui kinkekaart ei ole veel lunastatud (saaja ei ole koodi kasutanud). Lunastatud kinkekaardi puhul taganemisõigus ei kehti.</p>
+                    </div>
+                    <div x-show="lang === 'en'" x-cloak>
+                        <p class="mb-3">In accordance with the Law of Obligations Act §56, you have the right to withdraw from a contract concluded via means of communication within 14 days of the conclusion of the contract, by notifying us by email (<a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a>).</p>
+                        <p class="mb-3"><strong class="text-black font-normal">Subscription:</strong> The right of withdrawal does not apply if the provision of the service has already begun with your consent before the end of the withdrawal period (i.e., the first visit has taken place).</p>
+                        <p><strong class="text-black font-normal">Gift card:</strong> The right of withdrawal applies if the gift card has not yet been redeemed (the recipient has not used the code). Redeemed gift cards are non-refundable.</p>
+                    </div>
                 </div>
 
                 <div>
                     <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '6. Tühistamine ja tagasimakse' : '6. Cancellation and Refund'">6. Tühistamine ja tagasimakse</h2>
-                    <p x-show="lang === 'et'">Võid tellimuse tühistada igal ajal, kirjutades meile e-postile. Tellimus lõpeb jooksva arveldusperioodi lõpus. Juba tehtud külastuste eest tagasimakset ei tehta. Juba makstud, kuid veel tegemata külastuste eest tagastame proportsionaalse summa.</p>
-                    <p x-show="lang === 'en'" x-cloak>You may cancel your order at any time by writing to us. The order will end at the end of the current billing period. No refunds will be made for visits already completed. For paid but not yet completed visits, we will refund a proportional amount.</p>
+                    <div x-show="lang === 'et'">
+                        <p class="mb-3"><strong class="text-black font-normal">Püsitellimuse tühistamine:</strong> Võid tellimuse tühistada igal ajal, kirjutades meile aadressil <a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a>. Tühistamine jõustub jooksva arveldusperioodi lõpus — see tähendab, et sa saad käimasoleva perioodi eest juba makstud teenuse, aga järgmist makset enam ei tehta. Broneeritud külastused jooksva perioodi sees jäävad kehtima. Juba osutatud teenuste eest tagasimakset ei tehta.</p>
+                        <p class="mb-3"><strong class="text-black font-normal">Kinkekaardi tühistamine:</strong> Lunastamata kinkekaardi eest on võimalik taotleda tagasimakset, kirjutades meile e-postile. Juba lunastatud (kood kasutatud) kinkekaardi eest tagasimakset ei tehta.</p>
+                        <p><strong class="text-black font-normal">Broneeringud:</strong> Tühistamisel kustutatakse kõik tulevased broneeringud, mis jäävad makstud perioodi raamidest välja. Jooksva perioodi sees olevad broneeringud jäävad kehtima ja teenus osutatakse.</p>
+                    </div>
+                    <div x-show="lang === 'en'" x-cloak>
+                        <p class="mb-3"><strong class="text-black font-normal">Subscription cancellation:</strong> You may cancel your subscription at any time by writing to us at <a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a>. Cancellation takes effect at the end of the current billing period — meaning you will receive the service already paid for in the current period, but no further payments will be made. Bookings within the current paid period remain valid. No refunds will be made for services already rendered.</p>
+                        <p class="mb-3"><strong class="text-black font-normal">Gift card cancellation:</strong> A refund may be requested for an unredeemed gift card by writing to us by email. No refunds will be made for already redeemed (code used) gift cards.</p>
+                        <p><strong class="text-black font-normal">Bookings:</strong> Upon cancellation, all future bookings outside the paid period will be cancelled. Bookings within the current paid period remain valid and the service will be provided.</p>
+                    </div>
                 </div>
 
                 <div>

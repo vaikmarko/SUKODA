@@ -14,9 +14,9 @@ SUKODA Hoolitsus – lihtne valik, selge väärtus.
 
 | Rütm | Külastusi kuus | Hind (51-90m²) |
 |------|----------------|----------------|
-| **Kord kuus** | 1× | €149/kuu |
-| **Üle nädala** | 2× | €249/kuu |
-| **Iga nädal** | 4× | €449/kuu |
+| **Kord kuus** | 1× | €169/kuu |
+| **Üle nädala** | 2× | €279/kuu |
+| **Iga nädal** | 4× | €499/kuu |
 
 ### Iga külastusega kaasas
 
@@ -42,10 +42,10 @@ SUKODA Hoolitsus – lihtne valik, selge väärtus.
 
 | Elamispind | 1× kuus | 2× kuus | 4× kuus |
 |------------|---------|---------|---------|
-| Kuni 50m² | €119 | €199 | €379 |
-| 51-90m² | €149 | €249 | €449 |
-| 91-120m² | €189 | €319 | €579 |
-| 121-150m² | €229 | €389 | €699 |
+| Kuni 50m² | €135 | €225 | €429 |
+| 51-90m² | €169 | €279 | €499 |
+| 91-120m² | €215 | €359 | €649 |
+| 121-150m² | €259 | €439 | €789 |
 | 151m²+ | Rätseplahendus | Rätseplahendus | Rätseplahendus |
 
 ---
@@ -64,9 +64,9 @@ SUKODA Hoolitsus – lihtne valik, selge väärtus.
 
 | Kingitus | Hind | SUKODA marginaal |
 |----------|------|------------------|
-| Üks Hetk | €179 | ~35% |
-| Kuu Aega | €349 | ~30% |
-| Kvartal Vabadust | €899 | ~25% |
+| Üks Hetk | €199 | ~40% |
+| Kuu Aega | €389 | ~35% |
+| Kvartal Vabadust | €999 | ~30% |
 
 ### Kampaaniakalender
 
@@ -84,11 +84,11 @@ SUKODA Hoolitsus – lihtne valik, selge väärtus.
 
 | Rütm | Klient maksab | Partner saab (70%) | SUKODA saab (30%) |
 |------|---------------|-------------------|-------------------|
-| 1× kuus | €149 | €104 | €45 |
-| 2× kuus | €249 | €174 | €75 |
-| 4× kuus | €449 | €314 | €135 |
+| 1× kuus | €169 | €118 | €51 |
+| 2× kuus | €279 | €195 | €84 |
+| 4× kuus | €499 | €349 | €150 |
 
-**Keskmine SUKODA tulu kliendi kohta:** ~€85/kuu
+**Keskmine SUKODA tulu kliendi kohta:** ~€95/kuu
 
 ---
 
@@ -100,10 +100,10 @@ SUKODA Hoolitsus – lihtne valik, selge väärtus.
 |---------|------|
 | Partnerid | 2-3 |
 | Kliendid | 50 |
-| Käive | €12,500/kuu |
-| SUKODA tulu | €3,750/kuu |
+| Käive | €14,000/kuu |
+| SUKODA tulu | €4,200/kuu |
 | Püsikulud | €1,300/kuu |
-| **Kasum** | **€2,450/kuu** |
+| **Kasum** | **€2,900/kuu** |
 
 ### Faas 2: Kasv (kuud 7-18)
 
@@ -111,10 +111,10 @@ SUKODA Hoolitsus – lihtne valik, selge väärtus.
 |---------|------|
 | Partnerid | 6-8 |
 | Kliendid | 200 |
-| Käive | €50,000/kuu |
-| SUKODA tulu | €15,000/kuu |
+| Käive | €56,000/kuu |
+| SUKODA tulu | €16,800/kuu |
 | Püsikulud | €6,500/kuu |
-| **Kasum** | **€8,500/kuu** |
+| **Kasum** | **€10,300/kuu** |
 
 ### Faas 3: Skaleerimine (kuud 19-36)
 
@@ -122,10 +122,10 @@ SUKODA Hoolitsus – lihtne valik, selge väärtus.
 |---------|------|
 | Partnerid | 15-20 |
 | Kliendid | 500 |
-| Käive | €125,000/kuu |
-| SUKODA tulu | €37,500/kuu |
+| Käive | €140,000/kuu |
+| SUKODA tulu | €42,000/kuu |
 | Püsikulud | €18,000/kuu |
-| **Kasum** | **€19,500/kuu** |
+| **Kasum** | **€24,000/kuu** |
 
 ---
 
@@ -268,5 +268,5 @@ Iga koristuse järel jääb lauale käsitsi kirjutatud SUKODA kaart.
 
 - **Investeering:** ~€5,300
 - **Tasuvus:** 2-4 kuud
-- **Kasum 3. aastal:** €19,500+/kuu
+- **Kasum 3. aastal:** €24,000+/kuu
 - **Eristumine:** Üks lihtne pakett + eksklusiivne kogemus (lilled, kohvik, wellness)

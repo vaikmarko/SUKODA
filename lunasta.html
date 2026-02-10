@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="et" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUKODA | Lunasta kingitus</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="assets/logo/icon-s-black.svg">
+    <link rel="apple-touch-icon" href="assets/logo/icon-square.svg">
+    
+    <!-- Meta Pixel -->
+    <script src="assets/js/tracking.js"></script>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['Cormorant Garamond', 'Georgia', 'serif'],
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        black: '#111111',
+                        paper: '#FAF8F5',
+                        cream: '#F5F0EB',
+                        accent: '#B8976A',
+                        muted: '#6B6560',
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #FAF8F5;
+            color: #111111;
+        }
+        .grid-line-b {
+            border-bottom: 1px solid #E8E3DD;
+        }
+        ::selection {
+            background: #111;
+            color: #FAF8F5;
+        }
+        [x-cloak] {
+            display: none !important;
+        }
+        .luxury-link {
+            position: relative;
+            display: inline-block;
+        }
+        .luxury-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: #B8976A;
+            transition: width 0.4s ease;
+        }
+        .luxury-link:hover::after {
+            width: 100%;
+        }
+        .accent-line {
+            width: 40px;
+            height: 1px;
+            background: #B8976A;
+        }
+        @keyframes checkmark {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-checkmark {
+            animation: checkmark 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slide-up {
+            animation: slideUp 0.8s ease-out 0.3s forwards;
+            opacity: 0;
+        }
+        .scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 2px;
+            background: #B8976A;
+            z-index: 100;
+            transition: width 0.1s linear;
+        }
+        /* Calendar slot button */
+        .slot-btn {
+            transition: all 0.2s ease;
+        }
+        .slot-btn:hover {
+            background: #B8976A;
+            color: white;
+            border-color: #B8976A;
+        }
+        .slot-btn.selected {
+            background: #111111;
+            color: #FAF8F5;
+            border-color: #111111;
+        }
+        /* Day button */
+        .day-btn {
+            transition: all 0.2s ease;
+        }
+        .day-btn:hover:not(:disabled) {
+            background: #F5F0EB;
+        }
+        .day-btn.has-slots {
+            font-weight: 500;
+        }
+        .day-btn.selected {
+            background: #111111;
+            color: #FAF8F5;
+        }
+        .day-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body class="antialiased" x-data="{
+    lang: localStorage.getItem('sukoda_lang') || 'et',
+    step: 1,
+    
+    // Step 1: Code
+    giftCode: '',
+    codeLoading: false,
+    codeError: '',
+    gift: null,
+    
+    // Step 1.5: Package reveal + size confirmation (physical cards)
+    confirmedSize: '',
+    upgradeNeeded: false,
+    upgradeDiff: '',
+    upgradeLoading: false,
+    upgradeError: '',
+    
+    // Step 2: Contact details
+    email: '',
+    phone: '',
+    address: '',
+    additionalInfo: '',
+    emailError: false,
+    phoneError: false,
+    addressError: false,
+    addressSuggestions: [],
+    showSuggestions: false,
+    addressSearchTimer: null,
+    addressMunicipality: '',
+    
+    // Step 3: Calendar
+    slotsLoading: false,
+    slotsError: '',
+    slots: {},
+    currentMonth: '',
+    currentMonthLabel: '',
+    calendarDays: [],
+    selectedDate: '',
+    selectedTime: '',
+    availableTimes: [],
+    bookingLoading: false,
+    bookingError: '',
+    
+    // Step 4: Confirmed
+    bookingDate: '',
+    bookingTime: '',
+    
+    init() {
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('code');
+        const upgraded = params.get('upgraded');
+        if (code) {
+            this.giftCode = code.toUpperCase().replace(/0/g, 'O').replace(/1/g, 'I');
+            // After upgrade payment: auto-redeem and skip to step 2
+            if (upgraded === 'true') {
+                this.redeemCode(true);
+            } else {
+                this.redeemCode();
+            }
+        }
+        // Set current month
+        const now = new Date();
+        this.currentMonth = now.toISOString().slice(0, 7);
+        this.updateMonthLabel();
+    },
+    
+    async redeemCode(skipReveal = false) {
+        if (!this.giftCode.trim()) {
+            this.codeError = this.lang === 'et' ? 'Palun sisesta kingituse kood' : 'Please enter a gift code';
+            return;
+        }
+        // Normalize confused characters: 0→O, 1→I (gift codes use SUKO- prefix with letter O)
+        this.giftCode = this.giftCode.trim().toUpperCase().replace(/0/g, 'O').replace(/1/g, 'I');
+        this.codeLoading = true;
+        this.codeError = '';
+        try {
+            const res = await fetch('/api/redeem?code=' + encodeURIComponent(this.giftCode));
+            const data = await res.json();
+            if (!res.ok) {
+                if (data.alreadyRedeemed) {
+                    this.codeError = this.lang === 'et' ? 'See kingitus on juba lunastatud' : 'This gift has already been redeemed';
+                } else {
+                    this.codeError = this.lang === 'et' ? 'Kingituse koodi ei leitud' : 'Gift code not found';
+                }
+                return;
+            }
+            this.gift = data;
+            // After upgrade payment: skip reveal, go straight to contact details
+            if (skipReveal) {
+                this.step = 2;
+            }
+            // Physical cards: show package reveal + size confirmation
+            else if (data.physicalCard) {
+                this.step = 1.5;
+            } else {
+                this.step = 2;
+            }
+        } catch (e) {
+            console.error(e);
+            this.codeError = this.lang === 'et' ? 'Tekkis viga. Palun proovi uuesti.' : 'An error occurred. Please try again.';
+        } finally {
+            this.codeLoading = false;
+        }
+    },
+    
+    validateEmail() {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        this.emailError = !re.test(this.email);
+        return !this.emailError;
+    },
+    validatePhone() {
+        const cleaned = this.phone.replace(/[\s\-\(\)]/g, '');
+        this.phoneError = cleaned.length < 7;
+        return !this.phoneError;
+    },
+    validateAddress() {
+        const hasMinLength = this.address.trim().length >= 5;
+        const hasStructure = /[a-zA-ZäöüõÄÖÜÕ]+.*\d+/i.test(this.address);
+        this.addressError = !hasMinLength || !hasStructure;
+        return !this.addressError;
+    },
+    searchAddress() {
+        clearTimeout(this.addressSearchTimer);
+        this.addressMunicipality = '';
+        if (!this.address || this.address.trim().length < 3) {
+            this.addressSuggestions = [];
+            this.showSuggestions = false;
+            return;
+        }
+        this.addressSearchTimer = setTimeout(async () => {
+            try {
+                const res = await fetch('https://inaadress.maaamet.ee/inaadress/gazetteer?address=' + encodeURIComponent(this.address) + '&results=5');
+                const data = await res.json();
+                this.addressSuggestions = (data.addresses || []).map(a => ({
+                    display: a.ipikkaadress || a.pikkaadress,
+                    full: a.pikkaadress,
+                    municipality: a.omavalitsus,
+                    county: a.maakond,
+                    district: a.asustusyksus || '',
+                }));
+                this.showSuggestions = this.addressSuggestions.length > 0;
+            } catch (e) {
+                console.log('Address search error:', e);
+                this.showSuggestions = false;
+            }
+        }, 300);
+    },
+    selectAddress(suggestion) {
+        this.address = suggestion.display;
+        this.addressMunicipality = suggestion.municipality;
+        this.addressSuggestions = [];
+        this.showSuggestions = false;
+        this.addressError = false;
+    },
+    
+    // Size upgrade logic for physical gift cards
+    checkUpgrade() {
+        const sizeOrder = { small: 0, medium: 1, large: 2, xlarge: 3 };
+        const giftSize = this.gift?.size;
+        
+        if (sizeOrder[this.confirmedSize] > sizeOrder[giftSize]) {
+            // Home is bigger — need upgrade
+            const prices = {
+                moment: { small: 169, medium: 199, large: 259, xlarge: 319 },
+                month:  { small: 339, medium: 389, large: 499, xlarge: 619 },
+                quarter:{ small: 849, medium: 999, large: 1249, xlarge: 1449 },
+            };
+            const pkg = this.gift?.package;
+            const oldPrice = prices[pkg]?.[giftSize] || 0;
+            const newPrice = prices[pkg]?.[this.confirmedSize] || 0;
+            const diff = newPrice - oldPrice;
+            this.upgradeDiff = '\u20AC' + diff;
+            this.upgradeNeeded = true;
+            this.upgradeError = '';
+        } else {
+            this.upgradeNeeded = false;
+        }
+    },
+
+    async startUpgrade() {
+        this.upgradeLoading = true;
+        this.upgradeError = '';
+        try {
+            const res = await fetch('/api/gift-upgrade', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    code: this.giftCode,
+                    newSize: this.confirmedSize,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                this.upgradeError = data.error || (this.lang === 'et' ? 'Viga t\u00E4iendamisel' : 'Upgrade error');
+                return;
+            }
+            // Redirect to Stripe Checkout
+            window.location.href = data.url;
+        } catch (e) {
+            console.error(e);
+            this.upgradeError = this.lang === 'et' ? 'Tekkis viga. Palun proovi uuesti.' : 'An error occurred. Please try again.';
+        } finally {
+            this.upgradeLoading = false;
+        }
+    },
+
+    submitDetails() {
+        this.validateEmail();
+        if (!this.email.trim()) this.emailError = true;
+        this.validatePhone();
+        if (!this.phone.trim()) this.phoneError = true;
+        this.validateAddress();
+        if (!this.address.trim()) this.addressError = true;
+        
+        if (this.emailError || this.phoneError || this.addressError) return;
+        
+        this.step = 3;
+        this.loadSlots();
+    },
+    
+    updateMonthLabel() {
+        const [y, m] = this.currentMonth.split('-');
+        const d = new Date(parseInt(y), parseInt(m) - 1, 1);
+        const months = {
+            et: ['Jaanuar', 'Veebruar', 'Märts', 'Aprill', 'Mai', 'Juuni', 'Juuli', 'August', 'September', 'Oktoober', 'November', 'Detsember'],
+            en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+        };
+        this.currentMonthLabel = (months[this.lang] || months.et)[d.getMonth()] + ' ' + d.getFullYear();
+    },
+    
+    async loadSlots() {
+        this.slotsLoading = true;
+        this.slotsError = '';
+        this.selectedDate = '';
+        this.selectedTime = '';
+        this.availableTimes = [];
+        try {
+            const size = this.gift?.size || 'medium';
+            const res = await fetch('/api/slots?size=' + size + '&month=' + this.currentMonth);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            this.slots = data.slots || {};
+            this.buildCalendar();
+        } catch (e) {
+            console.error(e);
+            this.slotsError = this.lang === 'et' ? 'Aegade laadimine ebaõnnestus. Palun proovi uuesti.' : 'Failed to load available times. Please try again.';
+        } finally {
+            this.slotsLoading = false;
+        }
+    },
+    
+    buildCalendar() {
+        const [y, m] = this.currentMonth.split('-').map(Number);
+        const firstDay = new Date(y, m - 1, 1);
+        const lastDay = new Date(y, m, 0);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        // Monday-based week: getDay() returns 0=Sun, we want 0=Mon
+        let startDow = firstDay.getDay() - 1;
+        if (startDow < 0) startDow = 6;
+        
+        this.calendarDays = [];
+        
+        // Empty cells before first day
+        for (let i = 0; i < startDow; i++) {
+            this.calendarDays.push({ day: '', date: '', hasSlots: false, isPast: true });
+        }
+        
+        for (let d = 1; d <= lastDay.getDate(); d++) {
+            const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const dateObj = new Date(y, m - 1, d);
+            const hasSlots = this.slots[dateStr] && this.slots[dateStr].length > 0;
+            const isPast = dateObj < today;
+            this.calendarDays.push({ day: d, date: dateStr, hasSlots, isPast });
+        }
+    },
+    
+    selectDay(day) {
+        if (!day.hasSlots || day.isPast) return;
+        this.selectedDate = day.date;
+        this.selectedTime = '';
+        this.availableTimes = this.slots[day.date] || [];
+    },
+    
+    prevMonth() {
+        const [y, m] = this.currentMonth.split('-').map(Number);
+        const now = new Date();
+        const currentYM = now.getFullYear() * 12 + now.getMonth();
+        const targetYM = y * 12 + (m - 2);
+        if (targetYM < currentYM) return;
+        
+        // Build month string directly to avoid timezone issues with toISOString()
+        const newMonth = m - 1;
+        const newYear = newMonth < 1 ? y - 1 : y;
+        const adjustedMonth = newMonth < 1 ? 12 : newMonth;
+        this.currentMonth = newYear + '-' + String(adjustedMonth).padStart(2, '0');
+        this.updateMonthLabel();
+        this.loadSlots();
+    },
+    
+    nextMonth() {
+        const [y, m] = this.currentMonth.split('-').map(Number);
+        // Build month string directly to avoid timezone issues with toISOString()
+        const newMonth = m + 1;
+        const newYear = newMonth > 12 ? y + 1 : y;
+        const adjustedMonth = newMonth > 12 ? 1 : newMonth;
+        this.currentMonth = newYear + '-' + String(adjustedMonth).padStart(2, '0');
+        this.updateMonthLabel();
+        this.loadSlots();
+    },
+    
+    async confirmBooking() {
+        if (!this.selectedDate || !this.selectedTime) return;
+        this.bookingLoading = true;
+        this.bookingError = '';
+        try {
+            // Build ISO datetime from selected date + time
+            const startTime = this.selectedDate + 'T' + this.selectedTime + ':00';
+            // Convert to proper ISO with timezone
+            const dt = new Date(startTime + '+02:00'); // EET approximate
+            
+            const res = await fetch('/api/book-gift', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    code: this.giftCode,
+                    startTime: dt.toISOString(),
+                    email: this.email,
+                    phone: this.phone,
+                    address: this.address,
+                    additionalInfo: this.additionalInfo,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            
+            this.bookingDate = data.bookingDate;
+            this.bookingTime = data.bookingTime;
+            this.step = 4;
+        } catch (e) {
+            console.error(e);
+            this.bookingError = this.lang === 'et' ? 'Broneerimine ebaõnnestus. Palun proovi uuesti.' : 'Booking failed. Please try again.';
+        } finally {
+            this.bookingLoading = false;
+        }
+    },
+}">
+
+    <!-- Scroll Progress -->
+    <div id="scrollProgress" class="scroll-progress" style="width: 0%"></div>
+
+    <!-- Grid Container -->
+    <div class="max-w-[1440px] mx-auto bg-paper min-h-screen border-x border-[#E8E3DD]">
+        
+        <!-- Navigation -->
+        <nav class="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm grid-line-b">
+            <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12">
+                <a href="index.html" class="font-serif text-2xl md:text-3xl tracking-[0.08em] font-light">
+                    SUKODA
+                </a>
+                <div class="flex items-center gap-4 md:gap-6">
+                    <div class="flex text-[10px] uppercase tracking-[0.2em] font-sans font-medium gap-2">
+                        <button @click="lang = 'et'; updateMonthLabel()" :class="lang === 'et' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">ET</button>
+                        <span class="text-[#D4CFC8]">/</span>
+                        <button @click="lang = 'en'; updateMonthLabel()" :class="lang === 'en' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">EN</button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <main class="min-h-[80vh] px-4 py-12 md:py-24">
+            <div class="max-w-2xl mx-auto">
+
+                <!-- Progress Steps -->
+                <div class="flex items-center justify-center gap-3 md:gap-6 mb-12" x-show="step < 4">
+                    <template x-for="(s, i) in [
+                        { et: 'Kood', en: 'Code' },
+                        { et: 'Andmed', en: 'Details' },
+                        { et: 'Aeg', en: 'Time' },
+                    ]" :key="i">
+                        <div class="flex items-center gap-2">
+                            <div :class="step > i + 1 || (step === 1.5 && i === 0) ? 'bg-accent text-white' : ((step === i + 1 || (step === 1.5 && i === 0)) ? 'bg-black text-paper' : 'bg-[#E8E3DD] text-muted')" class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-serif transition-all" x-text="i + 1"></div>
+                            <span class="text-[10px] uppercase tracking-[0.2em] font-sans hidden md:inline" :class="step >= i + 1 || (step === 1.5 && i === 0) ? 'text-black' : 'text-muted'" x-text="lang === 'et' ? s.et : s.en"></span>
+                            <div class="h-[1px] w-8 md:w-16 bg-[#E8E3DD]" :class="step > i + 1 ? 'bg-accent' : ''" x-show="i < 2"></div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- ================================ -->
+                <!-- STEP 1: Enter Gift Code -->
+                <!-- ================================ -->
+                <div x-show="step === 1" x-transition>
+                    <div class="text-center mb-10">
+                        <div class="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-6">
+                            <svg class="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path></svg>
+                        </div>
+                        <h1 class="font-serif text-3xl md:text-4xl font-light mb-3">
+                            <span x-show="lang === 'et'">Lunasta kingitus</span>
+                            <span x-show="lang === 'en'" x-cloak>Redeem your gift</span>
+                        </h1>
+                        <p class="text-muted font-sans font-light">
+                            <span x-show="lang === 'et'">Sisesta kingituskaardil olev kood</span>
+                            <span x-show="lang === 'en'" x-cloak>Enter the code from your gift card</span>
+                        </p>
+                    </div>
+
+                    <form @submit.prevent="redeemCode()" class="max-w-md mx-auto">
+                        <div class="border-b pb-3 mb-6" :class="codeError ? 'border-red-400' : 'border-[#E8E3DD]'">
+                            <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Kingituse kood' : 'Gift code'">Kingituse kood</label>
+                            <input type="text" x-model="giftCode" @input="codeError = ''" 
+                                   class="w-full text-2xl font-serif font-light py-2 outline-none bg-transparent text-center tracking-[0.15em] uppercase"
+                                   placeholder="SUKO-XXXX-XXXX"
+                                   autocomplete="off">
+                        </div>
+                        <p x-show="codeError" x-cloak class="text-sm text-accent font-sans font-light text-center mb-6" x-text="codeError"></p>
+                        
+                        <button type="submit" :disabled="codeLoading" class="w-full bg-black text-paper px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-all duration-500 disabled:opacity-50">
+                            <span x-show="!codeLoading" x-text="lang === 'et' ? 'Lunasta' : 'Redeem'">Lunasta</span>
+                            <span x-show="codeLoading" x-cloak>
+                                <svg class="w-5 h-5 animate-spin mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                            </span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- ================================ -->
+                <!-- STEP 1.5: Package Reveal + Size Confirmation -->
+                <!-- ================================ -->
+                <div x-show="step === 1.5" x-transition x-cloak>
+                    <!-- Package Reveal -->
+                    <div class="text-center mb-10">
+                        <div class="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-6 animate-checkmark">
+                            <svg class="w-10 h-10 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path></svg>
+                        </div>
+                        <p class="text-[10px] uppercase tracking-[0.25em] text-accent font-sans mb-4" x-text="lang === 'et' ? 'Sulle on kingitud' : 'You have received'"></p>
+                        <h1 class="font-serif text-4xl md:text-5xl font-light mb-3 animate-slide-up" x-text="gift?.packageName || ''"></h1>
+                        <div class="accent-line mx-auto my-5"></div>
+                        <p class="text-muted font-sans font-light max-w-sm mx-auto animate-slide-up" x-text="gift?.packageDescription || (lang === 'et' ? 'Professionaalne koduhoolitsus koos lillede, tervituskaardi ja magusa \u00fcllatusega.' : 'Professional home care with flowers, a greeting card and a sweet surprise.')"></p>
+                    </div>
+
+                    <!-- Package Details Card -->
+                    <div class="bg-cream/60 p-6 md:p-8 mb-8 max-w-md mx-auto border-l-2 border-accent">
+                        <div class="space-y-3">
+                            <div>
+                                <p class="text-[10px] uppercase tracking-[0.25em] text-accent font-sans mb-1" x-text="lang === 'et' ? 'Pakett' : 'Package'"></p>
+                                <p class="font-serif text-xl font-light" x-text="gift?.packageName || ''"></p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] uppercase tracking-[0.25em] text-accent font-sans mb-1" x-text="lang === 'et' ? 'Kaetud kodu suurus' : 'Covered home size'"></p>
+                                <p class="font-serif text-xl font-light" x-text="gift?.sizeName || ''"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Size Confirmation -->
+                    <div class="max-w-md mx-auto mb-6" x-show="!upgradeNeeded">
+                        <p class="text-center font-serif text-lg font-light mb-4" x-text="lang === 'et' ? 'Kui suur on sinu kodu tegelikult?' : 'How big is your home actually?'"></p>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button type="button" @click="confirmedSize = 'small'; checkUpgrade()"
+                                    :class="confirmedSize === 'small' ? 'bg-black text-paper border-black' : 'border-[#E8E3DD] hover:border-black'"
+                                    class="p-4 border text-center transition-all duration-300">
+                                <p class="font-serif text-lg font-light" x-text="lang === 'et' ? 'Kuni 50m\u00B2' : 'Up to 50m\u00B2'"></p>
+                            </button>
+                            <button type="button" @click="confirmedSize = 'medium'; checkUpgrade()"
+                                    :class="confirmedSize === 'medium' ? 'bg-black text-paper border-black' : 'border-[#E8E3DD] hover:border-black'"
+                                    class="p-4 border text-center transition-all duration-300">
+                                <p class="font-serif text-lg font-light">51–90m²</p>
+                            </button>
+                            <button type="button" @click="confirmedSize = 'large'; checkUpgrade()"
+                                    :class="confirmedSize === 'large' ? 'bg-black text-paper border-black' : 'border-[#E8E3DD] hover:border-black'"
+                                    class="p-4 border text-center transition-all duration-300">
+                                <p class="font-serif text-lg font-light">91–120m²</p>
+                            </button>
+                            <button type="button" @click="confirmedSize = 'xlarge'; checkUpgrade()"
+                                    :class="confirmedSize === 'xlarge' ? 'bg-black text-paper border-black' : 'border-[#E8E3DD] hover:border-black'"
+                                    class="p-4 border text-center transition-all duration-300">
+                                <p class="font-serif text-lg font-light">121–150m²</p>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Upgrade Notice (shown when home is bigger) -->
+                    <div x-show="upgradeNeeded" x-transition class="max-w-md mx-auto mb-6">
+                        <div class="bg-accent/5 border border-accent/20 p-6 text-center">
+                            <p class="text-[10px] uppercase tracking-[0.25em] text-accent font-sans mb-3" x-text="lang === 'et' ? 'Sinu kodu on suurem' : 'Your home is bigger'"></p>
+                            <p class="font-sans text-sm font-light text-muted mb-4" x-text="lang === 'et'
+                                ? 'Sinu kinkekaart katab teenuse väiksemale kodule. Lisa ' + upgradeDiff + ' ja saad täisteenuse oma kodule.'
+                                : 'Your gift card covers a smaller home. Add ' + upgradeDiff + ' to get full service for your home.'"></p>
+                            
+                            <button type="button" @click="startUpgrade()" :disabled="upgradeLoading"
+                                    class="w-full bg-accent text-white py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent/90 transition-all duration-300 disabled:opacity-50 mb-3">
+                                <span x-show="!upgradeLoading" x-text="lang === 'et' ? 'Lisa ' + upgradeDiff + ' ja t\u00E4ienda' : 'Add ' + upgradeDiff + ' and upgrade'"></span>
+                                <span x-show="upgradeLoading" x-cloak>
+                                    <svg class="w-5 h-5 animate-spin mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                </span>
+                            </button>
+
+                            <button type="button" @click="upgradeNeeded = false; confirmedSize = ''"
+                                    class="text-xs text-muted hover:text-black transition-colors" x-text="lang === 'et' ? 'Vali teine suurus' : 'Choose another size'"></button>
+
+                            <p x-show="upgradeError" x-cloak class="mt-3 text-sm text-red-500 font-sans font-light" x-text="upgradeError"></p>
+                        </div>
+                    </div>
+
+                    <!-- Continue button (shown when size matches or is smaller) -->
+                    <div class="max-w-md mx-auto" x-show="confirmedSize && !upgradeNeeded">
+                        <button type="button" @click="step = 2" class="w-full bg-black text-paper px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-all duration-500" x-text="lang === 'et' ? 'Broneeri aeg' : 'Book your visit'">Broneeri aeg</button>
+                    </div>
+
+                    <div class="max-w-md mx-auto mt-3 text-center">
+                        <button type="button" @click="step = 1; gift = null; confirmedSize = ''; upgradeNeeded = false" class="text-[11px] uppercase tracking-[0.15em] font-sans text-muted hover:text-black transition-all" x-text="lang === 'et' ? 'Sisesta teine kood' : 'Enter another code'"></button>
+                    </div>
+                </div>
+
+                <!-- ================================ -->
+                <!-- STEP 2: Contact Details -->
+                <!-- ================================ -->
+                <div x-show="step === 2" x-transition x-cloak>
+                    <!-- Gift Info Card -->
+                    <div class="bg-cream/60 p-6 md:p-8 mb-8 border-l-2 border-accent">
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path></svg>
+                            </div>
+                            <div>
+                                <p class="text-[10px] uppercase tracking-[0.25em] text-accent font-sans mb-1" x-text="lang === 'et' ? 'Sinu kingitus' : 'Your gift'">Sinu kingitus</p>
+                                <h2 class="font-serif text-2xl font-light mb-1" x-text="gift?.packageName || ''"></h2>
+                                <p class="text-sm text-muted font-sans font-light" x-text="gift?.sizeName || ''"></p>
+                                <p class="text-sm text-muted font-sans font-light mt-2" x-show="gift?.senderName">
+                                    <span x-text="lang === 'et' ? 'Kinkija: ' : 'From: '"></span>
+                                    <span class="text-black" x-text="gift?.senderName"></span>
+                                </p>
+                                <p class="text-sm font-serif font-light italic text-muted mt-2" x-show="gift?.message" x-text="'&quot;' + (gift?.message || '') + '&quot;'"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2 class="font-serif text-3xl font-light mb-2">
+                        <span x-show="lang === 'et'">Sinu andmed</span>
+                        <span x-show="lang === 'en'" x-cloak>Your details</span>
+                    </h2>
+                    <p class="text-muted font-sans font-light mb-8">
+                        <span x-show="lang === 'et'">Vajame neid andmeid külastuse korraldamiseks</span>
+                        <span x-show="lang === 'en'" x-cloak>We need this information to arrange your visit</span>
+                    </p>
+
+                    <form @submit.prevent="submitDetails()" class="space-y-6" novalidate>
+                        <div class="border-b pb-3" :class="emailError ? 'border-red-400' : 'border-[#E8E3DD]'">
+                            <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'E-post' : 'Email'">E-post</label>
+                            <input type="email" x-model="email" @blur="validateEmail()" @input="emailError = false" class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" :placeholder="lang === 'et' ? 'sinu@email.com' : 'your@email.com'">
+                            <p x-show="emailError" x-cloak class="mt-2 text-sm text-accent font-sans font-light" x-text="lang === 'et' ? 'Palun sisesta kehtiv e-posti aadress' : 'Please enter a valid email address'"></p>
+                        </div>
+
+                        <div class="border-b pb-3" :class="phoneError ? 'border-red-400' : 'border-[#E8E3DD]'">
+                            <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Telefon' : 'Phone'">Telefon</label>
+                            <input type="tel" x-model="phone" @blur="validatePhone()" @input="phoneError = false" class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" placeholder="+372 5xxx xxxx">
+                            <p x-show="phoneError" x-cloak class="mt-2 text-sm text-accent font-sans font-light" x-text="lang === 'et' ? 'Palun sisesta kehtiv telefoninumber' : 'Please enter a valid phone number'"></p>
+                        </div>
+
+                        <div class="border-b pb-3 relative" :class="addressError ? 'border-red-400' : 'border-[#E8E3DD]'">
+                            <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Kodu aadress' : 'Home address'">Kodu aadress</label>
+                            <input type="text" x-model="address"
+                                @input="addressError = false; searchAddress()"
+                                @blur="setTimeout(() => { showSuggestions = false; validateAddress(); }, 200)"
+                                @focus="if(addressSuggestions.length) showSuggestions = true"
+                                @keydown.escape="showSuggestions = false"
+                                @keydown.enter.prevent="if(addressSuggestions.length && showSuggestions) { selectAddress(addressSuggestions[0]); }"
+                                autocomplete="off"
+                                class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" :placeholder="lang === 'et' ? 'Hakka tippima aadressi...' : 'Start typing address...'">
+
+                            <!-- Autocomplete dropdown -->
+                            <div x-show="showSuggestions && addressSuggestions.length > 0" x-cloak
+                                 class="absolute left-0 right-0 top-full mt-1 bg-white border border-[#E8E3DD] shadow-lg z-50 max-h-60 overflow-y-auto">
+                                <template x-for="(s, i) in addressSuggestions" :key="i">
+                                    <button type="button" @mousedown.prevent="selectAddress(s)"
+                                            class="w-full text-left px-4 py-3 hover:bg-cream/50 transition-colors border-b border-[#E8E3DD] last:border-b-0 group">
+                                        <p class="text-sm font-serif font-light text-black group-hover:text-accent transition-colors" x-text="s.display"></p>
+                                        <p class="text-[10px] text-muted/50 font-sans mt-0.5" x-text="s.municipality + (s.district ? ', ' + s.district : '')"></p>
+                                    </button>
+                                </template>
+                            </div>
+
+                            <p x-show="addressError" x-cloak class="mt-2 text-sm text-accent font-sans font-light" x-text="lang === 'et' ? 'Palun vali aadress nimekirjast' : 'Please select an address from the list'"></p>
+                            <div class="flex items-center gap-2 mt-2" x-show="!addressError && !showSuggestions">
+                                <svg class="w-3 h-3 text-muted/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                <p class="text-[10px] uppercase tracking-[0.15em] text-muted/40 font-sans" x-text="addressMunicipality || (lang === 'et' ? 'Maa-ameti aadressiotsing' : 'Address search by Maa-amet')"></p>
+                            </div>
+                        </div>
+
+                        <div class="border-b border-[#E8E3DD] pb-3">
+                            <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Lisainfo (valikuline)' : 'Additional info (optional)'">Lisainfo (valikuline)</label>
+                            <textarea x-model="additionalInfo" rows="2" class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent resize-none" :placeholder="lang === 'et' ? 'Uksekood, parkimisinfo, erijuhised...' : 'Door code, parking info, special instructions...'"></textarea>
+                        </div>
+
+                        <div class="flex gap-4 pt-4">
+                            <button type="button" @click="step = 1" class="px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans border border-black hover:bg-black hover:text-paper transition-all duration-500" x-text="lang === 'et' ? 'Tagasi' : 'Back'">Tagasi</button>
+                            <button type="submit" class="flex-1 bg-black text-paper px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-all duration-500" x-text="lang === 'et' ? 'Vali aeg' : 'Choose time'">Vali aeg</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- ================================ -->
+                <!-- STEP 3: Choose Time -->
+                <!-- ================================ -->
+                <div x-show="step === 3" x-transition x-cloak>
+                    <div class="text-center mb-8">
+                        <h2 class="font-serif text-3xl md:text-4xl font-light mb-3">
+                            <span x-show="lang === 'et'">Vali sobiv aeg</span>
+                            <span x-show="lang === 'en'" x-cloak>Choose a time</span>
+                        </h2>
+                        <p class="text-muted font-sans font-light">
+                            <span x-show="lang === 'et'">Vali allpool kalendrist sulle sobiv kuupäev ja kellaaeg</span>
+                            <span x-show="lang === 'en'" x-cloak>Select a date and time that works for you</span>
+                        </p>
+                    </div>
+
+                    <!-- Loading -->
+                    <div x-show="slotsLoading" class="py-12 text-center">
+                        <div class="w-10 h-10 border border-accent border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                        <p class="text-sm text-muted font-sans font-light" x-text="lang === 'et' ? 'Laadin vabu aegu...' : 'Loading available times...'"></p>
+                    </div>
+
+                    <!-- Error -->
+                    <div x-show="slotsError && !slotsLoading" x-cloak class="text-center py-8">
+                        <p class="text-accent font-sans font-light mb-4" x-text="slotsError"></p>
+                        <button @click="loadSlots()" class="text-[11px] uppercase tracking-[0.2em] font-sans border border-black px-6 py-3 hover:bg-black hover:text-paper transition-all" x-text="lang === 'et' ? 'Proovi uuesti' : 'Try again'">Proovi uuesti</button>
+                    </div>
+
+                    <!-- Calendar -->
+                    <div x-show="!slotsLoading && !slotsError" x-cloak>
+                        <div class="bg-white border border-[#E8E3DD] p-6 md:p-8 mb-6">
+                            <!-- Month navigation -->
+                            <div class="flex items-center justify-between mb-6">
+                                <button @click="prevMonth()" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7"></path></svg>
+                                </button>
+                                <h3 class="font-serif text-xl font-light" x-text="currentMonthLabel"></h3>
+                                <button @click="nextMonth()" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"></path></svg>
+                                </button>
+                            </div>
+
+                            <!-- Weekday headers -->
+                            <div class="grid grid-cols-7 gap-1 mb-2">
+                                <template x-for="day in (lang === 'et' ? ['E', 'T', 'K', 'N', 'R', 'L', 'P'] : ['M', 'T', 'W', 'T', 'F', 'S', 'S'])" :key="day">
+                                    <div class="text-center text-[10px] uppercase tracking-[0.2em] text-muted font-sans py-2" x-text="day"></div>
+                                </template>
+                            </div>
+
+                            <!-- Calendar grid -->
+                            <div class="grid grid-cols-7 gap-1">
+                                <template x-for="(d, i) in calendarDays" :key="i">
+                                    <button type="button"
+                                            @click="selectDay(d)"
+                                            :disabled="!d.day || d.isPast || !d.hasSlots"
+                                            :class="{
+                                                'selected': d.date === selectedDate,
+                                                'has-slots': d.hasSlots && !d.isPast,
+                                                'text-accent': d.hasSlots && !d.isPast && d.date !== selectedDate,
+                                            }"
+                                            class="day-btn aspect-square flex items-center justify-center text-sm font-sans rounded-lg"
+                                            x-text="d.day">
+                                    </button>
+                                </template>
+                            </div>
+
+                            <!-- Legend -->
+                            <div class="flex items-center gap-6 mt-4 pt-4 border-t border-[#E8E3DD]">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-3 h-3 rounded-sm bg-accent/20"></div>
+                                    <span class="text-[10px] text-muted font-sans" x-text="lang === 'et' ? 'Saadaval' : 'Available'">Saadaval</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-3 h-3 rounded-sm bg-black"></div>
+                                    <span class="text-[10px] text-muted font-sans" x-text="lang === 'et' ? 'Valitud' : 'Selected'">Valitud</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Time slots -->
+                        <div x-show="selectedDate" x-transition class="bg-white border border-[#E8E3DD] p-6 md:p-8 mb-6">
+                            <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-4" x-text="lang === 'et' ? 'Saadaolevad ajad' : 'Available times'">Saadaolevad ajad</p>
+                            <div class="grid grid-cols-3 md:grid-cols-4 gap-3">
+                                <template x-for="time in availableTimes" :key="time">
+                                    <button type="button"
+                                            @click="selectedTime = time"
+                                            :class="selectedTime === time ? 'selected' : ''"
+                                            class="slot-btn py-3 px-4 border border-[#E8E3DD] text-center text-sm font-sans font-light rounded"
+                                            x-text="time">
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Booking error -->
+                        <p x-show="bookingError" x-cloak class="text-sm text-accent font-sans font-light text-center mb-4" x-text="bookingError"></p>
+
+                        <!-- Actions -->
+                        <div class="flex gap-4">
+                            <button type="button" @click="step = 2" class="px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans border border-black hover:bg-black hover:text-paper transition-all duration-500" x-text="lang === 'et' ? 'Tagasi' : 'Back'">Tagasi</button>
+                            <button type="button"
+                                    @click="confirmBooking()"
+                                    :disabled="!selectedDate || !selectedTime || bookingLoading"
+                                    class="flex-1 bg-black text-paper px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-all duration-500 disabled:opacity-50">
+                                <span x-show="!bookingLoading" x-text="lang === 'et' ? 'Kinnita broneering' : 'Confirm booking'">Kinnita broneering</span>
+                                <span x-show="bookingLoading" x-cloak>
+                                    <svg class="w-5 h-5 animate-spin mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================================ -->
+                <!-- STEP 4: Confirmed -->
+                <!-- ================================ -->
+                <div x-show="step === 4" x-transition x-cloak class="text-center">
+                    <!-- Checkmark -->
+                    <div class="w-20 h-20 bg-accent rounded-full flex items-center justify-center mx-auto mb-8 animate-checkmark">
+                        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+
+                    <div class="animate-slide-up">
+                        <h1 class="font-serif text-4xl md:text-5xl font-light mb-4">
+                            <span x-show="lang === 'et'">Broneering kinnitatud!</span>
+                            <span x-show="lang === 'en'" x-cloak>Booking confirmed!</span>
+                        </h1>
+
+                        <div class="accent-line mx-auto my-6"></div>
+
+                        <p class="text-base text-muted font-sans font-light mb-10">
+                            <span x-show="lang === 'et'">Sinu külastus on broneeritud</span>
+                            <span x-show="lang === 'en'" x-cloak>Your visit has been booked</span>
+                        </p>
+                    </div>
+
+                    <div class="bg-cream/60 p-8 text-left mb-8 border-l-2 border-accent max-w-md mx-auto">
+                        <div class="space-y-4">
+                            <div>
+                                <p class="text-[10px] uppercase tracking-[0.25em] text-accent font-sans mb-1" x-text="lang === 'et' ? 'Kuupäev' : 'Date'">Kuupäev</p>
+                                <p class="font-serif text-xl font-light capitalize" x-text="bookingDate"></p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] uppercase tracking-[0.25em] text-accent font-sans mb-1" x-text="lang === 'et' ? 'Kellaaeg' : 'Time'">Kellaaeg</p>
+                                <p class="font-serif text-xl font-light" x-text="bookingTime"></p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] uppercase tracking-[0.25em] text-accent font-sans mb-1" x-text="lang === 'et' ? 'Aadress' : 'Address'">Aadress</p>
+                                <p class="font-serif text-lg font-light" x-text="address"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-cream/40 p-8 text-left mb-8 max-w-md mx-auto">
+                        <h3 class="text-[10px] uppercase tracking-[0.2em] text-accent font-sans font-medium mb-4" x-text="lang === 'et' ? 'Mis edasi?' : 'What\'s next?'">Mis edasi?</h3>
+                        <ul class="space-y-3 text-sm font-sans">
+                            <li class="flex items-start gap-3">
+                                <span class="text-accent font-medium mt-0.5">1.</span>
+                                <span class="text-muted font-light" x-text="lang === 'et' ? 'Saad kinnituse oma e-postile' : 'You\'ll receive a confirmation email'"></span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <span class="text-accent font-medium mt-0.5">2.</span>
+                                <span class="text-muted font-light" x-text="lang === 'et' ? 'Saad meeldetuletuse enne külastust' : 'You\'ll get a reminder before the visit'"></span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <span class="text-accent font-medium mt-0.5">3.</span>
+                                <span class="text-muted font-light" x-text="lang === 'et' ? 'Meie meeskond tuleb kokkulepitud ajal' : 'Our team arrives at the scheduled time'"></span>
+                            </li>
+                        </ul>
+                        <p class="text-xs text-muted/70 font-sans font-light mt-5 pt-4 border-t border-[#E8E3DD]">
+                            <span x-show="lang === 'et'">📬 Ei leia kinnituskirja? Kontrolli ka rämpsposti (Spam/Junk) kausta.</span>
+                            <span x-show="lang === 'en'" x-cloak>📬 Can't find the confirmation? Check your Spam/Junk folder.</span>
+                        </p>
+                    </div>
+
+                    <p class="text-sm text-muted font-sans font-light mb-8">
+                        <span x-show="lang === 'et'">Küsimuste korral kirjuta meile: </span>
+                        <span x-show="lang === 'en'" x-cloak>For questions, contact us: </span>
+                        <a href="mailto:tere@sukoda.ee" class="luxury-link text-black">tere@sukoda.ee</a>
+                    </p>
+
+                    <a href="index.html" class="inline-block bg-black text-paper px-10 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-colors duration-500" x-text="lang === 'et' ? 'Tagasi avalehele' : 'Back to home'">
+                        Tagasi avalehele
+                    </a>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-black text-paper">
+            <div class="grid md:grid-cols-12 py-16 px-6 md:px-12">
+                <div class="md:col-span-4 mb-8 md:mb-0">
+                    <a href="index.html" class="font-serif text-2xl tracking-[0.08em] font-light block mb-4">SUKODA</a>
+                    <p class="text-muted text-xs font-sans font-light leading-relaxed max-w-xs">
+                        <span x-show="lang === 'et'">Sinu kodu, meie hoole all.<br>Tallinn, Eesti.</span>
+                        <span x-show="lang === 'en'" x-cloak>Your home, our care.<br>Tallinn, Estonia.</span>
+                    </p>
+                </div>
+                <div class="md:col-span-4 mb-8 md:mb-0">
+                    <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-4">
+                        <span x-show="lang === 'et'">Lingid</span>
+                        <span x-show="lang === 'en'" x-cloak>Links</span>
+                    </p>
+                    <div class="flex flex-col gap-3 text-xs text-muted/70 font-sans font-light">
+                        <a href="kingitus.html" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Kingitus' : 'Gift'">Kingitus</a>
+                        <a href="partnerlus.html" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Koostöö' : 'Partnership'">Koostöö</a>
+                        <a href="tingimused.html" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Tingimused' : 'Terms'">Tingimused</a>
+                        <a href="privaatsus.html" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Privaatsuspoliitika' : 'Privacy'">Privaatsuspoliitika</a>
+                    </div>
+                </div>
+                <div class="md:col-span-4">
+                    <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-4">
+                        <span x-show="lang === 'et'">Kontakt</span>
+                        <span x-show="lang === 'en'" x-cloak>Contact</span>
+                    </p>
+                    <a href="mailto:tere@sukoda.ee" class="text-xs font-sans font-light text-muted/70 hover:text-paper transition-colors block mb-2">tere@sukoda.ee</a>
+                    <a href="mailto:partner@sukoda.ee" class="text-xs font-sans font-light text-muted/70 hover:text-paper transition-colors block">partner@sukoda.ee</a>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 py-6 px-6 md:px-12">
+                <p class="text-[10px] text-muted/40 font-sans text-center tracking-wide">
+                    <span x-show="lang === 'et'">© 2026 Epic Ship OÜ · Registrikood 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
+                    <span x-show="lang === 'en'" x-cloak>© 2026 Epic Ship OÜ · Reg. code 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
+                </p>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- Cookie Consent -->
+    <div x-data="{ show: !(document.cookie.includes('sukoda_consent=')) }" x-show="show" x-cloak
+         class="fixed bottom-0 left-0 right-0 z-[9999] bg-black/95 backdrop-blur-sm text-paper p-4 md:p-6"
+         x-transition:enter="transition ease-out duration-500"
+         x-transition:enter-start="translate-y-full opacity-0"
+         x-transition:enter-end="translate-y-0 opacity-100">
+        <div class="max-w-[1440px] mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="flex-1">
+                <p class="text-sm font-sans font-light" x-show="lang === 'et'">
+                    Kasutame küpsiseid veebilehe kasutuskogemuse parendamiseks ja turunduse tõhususe mõõtmiseks.
+                    <a href="privaatsus.html" class="text-accent hover:underline">Loe lähemalt</a>
+                </p>
+                <p class="text-sm font-sans font-light" x-show="lang === 'en'" x-cloak>
+                    We use cookies to improve your experience and measure marketing effectiveness.
+                    <a href="privaatsus.html" class="text-accent hover:underline">Learn more</a>
+                </p>
+            </div>
+            <div class="flex gap-3 shrink-0">
+                <button @click="if(window.SUKODA_TRACKING) SUKODA_TRACKING.declineCookies(); show = false"
+                        class="px-4 py-2 text-[10px] uppercase tracking-[0.2em] font-sans text-muted hover:text-paper transition-colors border border-muted/30 hover:border-paper/50"
+                        x-text="lang === 'et' ? 'Keeldu' : 'Decline'">Keeldu</button>
+                <button @click="if(window.SUKODA_TRACKING) SUKODA_TRACKING.acceptCookies(); show = false"
+                        class="px-6 py-2 text-[10px] uppercase tracking-[0.2em] font-sans bg-accent hover:bg-accent/80 text-paper transition-colors"
+                        x-text="lang === 'et' ? 'Nõustun' : 'Accept'">Nõustun</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        window.addEventListener('scroll', () => {
+            const scrollTop = document.documentElement.scrollTop;
+            const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+            document.getElementById('scrollProgress').style.width = progress + '%';
+        });
+    </script>
+
+</body>
+</html>

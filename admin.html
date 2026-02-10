@@ -78,7 +78,7 @@
             </header>
 
             <!-- Stats -->
-            <div class="grid grid-cols-2 md:grid-cols-4 grid-line-b">
+            <div class="grid grid-cols-2 md:grid-cols-5 grid-line-b">
                 <div class="p-6 border-r border-[#E8E3DD]">
                     <p class="text-[10px] uppercase tracking-[0.2em] text-muted mb-2">Tänased</p>
                     <p class="font-serif text-2xl font-light" x-text="todayBookings.length">0</p>
@@ -91,9 +91,14 @@
                     <p class="text-[10px] uppercase tracking-[0.2em] text-muted mb-2">Aktiivsed tellijad</p>
                     <p class="font-serif text-2xl font-light" x-text="activeSubscriptions.length">0</p>
                 </div>
-                <div class="p-6">
+                <div class="p-6 border-r border-[#E8E3DD]">
                     <p class="text-[10px] uppercase tracking-[0.2em] text-muted mb-2">Tellimused kokku</p>
-                    <p class="font-serif text-2xl font-light" x-text="allOrders.length">0</p>
+                    <p class="font-serif text-2xl font-light" x-text="paidOrdersCount">0</p>
+                </div>
+                <div class="p-6 cursor-pointer hover:bg-cream/30 transition-colors" @click="activeTab = 'followups'">
+                    <p class="text-[10px] uppercase tracking-[0.2em] text-accent mb-2">Follow-up</p>
+                    <p class="font-serif text-2xl font-light" x-text="followupStats.pending">0</p>
+                    <p class="text-[9px] text-muted mt-1" x-text="'Ootel · ' + followupStats.converted + ' konv.'"></p>
                 </div>
             </div>
 
@@ -110,6 +115,13 @@
                 </button>
                 <button @click="activeTab = 'all'" :class="activeTab === 'all' ? 'border-b-2 border-accent text-black' : 'text-muted'" class="py-4 text-xs uppercase tracking-[0.15em] transition-colors">
                     Kõik tellimused
+                </button>
+                <button @click="activeTab = 'followups'" :class="activeTab === 'followups' ? 'border-b-2 border-accent text-black' : 'text-muted'" class="py-4 text-xs uppercase tracking-[0.15em] transition-colors relative">
+                    Follow-ups
+                    <span x-show="followupStats.pending > 0" class="absolute -top-1 -right-2 bg-accent text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center" x-text="followupStats.pending"></span>
+                </button>
+                <button @click="activeTab = 'giftcards'" :class="activeTab === 'giftcards' ? 'border-b-2 border-accent text-black' : 'text-muted'" class="py-4 text-xs uppercase tracking-[0.15em] transition-colors">
+                    Kinkekaardid
                 </button>
             </div>
 
@@ -212,26 +224,268 @@
 
                 <!-- All Orders -->
                 <div x-show="activeTab === 'all' && !loading">
-                    <h2 class="font-serif text-xl font-light mb-4">Kõik tellimused</h2>
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="font-serif text-xl font-light">Kõik tellimused</h2>
+                        <div class="flex items-center gap-3">
+                            <button x-show="pendingCount > 0" @click="showPending = !showPending" class="text-[10px] uppercase tracking-wider px-3 py-1.5 border transition-colors" :class="showPending ? 'border-accent text-accent bg-cream/50' : 'border-[#E8E3DD] text-muted hover:border-accent/50'">
+                                <span x-show="!showPending">Näita katkestatud (<span x-text="pendingCount"></span>)</span>
+                                <span x-show="showPending">Peida katkestatud</span>
+                            </button>
+                        </div>
+                    </div>
                     <div class="space-y-3">
-                        <template x-for="o in allOrders" :key="o.id">
-                            <div @click="openOrderDetail(o)" class="bg-white border border-[#E8E3DD] p-5 flex flex-col md:flex-row md:items-center gap-4 cursor-pointer hover:border-accent/50 transition-colors">
-                                <div class="flex-1 min-w-0">
-                                    <p class="font-medium" x-text="o.customer?.name"></p>
-                                    <p class="text-muted text-xs mt-1" x-text="o.customer?.email"></p>
+                        <template x-for="o in filteredOrders" :key="o.id">
+                            <div @click="openOrderDetail(o)" class="bg-white border border-[#E8E3DD] p-5 cursor-pointer hover:border-accent/50 transition-colors" :class="o.status === 'pending' ? 'opacity-50' : ''">
+                                <div class="flex flex-col md:flex-row md:items-center gap-3">
+                                    <div class="flex-1 min-w-0">
+                                        <p class="font-medium" x-text="o.customer?.name"></p>
+                                        <p class="text-muted text-xs mt-1" x-text="o.customer?.email"></p>
+                                    </div>
+                                    <div class="shrink-0">
+                                        <span class="px-2 py-1 text-[10px] uppercase tracking-wider" :class="o.type === 'gift' ? 'bg-pink-50 text-pink-600' : 'bg-cream text-accent'" x-text="o.type === 'gift' ? 'Kingitus' : 'Tellimus'"></span>
+                                    </div>
+                                    <div class="text-xs text-muted shrink-0" x-text="getPackageName(o.package)"></div>
+                                    <div class="shrink-0">
+                                        <span class="px-2 py-1 text-[10px] uppercase tracking-wider" :class="o.status === 'paid' ? 'bg-green-50 text-green-600' : o.status === 'cancelling' ? 'bg-amber-50 text-amber-600' : o.status === 'cancelled' ? 'bg-red-50 text-red-500' : 'bg-gray-50 text-gray-500'" x-text="getStatusName(o.status)"></span>
+                                    </div>
+                                    <!-- Gift flow badge -->
+                                    <template x-if="getGiftFlowStatus(o)">
+                                        <div class="shrink-0">
+                                            <span class="px-2 py-1 text-[10px] uppercase tracking-wider" :class="getGiftFlowStatus(o).color" x-text="getGiftFlowStatus(o).label"></span>
+                                        </div>
+                                    </template>
+                                    <!-- Subscription booking badge -->
+                                    <template x-if="getBookingStatus(o)">
+                                        <div class="shrink-0">
+                                            <span class="px-2 py-1 text-[10px] uppercase tracking-wider" :class="getBookingStatus(o).color" x-text="getBookingStatus(o).label"></span>
+                                        </div>
+                                    </template>
+                                    <div class="text-xs text-muted shrink-0" x-text="o.createdAt ? new Date(o.createdAt).toLocaleDateString('et-EE') : ''"></div>
                                 </div>
-                                <div class="shrink-0">
-                                    <span class="px-2 py-1 text-[10px] uppercase tracking-wider" :class="o.type === 'gift' ? 'bg-pink-50 text-pink-600' : 'bg-cream text-accent'" x-text="o.type === 'gift' ? 'Kingitus' : 'Tellimus'"></span>
-                                </div>
-                                <div class="text-xs text-muted shrink-0" x-text="getPackageName(o.package)"></div>
-                                <div class="shrink-0">
-                                    <span class="px-2 py-1 text-[10px] uppercase tracking-wider" :class="o.status === 'paid' ? 'bg-green-50 text-green-600' : o.status === 'cancelled' ? 'bg-red-50 text-red-500' : 'bg-gray-50 text-gray-500'" x-text="getStatusName(o.status)"></span>
-                                </div>
-                                <div class="text-xs text-muted shrink-0" x-text="o.createdAt ? new Date(o.createdAt).toLocaleDateString('et-EE') : ''"></div>
                             </div>
                         </template>
                     </div>
                 </div>
+
+                <!-- Follow-ups -->
+                <div x-show="activeTab === 'followups' && !loading">
+                    <h2 class="font-serif text-xl font-light mb-4">Follow-up meilid</h2>
+                    <p class="text-muted text-xs font-light mb-6">Automaatne konversioonivoog: kinkesaaja → tellija. Pärast koristust saadetakse 3 meili (24h, 7d, 30d).</p>
+
+                    <!-- Follow-up stats -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                        <div class="bg-white border border-[#E8E3DD] p-4 text-center">
+                            <p class="text-[10px] uppercase tracking-[0.2em] text-muted mb-1">Ootel</p>
+                            <p class="font-serif text-2xl font-light text-accent" x-text="followupStats.pending">0</p>
+                        </div>
+                        <div class="bg-white border border-[#E8E3DD] p-4 text-center">
+                            <p class="text-[10px] uppercase tracking-[0.2em] text-muted mb-1">Saadetud</p>
+                            <p class="font-serif text-2xl font-light" x-text="followupStats.sent">0</p>
+                        </div>
+                        <div class="bg-white border border-[#E8E3DD] p-4 text-center">
+                            <p class="text-[10px] uppercase tracking-[0.2em] text-muted mb-1">Konverteeritud</p>
+                            <p class="font-serif text-2xl font-light text-green-600" x-text="followupStats.converted">0</p>
+                        </div>
+                        <div class="bg-white border border-[#E8E3DD] p-4 text-center">
+                            <p class="text-[10px] uppercase tracking-[0.2em] text-muted mb-1">Kokku</p>
+                            <p class="font-serif text-2xl font-light" x-text="followupStats.total">0</p>
+                        </div>
+                    </div>
+
+                    <!-- Conversion rate -->
+                    <div x-show="followupStats.total > 0" class="bg-cream/50 border border-[#E8E3DD] p-5 mb-8">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] uppercase tracking-[0.2em] text-accent font-medium mb-1">Konversioonimäär</p>
+                                <p class="font-serif text-3xl font-light" x-text="followupStats.total > 0 ? Math.round((followupStats.converted / Math.max(1, Math.floor(followupStats.total / 3))) * 100) + '%' : '0%'"></p>
+                            </div>
+                            <div class="text-right text-xs text-muted">
+                                <p>Unikaalseid saajaid: <span class="text-black font-medium" x-text="Math.floor(followupStats.total / 3)"></span></p>
+                                <p>Tellijaks saanud: <span class="text-green-600 font-medium" x-text="followupStats.converted"></span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Follow-up list -->
+                    <template x-if="followups.length === 0 && followupsLoaded">
+                        <p class="text-muted font-light py-8 text-center">Follow-up meile pole veel loodud. Need luuakse automaatselt kui kinkesaaja broneerib oma visiidi.</p>
+                    </template>
+                    <div class="space-y-2">
+                        <template x-for="f in followups" :key="f.id">
+                            <div class="bg-white border border-[#E8E3DD] p-4 flex flex-col md:flex-row md:items-center gap-3">
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-medium text-sm" x-text="f.recipientEmail"></p>
+                                    <p class="text-muted text-xs mt-0.5" x-text="f.recipientName || '—'"></p>
+                                </div>
+                                <div class="shrink-0">
+                                    <span class="px-2 py-1 text-[10px] uppercase tracking-wider font-medium"
+                                        :class="{
+                                            'bg-yellow-50 text-yellow-600': f.stage === '24h',
+                                            'bg-blue-50 text-blue-600': f.stage === '7d',
+                                            'bg-purple-50 text-purple-600': f.stage === '30d',
+                                            'bg-teal-50 text-teal-600': f.stage === 'subscriber_first_visit',
+                                        }"
+                                        x-text="f.stage === '24h' ? '24h — See tunne' : f.stage === '7d' ? '7d — Kas mäletad?' : f.stage === '30d' ? '30d — Mõtlesime sinu peale' : 'Tellija — Tere tulemast koju'"></span>
+                                </div>
+                                <div class="shrink-0">
+                                    <span class="px-2 py-1 text-[10px] uppercase tracking-wider"
+                                        :class="{
+                                            'bg-gray-50 text-gray-500': f.status === 'pending',
+                                            'bg-green-50 text-green-600': f.status === 'sent',
+                                            'bg-accent/10 text-accent': f.status === 'converted',
+                                            'bg-red-50 text-red-500': f.status === 'failed',
+                                        }"
+                                        x-text="f.status === 'pending' ? 'Ootel' : f.status === 'sent' ? 'Saadetud' : f.status === 'converted' ? 'Konverteeritud' : 'Ebaõnnestunud'"></span>
+                                </div>
+                                <div class="text-xs text-muted shrink-0">
+                                    <span x-show="f.status === 'pending'" x-text="f.sendAt ? 'Saadetakse: ' + new Date(f.sendAt).toLocaleDateString('et-EE', { day: 'numeric', month: 'short' }) : ''"></span>
+                                    <span x-show="f.status === 'sent'" x-text="f.sentAt ? 'Saadetud: ' + new Date(f.sentAt).toLocaleDateString('et-EE', { day: 'numeric', month: 'short' }) : ''"></span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Gift Cards Generator -->
+                <div x-show="activeTab === 'giftcards' && !loading">
+                    <h2 class="font-serif text-xl font-light mb-2">Füüsilised kinkekaardid</h2>
+                    <p class="text-muted text-xs font-light mb-8">Genereeri töötavad koodid füüsilistele kinkekaartidele. Koodid aktiveeritakse kohe ja neid saab lunastada aadressil sukoda.ee/lunasta</p>
+
+                    <!-- Generator Form -->
+                    <div class="bg-white border border-[#E8E3DD] p-6 mb-8">
+                        <p class="text-[10px] uppercase tracking-[0.2em] text-accent font-medium mb-5">Genereeri uued koodid</p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
+                            <!-- Package -->
+                            <div>
+                                <label class="block text-[10px] uppercase tracking-[0.15em] text-muted mb-2">Pakett</label>
+                                <select x-model="gc.package" class="w-full border border-[#E8E3DD] bg-white px-4 py-3 text-sm font-light outline-none focus:border-accent">
+                                    <option value="moment">Üks Hetk — 1 külastus</option>
+                                    <option value="month">Kuu Aega — 4 külastust</option>
+                                    <option value="quarter">Kvartal Vabadust — 12 külastust</option>
+                                </select>
+                            </div>
+
+                            <!-- Size -->
+                            <div>
+                                <label class="block text-[10px] uppercase tracking-[0.15em] text-muted mb-2">Kodu suurus</label>
+                                <select x-model="gc.size" class="w-full border border-[#E8E3DD] bg-white px-4 py-3 text-sm font-light outline-none focus:border-accent">
+                                    <option value="small">Kuni 50m²</option>
+                                    <option value="medium">51–90m²</option>
+                                    <option value="large">91–120m²</option>
+                                    <option value="xlarge">121–150m²</option>
+                                </select>
+                            </div>
+
+                            <!-- Count -->
+                            <div>
+                                <label class="block text-[10px] uppercase tracking-[0.15em] text-muted mb-2">Kogus</label>
+                                <input type="number" x-model.number="gc.count" min="1" max="200" placeholder="10"
+                                    class="w-full border border-[#E8E3DD] bg-white px-4 py-3 text-sm font-light outline-none focus:border-accent">
+                            </div>
+                        </div>
+
+                        <!-- Buyer info -->
+                        <p class="text-[10px] uppercase tracking-[0.15em] text-muted mb-3 mt-2">Ostja (maakler / büroo)</p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
+                            <div>
+                                <input type="text" x-model="gc.buyerName" placeholder="Nimi"
+                                    class="w-full border border-[#E8E3DD] bg-white px-4 py-3 text-sm font-light outline-none focus:border-accent">
+                            </div>
+                            <div>
+                                <input type="email" x-model="gc.buyerEmail" placeholder="E-post"
+                                    class="w-full border border-[#E8E3DD] bg-white px-4 py-3 text-sm font-light outline-none focus:border-accent">
+                            </div>
+                            <div>
+                                <input type="text" x-model="gc.buyerCompany" placeholder="Ettevõte"
+                                    class="w-full border border-[#E8E3DD] bg-white px-4 py-3 text-sm font-light outline-none focus:border-accent">
+                            </div>
+                        </div>
+
+                        <!-- Batch name -->
+                        <div class="mb-6">
+                            <label class="block text-[10px] uppercase tracking-[0.15em] text-muted mb-2">Partii nimi (valikuline)</label>
+                            <input type="text" x-model="gc.batchName" placeholder="nt. Uus Maa Kinnisvarabüroo veebr 2026"
+                                class="w-full border border-[#E8E3DD] bg-white px-4 py-3 text-sm font-light outline-none focus:border-accent">
+                        </div>
+
+                        <!-- Generate button -->
+                        <button @click="generateGiftCards()" :disabled="gc.generating"
+                            class="bg-accent text-white py-3 px-8 text-xs uppercase tracking-[0.2em] font-medium hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span x-show="!gc.generating">Genereeri koodid</span>
+                            <span x-show="gc.generating">Genereerin...</span>
+                        </button>
+
+                        <p x-show="gc.error" class="mt-3 text-red-500 text-xs" x-text="gc.error"></p>
+                    </div>
+
+                    <!-- Generated Codes Result -->
+                    <div x-show="gc.result" class="bg-white border border-[#E8E3DD] p-6 mb-8">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <p class="text-[10px] uppercase tracking-[0.2em] text-accent font-medium mb-1">Genereeritud koodid</p>
+                                <p class="text-xs text-muted">
+                                    Partii: <span class="text-black" x-text="gc.result?.batchId"></span> · 
+                                    Pakett: <span class="text-black" x-text="getPackageName(gc.result?.package)"></span> · 
+                                    Suurus: <span class="text-black" x-text="getSizeName(gc.result?.size)"></span> · 
+                                    Ostja: <span class="text-black" x-text="gc.result?.buyer || '—'"></span>
+                                </p>
+                            </div>
+                            <div class="flex gap-3 shrink-0">
+                                <button @click="downloadGiftCSV()" class="text-xs text-white bg-accent hover:bg-accent/80 px-4 py-2 uppercase tracking-[0.15em] transition-colors">
+                                    CSV trükikojale
+                                </button>
+                                <button @click="copyGiftCodes()" class="text-xs text-accent hover:text-accent/70 px-4 py-2 border border-accent/30 uppercase tracking-[0.15em] transition-colors">
+                                    <span x-text="gc.copied ? '✓ Kopeeritud' : 'Kopeeri koodid'"></span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                            <template x-for="item in gc.result?.codes || []" :key="item.code">
+                                <div class="bg-paper border border-[#E8E3DD] px-3 py-2 text-center">
+                                    <p class="font-mono text-sm tracking-wider font-medium" x-text="item.code"></p>
+                                </div>
+                            </template>
+                        </div>
+
+                        <p class="text-xs text-muted mt-4">Kokku: <span class="text-black font-medium" x-text="gc.result?.count"></span> koodi. Kõik koodid on aktiivsed ja lunastatavad aadressil <a href="/lunasta.html" target="_blank" class="text-accent hover:underline">sukoda.ee/lunasta</a></p>
+                    </div>
+
+                    <!-- Previous batches from allOrders -->
+                    <div x-show="physicalCardOrders.length > 0">
+                        <p class="text-[10px] uppercase tracking-[0.2em] text-accent font-medium mb-4">Olemasolevad füüsilised kaardid</p>
+                        <div class="bg-white border border-[#E8E3DD] overflow-hidden">
+                            <table class="w-full text-xs">
+                                <thead>
+                                    <tr class="grid-line-b">
+                                        <th class="text-left py-3 px-4 text-[10px] uppercase tracking-[0.15em] text-muted font-medium">Kood</th>
+                                        <th class="text-left py-3 px-4 text-[10px] uppercase tracking-[0.15em] text-muted font-medium">Pakett</th>
+                                        <th class="text-left py-3 px-4 text-[10px] uppercase tracking-[0.15em] text-muted font-medium">Ostja</th>
+                                        <th class="text-left py-3 px-4 text-[10px] uppercase tracking-[0.15em] text-muted font-medium">Staatus</th>
+                                        <th class="text-left py-3 px-4 text-[10px] uppercase tracking-[0.15em] text-muted font-medium">Loodud</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="order in physicalCardOrders" :key="order.id">
+                                        <tr class="grid-line-b hover:bg-cream/30 cursor-pointer" @click="openOrderDetail(order)">
+                                            <td class="py-3 px-4 font-mono tracking-wider font-medium" x-text="order.giftCode || '—'"></td>
+                                            <td class="py-3 px-4" x-text="getPackageName(order.package)"></td>
+                                            <td class="py-3 px-4" x-text="order.buyer?.company || order.buyer?.name || '—'"></td>
+                                            <td class="py-3 px-4">
+                                                <span class="px-2 py-0.5 text-[10px] uppercase tracking-wider"
+                                                    :class="getGiftFlowStatus(order)?.color || 'bg-gray-50 text-gray-500'"
+                                                    x-text="getGiftFlowStatus(order)?.label || getStatusName(order.status)"></span>
+                                            </td>
+                                            <td class="py-3 px-4 text-muted" x-text="order.createdAt ? new Date(order.createdAt).toLocaleDateString('et-EE', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -419,7 +673,7 @@
 
                     <!-- Status & Package -->
                     <div class="px-6 py-4 grid-line-b flex items-center gap-3 flex-wrap">
-                        <span class="px-3 py-1 text-xs" :class="selectedOrder.status === 'paid' ? 'bg-green-50 text-green-600' : selectedOrder.status === 'cancelled' ? 'bg-red-50 text-red-500' : 'bg-gray-50 text-gray-500'" x-text="getStatusName(selectedOrder.status)"></span>
+                        <span class="px-3 py-1 text-xs" :class="selectedOrder.status === 'paid' ? 'bg-green-50 text-green-600' : selectedOrder.status === 'cancelling' ? 'bg-amber-50 text-amber-600' : selectedOrder.status === 'cancelled' ? 'bg-red-50 text-red-500' : 'bg-gray-50 text-gray-500'" x-text="getStatusName(selectedOrder.status)"></span>
                         <span class="text-xs text-accent font-medium" x-text="getPackageName(selectedOrder.package)"></span>
                         <span class="text-xs text-muted" x-text="getSizeName(selectedOrder.size)"></span>
                         <span x-show="selectedOrder.subscriptionStatus === 'active'" class="px-2 py-0.5 bg-green-50 text-[10px] text-green-600 uppercase tracking-wider">Aktiivne</span>
@@ -452,6 +706,49 @@
                         </div>
                     </div>
 
+                    <!-- Gift Flow Progress -->
+                    <div x-show="selectedOrder.type === 'gift' && selectedOrder.status === 'paid'" class="px-6 py-4 grid-line-b bg-cream/30">
+                        <p class="text-[10px] uppercase tracking-[0.2em] text-muted font-medium mb-3">Kingituse staatus</p>
+                        <div class="flex items-center gap-2">
+                            <!-- Step 1: Paid -->
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-5 h-5 rounded-full bg-green-500 text-white flex items-center justify-center">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                </span>
+                                <span class="text-[10px] text-green-600 font-medium">Makstud</span>
+                            </div>
+                            <div class="h-[1px] w-4 bg-[#E8E3DD]"></div>
+                            <!-- Step 2: Email sent -->
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-5 h-5 rounded-full bg-green-500 text-white flex items-center justify-center">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                </span>
+                                <span class="text-[10px] text-green-600 font-medium">E-kiri</span>
+                            </div>
+                            <div class="h-[1px] w-4 bg-[#E8E3DD]"></div>
+                            <!-- Step 3: Redeemed -->
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-5 h-5 rounded-full flex items-center justify-center" :class="selectedOrder.giftRedeemed ? 'bg-green-500 text-white' : 'bg-[#E8E3DD] text-muted'">
+                                    <svg x-show="selectedOrder.giftRedeemed" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    <span x-show="!selectedOrder.giftRedeemed" class="text-[9px]">3</span>
+                                </span>
+                                <span class="text-[10px] font-medium" :class="selectedOrder.giftRedeemed ? 'text-green-600' : 'text-muted'">Lunastatud</span>
+                            </div>
+                            <div class="h-[1px] w-4 bg-[#E8E3DD]"></div>
+                            <!-- Step 4: Booked -->
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-5 h-5 rounded-full flex items-center justify-center" :class="selectedOrder.booking?.startTime ? 'bg-green-500 text-white' : 'bg-[#E8E3DD] text-muted'">
+                                    <svg x-show="selectedOrder.booking?.startTime" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    <span x-show="!selectedOrder.booking?.startTime" class="text-[9px]">4</span>
+                                </span>
+                                <span class="text-[10px] font-medium" :class="selectedOrder.booking?.startTime ? 'text-green-600' : 'text-muted'">Broneeritud</span>
+                            </div>
+                        </div>
+                        <p x-show="selectedOrder.giftRedeemedAt" class="text-[10px] text-muted mt-2">
+                            Lunastatud: <span x-text="selectedOrder.giftRedeemedAt ? new Date(selectedOrder.giftRedeemedAt).toLocaleString('et-EE') : ''"></span>
+                        </p>
+                    </div>
+
                     <!-- Gift Recipient -->
                     <div x-show="selectedOrder.type === 'gift' && selectedOrder.recipient" class="px-6 py-5 grid-line-b">
                         <p class="text-[10px] uppercase tracking-[0.2em] text-pink-500 font-medium mb-4">Kingisaaja</p>
@@ -462,7 +759,11 @@
                             </div>
                             <div class="flex items-center gap-3" x-show="selectedOrder.recipient?.email">
                                 <svg class="w-4 h-4 text-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                                <span x-text="selectedOrder.recipient?.email"></span>
+                                <a :href="'mailto:' + selectedOrder.recipient?.email" class="text-accent hover:underline" x-text="selectedOrder.recipient?.email"></a>
+                            </div>
+                            <div class="flex items-center gap-3" x-show="selectedOrder.recipient?.phone">
+                                <svg class="w-4 h-4 text-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                                <a :href="'tel:' + selectedOrder.recipient?.phone" class="text-accent hover:underline" x-text="selectedOrder.recipient?.phone"></a>
                             </div>
                             <div class="flex items-start gap-3" x-show="selectedOrder.recipient?.address">
                                 <svg class="w-4 h-4 text-muted shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -472,8 +773,26 @@
                                 <p class="font-medium text-pink-600 mb-1">Sõnum:</p>
                                 <p x-text="selectedOrder.recipient?.message" class="italic"></p>
                             </div>
+                            <div x-show="selectedOrder.recipient?.additionalInfo" class="ml-7 text-xs text-muted bg-cream p-3 mt-2">
+                                <p class="font-medium text-black mb-1">Lisainfo:</p>
+                                <p x-text="selectedOrder.recipient?.additionalInfo"></p>
+                            </div>
                             <div x-show="selectedOrder.giftCode" class="ml-7">
                                 <p class="text-xs text-muted">Kingituse kood: <span class="font-mono text-accent font-medium" x-text="selectedOrder.giftCode"></span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gift Booking Info -->
+                    <div x-show="selectedOrder.type === 'gift' && selectedOrder.booking?.startTime" class="px-6 py-5 grid-line-b">
+                        <p class="text-[10px] uppercase tracking-[0.2em] text-green-600 font-medium mb-4">Broneeritud külastus</p>
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 bg-green-50 flex items-center justify-center shrink-0">
+                                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            </div>
+                            <div>
+                                <p class="font-medium" x-text="selectedOrder.booking?.startTime ? formatFullDate(selectedOrder.booking.startTime) : ''"></p>
+                                <p class="text-muted text-xs mt-1" x-text="selectedOrder.booking?.startTime ? formatTime(selectedOrder.booking.startTime) : ''"></p>
                             </div>
                         </div>
                     </div>
@@ -530,13 +849,38 @@
                     </div>
 
                     <!-- Actions -->
-                    <div class="px-6 py-5 grid-line-b" x-show="selectedOrder.status !== 'cancelled'">
+                    <div class="px-6 py-5 grid-line-b" x-show="selectedOrder.status !== 'cancelled' && selectedOrder.status !== 'cancelling'">
                         <div class="flex flex-wrap gap-3">
                             <button @click="cancelOrderWithReason(selectedOrder.id)" class="px-4 py-2 border border-red-200 text-xs uppercase tracking-wider text-red-500 hover:bg-red-50 hover:border-red-300">
                                 Tühista tellimus
                             </button>
                         </div>
-                        <p class="text-[10px] text-muted mt-3">Tühistab tellimuse, kõik seotud broneeringud ja Stripe püsimakse. Kliendile saadetakse email.</p>
+                        <p class="text-[10px] text-muted mt-3" x-show="selectedOrder.type === 'subscription'">
+                            Tühistab tellimuse jooksva perioodi lõpus. Klient saab praeguse perioodi teenuse, aga järgmist makset enam ei tehta. Planeeritud broneeringud tühistatakse. Kliendile saadetakse email.
+                        </p>
+                        <p class="text-[10px] text-muted mt-3" x-show="selectedOrder.type === 'gift'">
+                            Tühistab kingituse ja seotud broneeringud. Raha tagastamiseks tee Stripe'is manuaalne refund. Kliendile saadetakse email.
+                        </p>
+                    </div>
+
+                    <!-- Cancelling info (subscription pending period end) -->
+                    <div class="px-6 py-4 grid-line-b" x-show="selectedOrder.status === 'cancelling'">
+                        <div class="flex items-start gap-2">
+                            <svg class="w-4 h-4 text-amber-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+                            <div>
+                                <p class="text-xs text-amber-700 font-medium">Tühistatakse perioodi lõpus</p>
+                                <p class="text-[10px] text-muted mt-1">
+                                    Klient saab jooksva perioodi teenuse.
+                                    <template x-if="selectedOrder.currentPeriodEnd">
+                                        <span>Tellimus lõpeb <strong x-text="new Date(selectedOrder.currentPeriodEnd).toLocaleDateString('et-EE')"></strong>.</span>
+                                    </template>
+                                    <template x-if="!selectedOrder.currentPeriodEnd">
+                                        <span>Tellimus lõpeb automaatselt perioodi lõpus.</span>
+                                    </template>
+                                </p>
+                                <p class="text-[10px] text-muted mt-1" x-show="selectedOrder.cancelReason">Põhjus: <span class="text-amber-600" x-text="selectedOrder.cancelReason"></span></p>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Cancel info -->
@@ -575,6 +919,7 @@
             weekBookings: [],
             activeSubscriptions: [],
             allOrders: [],
+            showPending: false,
 
             // Booking detail modal
             showBookingModal: false,
@@ -585,6 +930,26 @@
             selectedOrder: null,
             orderBookings: [],
             orderBookingsLoading: false,
+
+            // Follow-ups
+            followupStats: { pending: 0, sent: 0, converted: 0, total: 0 },
+            followups: [],
+            followupsLoaded: false,
+
+            // Gift card generator
+            gc: {
+                package: 'moment',
+                size: 'medium',
+                count: 10,
+                buyerName: '',
+                buyerEmail: '',
+                buyerCompany: '',
+                batchName: '',
+                generating: false,
+                error: '',
+                result: null,
+                copied: false,
+            },
 
             // Reschedule
             rescheduleMode: false,
@@ -601,7 +966,7 @@
                 once: 'Kord kuus', twice: 'Üle nädala', weekly: 'Iga nädal', test: 'Test'
             },
             sizes: { small: 'Kuni 50m²', medium: '51-90m²', large: '91-120m²', xlarge: '121-150m²' },
-            statuses: { pending: 'Ootel', paid: 'Makstud', cancelled: 'Tühistatud' },
+            statuses: { pending: 'Ootel', paid: 'Makstud', cancelled: 'Tühistatud', cancelling: 'Tühistatakse' },
 
             async init() {
                 const saved = sessionStorage.getItem('sukoda_admin');
@@ -661,6 +1026,20 @@
                             o.type === 'subscription' && o.status === 'paid' && o.subscriptionStatus === 'active'
                         );
                     }
+
+                    // Load follow-up data
+                    try {
+                        const followupRes = await fetch(`/api/admin/followups?password=${pw}`);
+                        if (followupRes.ok) {
+                            const data = await followupRes.json();
+                            this.followupStats = data.stats || { pending: 0, sent: 0, converted: 0, total: 0 };
+                            this.followups = data.followups || [];
+                            this.followupsLoaded = true;
+                        }
+                    } catch (e) {
+                        console.error('Failed to load followups:', e);
+                    }
+
                 } catch (e) {
                     console.error('Failed to load data:', e);
                 }
@@ -718,7 +1097,14 @@
             },
 
             async cancelOrderWithReason(orderId) {
-                const reason = prompt('Tellimuse tühistamise põhjus (valikuline).\n\nTühistab tellimuse, seotud broneeringud ja Stripe makse.\nKliendile saadetakse tühistamise email:');
+                const order = this.selectedOrder;
+                let promptMsg = '';
+                if (order?.type === 'gift') {
+                    promptMsg = 'Kingituse tühistamise põhjus (valikuline).\n\n⚠️ Kingitus tühistatakse ja seotud broneeringud kustutatakse.\nRaha tagastamiseks tee Stripe\'is manuaalne refund.\nKliendile saadetakse tühistamise email:';
+                } else {
+                    promptMsg = 'Tellimuse tühistamise põhjus (valikuline).\n\n⚠️ Tellimus tühistatakse jooksva perioodi LÕPUS.\nKlient saab praeguse perioodi teenuse.\nJärgmist makset enam ei tehta.\nPlaneeritud broneeringud tühistatakse.\nKliendile saadetakse email:';
+                }
+                const reason = prompt(promptMsg);
                 if (reason === null) return;
                 try {
                     const res = await fetch('/api/admin/cancel-order', {
@@ -728,9 +1114,17 @@
                     });
                     if (res.ok) {
                         const data = await res.json();
-                        const msg = data.cancelledBookings > 0
-                            ? `Tellimus tühistatud. ${data.cancelledBookings} broneeringut tühistatud.`
-                            : 'Tellimus tühistatud.';
+                        let msg = '';
+                        if (order?.type === 'gift') {
+                            msg = 'Kingitus tühistatud.';
+                            if (data.cancelledBookings > 0) msg += ` ${data.cancelledBookings} broneeringut tühistatud.`;
+                            msg += '\n\nRaha tagastamiseks mine Stripe dashboardi.';
+                        } else {
+                            msg = 'Tellimus tühistatakse jooksva perioodi lõpus.';
+                            if (data.periodEnd) msg += `\nLõpeb: ${new Date(data.periodEnd).toLocaleDateString('et-EE')}`;
+                            if (data.keptBookings > 0) msg += `\n✓ ${data.keptBookings} broneering(ut) jooksvas perioodis jäävad alles.`;
+                            if (data.cancelledBookings > 0) msg += `\n✕ ${data.cancelledBookings} tulevast broneeringut tühistatud.`;
+                        }
                         alert(msg);
                         this.closeOrderModal();
                         await this.loadData();
@@ -864,6 +1258,87 @@
                 return slugs[size] || 'koristus-90';
             },
 
+            // ---- Gift Card Generator ----
+
+            async generateGiftCards() {
+                this.gc.error = '';
+                this.gc.result = null;
+                this.gc.generating = true;
+                this.gc.copied = false;
+
+                try {
+                    const res = await fetch('/api/admin/generate-gift-cards', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            password: this.password,
+                            count: this.gc.count,
+                            package: this.gc.package,
+                            size: this.gc.size,
+                            batchName: this.gc.batchName,
+                            buyer: {
+                                name: this.gc.buyerName,
+                                email: this.gc.buyerEmail,
+                                company: this.gc.buyerCompany,
+                            },
+                        }),
+                    });
+
+                    const data = await res.json();
+
+                    if (!res.ok) {
+                        this.gc.error = data.error || 'Viga genereerimisel';
+                        return;
+                    }
+
+                    this.gc.result = data;
+
+                    // Reload orders to show the new physical cards
+                    await this.loadData();
+                } catch (e) {
+                    this.gc.error = 'Ühenduse viga: ' + e.message;
+                } finally {
+                    this.gc.generating = false;
+                }
+            },
+
+            copyGiftCodes() {
+                if (!this.gc.result?.codes) return;
+                const text = this.gc.result.codes.map(c => c.code).join('\n');
+                navigator.clipboard.writeText(text).then(() => {
+                    this.gc.copied = true;
+                    setTimeout(() => this.gc.copied = false, 3000);
+                });
+            },
+
+            downloadGiftCSV() {
+                if (!this.gc.result?.codes) return;
+                const r = this.gc.result;
+                const pkgName = this.getPackageName(r.package);
+                const sizeName = this.getSizeName(r.size);
+
+                // BOM for Excel UTF-8 compatibility
+                let csv = '\uFEFF';
+                csv += 'Nr;Kood;Pakett;Suurus;Partii;Ostja;Lunasta\n';
+                r.codes.forEach((item, i) => {
+                    csv += `${i + 1};${item.code};${pkgName};${sizeName};${r.batchId};${r.buyer || ''};sukoda.ee/lunasta?code=${item.code}\n`;
+                });
+
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `SUKODA-koodid-${r.batchId}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            },
+
+            get physicalCardOrders() {
+                return this.allOrders.filter(o => o.physicalCard === true);
+            },
+
             // ---- Formatting ----
 
             formatTime(isoStr) {
@@ -888,6 +1363,36 @@
             getPackageName(pkg) { return this.packages[pkg] || pkg || ''; },
             getSizeName(size) { return this.sizes[size] || size || ''; },
             getStatusName(status) { return this.statuses[status] || status || ''; },
+
+            // Filtered orders (hide pending by default)
+            get filteredOrders() {
+                if (this.showPending) return this.allOrders;
+                return this.allOrders.filter(o => o.status !== 'pending');
+            },
+
+            get paidOrdersCount() {
+                return this.allOrders.filter(o => o.status !== 'pending').length;
+            },
+
+            get pendingCount() {
+                return this.allOrders.filter(o => o.status === 'pending').length;
+            },
+
+            // Gift flow status
+            getGiftFlowStatus(order) {
+                if (order.type !== 'gift' || order.status !== 'paid') return null;
+                if (order.booking?.startTime) return { label: 'Broneeritud', color: 'bg-green-50 text-green-600' };
+                if (order.giftRedeemed) return { label: 'Lunastatud', color: 'bg-orange-50 text-orange-600' };
+                return { label: 'Ootab lunastamist', color: 'bg-gray-100 text-gray-500' };
+            },
+
+            // Subscription booking status
+            getBookingStatus(order) {
+                if (order.type === 'gift') return null;
+                if (order.status !== 'paid') return null;
+                if (order.booking?.startTime) return { label: 'Aeg valitud', color: 'bg-green-50 text-green-600' };
+                return { label: 'Aeg valimata', color: 'bg-yellow-50 text-yellow-600' };
+            },
         };
     }
     </script>

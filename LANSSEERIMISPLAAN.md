@@ -225,14 +225,14 @@ KLIENT                    SUKODA                     PARTNER
 ### Tulud vs kulud näide (30 klienti)
 
 ```
-30 klienti × €250/kuu keskmine = €7,500 käive
+30 klienti × €280/kuu keskmine = €8,400 käive
 
-Partner saab 72%:                 -€5,400
+Partner saab 72%:                 -€6,050
 Lilled/puuviljad (~€15/klient):   -€450
 Turundus:                         -€200
 Muud kulud:                       -€100
 ─────────────────────────────────────────
-KASUM:                            ~€1,350/kuu
+KASUM:                            ~€1,600/kuu
 ```
 
 ---
@@ -362,9 +362,9 @@ Loome eraldi lihtsa lehe:
 
 | Pakett | Sisu | Hind | Marginaal |
 |--------|------|------|-----------|
-| **Värske Algus** | 1x süvapuhastus + lilled | €149+ | ~40% |
-| **Kuu Hoolitsust** | 2x koristus + lilled | €249+ | ~35% |
-| **Eriline Hoolitsus** | 3 kuud (12x) täisteenus | €799+ | ~30% |
+| **Värske Algus** | 1x süvapuhastus + lilled | €169+ | ~45% |
+| **Kuu Hoolitsust** | 2x koristus + lilled | €339+ | ~40% |
+| **Eriline Hoolitsus** | 3 kuud (6x) täisteenus | €849+ | ~35% |
 
 ### Müügikanalid
 1. **Veebileht** – sukoda.ee/kingitus (TEHTUD ✓)

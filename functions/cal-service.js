@@ -14,7 +14,7 @@
 const functions = require('firebase-functions');
 
 const CAL_API_BASE = 'https://api.cal.eu/v2';
-const CAL_API_VERSION = '2024-08-13';
+const CAL_API_VERSION = '2024-11-13';
 
 // Event type slugs mapped to sizes
 const EVENT_TYPE_SLUGS = {
@@ -79,14 +79,30 @@ async function getEventTypes() {
   const data = await calApiRequest('GET', '/event-types');
   const eventTypes = {};
 
-  if (data.status === 'success' && Array.isArray(data.data)) {
-    for (const et of data.data) {
-      eventTypes[et.slug] = {
-        id: et.id,
-        slug: et.slug,
-        title: et.title,
-        lengthInMinutes: et.lengthInMinutes,
-      };
+  if (data.status === 'success') {
+    // Cal.com API v2 (2024-11-13+) returns eventTypeGroups with nested eventTypes
+    const groups = data.data?.eventTypeGroups || [];
+    for (const group of groups) {
+      for (const et of (group.eventTypes || [])) {
+        eventTypes[et.slug] = {
+          id: et.id,
+          slug: et.slug,
+          title: et.title,
+          lengthInMinutes: et.length || et.lengthInMinutes,
+        };
+      }
+    }
+
+    // Fallback: old format where data is a flat array
+    if (Object.keys(eventTypes).length === 0 && Array.isArray(data.data)) {
+      for (const et of data.data) {
+        eventTypes[et.slug] = {
+          id: et.id,
+          slug: et.slug,
+          title: et.title,
+          lengthInMinutes: et.lengthInMinutes || et.length,
+        };
+      }
     }
   }
 
@@ -116,7 +132,7 @@ async function getAvailableSlots(eventTypeSlug, startDate, endDate) {
     eventTypeId: eventType.id.toString(),
   });
 
-  const data = await calApiRequest('GET', `/slots?${params.toString()}`);
+  const data = await calApiRequest('GET', `/slots/available?${params.toString()}`);
 
   // Cal.com returns slots grouped by date
   const allSlots = [];
@@ -154,26 +170,27 @@ async function createBooking(eventTypeSlug, startTime, attendee, metadata = {}) 
   const bookingData = {
     eventTypeId: eventType.id,
     start: startTime,
-    attendee: {
-      name: attendee.name,
-      email: attendee.email,
-      timeZone: 'Europe/Tallinn',
-    },
+    timeZone: 'Europe/Tallinn',
+    language: 'et',
     metadata: {
       ...metadata,
       source: 'sukoda-auto-scheduler',
     },
+    responses: {
+      name: attendee.name,
+      email: attendee.email,
+    },
   };
 
-  // Add booking field responses (phone, address)
-  if (attendee.phone || attendee.address) {
-    bookingData.responses = {};
-    if (attendee.phone) {
-      bookingData.responses.phone = attendee.phone;
-    }
-    if (attendee.address) {
-      bookingData.responses.address = attendee.address;
-    }
+  // Add optional booking field responses (phone, address)
+  if (attendee.phone) {
+    bookingData.responses.phone = attendee.phone;
+  }
+  if (attendee.address) {
+    bookingData.responses.location = {
+      value: 'attendeeInPerson',
+      optionValue: attendee.address,
+    };
   }
 
   const data = await calApiRequest('POST', '/bookings', bookingData);

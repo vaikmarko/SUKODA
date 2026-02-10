@@ -68,14 +68,27 @@ async function startSubscriptionCheckout({
   size,        // 'small', 'medium', 'large', 'xlarge'
   customer,    // { name, email, phone, address }
   lang = 'et',
+  promoCode,   // optional promo code (e.g. from follow-up email)
+  referralCode, // optional referral code (e.g. from ?ref= URL param)
 }) {
-  return createCheckout({
+  const data = {
     type: 'subscription',
     packageType: rhythm,
     size: size,
     customer: customer,
     lang: lang,
-  });
+  };
+  // Pass referral code if provided (takes priority over promo)
+  const ref = referralCode || new URLSearchParams(window.location.search).get('ref');
+  if (ref) {
+    data.referralCode = ref;
+  }
+  // Pass promo code if provided (from URL param or explicit)
+  const promo = promoCode || new URLSearchParams(window.location.search).get('promo');
+  if (promo && !ref) {
+    data.promoCode = promo;
+  }
+  return createCheckout(data);
 }
 
 /**
@@ -89,8 +102,9 @@ async function startGiftCheckout({
   recipient,       // { name, address, message }
   deliveryMethod,  // 'email' or 'post'
   lang = 'et',
+  promoCode,       // optional promo code
 }) {
-  return createCheckout({
+  const data = {
     type: 'gift',
     packageType: giftType,
     size: size,
@@ -98,7 +112,12 @@ async function startGiftCheckout({
     recipient: recipient,
     deliveryMethod: deliveryMethod,
     lang: lang,
-  });
+  };
+  const promo = promoCode || new URLSearchParams(window.location.search).get('promo');
+  if (promo) {
+    data.promoCode = promo;
+  }
+  return createCheckout(data);
 }
 
 /**
@@ -129,6 +148,8 @@ function getUrlParams() {
     orderId: params.get('order_id'),
     size: params.get('size'),
     cancelled: params.get('cancelled') === 'true',
+    promo: params.get('promo'),
+    ref: params.get('ref'),
   };
 }
 
