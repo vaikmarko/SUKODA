@@ -1,61 +1,19 @@
 /**
  * SUKODA Firebase Cloud Functions
- * 
- * SEADISTAMINE:
- * 1. Paigalda dependencies: cd functions && npm install
- * 2. Secrets on Firebase Secret Manager'is (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET,
- *    RESEND_API_KEY, CAL_API_KEY, ADMIN_PASSWORD).
- *    Mittetundlik konfiguratsioon on functions/.env failis (NOTIFICATION_EMAIL).
- * 3. Deploy: firebase deploy --only functions
+ *
+ * Setup: see SETUP.md
+ * Shared config extracted to ./lib/config.js
  */
 
-const functions = require('firebase-functions');
-const admin = require('firebase-admin');
-const cors = require('cors')({ origin: true });
-const { Resend } = require('resend');
+const {
+  functions, admin, cors, db, SECRETS,
+  getStripe, getResend, NOTIFICATION_EMAIL,
+  MIN_BOOKING_LEAD_HOURS, LAUNCH_DATE,
+  authenticateAdmin, checkRateLimit,
+} = require('./lib/config');
 const calService = require('./cal-service');
+const { checkoutSchema, waitlistSchema, bookGiftSchema, bookSubscriptionSchema, giftUpgradeSchema, validate } = require('./lib/schemas');
 
-// Secrets declared for runWith — injected into process.env at cold start
-const SECRETS = [
-  'STRIPE_SECRET_KEY',
-  'STRIPE_WEBHOOK_SECRET',
-  'RESEND_API_KEY',
-  'CAL_API_KEY',
-  'ADMIN_PASSWORD',
-];
-
-// Initialize Firebase Admin
-admin.initializeApp();
-const db = admin.firestore();
-
-// Stripe — lazy init because Secret Manager values arrive at cold start
-let _stripe;
-function getStripe() {
-  if (!_stripe) {
-    _stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-  }
-  return _stripe;
-}
-
-// Resend — lazy init
-let _resend;
-function getResend() {
-  if (!_resend) {
-    const key = process.env.RESEND_API_KEY;
-    if (key) _resend = new Resend(key);
-  }
-  return _resend;
-}
-
-// Notification email (from .env)
-const NOTIFICATION_EMAIL = process.env.NOTIFICATION_EMAIL || 'tere@sukoda.ee';
-
-// Minimum booking lead time — customers must book at least 48h in advance
-const MIN_BOOKING_LEAD_HOURS = 48;
-
-// Launch date — first available booking slots start from this date (Europe/Tallinn)
-// Set to null to disable (allow bookings from any available time)
-const LAUNCH_DATE = '2026-02-25';
 
 // ============================================================
 // I18N — Email translations (ET / EN)
@@ -502,7 +460,7 @@ const PRICE_IDS = {
   },
   subscriptions: {
     once: {
-      small: 'price_1T51LTEoH1b07UGQ6i8FiEix',   // €179/kuu
+      small: 'price_1T5AJyEoH1b07UGQeSWsu5I0',   // €199/kuu
       medium: 'price_1T51LUEoH1b07UGQPsUzybQS',  // €229/kuu
       large: 'price_1T51LUEoH1b07UGQs0BYqLx2',   // €289/kuu
     },
@@ -605,8 +563,14 @@ exports.createCheckoutSession = functions
   .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
+      if (!checkRateLimit(req, res, 'checkout', 10, 60000)) return;
       if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
+      }
+
+      const validation = validate(checkoutSchema, req.body);
+      if (!validation.ok) {
+        return res.status(400).json({ error: validation.error });
       }
 
       try {
@@ -906,6 +870,20 @@ async function handleCheckoutComplete(session) {
 
     await db.collection('orders').doc(orderId).update(updateData);
 
+    // Generate portal session token for subscriptions
+    let portalToken = null;
+    if (session.subscription) {
+      const crypto = require('crypto');
+      portalToken = crypto.randomBytes(32).toString('hex');
+      const tokenHash = crypto.createHash('sha256').update(portalToken).digest('hex');
+      const tokenExpiry = new Date();
+      tokenExpiry.setDate(tokenExpiry.getDate() + 30);
+      await db.collection('orders').doc(orderId).update({
+        sessionTokenHash: tokenHash,
+        sessionTokenExpiresAt: admin.firestore.Timestamp.fromDate(tokenExpiry),
+      });
+    }
+
     const orderDoc = await db.collection('orders').doc(orderId).get();
     const order = orderDoc.data();
 
@@ -920,7 +898,7 @@ async function handleCheckoutComplete(session) {
     }
 
     // Send all emails
-    await sendAllEmails(order, orderId);
+    await sendAllEmails(order, orderId, portalToken);
 
     console.log('Order completed:', orderId);
 
@@ -1011,7 +989,7 @@ async function handleSubscriptionCancelled(subscription) {
 /**
  * Send all emails for an order
  */
-async function sendAllEmails(order, orderId) {
+async function sendAllEmails(order, orderId, portalToken) {
   const lang = order.lang || 'et';
   const t = tx(lang);
   const isGift = order.type === 'gift';
@@ -1046,7 +1024,7 @@ async function sendAllEmails(order, orderId) {
     await sendEmail({
       to: order.customer?.email,
       subject: isGift ? t.subjectGiftOnWay : t.subjectOrderReceived,
-      html: generateCustomerEmail(order, orderId, packageName, sizeName, isGift, lang),
+      html: generateCustomerEmail(order, orderId, packageName, sizeName, isGift, lang, portalToken),
     });
   } catch (err) {
     console.error('sendAllEmails: customer confirmation failed:', err);
@@ -1304,7 +1282,7 @@ async function sendAdminBookingNotification({ customerName, customerEmail, custo
  * For gift orders: rich preview with gift code, message preview, and what-happens-next
  * For subscriptions: simple confirmation
  */
-function generateCustomerEmail(order, orderId, packageName, sizeName, isGift, lang) {
+function generateCustomerEmail(order, orderId, packageName, sizeName, isGift, lang, portalToken) {
   const t = tx(lang);
 
   // For subscription orders, use a simple confirmation
@@ -1333,6 +1311,19 @@ function generateCustomerEmail(order, orderId, packageName, sizeName, isGift, la
                 </p>
               ` : ''}
             </div>
+            ${portalToken ? `
+            <div style="background: #111111; padding: 28px; margin-bottom: 32px; text-align: center;">
+              <p style="margin: 0 0 12px 0; color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">
+                ${lang === 'et' ? 'SINU ISIKLIK PORTAAL' : 'YOUR PERSONAL PORTAL'}
+              </p>
+              <p style="margin: 0 0 20px 0; color: #8A8578; font-size: 13px; line-height: 1.6;">
+                ${lang === 'et' ? 'Halda oma tellimust, täida koduprofiil ja vaata visiite.' : 'Manage your order, fill in your home profile and view visits.'}
+              </p>
+              <a href="https://sukoda.ee/minu?token=${portalToken}" style="display: inline-block; background: #B8976A; color: #FFFFFF; padding: 14px 32px; text-decoration: none; font-size: 11px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">
+                ${lang === 'et' ? 'MINU SUKODA' : 'MY SUKODA'}
+              </a>
+            </div>
+            ` : ''}
             <p style="color: #8A8578; font-size: 14px;">
               ${t.questionsAt}: <a href="mailto:tere@sukoda.ee" style="color: #2C2824; text-decoration: none; border-bottom: 1px solid #B8976A;">tere@sukoda.ee</a>
             </p>
@@ -1880,6 +1871,12 @@ exports.autoScheduleVisits = functions
       for (const orderDoc of ordersSnapshot.docs) {
         const order = orderDoc.data();
         const orderId = orderDoc.id;
+
+        // Skip paused subscriptions
+        if (order.pausedAt) {
+          console.log(`Skipping paused subscription: ${orderId}`);
+          continue;
+        }
 
         try {
           await scheduleNextVisit(orderId, order);
@@ -2867,6 +2864,7 @@ exports.validateReferral = functions
   .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
+      if (!checkRateLimit(req, res, 'validate-ref', 30, 60000)) return;
       const code = req.query.code;
 
       if (!code) {
@@ -3064,13 +3062,12 @@ exports.getAdminFollowups = functions
   .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
-      const adminPassword = (process.env.ADMIN_PASSWORD || '').trim();
-      if (req.query.password !== adminPassword) {
+      if (!checkRateLimit(req, res, 'admin', 60, 60000)) return;
+      if (!authenticateAdmin(req)) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
       try {
-        // Get stats
         const pendingSnapshot = await db.collection('followups').where('status', '==', 'pending').get();
         const sentSnapshot = await db.collection('followups').where('status', '==', 'sent').get();
         const convertedSnapshot = await db.collection('followups').where('status', '==', 'converted').get();
@@ -3118,8 +3115,8 @@ exports.getAdminBookings = functions
   .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
-      const adminPassword = (process.env.ADMIN_PASSWORD || '').trim();
-      if (req.query.password !== adminPassword) {
+      if (!checkRateLimit(req, res, 'admin', 60, 60000)) return;
+      if (!authenticateAdmin(req)) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
@@ -3157,8 +3154,8 @@ exports.getAdminOrders = functions
   .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
-      const adminPassword = (process.env.ADMIN_PASSWORD || '').trim();
-      if (req.query.password !== adminPassword) {
+      if (!checkRateLimit(req, res, 'admin', 60, 60000)) return;
+      if (!authenticateAdmin(req)) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
@@ -3208,12 +3205,12 @@ exports.markVisitComplete = functions
   .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
+      if (!checkRateLimit(req, res, 'admin', 60, 60000)) return;
       if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
       }
 
-      const adminPassword = (process.env.ADMIN_PASSWORD || '').trim();
-      if (req.body.password !== adminPassword) {
+      if (!authenticateAdmin(req)) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
@@ -3296,12 +3293,12 @@ exports.cancelVisit = functions
   .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
+      if (!checkRateLimit(req, res, 'admin', 60, 60000)) return;
       if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
       }
 
-      const adminPassword = (process.env.ADMIN_PASSWORD || '').trim();
-      if (req.body.password !== adminPassword) {
+      if (!authenticateAdmin(req)) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
@@ -3374,8 +3371,8 @@ exports.getAdminSlots = functions
   .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
-      const adminPassword = (process.env.ADMIN_PASSWORD || '').trim();
-      if (req.query.password !== adminPassword) {
+      if (!checkRateLimit(req, res, 'admin', 60, 60000)) return;
+      if (!authenticateAdmin(req)) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
@@ -3412,12 +3409,12 @@ exports.rescheduleVisit = functions
   .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
+      if (!checkRateLimit(req, res, 'admin', 60, 60000)) return;
       if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
       }
 
-      const adminPassword = (process.env.ADMIN_PASSWORD || '').trim();
-      if (req.body.password !== adminPassword) {
+      if (!authenticateAdmin(req)) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
@@ -3557,12 +3554,12 @@ exports.cancelOrder = functions
   .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
+      if (!checkRateLimit(req, res, 'admin', 60, 60000)) return;
       if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
       }
 
-      const adminPassword = (process.env.ADMIN_PASSWORD || '').trim();
-      if (req.body.password !== adminPassword) {
+      if (!authenticateAdmin(req)) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
@@ -3696,8 +3693,8 @@ exports.getOrderBookings = functions
   .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
-      const adminPassword = (process.env.ADMIN_PASSWORD || '').trim();
-      if (req.query.password !== adminPassword) {
+      if (!checkRateLimit(req, res, 'admin', 60, 60000)) return;
+      if (!authenticateAdmin(req)) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
@@ -3792,6 +3789,86 @@ exports.calendarEvent = functions
 // ============================================================
 
 /**
+ * Estate inquiry — bespoke 5+ room / house requests
+ * Body: { name, email, phone?, additionalInfo?, selectedRhythm, lang }
+ */
+exports.estateInquiry = functions
+  .runWith({ secrets: SECRETS }).region('europe-west1')
+  .https.onRequest((req, res) => {
+    cors(req, res, async () => {
+      if (!checkRateLimit(req, res, 'estateInquiry', 5, 60000)) return;
+      if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' });
+      }
+
+      const { name, email, phone, additionalInfo, selectedRhythm, lang } = req.body || {};
+
+      if (!name || !email) {
+        return res.status(400).json({ error: 'Name and email are required' });
+      }
+
+      try {
+        await db.collection('estate_inquiries').add({
+          name,
+          email,
+          phone: phone || null,
+          additionalInfo: additionalInfo || null,
+          selectedRhythm: selectedRhythm || null,
+          lang: lang || 'et',
+          status: 'new',
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        await sendEmail({
+          to: NOTIFICATION_EMAIL,
+          subject: `SUKODA | Rätseplahendus — ${name}`,
+          html: `
+            <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 500px; padding: 20px;">
+              <h2 style="color: #2C2824; font-family: Georgia, serif; font-weight: 300; border-bottom: 1px solid #B8976A; padding-bottom: 10px;">Uus rätseplahenduse päring</h2>
+              <table style="width: 100%; margin: 16px 0;">
+                <tr><td style="padding: 6px 0; color: #8A8578;">Nimi:</td><td style="padding: 6px 0;"><strong>${name}</strong></td></tr>
+                <tr><td style="padding: 6px 0; color: #8A8578;">E-post:</td><td style="padding: 6px 0;"><strong>${email}</strong></td></tr>
+                ${phone ? `<tr><td style="padding: 6px 0; color: #8A8578;">Telefon:</td><td style="padding: 6px 0;">${phone}</td></tr>` : ''}
+                ${selectedRhythm ? `<tr><td style="padding: 6px 0; color: #8A8578;">Rütm:</td><td style="padding: 6px 0;">${selectedRhythm}</td></tr>` : ''}
+                ${additionalInfo ? `<tr><td style="padding: 6px 0; color: #8A8578;">Lisainfo:</td><td style="padding: 6px 0;">${additionalInfo}</td></tr>` : ''}
+              </table>
+              <p style="color: #B8976A; font-size: 13px; font-style: italic;">Palun vasta 24 tunni jooksul.</p>
+            </div>
+          `,
+        });
+
+        await sendEmail({
+          to: email,
+          subject: lang === 'en' ? 'SUKODA | Your inquiry has been received' : 'SUKODA | Sinu päring on vastu võetud',
+          html: `
+            <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 500px; padding: 20px;">
+              <h2 style="color: #2C2824; font-family: Georgia, serif; font-weight: 300; border-bottom: 1px solid #B8976A; padding-bottom: 10px;">
+                ${lang === 'en' ? 'Thank you for your inquiry' : 'Täname päringu eest'}
+              </h2>
+              <p style="color: #6B6560; line-height: 1.6;">
+                ${lang === 'en'
+                  ? `Dear ${name}, we have received your bespoke home care inquiry. A member of our team will be in touch within 24 hours to discuss your needs.`
+                  : `${name}, oleme sinu rätseplahenduse päringu kätte saanud. Võtame sinuga ühendust 24 tunni jooksul, et arutada sinu soove.`
+                }
+              </p>
+              <p style="color: #8A8578; font-size: 13px; margin-top: 20px;">SUKODA — tere@sukoda.ee</p>
+            </div>
+          `,
+        });
+
+        console.log('Estate inquiry saved:', email);
+        res.status(200).json({ success: true });
+
+      } catch (error) {
+        console.error('Estate inquiry error:', error);
+        res.status(500).json({ error: error.message });
+      }
+    });
+  });
+
+// ============================================================
+
+/**
  * Save waitlist entry for expansion planning
  * Body: { email, name, city, address, lang }
  */
@@ -3799,15 +3876,21 @@ exports.waitlist = functions
   .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
+      if (!checkRateLimit(req, res, 'waitlist', 5, 60000)) return;
       if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
       }
 
-      try {
-        const { email, name, city, address, lang } = req.body;
+      const wv = validate(waitlistSchema, req.body);
+      if (!wv.ok) {
+        return res.status(400).json({ error: wv.error });
+      }
 
-        if (!email || !city) {
-          return res.status(400).json({ error: 'Missing email or city' });
+      try {
+        const { email, name, city, address, lang } = wv.data;
+
+        if (!city) {
+          return res.status(400).json({ error: 'Missing city' });
         }
 
         // Save to Firestore
@@ -3863,6 +3946,7 @@ exports.redeemGift = functions
   .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
+      if (!checkRateLimit(req, res, 'redeem', 20, 60000)) return;
       const code = normalizeGiftInput((req.query.code || ''));
 
       if (!code) {
@@ -4033,11 +4117,16 @@ exports.bookGiftVisit = functions
   .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
+      if (!checkRateLimit(req, res, 'book-gift', 10, 60000)) return;
       if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
       }
 
-      const { code, startTime, email, phone, address, additionalInfo } = req.body;
+      const bgv = validate(bookGiftSchema, req.body);
+      if (!bgv.ok) {
+        return res.status(400).json({ error: bgv.error });
+      }
+      const { code, startTime, email, phone, address, additionalInfo } = bgv.data;
 
       if (!code || !startTime || !email || !address) {
         return res.status(400).json({ error: 'Missing required fields: code, startTime, email, address' });
@@ -4175,11 +4264,16 @@ exports.bookSubscriptionVisit = functions
   .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
+      if (!checkRateLimit(req, res, 'book-sub', 10, 60000)) return;
       if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
       }
 
-      const { orderId, startTime } = req.body;
+      const bsv = validate(bookSubscriptionSchema, req.body);
+      if (!bsv.ok) {
+        return res.status(400).json({ error: bsv.error });
+      }
+      const { orderId, startTime } = bsv.data;
 
       if (!orderId || !startTime) {
         return res.status(400).json({ error: 'Missing required fields: orderId, startTime' });
@@ -4306,19 +4400,16 @@ exports.generatePhysicalGiftCards = functions
   .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
+      if (!checkRateLimit(req, res, 'admin', 60, 60000)) return;
       if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
       }
 
-      const adminPassword = (process.env.ADMIN_PASSWORD || '').trim();
-      // cards: optional array of {code, package, size} for bulk import with pre-set codes
-      // If cards is provided, package/size/count are ignored.
-      const { password, count = 10, package: pkg = 'moment', size = 'medium', batchName = '', buyer = {}, cards: customCards } = req.body;
-      // buyer: { name, email, company } — who purchased these cards (agent/office)
-
-      if (password !== adminPassword) {
+      if (!authenticateAdmin(req)) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
+
+      const { count = 10, package: pkg = 'moment', size = 'medium', batchName = '', buyer = {}, cards: customCards } = req.body;
 
       const validPackages = ['moment', 'month', 'quarter'];
       const validSizes = ['small', 'medium', 'large'];
@@ -4449,11 +4540,11 @@ exports.createGiftUpgrade = functions
         return res.status(405).json({ error: 'Method not allowed' });
       }
 
-      const { code, newSize } = req.body;
-
-      if (!code || !newSize) {
-        return res.status(400).json({ error: 'Missing required fields: code, newSize' });
+      const guv = validate(giftUpgradeSchema, req.body);
+      if (!guv.ok) {
+        return res.status(400).json({ error: guv.error });
       }
+      const { code, newSize } = guv.data;
 
       const validSizes = ['small', 'medium', 'large'];
       if (!validSizes.includes(newSize)) {
@@ -4545,6 +4636,554 @@ exports.createGiftUpgrade = functions
       } catch (error) {
         console.error('Gift upgrade error:', error);
         res.status(500).json({ error: error.message });
+      }
+    });
+  });
+
+
+// ============================================================
+// CLIENT PORTAL — Authentication & API
+// ============================================================
+
+/**
+ * Authenticate client portal request via session token.
+ * Returns { orderId, order } or null.
+ */
+async function authenticateClient(req) {
+  const authHeader = req.headers.authorization || '';
+  if (!authHeader.startsWith('Bearer ')) return null;
+
+  const token = authHeader.slice(7);
+  if (!token || token.length < 32) return null;
+
+  const crypto = require('crypto');
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+  const ordersSnapshot = await db.collection('orders')
+    .where('sessionTokenHash', '==', tokenHash)
+    .where('type', '==', 'subscription')
+    .limit(1)
+    .get();
+
+  if (ordersSnapshot.empty) return null;
+
+  const orderDoc = ordersSnapshot.docs[0];
+  const order = orderDoc.data();
+
+  const expiresAt = order.sessionTokenExpiresAt?.toDate?.();
+  if (expiresAt && expiresAt < new Date()) return null;
+
+  return { orderId: orderDoc.id, order };
+}
+
+// --- POST /api/auth/validate ---
+exports.validatePortalToken = functions
+  .runWith({ secrets: SECRETS }).region('europe-west1')
+  .https.onRequest((req, res) => {
+    cors(req, res, async () => {
+      if (!checkRateLimit(req, res, 'portal-auth', 20, 60000)) return;
+      if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+      try {
+        const { token } = req.body;
+        if (!token || token.length < 32) {
+          return res.status(400).json({ error: 'Invalid token' });
+        }
+
+        const crypto = require('crypto');
+        const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+        const ordersSnapshot = await db.collection('orders')
+          .where('sessionTokenHash', '==', tokenHash)
+          .where('type', '==', 'subscription')
+          .limit(1)
+          .get();
+
+        if (ordersSnapshot.empty) {
+          return res.status(401).json({ error: 'Invalid or expired token' });
+        }
+
+        const orderDoc = ordersSnapshot.docs[0];
+        const order = orderDoc.data();
+
+        const expiresAt = order.sessionTokenExpiresAt?.toDate?.();
+        if (expiresAt && expiresAt < new Date()) {
+          return res.status(401).json({ error: 'Token expired' });
+        }
+
+        // Refresh token expiry on use
+        const newExpiry = new Date();
+        newExpiry.setDate(newExpiry.getDate() + 30);
+        await orderDoc.ref.update({
+          sessionTokenExpiresAt: admin.firestore.Timestamp.fromDate(newExpiry),
+        });
+
+        res.status(200).json({
+          token,
+          orderId: orderDoc.id,
+          name: order.customer?.name || '',
+        });
+      } catch (error) {
+        console.error('Token validation error:', error);
+        res.status(500).json({ error: 'Server error' });
+      }
+    });
+  });
+
+// --- POST /api/magic-link ---
+exports.sendMagicLink = functions
+  .runWith({ secrets: SECRETS }).region('europe-west1')
+  .https.onRequest((req, res) => {
+    cors(req, res, async () => {
+      if (!checkRateLimit(req, res, 'magic-link', 3, 300000)) return;
+      if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+      try {
+        const { email } = req.body;
+        if (!email || !email.includes('@')) {
+          return res.status(400).json({ error: 'Invalid email' });
+        }
+
+        const normalizedEmail = email.trim().toLowerCase();
+
+        // Per-email rate limit: max 1 per hour
+        const crypto = require('crypto');
+        const emailHash = crypto.createHash('sha256').update(normalizedEmail).digest('hex');
+        const rateLimitRef = db.collection('rateLimits').doc(`magic_${emailHash}`);
+        const rateLimitDoc = await rateLimitRef.get();
+        if (rateLimitDoc.exists) {
+          const data = rateLimitDoc.data();
+          const lastSent = data.lastSent?.toDate?.() || new Date(0);
+          const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
+          if (lastSent > hourAgo) {
+            return res.status(200).json({ sent: true });
+          }
+        }
+
+        const ordersSnapshot = await db.collection('orders')
+          .where('customer.email', '==', normalizedEmail)
+          .where('type', '==', 'subscription')
+          .where('status', 'in', ['paid', 'cancelling'])
+          .orderBy('paidAt', 'desc')
+          .limit(1)
+          .get();
+
+        // Always return success (don't reveal if email exists)
+        if (ordersSnapshot.empty) {
+          return res.status(200).json({ sent: true });
+        }
+
+        const orderDoc = ordersSnapshot.docs[0];
+        const order = orderDoc.data();
+        const lang = order.lang || 'et';
+
+        const rawToken = crypto.randomBytes(32).toString('hex');
+        const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+        const tokenExpiry = new Date();
+        tokenExpiry.setDate(tokenExpiry.getDate() + 30);
+
+        await orderDoc.ref.update({
+          sessionTokenHash: tokenHash,
+          sessionTokenExpiresAt: admin.firestore.Timestamp.fromDate(tokenExpiry),
+        });
+
+        const portalUrl = `https://sukoda.ee/minu?token=${rawToken}`;
+        await sendEmail({
+          to: normalizedEmail,
+          subject: lang === 'et' ? 'SUKODA | Sinu portaali link' : 'SUKODA | Your portal link',
+          html: `
+            <!DOCTYPE html>
+            <html>
+            <head><meta charset="utf-8"></head>
+            <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+              <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+                ${emailHeader()}
+                <div style="padding: 44px 40px; text-align: center;">
+                  <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 20px 0;">
+                    ${lang === 'et' ? 'Sinu portaali link' : 'Your portal link'}
+                  </h2>
+                  <p style="color: #8A8578; line-height: 1.7; margin: 0 0 32px 0; font-size: 15px;">
+                    ${lang === 'et' ? 'Kliki allpool olevat nuppu, et siseneda oma SUKODA portaali.' : 'Click the button below to access your SUKODA portal.'}
+                  </p>
+                  <a href="${portalUrl}" style="display: inline-block; background: #111111; color: #FFFFFF; padding: 16px 40px; text-decoration: none; font-size: 11px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">
+                    ${lang === 'et' ? 'SISENE PORTAALI' : 'ENTER PORTAL'}
+                  </a>
+                  <p style="color: #8A8578; font-size: 12px; margin: 24px 0 0 0;">
+                    ${lang === 'et' ? 'Link kehtib 30 päeva.' : 'This link is valid for 30 days.'}
+                  </p>
+                </div>
+                ${emailFooter(lang)}
+              </div>
+            </body>
+            </html>
+          `,
+        });
+
+        await rateLimitRef.set({
+          lastSent: admin.firestore.FieldValue.serverTimestamp(),
+          count: admin.firestore.FieldValue.increment(1),
+        }, { merge: true });
+
+        res.status(200).json({ sent: true });
+      } catch (error) {
+        console.error('Magic link error:', error);
+        res.status(500).json({ error: 'Server error' });
+      }
+    });
+  });
+
+// --- GET /api/me ---
+exports.getClientProfile = functions
+  .runWith({ secrets: SECRETS }).region('europe-west1')
+  .https.onRequest((req, res) => {
+    cors(req, res, async () => {
+      if (!checkRateLimit(req, res, 'portal', 60, 60000)) return;
+      if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+
+      try {
+        const auth = await authenticateClient(req);
+        if (!auth) return res.status(401).json({ error: 'Unauthorized' });
+
+        const { orderId, order } = auth;
+
+        // Refresh token expiry on use (same as validatePortalToken)
+        const newExpiry = new Date();
+        newExpiry.setDate(newExpiry.getDate() + 30);
+        await db.collection('orders').doc(orderId).update({
+          sessionTokenExpiresAt: admin.firestore.Timestamp.fromDate(newExpiry),
+        });
+
+        const bookingsSnapshot = await db.collection('bookings')
+          .where('orderId', '==', orderId)
+          .orderBy('scheduledAt', 'desc')
+          .limit(20)
+          .get();
+
+        const bookings = bookingsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          status: doc.data().status,
+          scheduledAt: doc.data().scheduledAt?.toDate?.()?.toISOString(),
+          endTime: doc.data().endTime?.toDate?.()?.toISOString(),
+        }));
+
+        res.status(200).json({
+          order: {
+            id: orderId,
+            package: order.package,
+            size: order.size,
+            status: order.status,
+            subscriptionStatus: order.subscriptionStatus,
+            customerName: order.customer?.name,
+            customerEmail: order.customer?.email,
+            customerPhone: order.customer?.phone,
+            customerAddress: order.customer?.address,
+            homeProfile: order.homeProfile || null,
+            pausedAt: order.pausedAt?.toDate?.()?.toISOString() || null,
+            pauseExpiresAt: order.pauseExpiresAt?.toDate?.()?.toISOString() || null,
+            pauseReason: order.pauseReason || null,
+            paidAt: order.paidAt?.toDate?.()?.toISOString() || null,
+            referralCode: order.referralCode || null,
+          },
+          bookings,
+        });
+      } catch (error) {
+        console.error('Get client profile error:', error);
+        res.status(500).json({ error: 'Server error' });
+      }
+    });
+  });
+
+// --- POST /api/me/home-profile ---
+exports.updateHomeProfile = functions
+  .runWith({ secrets: SECRETS }).region('europe-west1')
+  .https.onRequest((req, res) => {
+    cors(req, res, async () => {
+      if (!checkRateLimit(req, res, 'portal', 30, 60000)) return;
+      if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+      try {
+        const auth = await authenticateClient(req);
+        if (!auth) return res.status(401).json({ error: 'Unauthorized' });
+
+        const { orderId } = auth;
+        const { homeProfile } = req.body;
+
+        if (!homeProfile || typeof homeProfile !== 'object') {
+          return res.status(400).json({ error: 'Invalid home profile data' });
+        }
+
+        const sanitized = {
+          access: String(homeProfile.access || '').slice(0, 500),
+          pets: String(homeProfile.pets || '').slice(0, 300),
+          allergies: String(homeProfile.allergies || '').slice(0, 300),
+          flowerPreference: String(homeProfile.flowerPreference || '').slice(0, 300),
+          linens: String(homeProfile.linens || '').slice(0, 300),
+          towels: String(homeProfile.towels || '').slice(0, 300),
+          specialRequests: String(homeProfile.specialRequests || '').slice(0, 500),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        };
+
+        await db.collection('orders').doc(orderId).update({
+          homeProfile: sanitized,
+        });
+
+        res.status(200).json({ success: true });
+      } catch (error) {
+        console.error('Update home profile error:', error);
+        res.status(500).json({ error: 'Server error' });
+      }
+    });
+  });
+
+// --- POST /api/me/pause ---
+exports.pauseSubscription = functions
+  .runWith({ secrets: SECRETS }).region('europe-west1')
+  .https.onRequest((req, res) => {
+    cors(req, res, async () => {
+      if (!checkRateLimit(req, res, 'portal', 10, 60000)) return;
+      if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+      try {
+        const auth = await authenticateClient(req);
+        if (!auth) return res.status(401).json({ error: 'Unauthorized' });
+
+        const { orderId, order } = auth;
+
+        if (order.status !== 'paid' || order.subscriptionStatus !== 'active') {
+          return res.status(400).json({ error: 'Subscription is not active' });
+        }
+
+        if (order.pausedAt) {
+          return res.status(400).json({ error: 'Subscription is already paused' });
+        }
+
+        const reason = String(req.body.reason || '').slice(0, 300);
+        const now = new Date();
+        const pauseExpiry = new Date(now);
+        pauseExpiry.setDate(pauseExpiry.getDate() + 30);
+
+        await db.collection('orders').doc(orderId).update({
+          pausedAt: admin.firestore.Timestamp.fromDate(now),
+          pauseExpiresAt: admin.firestore.Timestamp.fromDate(pauseExpiry),
+          pauseReason: reason || null,
+        });
+
+        if (order.stripeSubscriptionId) {
+          try {
+            await getStripe().subscriptions.update(order.stripeSubscriptionId, {
+              pause_collection: {
+                behavior: 'mark_uncollectible',
+                resumes_at: Math.floor(pauseExpiry.getTime() / 1000),
+              },
+            });
+          } catch (stripeErr) {
+            console.error('Stripe pause failed (non-fatal):', stripeErr);
+          }
+        }
+
+        // Cancel upcoming bookings
+        const upcomingBookings = await db.collection('bookings')
+          .where('orderId', '==', orderId)
+          .where('status', '==', 'confirmed')
+          .where('scheduledAt', '>', admin.firestore.Timestamp.fromDate(now))
+          .get();
+
+        for (const bookingDoc of upcomingBookings.docs) {
+          const booking = bookingDoc.data();
+          if (booking.calBookingUid) {
+            try {
+              await calService.cancelBooking(booking.calBookingUid, 'Subscription paused by client');
+            } catch (calErr) {
+              console.error('Cal.com cancel failed during pause:', calErr);
+            }
+          }
+          await bookingDoc.ref.update({
+            status: 'cancelled',
+            cancelReason: 'Tellimus pausil',
+            cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+        }
+
+        await sendEmail({
+          to: NOTIFICATION_EMAIL,
+          subject: `SUKODA | Tellimus pausil: ${order.customer?.name || orderId}`,
+          html: `<p>${order.customer?.name} (${order.customer?.email}) pani oma tellimuse pausile.</p><p>Põhjus: ${reason || 'Pole märgitud'}</p><p>Paus lõpeb: ${pauseExpiry.toLocaleDateString('et-EE')}</p>`,
+        });
+
+        res.status(200).json({
+          success: true,
+          pauseExpiresAt: pauseExpiry.toISOString(),
+        });
+      } catch (error) {
+        console.error('Pause subscription error:', error);
+        res.status(500).json({ error: 'Server error' });
+      }
+    });
+  });
+
+// --- POST /api/me/resume ---
+exports.resumeSubscription = functions
+  .runWith({ secrets: SECRETS }).region('europe-west1')
+  .https.onRequest((req, res) => {
+    cors(req, res, async () => {
+      if (!checkRateLimit(req, res, 'portal', 10, 60000)) return;
+      if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+      try {
+        const auth = await authenticateClient(req);
+        if (!auth) return res.status(401).json({ error: 'Unauthorized' });
+
+        const { orderId, order } = auth;
+
+        if (!order.pausedAt) {
+          return res.status(400).json({ error: 'Subscription is not paused' });
+        }
+
+        await db.collection('orders').doc(orderId).update({
+          pausedAt: admin.firestore.FieldValue.delete(),
+          pauseExpiresAt: admin.firestore.FieldValue.delete(),
+          pauseReason: admin.firestore.FieldValue.delete(),
+        });
+
+        if (order.stripeSubscriptionId) {
+          try {
+            await getStripe().subscriptions.update(order.stripeSubscriptionId, {
+              pause_collection: '',
+            });
+          } catch (stripeErr) {
+            console.error('Stripe resume failed (non-fatal):', stripeErr);
+          }
+        }
+
+        await sendEmail({
+          to: NOTIFICATION_EMAIL,
+          subject: `SUKODA | Tellimus jätkub: ${order.customer?.name || orderId}`,
+          html: `<p>${order.customer?.name} (${order.customer?.email}) jätkab oma tellimust.</p>`,
+        });
+
+        res.status(200).json({ success: true });
+      } catch (error) {
+        console.error('Resume subscription error:', error);
+        res.status(500).json({ error: 'Server error' });
+      }
+    });
+  });
+
+// --- POST /api/me/reschedule ---
+exports.clientReschedule = functions
+  .runWith({ secrets: SECRETS }).region('europe-west1')
+  .https.onRequest((req, res) => {
+    cors(req, res, async () => {
+      if (!checkRateLimit(req, res, 'portal', 10, 60000)) return;
+      if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+      try {
+        const auth = await authenticateClient(req);
+        if (!auth) return res.status(401).json({ error: 'Unauthorized' });
+
+        const { orderId, order } = auth;
+        const { bookingId, newStartTime } = req.body;
+
+        if (!bookingId || !newStartTime) {
+          return res.status(400).json({ error: 'Missing bookingId or newStartTime' });
+        }
+
+        const bookingRef = db.collection('bookings').doc(bookingId);
+        const bookingDoc = await bookingRef.get();
+
+        if (!bookingDoc.exists || bookingDoc.data().orderId !== orderId) {
+          return res.status(404).json({ error: 'Booking not found' });
+        }
+
+        const booking = bookingDoc.data();
+
+        const newTime = new Date(newStartTime);
+        const minTime = new Date();
+        minTime.setHours(minTime.getHours() + MIN_BOOKING_LEAD_HOURS);
+        if (newTime < minTime) {
+          return res.status(400).json({
+            error: `Uut aega saab valida vähemalt ${MIN_BOOKING_LEAD_HOURS}h ette`,
+          });
+        }
+
+        if (booking.calBookingUid) {
+          try {
+            await calService.cancelBooking(booking.calBookingUid, 'Rescheduled by client');
+          } catch (calErr) {
+            console.error('Cal.com cancel failed during reschedule:', calErr);
+          }
+        }
+
+        const eventTypeSlug = booking.eventTypeSlug || calService.EVENT_TYPE_SLUGS[booking.size] || 'koristus-90';
+        let newCalBooking = null;
+
+        // Only create Cal.com booking if original had one (real Cal.com bookings). Demo/manual bookings skip Cal.com.
+        if (booking.calBookingUid) {
+          try {
+            newCalBooking = await calService.createBooking(
+              eventTypeSlug,
+              newStartTime,
+              {
+                name: booking.customerName || order.customer?.name,
+                email: booking.customerEmail || order.customer?.email,
+              },
+              { orderId, bookingId: bookingDoc.id }
+            );
+          } catch (calErr) {
+            console.error('Cal.com booking creation failed:', calErr);
+            return res.status(500).json({ error: 'Failed to create new booking' });
+          }
+        }
+
+        const oldScheduledAt = booking.scheduledAt;
+        await bookingRef.update({
+          scheduledAt: admin.firestore.Timestamp.fromDate(newTime),
+          calBookingUid: newCalBooking?.uid ?? null,
+          calBookingId: newCalBooking?.id ?? null,
+          rescheduledAt: admin.firestore.FieldValue.serverTimestamp(),
+          rescheduledBy: 'client',
+          previousScheduledAt: oldScheduledAt,
+        });
+
+        res.status(200).json({
+          success: true,
+          newTime: newTime.toISOString(),
+        });
+      } catch (error) {
+        console.error('Client reschedule error:', error);
+        res.status(500).json({ error: 'Server error' });
+      }
+    });
+  });
+
+// --- POST /api/me/logout-all ---
+exports.logoutAllDevices = functions
+  .runWith({ secrets: SECRETS }).region('europe-west1')
+  .https.onRequest((req, res) => {
+    cors(req, res, async () => {
+      if (!checkRateLimit(req, res, 'portal', 10, 60000)) return;
+      if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+      try {
+        const auth = await authenticateClient(req);
+        if (!auth) return res.status(401).json({ error: 'Unauthorized' });
+
+        const { orderId } = auth;
+        const crypto = require('crypto');
+        const newToken = crypto.randomBytes(32).toString('hex');
+        const tokenHash = crypto.createHash('sha256').update(newToken).digest('hex');
+        const tokenExpiry = new Date();
+        tokenExpiry.setDate(tokenExpiry.getDate() + 30);
+
+        await db.collection('orders').doc(orderId).update({
+          sessionTokenHash: tokenHash,
+          sessionTokenExpiresAt: admin.firestore.Timestamp.fromDate(tokenExpiry),
+        });
+
+        res.status(200).json({ success: true });
+      } catch (error) {
+        console.error('Logout all devices error:', error);
+        res.status(500).json({ error: 'Server error' });
       }
     });
   });

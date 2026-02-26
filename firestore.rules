@@ -29,5 +29,11 @@ service cloud.firestore {
       allow read: if false;
       allow write: if false; // Only Cloud Functions
     }
+
+    // Rate limits - only Cloud Functions
+    match /rateLimits/{limitId} {
+      allow read: if false;
+      allow write: if false;
+    }
   }
 }
