@@ -184,7 +184,7 @@
         const code = params.get('code');
         const upgraded = params.get('upgraded');
         if (code) {
-            this.giftCode = code.toUpperCase().replace(/0/g, 'O').replace(/1/g, 'I');
+            this.giftCode = this.normalizeCode(code);
             // After upgrade payment: auto-redeem and skip to step 2
             if (upgraded === 'true') {
                 this.redeemCode(true);
@@ -198,13 +198,19 @@
         this.updateMonthLabel();
     },
     
+    normalizeCode(raw) {
+        const code = (raw || '').trim().toUpperCase();
+        const m = code.match(/^(SK\d+-)([\S]+)$/);
+        if (m) return m[1] + m[2].replace(/0/g, 'O').replace(/1/g, 'I');
+        return code.replace(/0/g, 'O').replace(/1/g, 'I');
+    },
+
     async redeemCode(skipReveal = false) {
         if (!this.giftCode.trim()) {
             this.codeError = this.lang === 'et' ? 'Palun sisesta kingituse kood' : 'Please enter a gift code';
             return;
         }
-        // Normalize confused characters: 0→O, 1→I (gift codes use SUKO- prefix with letter O)
-        this.giftCode = this.giftCode.trim().toUpperCase().replace(/0/g, 'O').replace(/1/g, 'I');
+        this.giftCode = this.normalizeCode(this.giftCode);
         this.codeLoading = true;
         this.codeError = '';
         try {
@@ -289,15 +295,14 @@
     
     // Size upgrade logic for physical gift cards
     checkUpgrade() {
-        const sizeOrder = { small: 0, medium: 1, large: 2, xlarge: 3 };
+        const sizeOrder = { small: 0, medium: 1, large: 2 };
         const giftSize = this.gift?.size;
-        
+
         if (sizeOrder[this.confirmedSize] > sizeOrder[giftSize]) {
-            // Home is bigger — need upgrade
             const prices = {
-                moment: { small: 169, medium: 199, large: 259, xlarge: 319 },
-                month:  { small: 339, medium: 389, large: 499, xlarge: 619 },
-                quarter:{ small: 849, medium: 999, large: 1249, xlarge: 1449 },
+                moment: { small: 219, medium: 279, large: 349 },
+                month:  { small: 419, medium: 519, large: 649 },
+                quarter:{ small: 1099, medium: 1349, large: 1699 },
             };
             const pkg = this.gift?.package;
             const oldPrice = prices[pkg]?.[giftSize] || 0;
@@ -544,7 +549,7 @@
                             <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Kingituse kood' : 'Gift code'">Kingituse kood</label>
                             <input type="text" x-model="giftCode" @input="codeError = ''" 
                                    class="w-full text-2xl font-serif font-light py-2 outline-none bg-transparent text-center tracking-[0.15em] uppercase"
-                                   placeholder="SUKO-XXXX-XXXX"
+                                   placeholder="SK199-XXXX-XXXX"
                                    autocomplete="off">
                         </div>
                         <p x-show="codeError" x-cloak class="text-sm text-accent font-sans font-light text-center mb-6" x-text="codeError"></p>
@@ -581,7 +586,7 @@
                                 <p class="font-serif text-xl font-light" x-text="gift?.packageName || ''"></p>
                             </div>
                             <div>
-                                <p class="text-[10px] uppercase tracking-[0.25em] text-accent font-sans mb-1" x-text="lang === 'et' ? 'Kaetud kodu suurus' : 'Covered home size'"></p>
+                                <p class="text-[10px] uppercase tracking-[0.25em] text-accent font-sans mb-1" x-text="lang === 'et' ? 'Kaetud tubade arv' : 'Covered rooms'"></p>
                                 <p class="font-serif text-xl font-light" x-text="gift?.sizeName || ''"></p>
                             </div>
                         </div>
@@ -589,27 +594,22 @@
 
                     <!-- Size Confirmation -->
                     <div class="max-w-md mx-auto mb-6" x-show="!upgradeNeeded">
-                        <p class="text-center font-serif text-lg font-light mb-4" x-text="lang === 'et' ? 'Kui suur on sinu kodu tegelikult?' : 'How big is your home actually?'"></p>
-                        <div class="grid grid-cols-2 gap-3">
+                        <p class="text-center font-serif text-lg font-light mb-4" x-text="lang === 'et' ? 'Mitu tuba on sinu kodus?' : 'How many rooms in your home?'"></p>
+                        <div class="grid grid-cols-3 gap-3">
                             <button type="button" @click="confirmedSize = 'small'; checkUpgrade()"
                                     :class="confirmedSize === 'small' ? 'bg-black text-paper border-black' : 'border-[#E8E3DD] hover:border-black'"
                                     class="p-4 border text-center transition-all duration-300">
-                                <p class="font-serif text-lg font-light" x-text="lang === 'et' ? 'Kuni 50m\u00B2' : 'Up to 50m\u00B2'"></p>
+                                <p class="font-serif text-lg font-light" x-text="lang === 'et' ? '1-2 tuba' : '1-2 rooms'"></p>
                             </button>
                             <button type="button" @click="confirmedSize = 'medium'; checkUpgrade()"
                                     :class="confirmedSize === 'medium' ? 'bg-black text-paper border-black' : 'border-[#E8E3DD] hover:border-black'"
                                     class="p-4 border text-center transition-all duration-300">
-                                <p class="font-serif text-lg font-light">51–90m²</p>
+                                <p class="font-serif text-lg font-light" x-text="lang === 'et' ? '3 tuba' : '3 rooms'"></p>
                             </button>
                             <button type="button" @click="confirmedSize = 'large'; checkUpgrade()"
                                     :class="confirmedSize === 'large' ? 'bg-black text-paper border-black' : 'border-[#E8E3DD] hover:border-black'"
                                     class="p-4 border text-center transition-all duration-300">
-                                <p class="font-serif text-lg font-light">91–120m²</p>
-                            </button>
-                            <button type="button" @click="confirmedSize = 'xlarge'; checkUpgrade()"
-                                    :class="confirmedSize === 'xlarge' ? 'bg-black text-paper border-black' : 'border-[#E8E3DD] hover:border-black'"
-                                    class="p-4 border text-center transition-all duration-300">
-                                <p class="font-serif text-lg font-light">121–150m²</p>
+                                <p class="font-serif text-lg font-light" x-text="lang === 'et' ? '4 tuba' : '4 rooms'"></p>
                             </button>
                         </div>
                     </div>
@@ -929,17 +929,17 @@
             <div class="grid md:grid-cols-12 py-16 px-6 md:px-12">
                 <div class="md:col-span-4 mb-8 md:mb-0">
                     <a href="index.html" class="font-serif text-2xl tracking-[0.08em] font-light block mb-4">SUKODA</a>
-                    <p class="text-muted text-xs font-sans font-light leading-relaxed max-w-xs">
+                    <p class="text-gray-300 text-xs font-sans font-light leading-relaxed max-w-xs">
                         <span x-show="lang === 'et'">Sinu kodu, meie hoole all.<br>Tallinn, Eesti.</span>
                         <span x-show="lang === 'en'" x-cloak>Your home, our care.<br>Tallinn, Estonia.</span>
                     </p>
                 </div>
                 <div class="md:col-span-4 mb-8 md:mb-0">
-                    <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-4">
+                    <p class="text-[10px] uppercase tracking-[0.25em] text-gray-300 font-sans mb-4">
                         <span x-show="lang === 'et'">Lingid</span>
                         <span x-show="lang === 'en'" x-cloak>Links</span>
                     </p>
-                    <div class="flex flex-col gap-3 text-xs text-muted/70 font-sans font-light">
+                    <div class="flex flex-col gap-3 text-xs text-gray-300 font-sans font-light">
                         <a href="kingitus.html" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Kingitus' : 'Gift'">Kingitus</a>
                         <a href="partnerlus.html" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Koostöö' : 'Partnership'">Koostöö</a>
                         <a href="tingimused.html" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Tingimused' : 'Terms'">Tingimused</a>
@@ -947,16 +947,16 @@
                     </div>
                 </div>
                 <div class="md:col-span-4">
-                    <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-4">
+                    <p class="text-[10px] uppercase tracking-[0.25em] text-gray-300 font-sans mb-4">
                         <span x-show="lang === 'et'">Kontakt</span>
                         <span x-show="lang === 'en'" x-cloak>Contact</span>
                     </p>
-                    <a href="mailto:tere@sukoda.ee" class="text-xs font-sans font-light text-muted/70 hover:text-paper transition-colors block mb-2">tere@sukoda.ee</a>
-                    <a href="mailto:partner@sukoda.ee" class="text-xs font-sans font-light text-muted/70 hover:text-paper transition-colors block">partner@sukoda.ee</a>
+                    <a href="mailto:tere@sukoda.ee" class="text-xs font-sans font-light text-gray-300 hover:text-paper transition-colors block mb-2">tere@sukoda.ee</a>
+                    <a href="mailto:partner@sukoda.ee" class="text-xs font-sans font-light text-gray-300 hover:text-paper transition-colors block">partner@sukoda.ee</a>
                 </div>
             </div>
             <div class="border-t border-gray-800 py-6 px-6 md:px-12">
-                <p class="text-[10px] text-muted/40 font-sans text-center tracking-wide">
+                <p class="text-[10px] text-gray-400 font-sans text-center tracking-wide">
                     <span x-show="lang === 'et'">© 2026 Epic Ship OÜ · Registrikood 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
                     <span x-show="lang === 'en'" x-cloak>© 2026 Epic Ship OÜ · Reg. code 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
                 </p>

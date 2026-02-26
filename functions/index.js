@@ -3,10 +3,9 @@
  * 
  * SEADISTAMINE:
  * 1. Paigalda dependencies: cd functions && npm install
- * 2. Seadista võtmed:
- *    firebase functions:config:set stripe.secret_key="sk_test_..." stripe.webhook_secret="whsec_..."
- *    firebase functions:config:set resend.api_key="re_..."
- *    firebase functions:config:set notification.email="sinu@email.ee"
+ * 2. Secrets on Firebase Secret Manager'is (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET,
+ *    RESEND_API_KEY, CAL_API_KEY, ADMIN_PASSWORD).
+ *    Mittetundlik konfiguratsioon on functions/.env failis (NOTIFICATION_EMAIL).
  * 3. Deploy: firebase deploy --only functions
  */
 
@@ -16,22 +15,47 @@ const cors = require('cors')({ origin: true });
 const { Resend } = require('resend');
 const calService = require('./cal-service');
 
+// Secrets declared for runWith — injected into process.env at cold start
+const SECRETS = [
+  'STRIPE_SECRET_KEY',
+  'STRIPE_WEBHOOK_SECRET',
+  'RESEND_API_KEY',
+  'CAL_API_KEY',
+  'ADMIN_PASSWORD',
+];
+
 // Initialize Firebase Admin
 admin.initializeApp();
 const db = admin.firestore();
 
-// Stripe initialization
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || functions.config().stripe?.secret_key);
+// Stripe — lazy init because Secret Manager values arrive at cold start
+let _stripe;
+function getStripe() {
+  if (!_stripe) {
+    _stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+  }
+  return _stripe;
+}
 
-// Resend initialization for emails
-const resendApiKey = process.env.RESEND_API_KEY || functions.config().resend?.api_key;
-const resend = resendApiKey ? new Resend(resendApiKey) : null;
+// Resend — lazy init
+let _resend;
+function getResend() {
+  if (!_resend) {
+    const key = process.env.RESEND_API_KEY;
+    if (key) _resend = new Resend(key);
+  }
+  return _resend;
+}
 
-// Notification email
-const NOTIFICATION_EMAIL = process.env.NOTIFICATION_EMAIL || functions.config().notification?.email || 'tere@sukoda.ee';
+// Notification email (from .env)
+const NOTIFICATION_EMAIL = process.env.NOTIFICATION_EMAIL || 'tere@sukoda.ee';
 
 // Minimum booking lead time — customers must book at least 48h in advance
 const MIN_BOOKING_LEAD_HOURS = 48;
+
+// Launch date — first available booking slots start from this date (Europe/Tallinn)
+// Set to null to disable (allow bookings from any available time)
+const LAUNCH_DATE = '2026-02-25';
 
 // ============================================================
 // I18N — Email translations (ET / EN)
@@ -194,12 +218,12 @@ const EMAIL_TEXTS = {
       moment: { name: 'Üks Hetk', description: 'Üks täiuslik koduhoolitsus', includes: ['Põhjalik koristus', 'Värsked lilled', 'Käsitsi kirjutatud kaart', 'Väike magus üllatus'] },
       month: { name: 'Kuu Aega', description: 'Kaks koduhoolitsust ühe kuu jooksul', includes: ['2× põhjalik koristus', 'Värsked lilled igal korral', 'Käsitsi kirjutatud kaardid', 'Hooajalised puuviljad', 'Lõõgastav aroomiküünal'] },
       quarter: { name: 'Kvartal Vabadust', description: 'Kuus koduhoolitsust kolme kuu jooksul', includes: ['6× põhjalik koristus', 'Värsked lilled igal korral', 'Käsitsi kirjutatud kaardid', 'Puuviljad + taimede kastmine', 'Premium koduhooldusvahenid'] },
-      once: { name: 'Kord kuus', description: 'Üks külastus kuus' },
-      twice: { name: 'Üle nädala', description: 'Kaks külastust kuus' },
-      weekly: { name: 'Iga nädal', description: 'Neli külastust kuus' },
+      once: { name: '1× kuus', description: 'Üks külastus kuus' },
+      twice: { name: '2× kuus', description: 'Kaks külastust kuus' },
+      weekly: { name: '4× kuus', description: 'Neli külastust kuus' },
       test: { name: 'Test €1', description: 'Testtellimus' },
     },
-    sizes: { small: 'Kuni 50m²', medium: '51-90m²', large: '91-120m²', xlarge: '121-150m²' },
+    sizes: { small: '1-2 tuba', medium: '3 tuba', large: '4 tuba' },
   },
 
   en: {
@@ -350,12 +374,12 @@ const EMAIL_TEXTS = {
       moment: { name: 'One Moment', description: 'One perfect home care experience', includes: ['Deep cleaning', 'Fresh flowers', 'Handwritten card', 'A sweet surprise'] },
       month: { name: 'One Month', description: 'Two home care visits in one month', includes: ['2× deep cleaning', 'Fresh flowers each time', 'Handwritten cards', 'Seasonal fruits', 'Relaxing scented candle'] },
       quarter: { name: 'Quarter of Freedom', description: 'Six home care visits over three months', includes: ['6× deep cleaning', 'Fresh flowers each time', 'Handwritten cards', 'Fruits + plant watering', 'Premium home care products'] },
-      once: { name: 'Once a month', description: 'One visit per month' },
-      twice: { name: 'Every other week', description: 'Two visits per month' },
-      weekly: { name: 'Every week', description: 'Four visits per month' },
+      once: { name: '1× month', description: 'One visit per month' },
+      twice: { name: '2× month', description: 'Two visits per month' },
+      weekly: { name: '4× month', description: 'Four visits per month' },
       test: { name: 'Test €1', description: 'Test order' },
     },
-    sizes: { small: 'Up to 50m²', medium: '51-90m²', large: '91-120m²', xlarge: '121-150m²' },
+    sizes: { small: '1-2 rooms', medium: '3 rooms', large: '4 rooms' },
   },
 };
 
@@ -458,46 +482,39 @@ const PRICE_IDS = {
     small: 'price_1SuWlqEoH1b07UGQlu6Vcbhy',
     medium: 'price_1SuWlqEoH1b07UGQlu6Vcbhy',
     large: 'price_1SuWlqEoH1b07UGQlu6Vcbhy',
-    xlarge: 'price_1SuWlqEoH1b07UGQlu6Vcbhy',
   },
   gifts: {
     moment: {
-      small: 'price_1SzHrDEoH1b07UGQYLVwCTbj',   // €169
-      medium: 'price_1SzHrDEoH1b07UGQFPUr3Nrl',  // €199
-      large: 'price_1SzHrDEoH1b07UGQ7zyKVds3',   // €259
-      xlarge: 'price_1SzHrEEoH1b07UGQ7xMOPZR2',  // €319
+      small: 'price_1T51LQEoH1b07UGQXIx58Ipf',   // €219
+      medium: 'price_1T51LQEoH1b07UGQs6SVNha0',  // €279
+      large: 'price_1T51LQEoH1b07UGQrRB2dK4y',   // €349
     },
     month: {
-      small: 'price_1SzHrEEoH1b07UGQH22LSIF1',   // €339
-      medium: 'price_1SzHrFEoH1b07UGQMynqX4lz',  // €389
-      large: 'price_1SzHrFEoH1b07UGQXxj9kh6v',   // €499
-      xlarge: 'price_1SzHrFEoH1b07UGQWTkE1u8Z',  // €619
+      small: 'price_1T51LREoH1b07UGQmq2lmlqR',   // €419
+      medium: 'price_1T51LREoH1b07UGQZqOx9ixS',  // €519
+      large: 'price_1T51LSEoH1b07UGQUhpp0B8u',   // €649
     },
     quarter: {
-      small: 'price_1SzHrGEoH1b07UGQrHx6yk7G',   // €849
-      medium: 'price_1SzHrGEoH1b07UGQXIKyu61j',  // €999
-      large: 'price_1SzHrHEoH1b07UGQaIZyV5Ry',   // €1249
-      xlarge: 'price_1SzHrHEoH1b07UGQuIKAYkvf',  // €1449
+      small: 'price_1T51LSEoH1b07UGQJNJkNsH5',   // €1099
+      medium: 'price_1T51LTEoH1b07UGQmBbzkp04',  // €1349
+      large: 'price_1T51LTEoH1b07UGQWt1dkflE',   // €1699
     },
   },
   subscriptions: {
     once: {
-      small: 'price_1SzHrIEoH1b07UGQFnwdDBCE',   // €135/kuu
-      medium: 'price_1SzHrIEoH1b07UGQuyc7y9Ap',  // €169/kuu
-      large: 'price_1SzHrIEoH1b07UGQdilTxd1D',   // €215/kuu
-      xlarge: 'price_1SzHrJEoH1b07UGQmoehZXBP',  // €259/kuu
+      small: 'price_1T51LTEoH1b07UGQ6i8FiEix',   // €179/kuu
+      medium: 'price_1T51LUEoH1b07UGQPsUzybQS',  // €229/kuu
+      large: 'price_1T51LUEoH1b07UGQs0BYqLx2',   // €289/kuu
     },
     twice: {
-      small: 'price_1SzHrKEoH1b07UGQdpPxm7D2',   // €225/kuu
-      medium: 'price_1SzHrKEoH1b07UGQV1TWjYqj',  // €279/kuu
-      large: 'price_1SzHrKEoH1b07UGQg4jBEvpg',   // €359/kuu
-      xlarge: 'price_1SzHrLEoH1b07UGQhTBbxKha',  // €439/kuu
+      small: 'price_1T51LVEoH1b07UGQp5MscEFb',   // €319/kuu
+      medium: 'price_1T51LVEoH1b07UGQg8c4tW5t',  // €399/kuu
+      large: 'price_1T51LVEoH1b07UGQrFg16Y7y',   // €499/kuu
     },
     weekly: {
-      small: 'price_1SzHrLEoH1b07UGQiww4FasC',   // €429/kuu
-      medium: 'price_1SzHrMEoH1b07UGQJ8lm21hK',  // €499/kuu
-      large: 'price_1SzHrMEoH1b07UGQK3I9SwA9',   // €649/kuu
-      xlarge: 'price_1SzHrNEoH1b07UGQBXlmbysX',  // €789/kuu
+      small: 'price_1T51LWEoH1b07UGQ4Bh1ig1o',   // €579/kuu
+      medium: 'price_1T51LWEoH1b07UGQ9NLtoAgb',  // €719/kuu
+      large: 'price_1T51LXEoH1b07UGQmVNjYRf6',   // €899/kuu
     },
   },
 };
@@ -519,17 +536,16 @@ const PACKAGES = {
     description: 'Kuus koduhoolitsust kolme kuu jooksul',
     includes: ['6× põhjalik koristus', 'Värsked lilled igal korral', 'Käsitsi kirjutatud kaardid', 'Puuviljad + taimede kastmine', 'Premium koduhooldusvahenid'],
   },
-  once: { name: 'Kord kuus', description: 'Üks külastus kuus' },
-  twice: { name: 'Üle nädala', description: 'Kaks külastust kuus' },
-  weekly: { name: 'Iga nädal', description: 'Neli külastust kuus' },
+  once: { name: '1× kuus', description: 'Üks külastus kuus' },
+  twice: { name: '2× kuus', description: 'Kaks külastust kuus' },
+  weekly: { name: '4× kuus', description: 'Neli külastust kuus' },
   test: { name: 'Test €1', description: 'Testtellimus' },
 };
 
 const SIZE_NAMES = {
-  small: 'Kuni 50m²',
-  medium: '51-90m²',
-  large: '91-120m²',
-  xlarge: '121-150m²',
+  small: '1-2 tuba',
+  medium: '3 tuba',
+  large: '4 tuba',
 };
 
 // Size to Cal.eu calendar mapping
@@ -537,7 +553,6 @@ const SIZE_CALENDAR_CODES = {
   small: '50',
   medium: '90',
   large: '120',
-  xlarge: '150',
 };
 
 /**
@@ -557,6 +572,20 @@ function generateGiftCode() {
 }
 
 /**
+ * Normalize user-typed gift code input.
+ * Old format: SUKO-XXXX-XXXX (0→O, 1→I everywhere is safe)
+ * New format: SK169-XXXX-XXXX (digits in prefix must stay, only normalize random part)
+ */
+function normalizeGiftInput(raw) {
+  const code = (raw || '').trim().toUpperCase();
+  const skPriceMatch = code.match(/^(SK\d+-)([\S]+)$/);
+  if (skPriceMatch) {
+    return skPriceMatch[1] + skPriceMatch[2].replace(/0/g, 'O').replace(/1/g, 'I');
+  }
+  return code.replace(/0/g, 'O').replace(/1/g, 'I');
+}
+
+/**
  * Generate unique referral code for subscriber
  * Format: SOOVITA-XXXXX (5 alphanumeric chars)
  */
@@ -573,7 +602,7 @@ function generateReferralCode() {
  * Create Stripe Checkout Session
  */
 exports.createCheckoutSession = functions
-  .region('europe-west1')
+  .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
       if (req.method !== 'POST') {
@@ -706,7 +735,7 @@ exports.createCheckoutSession = functions
         // Referral discount takes priority over other promo codes
         if (referralCode && type === 'subscription') {
           try {
-            const promoCodes = await stripe.promotionCodes.list({
+            const promoCodes = await getStripe().promotionCodes.list({
               code: 'SOOVITA20',
               active: true,
               limit: 1,
@@ -715,7 +744,7 @@ exports.createCheckoutSession = functions
               sessionParams.discounts = [{ promotion_code: promoCodes.data[0].id }];
             } else {
               // Fallback: try KINGITUS20 (same discount)
-              const fallbackCodes = await stripe.promotionCodes.list({
+              const fallbackCodes = await getStripe().promotionCodes.list({
                 code: 'KINGITUS20',
                 active: true,
                 limit: 1,
@@ -736,7 +765,7 @@ exports.createCheckoutSession = functions
         else if (promoCode) {
           try {
             // Look up the promotion code in Stripe to get its ID
-            const promoCodes = await stripe.promotionCodes.list({
+            const promoCodes = await getStripe().promotionCodes.list({
               code: promoCode,
               active: true,
               limit: 1,
@@ -764,7 +793,7 @@ exports.createCheckoutSession = functions
           sessionParams.metadata.delivery_method = deliveryMethod || 'email';
         }
 
-        const session = await stripe.checkout.sessions.create(sessionParams);
+        const session = await getStripe().checkout.sessions.create(sessionParams);
 
         await orderRef.update({ stripeSessionId: session.id });
 
@@ -785,15 +814,15 @@ exports.createCheckoutSession = functions
  * Stripe Webhook Handler
  */
 exports.stripeWebhook = functions
-  .region('europe-west1')
+  .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest(async (req, res) => {
     const sig = req.headers['stripe-signature'];
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || functions.config().stripe?.webhook_secret;
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
     let event;
 
     try {
-      event = stripe.webhooks.constructEvent(req.rawBody, sig, webhookSecret);
+      event = getStripe().webhooks.constructEvent(req.rawBody, sig, webhookSecret);
     } catch (err) {
       console.error('Webhook signature verification failed:', err.message);
       return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -831,6 +860,13 @@ async function handleCheckoutComplete(session) {
   }
 
   try {
+    // Idempotency check — skip if order is already paid (webhook retry)
+    const existingOrder = await db.collection('orders').doc(orderId).get();
+    if (existingOrder.exists && existingOrder.data().status === 'paid') {
+      console.log('Order already paid (webhook retry), skipping:', orderId);
+      return;
+    }
+
     // Handle gift card size upgrades separately
     if (session.metadata?.type === 'gift_upgrade') {
       const newSize = session.metadata.new_size;
@@ -993,38 +1029,58 @@ async function sendAllEmails(order, orderId) {
   const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
   // 1. Admin notification (always Estonian)
-  await sendEmail({
-    to: NOTIFICATION_EMAIL,
-    subject: `SUKODA | Uus ${isGift ? 'kingitus' : 'tellimus'}: ${packageNameET}`,
-    html: generateAdminEmail(order, orderId, packageNameET, sizeNameET, isGift),
-  });
+  try {
+    await sendEmail({
+      to: NOTIFICATION_EMAIL,
+      subject: `SUKODA | Uus ${isGift ? 'kingitus' : 'tellimus'}: ${packageNameET}`,
+      html: generateAdminEmail(order, orderId, packageNameET, sizeNameET, isGift),
+    });
+  } catch (err) {
+    console.error('sendAllEmails: admin notification failed:', err);
+  }
 
   await wait(600);
 
   // 2. Customer confirmation (in customer's language)
-  await sendEmail({
-    to: order.customer?.email,
-    subject: isGift ? t.subjectGiftOnWay : t.subjectOrderReceived,
-    html: generateCustomerEmail(order, orderId, packageName, sizeName, isGift, lang),
-  });
+  try {
+    await sendEmail({
+      to: order.customer?.email,
+      subject: isGift ? t.subjectGiftOnWay : t.subjectOrderReceived,
+      html: generateCustomerEmail(order, orderId, packageName, sizeName, isGift, lang),
+    });
+  } catch (err) {
+    console.error('sendAllEmails: customer confirmation failed:', err);
+  }
 
   // 3. Gift card to recipient (if gift + email delivery, in customer's language)
   if (isGift && order.deliveryMethod === 'email' && order.recipient?.email) {
     await wait(600);
-    const pkg = getPackageInfo(order.package, lang);
-    await sendEmail({
-      to: order.recipient.email,
-      subject: t.subjectGiftFrom(order.customer?.name || (lang === 'en' ? 'Someone special' : 'Keegi eriline')),
-      html: generateGiftCardEmail(order, pkg, lang),
-    });
+    try {
+      const pkg = getPackageInfo(order.package, lang);
+      await sendEmail({
+        to: order.recipient.email,
+        subject: t.subjectGiftFrom(order.customer?.name || (lang === 'en' ? 'Someone special' : 'Keegi eriline')),
+        html: generateGiftCardEmail(order, pkg, lang),
+      });
+    } catch (err) {
+      console.error('sendAllEmails: gift card email failed:', err);
+    }
   }
 }
 
 /**
  * Send email via Resend
  */
+const EMAIL_FROM = 'SUKODA <tere@sukoda.ee>';
+
 async function sendEmail({ to, subject, html }) {
-  if (!resend) {
+  // Validate recipient email
+  if (!to || typeof to !== 'string' || !to.includes('@')) {
+    console.error('sendEmail: invalid or missing recipient:', to);
+    return;
+  }
+
+  if (!getResend()) {
     console.log('Resend not configured, saving to Firestore instead');
     await db.collection('mail').add({
       to,
@@ -1036,8 +1092,8 @@ async function sendEmail({ to, subject, html }) {
 
   try {
     // Domain sukoda.ee is verified in Resend - DNS records configured in Zone.ee
-    const { data, error } = await resend.emails.send({
-      from: 'SUKODA <tere@sukoda.ee>',
+    const { data, error } = await getResend().emails.send({
+      from: EMAIL_FROM,
       to,
       subject,
       html,
@@ -1495,7 +1551,7 @@ function generateGiftCardEmail(order, pkg, lang) {
  * Get order details
  */
 exports.getOrder = functions
-  .region('europe-west1')
+  .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
       const orderId = req.query.orderId;
@@ -1550,7 +1606,7 @@ exports.getOrder = functions
  * Triggers: BOOKING_CREATED, BOOKING_CANCELLED, BOOKING_RESCHEDULED
  */
 exports.calWebhook = functions
-  .region('europe-west1')
+  .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest(async (req, res) => {
     if (req.method !== 'POST') {
       return res.status(405).json({ error: 'Method not allowed' });
@@ -1608,6 +1664,9 @@ async function handleCalBookingCreated(booking) {
   }
 
   // Find the matching order by customer email
+  let orderId = null;
+  let orderData = null;
+
   const ordersSnapshot = await db.collection('orders')
     .where('customer.email', '==', attendeeEmail)
     .where('status', '==', 'paid')
@@ -1615,12 +1674,25 @@ async function handleCalBookingCreated(booking) {
     .limit(1)
     .get();
 
-  let orderId = null;
-  let orderData = null;
-
   if (!ordersSnapshot.empty) {
     orderId = ordersSnapshot.docs[0].id;
     orderData = ordersSnapshot.docs[0].data();
+  }
+
+  // If not found by customer email, check gift orders by recipient email
+  if (!orderId) {
+    const giftOrdersSnapshot = await db.collection('orders')
+      .where('recipient.email', '==', attendeeEmail)
+      .where('type', '==', 'gift')
+      .where('status', '==', 'paid')
+      .orderBy('createdAt', 'desc')
+      .limit(1)
+      .get();
+
+    if (!giftOrdersSnapshot.empty) {
+      orderId = giftOrdersSnapshot.docs[0].id;
+      orderData = giftOrdersSnapshot.docs[0].data();
+    }
   }
 
   // Determine size from event type slug
@@ -1629,7 +1701,6 @@ async function handleCalBookingCreated(booking) {
   if (eventTypeSlug.includes('50')) size = 'small';
   else if (eventTypeSlug.includes('90')) size = 'medium';
   else if (eventTypeSlug.includes('120')) size = 'large';
-  else if (eventTypeSlug.includes('150')) size = 'xlarge';
 
   // Create booking record in Firestore
   const bookingRef = await db.collection('bookings').add({
@@ -1639,7 +1710,7 @@ async function handleCalBookingCreated(booking) {
     customerEmail: attendeeEmail,
     customerName: attendeeName || orderData?.customer?.name || '',
     customerPhone: booking.responses?.phone || orderData?.customer?.phone || '',
-    address: booking.responses?.address || orderData?.customer?.address || '',
+    address: booking.responses?.location?.optionValue || booking.responses?.address || orderData?.customer?.address || '',
     scheduledAt: admin.firestore.Timestamp.fromDate(new Date(booking.startTime)),
     endTime: admin.firestore.Timestamp.fromDate(new Date(booking.endTime)),
     eventTypeSlug: eventTypeSlug,
@@ -1660,7 +1731,7 @@ async function handleCalBookingCreated(booking) {
       customerName: attendeeName || orderData?.customer?.name || '',
       customerEmail: attendeeEmail,
       customerPhone: booking.responses?.phone || orderData?.customer?.phone || '',
-      address: booking.responses?.address || orderData?.customer?.address || '',
+      address: booking.responses?.location?.optionValue || booking.responses?.address || orderData?.customer?.address || '',
       scheduledAt: booking.startTime,
       size: size,
       type: orderData?.type || 'unknown',
@@ -1781,7 +1852,7 @@ async function handleCalBookingRescheduled(booking) {
  * Runs daily at 09:00 Europe/Tallinn time
  */
 exports.autoScheduleVisits = functions
-  .region('europe-west1')
+  .runWith({ secrets: SECRETS }).region('europe-west1')
   .pubsub.schedule('0 9 * * *')
   .timeZone('Europe/Tallinn')
   .onRun(async (context) => {
@@ -1911,7 +1982,7 @@ async function scheduleNextVisit(orderId, order) {
  * Runs daily at 08:00 Europe/Tallinn time
  */
 exports.sendVisitReminders = functions
-  .region('europe-west1')
+  .runWith({ secrets: SECRETS }).region('europe-west1')
   .pubsub.schedule('0 8 * * *')
   .timeZone('Europe/Tallinn')
   .onRun(async (context) => {
@@ -2662,7 +2733,7 @@ async function createFollowupSequence({ orderId, recipientEmail, recipientName, 
  * Checks for pending follow-ups whose sendAt has passed and sends them
  */
 exports.processFollowups = functions
-  .region('europe-west1')
+  .runWith({ secrets: SECRETS }).region('europe-west1')
   .pubsub.schedule('0 10 * * *')
   .timeZone('Europe/Tallinn')
   .onRun(async (context) => {
@@ -2793,7 +2864,7 @@ exports.processFollowups = functions
  * GET /api/validate-referral?code=SOOVITA-XXXXX
  */
 exports.validateReferral = functions
-  .region('europe-west1')
+  .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
       const code = req.query.code;
@@ -2878,11 +2949,11 @@ async function processReferralReward(referralCode, friendOrderId, friendOrder, f
     try {
       // Look up or use the SOOVITAJA20 coupon ID
       // The coupon must exist in Stripe (created manually: 20% off, duration "once")
-      const coupons = await stripe.coupons.list({ limit: 100 });
+      const coupons = await getStripe().coupons.list({ limit: 100 });
       const referrerCoupon = coupons.data.find(c => c.name === 'SOOVITAJA20' || c.id === 'SOOVITAJA20');
 
       if (referrerCoupon) {
-        await stripe.subscriptions.update(referrerOrder.stripeSubscriptionId, {
+        await getStripe().subscriptions.update(referrerOrder.stripeSubscriptionId, {
           coupon: referrerCoupon.id,
         });
 
@@ -2990,10 +3061,10 @@ function generateReferralSuccessEmail(referrerOrder, friendOrder, lang) {
  * GET /api/admin/followups?password=ADMIN_PASSWORD
  */
 exports.getAdminFollowups = functions
-  .region('europe-west1')
+  .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
-      const adminPassword = process.env.ADMIN_PASSWORD || functions.config().admin?.password;
+      const adminPassword = (process.env.ADMIN_PASSWORD || '').trim();
       if (req.query.password !== adminPassword) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
@@ -3044,10 +3115,10 @@ exports.getAdminFollowups = functions
  * Query params: ?start=2026-02-09&end=2026-02-16&password=ADMIN_PASSWORD
  */
 exports.getAdminBookings = functions
-  .region('europe-west1')
+  .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
-      const adminPassword = process.env.ADMIN_PASSWORD || functions.config().admin?.password;
+      const adminPassword = (process.env.ADMIN_PASSWORD || '').trim();
       if (req.query.password !== adminPassword) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
@@ -3083,10 +3154,10 @@ exports.getAdminBookings = functions
  * Query params: ?type=subscription&status=paid&limit=20&password=ADMIN_PASSWORD
  */
 exports.getAdminOrders = functions
-  .region('europe-west1')
+  .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
-      const adminPassword = process.env.ADMIN_PASSWORD || functions.config().admin?.password;
+      const adminPassword = (process.env.ADMIN_PASSWORD || '').trim();
       if (req.query.password !== adminPassword) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
@@ -3134,14 +3205,14 @@ exports.getAdminOrders = functions
  * Body: { bookingId, password }
  */
 exports.markVisitComplete = functions
-  .region('europe-west1')
+  .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
       if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
       }
 
-      const adminPassword = process.env.ADMIN_PASSWORD || functions.config().admin?.password;
+      const adminPassword = (process.env.ADMIN_PASSWORD || '').trim();
       if (req.body.password !== adminPassword) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
@@ -3222,14 +3293,14 @@ exports.markVisitComplete = functions
  * Body: { bookingId, password, reason }
  */
 exports.cancelVisit = functions
-  .region('europe-west1')
+  .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
       if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
       }
 
-      const adminPassword = process.env.ADMIN_PASSWORD || functions.config().admin?.password;
+      const adminPassword = (process.env.ADMIN_PASSWORD || '').trim();
       if (req.body.password !== adminPassword) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
@@ -3300,10 +3371,10 @@ exports.cancelVisit = functions
  * Query params: ?eventTypeSlug=koristus-90&startDate=2026-02-10&endDate=2026-02-24&password=ADMIN_PASSWORD
  */
 exports.getAdminSlots = functions
-  .region('europe-west1')
+  .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
-      const adminPassword = process.env.ADMIN_PASSWORD || functions.config().admin?.password;
+      const adminPassword = (process.env.ADMIN_PASSWORD || '').trim();
       if (req.query.password !== adminPassword) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
@@ -3338,14 +3409,14 @@ exports.getAdminSlots = functions
  * Body: { bookingId, newStartTime, password }
  */
 exports.rescheduleVisit = functions
-  .region('europe-west1')
+  .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
       if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
       }
 
-      const adminPassword = process.env.ADMIN_PASSWORD || functions.config().admin?.password;
+      const adminPassword = (process.env.ADMIN_PASSWORD || '').trim();
       if (req.body.password !== adminPassword) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
@@ -3483,14 +3554,14 @@ exports.rescheduleVisit = functions
  * Body: { orderId, password, reason }
  */
 exports.cancelOrder = functions
-  .region('europe-west1')
+  .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
       if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
       }
 
-      const adminPassword = process.env.ADMIN_PASSWORD || functions.config().admin?.password;
+      const adminPassword = (process.env.ADMIN_PASSWORD || '').trim();
       if (req.body.password !== adminPassword) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
@@ -3524,7 +3595,7 @@ exports.cancelOrder = functions
         let periodEnd = null;
         if (isSubscription && order.stripeSubscriptionId) {
           try {
-            const sub = await stripe.subscriptions.retrieve(order.stripeSubscriptionId);
+            const sub = await getStripe().subscriptions.retrieve(order.stripeSubscriptionId);
             periodEnd = new Date(sub.current_period_end * 1000);
           } catch (e) {
             console.error('Could not retrieve subscription period:', e);
@@ -3565,7 +3636,7 @@ exports.cancelOrder = functions
         if (isSubscription && order.stripeSubscriptionId && order.subscriptionStatus === 'active') {
           // Subscriptions: cancel at period end (customer gets current paid period service)
           try {
-            await stripe.subscriptions.update(order.stripeSubscriptionId, {
+            await getStripe().subscriptions.update(order.stripeSubscriptionId, {
               cancel_at_period_end: true,
             });
             console.log('Stripe subscription set to cancel at period end:', order.stripeSubscriptionId);
@@ -3622,10 +3693,10 @@ exports.cancelOrder = functions
  * Query params: ?orderId=xxx&password=ADMIN_PASSWORD
  */
 exports.getOrderBookings = functions
-  .region('europe-west1')
+  .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
-      const adminPassword = process.env.ADMIN_PASSWORD || functions.config().admin?.password;
+      const adminPassword = (process.env.ADMIN_PASSWORD || '').trim();
       if (req.query.password !== adminPassword) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
@@ -3668,7 +3739,7 @@ exports.getOrderBookings = functions
  * GET /api/calendar?title=...&start=...&end=...&description=...&location=...
  */
 exports.calendarEvent = functions
-  .region('europe-west1')
+  .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, () => {
       const { title, start, end, description, location } = req.query;
@@ -3725,7 +3796,7 @@ exports.calendarEvent = functions
  * Body: { email, name, city, address, lang }
  */
 exports.waitlist = functions
-  .region('europe-west1')
+  .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
       if (req.method !== 'POST') {
@@ -3789,11 +3860,10 @@ exports.waitlist = functions
  * GET /api/redeem?code=SUKO-XXXX-XXXX
  */
 exports.redeemGift = functions
-  .region('europe-west1')
+  .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
-      // Normalize confused characters: 0→O, 1→I (gift codes never use 0, 1, I, O in random part, but prefix is SUKO-)
-      const code = (req.query.code || '').trim().toUpperCase().replace(/0/g, 'O').replace(/1/g, 'I');
+      const code = normalizeGiftInput((req.query.code || ''));
 
       if (!code) {
         return res.status(400).json({ error: 'Missing gift code' });
@@ -3826,8 +3896,8 @@ exports.redeemGift = functions
 
         const lang = order.lang || 'et';
         const sizeNames = {
-          et: { small: 'kuni 50m²', medium: '51–90m²', large: '91–120m²', xlarge: '121–150m²' },
-          en: { small: 'up to 50m²', medium: '51–90m²', large: '91–120m²', xlarge: '121–150m²' },
+          et: { small: '1-2 tuba', medium: '3 tuba', large: '4 tuba' },
+          en: { small: '1-2 rooms', medium: '3 rooms', large: '4 rooms' },
         };
         const packageNames = {
           et: { moment: 'Üks Hetk', month: 'Kuu Aega', quarter: 'Kvartal Vabadust', harmony: 'Harmoonia', serenity: 'Täielik Rahulolu' },
@@ -3873,7 +3943,7 @@ exports.redeemGift = functions
  * GET /api/slots?size=medium&month=2026-02
  */
 exports.getPublicSlots = functions
-  .region('europe-west1')
+  .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
       const size = req.query.size || 'medium';
@@ -3887,16 +3957,26 @@ exports.getPublicSlots = functions
       try {
         // Calculate date range: current month or specified month, up to 4 weeks ahead
         let startDate, endDate;
+        const launchStartDate = LAUNCH_DATE || null;
+
         if (month) {
           startDate = `${month}-01`;
+          // If launch date is later than month start, use launch date
+          if (launchStartDate && launchStartDate > startDate) {
+            startDate = launchStartDate;
+          }
           // End of month + some buffer
-          const d = new Date(startDate);
+          const d = new Date(`${month}-01`);
           d.setMonth(d.getMonth() + 1);
           d.setDate(d.getDate() + 7); // 1 week into next month
           endDate = d.toISOString().split('T')[0];
         } else {
           const now = new Date();
           startDate = now.toISOString().split('T')[0];
+          // If launch date is later, use it
+          if (launchStartDate && launchStartDate > startDate) {
+            startDate = launchStartDate;
+          }
           const end = new Date(now);
           end.setDate(end.getDate() + 28);
           endDate = end.toISOString().split('T')[0];
@@ -3907,12 +3987,16 @@ exports.getPublicSlots = functions
         // Minimum lead time: only show slots at least MIN_BOOKING_LEAD_HOURS ahead
         const minBookingTime = new Date(Date.now() + MIN_BOOKING_LEAD_HOURS * 60 * 60 * 1000);
 
+        // Launch date: don't show slots before the launch date
+        const launchMinTime = LAUNCH_DATE ? new Date(LAUNCH_DATE + 'T00:00:00+02:00') : null;
+        const effectiveMinTime = launchMinTime && launchMinTime > minBookingTime ? launchMinTime : minBookingTime;
+
         // Group slots by date and extract just the time
         const grouped = {};
         for (const slot of allSlots) {
           const dt = new Date(slot.time);
-          // Filter out slots that are too soon
-          if (dt < minBookingTime) continue;
+          // Filter out slots that are too soon or before launch date
+          if (dt < effectiveMinTime) continue;
 
           const date = slot.date || slot.time.split('T')[0];
           if (!grouped[date]) grouped[date] = [];
@@ -3946,7 +4030,7 @@ exports.getPublicSlots = functions
  * Body: { code, startTime, email, phone, address, additionalInfo }
  */
 exports.bookGiftVisit = functions
-  .region('europe-west1')
+  .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
       if (req.method !== 'POST') {
@@ -3959,9 +4043,11 @@ exports.bookGiftVisit = functions
         return res.status(400).json({ error: 'Missing required fields: code, startTime, email, address' });
       }
 
-      // Validate minimum lead time (48h)
+      // Validate minimum lead time (48h) and launch date
       const minBookingTime = new Date(Date.now() + MIN_BOOKING_LEAD_HOURS * 60 * 60 * 1000);
-      if (new Date(startTime) < minBookingTime) {
+      const launchMinTime = LAUNCH_DATE ? new Date(LAUNCH_DATE + 'T00:00:00+02:00') : null;
+      const effectiveMin = launchMinTime && launchMinTime > minBookingTime ? launchMinTime : minBookingTime;
+      if (new Date(startTime) < effectiveMin) {
         return res.status(400).json({ error: `Broneerida saab vähemalt ${MIN_BOOKING_LEAD_HOURS} tundi ette. Palun valige hilisem aeg.` });
       }
 
@@ -4086,7 +4172,7 @@ exports.bookGiftVisit = functions
  * Body: { orderId, startTime }
  */
 exports.bookSubscriptionVisit = functions
-  .region('europe-west1')
+  .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
       if (req.method !== 'POST') {
@@ -4099,9 +4185,11 @@ exports.bookSubscriptionVisit = functions
         return res.status(400).json({ error: 'Missing required fields: orderId, startTime' });
       }
 
-      // Validate minimum lead time (48h)
-      const minBookingTime = new Date(Date.now() + MIN_BOOKING_LEAD_HOURS * 60 * 60 * 1000);
-      if (new Date(startTime) < minBookingTime) {
+      // Validate minimum lead time (48h) and launch date
+      const minBookingTimeSub = new Date(Date.now() + MIN_BOOKING_LEAD_HOURS * 60 * 60 * 1000);
+      const launchMinTimeSub = LAUNCH_DATE ? new Date(LAUNCH_DATE + 'T00:00:00+02:00') : null;
+      const effectiveMinSub = launchMinTimeSub && launchMinTimeSub > minBookingTimeSub ? launchMinTimeSub : minBookingTimeSub;
+      if (new Date(startTime) < effectiveMinSub) {
         return res.status(400).json({ error: `Broneerida saab vähemalt ${MIN_BOOKING_LEAD_HOURS} tundi ette. Palun valige hilisem aeg.` });
       }
 
@@ -4211,104 +4299,116 @@ exports.bookSubscriptionVisit = functions
  *
  * - count: number of codes to generate (1-200)
  * - package: 'moment' (default), 'month', 'quarter'
- * - size: 'small', 'medium' (default), 'large', 'xlarge' — locked at purchase
+ * - size: 'small', 'medium' (default), 'large' — locked at purchase
  * - batchName: optional label, e.g. 'Printon Feb 2026'
  */
 exports.generatePhysicalGiftCards = functions
-  .region('europe-west1')
+  .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
       if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
       }
 
-      const adminPassword = process.env.ADMIN_PASSWORD || functions.config().admin?.password;
-      const { password, count = 10, package: pkg = 'moment', size = 'medium', batchName = '', buyer = {} } = req.body;
+      const adminPassword = (process.env.ADMIN_PASSWORD || '').trim();
+      // cards: optional array of {code, package, size} for bulk import with pre-set codes
+      // If cards is provided, package/size/count are ignored.
+      const { password, count = 10, package: pkg = 'moment', size = 'medium', batchName = '', buyer = {}, cards: customCards } = req.body;
       // buyer: { name, email, company } — who purchased these cards (agent/office)
 
       if (password !== adminPassword) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      const numCards = Math.min(Math.max(parseInt(count) || 10, 1), 200);
       const validPackages = ['moment', 'month', 'quarter'];
-      const validSizes = ['small', 'medium', 'large', 'xlarge'];
-
-      if (!validPackages.includes(pkg)) {
-        return res.status(400).json({ error: `Invalid package. Must be one of: ${validPackages.join(', ')}` });
-      }
-      if (!validSizes.includes(size)) {
-        return res.status(400).json({ error: `Invalid size. Must be one of: ${validSizes.join(', ')}` });
-      }
+      const validSizes = ['small', 'medium', 'large'];
 
       try {
         const batchId = `PRINT-${Date.now()}`;
         const codes = [];
-        const batch = db.batch();
+        const firestoreBatch = db.batch();
 
-        for (let i = 0; i < numCards; i++) {
-          // Generate unique code
-          let code;
-          let attempts = 0;
-          do {
-            code = generateGiftCode();
-            attempts++;
-            if (attempts > 50) throw new Error('Could not generate unique code');
-            const existing = await db.collection('orders')
-              .where('giftCode', '==', code)
-              .limit(1)
-              .get();
-            if (existing.empty) break;
-          } while (true);
+        if (customCards && Array.isArray(customCards)) {
+          // Bulk import with pre-set codes (e.g. from generate-physical-cards.js)
+          if (customCards.length > 200) {
+            return res.status(400).json({ error: 'Max 200 cards per request' });
+          }
+          for (const card of customCards) {
+            if (!validPackages.includes(card.package) || !validSizes.includes(card.size) || !card.code) {
+              return res.status(400).json({ error: `Invalid card entry: ${JSON.stringify(card)}` });
+            }
+            const orderRef = db.collection('orders').doc();
+            firestoreBatch.set(orderRef, {
+              type: 'gift',
+              package: card.package,
+              size: card.size,
+              customer: { name: 'SUKODA (Physical Card)', email: 'tere@sukoda.ee' },
+              recipient: { name: '', email: '', message: '' },
+              deliveryMethod: 'physical',
+              giftCode: card.code,
+              lang: 'et',
+              status: 'paid',
+              physicalCard: true,
+              batchId,
+              batchName: batchName || `Physical cards ${new Date().toISOString().slice(0, 10)}`,
+              buyer: { name: buyer.name || '', email: buyer.email || '', company: buyer.company || '' },
+              createdAt: admin.firestore.FieldValue.serverTimestamp(),
+              paidAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+            codes.push({ code: card.code, orderId: orderRef.id });
+          }
+        } else {
+          // Original flow: generate random codes for one package+size
+          if (!validPackages.includes(pkg)) {
+            return res.status(400).json({ error: `Invalid package. Must be one of: ${validPackages.join(', ')}` });
+          }
+          if (!validSizes.includes(size)) {
+            return res.status(400).json({ error: `Invalid size. Must be one of: ${validSizes.join(', ')}` });
+          }
 
-          const orderRef = db.collection('orders').doc();
-          batch.set(orderRef, {
-            type: 'gift',
-            package: pkg,
-            size: size,              // Size locked at purchase — determines service price
-            customer: {
-              name: 'SUKODA (Physical Card)',
-              email: 'tere@sukoda.ee',
-            },
-            recipient: {
-              name: '',
-              email: '',
-              message: '',
-            },
-            deliveryMethod: 'physical',
-            giftCode: code,
-            lang: 'et',
-            status: 'paid',
-            physicalCard: true,
-            batchId: batchId,
-            batchName: batchName || `Physical cards ${new Date().toISOString().slice(0, 10)}`,
-            buyer: {
-              name: buyer.name || '',
-              email: buyer.email || '',
-              company: buyer.company || '',
-            },
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            paidAt: admin.firestore.FieldValue.serverTimestamp(),
-          });
+          const numCards = Math.min(Math.max(parseInt(count) || 10, 1), 200);
+          for (let i = 0; i < numCards; i++) {
+            let code;
+            let attempts = 0;
+            do {
+              code = generateGiftCode();
+              attempts++;
+              if (attempts > 50) throw new Error('Could not generate unique code');
+              const existing = await db.collection('orders').where('giftCode', '==', code).limit(1).get();
+              if (existing.empty) break;
+            } while (true);
 
-          codes.push({
-            code: code,
-            orderId: orderRef.id,
-          });
+            const orderRef = db.collection('orders').doc();
+            firestoreBatch.set(orderRef, {
+              type: 'gift',
+              package: pkg,
+              size,
+              customer: { name: 'SUKODA (Physical Card)', email: 'tere@sukoda.ee' },
+              recipient: { name: '', email: '', message: '' },
+              deliveryMethod: 'physical',
+              giftCode: code,
+              lang: 'et',
+              status: 'paid',
+              physicalCard: true,
+              batchId,
+              batchName: batchName || `Physical cards ${new Date().toISOString().slice(0, 10)}`,
+              buyer: { name: buyer.name || '', email: buyer.email || '', company: buyer.company || '' },
+              createdAt: admin.firestore.FieldValue.serverTimestamp(),
+              paidAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+            codes.push({ code, orderId: orderRef.id });
+          }
         }
 
-        await batch.commit();
+        await firestoreBatch.commit();
 
-        console.log(`Generated ${codes.length} physical gift card codes (${pkg}, ${size}). Batch: ${batchId}`);
+        console.log(`Generated ${codes.length} physical gift card codes. Batch: ${batchId}`);
 
         res.status(200).json({
           success: true,
           batchId,
-          package: pkg,
-          size: size,
-          buyer: buyer.name || buyer.company || 'N/A',
           count: codes.length,
-          codes: codes,
+          codes,
           redeemUrl: 'https://sukoda.ee/lunasta.html',
         });
 
@@ -4332,17 +4432,17 @@ exports.generatePhysicalGiftCards = functions
 
 // Gift prices in cents for upgrade calculation
 const GIFT_PRICES_CENTS = {
-  moment: { small: 16900, medium: 19900, large: 25900, xlarge: 31900 },
-  month:  { small: 33900, medium: 38900, large: 49900, xlarge: 61900 },
-  quarter:{ small: 84900, medium: 99900, large: 124900, xlarge: 144900 },
+  moment: { small: 21900, medium: 27900, large: 34900 },
+  month:  { small: 41900, medium: 51900, large: 64900 },
+  quarter:{ small: 109900, medium: 134900, large: 169900 },
 };
 
 // Size ordering for validation (can only upgrade UP)
-const SIZE_ORDER = { small: 0, medium: 1, large: 2, xlarge: 3 };
-const SIZE_LABELS = { small: 'kuni 50m²', medium: '51–90m²', large: '91–120m²', xlarge: '121–150m²' };
+const SIZE_ORDER = { small: 0, medium: 1, large: 2 };
+const SIZE_LABELS = { small: '1-2 tuba', medium: '3 tuba', large: '4 tuba' };
 
 exports.createGiftUpgrade = functions
-  .region('europe-west1')
+  .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
     cors(req, res, async () => {
       if (req.method !== 'POST') {
@@ -4355,7 +4455,7 @@ exports.createGiftUpgrade = functions
         return res.status(400).json({ error: 'Missing required fields: code, newSize' });
       }
 
-      const validSizes = ['small', 'medium', 'large', 'xlarge'];
+      const validSizes = ['small', 'medium', 'large'];
       if (!validSizes.includes(newSize)) {
         return res.status(400).json({ error: 'Invalid size' });
       }
@@ -4409,7 +4509,7 @@ exports.createGiftUpgrade = functions
         const pkgNames = { moment: 'Üks Hetk', month: 'Kuu Aega', quarter: 'Kvartal Vabadust' };
 
         // Create Stripe Checkout session for the difference
-        const session = await stripe.checkout.sessions.create({
+        const session = await getStripe().checkout.sessions.create({
           payment_method_types: ['card'],
           line_items: [{
             price_data: {

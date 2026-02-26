@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SUKODA Kinkekaardi Umbrik DL - ESIKULG (logo trükifail)
+     Landscape umbrik, logo fail trükikojale
+     Valge taust + must SUKODA tekst (trükikoda teeb kuumfooliumi)
+     Moot kooskolda trukikojaga
+-->
+<svg width="226mm" height="116mm" viewBox="0 0 226 116" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&amp;display=swap');
+    </style>
+  </defs>
+
+  <rect width="226" height="116" fill="#FFFFFF"/>
+
+  <text x="113" y="60"
+        font-family="'Cormorant Garamond', Georgia, serif"
+        font-size="10"
+        font-weight="400"
+        letter-spacing="5"
+        fill="#000000"
+        text-anchor="middle">SUKODA</text>
+
+</svg>

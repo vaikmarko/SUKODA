@@ -370,10 +370,9 @@
                             <div>
                                 <label class="block text-[10px] uppercase tracking-[0.15em] text-muted mb-2">Kodu suurus</label>
                                 <select x-model="gc.size" class="w-full border border-[#E8E3DD] bg-white px-4 py-3 text-sm font-light outline-none focus:border-accent">
-                                    <option value="small">Kuni 50m²</option>
-                                    <option value="medium">51–90m²</option>
-                                    <option value="large">91–120m²</option>
-                                    <option value="xlarge">121–150m²</option>
+                                    <option value="small">1-2 tuba</option>
+                                    <option value="medium">3 tuba</option>
+                                    <option value="large">4 tuba</option>
                                 </select>
                             </div>
 
@@ -718,12 +717,15 @@
                                 <span class="text-[10px] text-green-600 font-medium">Makstud</span>
                             </div>
                             <div class="h-[1px] w-4 bg-[#E8E3DD]"></div>
-                            <!-- Step 2: Email sent -->
+                            <!-- Step 2: Email sent (or physical card) -->
                             <div class="flex items-center gap-1.5">
-                                <span class="w-5 h-5 rounded-full bg-green-500 text-white flex items-center justify-center">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                <span class="w-5 h-5 rounded-full flex items-center justify-center"
+                                      :class="selectedOrder.physicalCard ? 'bg-accent/20 text-accent' : 'bg-green-500 text-white'">
+                                    <svg x-show="!selectedOrder.physicalCard" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    <svg x-show="selectedOrder.physicalCard" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                                 </span>
-                                <span class="text-[10px] text-green-600 font-medium">E-kiri</span>
+                                <span class="text-[10px] font-medium" :class="selectedOrder.physicalCard ? 'text-accent' : 'text-green-600'"
+                                      x-text="selectedOrder.physicalCard ? 'Füüsiline kaart' : 'E-kiri'"></span>
                             </div>
                             <div class="h-[1px] w-4 bg-[#E8E3DD]"></div>
                             <!-- Step 3: Redeemed -->
@@ -965,7 +967,7 @@
                 moment: 'Üks Hetk', month: 'Kuu Aega', quarter: 'Kvartal Vabadust',
                 once: 'Kord kuus', twice: 'Üle nädala', weekly: 'Iga nädal', test: 'Test'
             },
-            sizes: { small: 'Kuni 50m²', medium: '51-90m²', large: '91-120m²', xlarge: '121-150m²' },
+            sizes: { small: '1-2 tuba', medium: '3 tuba', large: '4 tuba' },
             statuses: { pending: 'Ootel', paid: 'Makstud', cancelled: 'Tühistatud', cancelling: 'Tühistatakse' },
 
             async init() {
@@ -1254,7 +1256,7 @@
             },
 
             getEventTypeSlug(size) {
-                const slugs = { small: 'koristus-50', medium: 'koristus-90', large: 'koristus-120', xlarge: 'koristus-150' };
+                const slugs = { small: 'koristus-50', medium: 'koristus-90', large: 'koristus-120' };
                 return slugs[size] || 'koristus-90';
             },
 
@@ -1364,14 +1366,15 @@
             getSizeName(size) { return this.sizes[size] || size || ''; },
             getStatusName(status) { return this.statuses[status] || status || ''; },
 
-            // Filtered orders (hide pending by default)
+            // Filtered orders (hide pending + physical cards which have their own tab)
             get filteredOrders() {
-                if (this.showPending) return this.allOrders;
-                return this.allOrders.filter(o => o.status !== 'pending');
+                let orders = this.allOrders.filter(o => !o.physicalCard);
+                if (!this.showPending) orders = orders.filter(o => o.status !== 'pending');
+                return orders;
             },
 
             get paidOrdersCount() {
-                return this.allOrders.filter(o => o.status !== 'pending').length;
+                return this.allOrders.filter(o => o.status !== 'pending' && !o.physicalCard).length;
             },
 
             get pendingCount() {

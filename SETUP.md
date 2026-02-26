@@ -27,37 +27,31 @@ Mine [Stripe Dashboard](https://dashboard.stripe.com/products) ja loo järgmised
 
 **KINGITUSED (One-time payments):**
 
-| Toode | Suurus | Hind |
-|-------|--------|------|
-| Üks Hetk | Kuni 50m² | €149 |
-| Üks Hetk | 51-90m² | €179 |
-| Üks Hetk | 91-120m² | €229 |
-| Üks Hetk | 121-150m² | €279 |
-| Kuu Aega | Kuni 50m² | €299 |
-| Kuu Aega | 51-90m² | €349 |
-| Kuu Aega | 91-120m² | €449 |
-| Kuu Aega | 121-150m² | €549 |
-| Kvartal Vabadust | Kuni 50m² | €749 |
-| Kvartal Vabadust | 51-90m² | €899 |
-| Kvartal Vabadust | 91-120m² | €1099 |
-| Kvartal Vabadust | 121-150m² | €1299 |
+| Toode | Tubade arv | Hind |
+|-------|-----------|------|
+| Üks Hetk | 1-2 tuba | €219 |
+| Üks Hetk | 3 tuba | €279 |
+| Üks Hetk | 4 tuba | €349 |
+| Kuu Aega | 1-2 tuba | €419 |
+| Kuu Aega | 3 tuba | €519 |
+| Kuu Aega | 4 tuba | €649 |
+| Kvartal Vabadust | 1-2 tuba | €1099 |
+| Kvartal Vabadust | 3 tuba | €1349 |
+| Kvartal Vabadust | 4 tuba | €1699 |
 
 **PÜSITELLIMUSED (Recurring monthly):**
 
-| Toode | Suurus | Hind/kuu |
-|-------|--------|----------|
-| Kord kuus | Kuni 50m² | €119 |
-| Kord kuus | 51-90m² | €149 |
-| Kord kuus | 91-120m² | €189 |
-| Kord kuus | 121-150m² | €229 |
-| Üle nädala | Kuni 50m² | €199 |
-| Üle nädala | 51-90m² | €249 |
-| Üle nädala | 91-120m² | €319 |
-| Üle nädala | 121-150m² | €389 |
-| Iga nädal | Kuni 50m² | €379 |
-| Iga nädal | 51-90m² | €449 |
-| Iga nädal | 91-120m² | €579 |
-| Iga nädal | 121-150m² | €699 |
+| Toode | Tubade arv | Hind/kuu |
+|-------|-----------|----------|
+| 1× kuus | 1-2 tuba | €179 |
+| 1× kuus | 3 tuba | €229 |
+| 1× kuus | 4 tuba | €289 |
+| 2× kuus | 1-2 tuba | €319 |
+| 2× kuus | 3 tuba | €399 |
+| 2× kuus | 4 tuba | €499 |
+| 4× kuus | 1-2 tuba | €579 |
+| 4× kuus | 3 tuba | €719 |
+| 4× kuus | 4 tuba | €899 |
 
 #### 2.2 Price ID-de kopeerimine
 

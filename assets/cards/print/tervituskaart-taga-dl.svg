@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SUKODA Tervituskaart - TAGAPOOL
+     Puhas formaat: 148x99 mm (landscape, sama korgus kui kinkekaart)
+     Koos bleed: 154x105 mm (3mm igalt poolt)
+     Valge paber + kuldne kuumfoolium
+     Fondid: Convert to Outlines
+-->
+<svg width="154mm" height="105mm" viewBox="0 0 154 105" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&amp;family=Inter:wght@300&amp;display=swap');
+    </style>
+  </defs>
+
+  <rect width="154" height="105" fill="#FFFFFF"/>
+
+  <text x="77" y="46"
+        font-family="'Cormorant Garamond', Georgia, serif"
+        font-size="9"
+        font-weight="300"
+        font-style="italic"
+        fill="#B8976A"
+        text-anchor="middle">Tulid koju.</text>
+
+  <text x="77" y="58"
+        font-family="'Cormorant Garamond', Georgia, serif"
+        font-size="9"
+        font-weight="300"
+        font-style="italic"
+        fill="#B8976A"
+        text-anchor="middle">K&#xF5;ik on korras.</text>
+
+  <text x="77" y="91"
+        font-family="'Cormorant Garamond', Georgia, serif"
+        font-size="4"
+        font-weight="400"
+        letter-spacing="3"
+        fill="#B8976A"
+        opacity="0.6"
+        text-anchor="middle">SUKODA</text>
+
+  <text x="77" y="97"
+        font-family="'Inter', 'Helvetica Neue', sans-serif"
+        font-size="1.8"
+        font-weight="300"
+        letter-spacing="1.5"
+        fill="#B8976A"
+        opacity="0.5"
+        text-anchor="middle">sukoda.ee</text>
+
+</svg>

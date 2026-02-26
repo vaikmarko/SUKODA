@@ -10,6 +10,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "firebase-admin": "^12.0.0",
     "stripe": "^20.1.1"
   }
 }

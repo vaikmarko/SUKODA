@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SUKODA Kaardid</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    @page { size: A4 portrait; margin: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #FFFFFF;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 50px 40px;
+      gap: 40px;
+    }
+
+    .page-title {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 14px;
+      font-weight: 300;
+      letter-spacing: 6px;
+      color: #B8976A;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .info {
+      font-size: 10px;
+      color: #8A8578;
+      font-weight: 300;
+      text-align: center;
+      line-height: 1.8;
+    }
+
+    .section-label {
+      font-size: 9px;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: #B8976A;
+      text-align: center;
+      font-weight: 500;
+      margin-top: 20px;
+    }
+
+    .side-label {
+      font-size: 7px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #B8976A;
+      opacity: 0.5;
+      margin-bottom: 12px;
+      font-weight: 400;
+    }
+
+    .card-pair {
+      display: flex;
+      gap: 30px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .card {
+      width: 320px;
+      aspect-ratio: 148 / 105;
+      background: #FFFFFF;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      border: 0.5px solid #E8E3DD;
+    }
+
+    .card-front .logo {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 30px;
+      font-weight: 400;
+      letter-spacing: 12px;
+      color: #B8976A;
+    }
+
+    .card-back .message {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 22px;
+      font-weight: 300;
+      font-style: italic;
+      color: #B8976A;
+      margin-bottom: 30px;
+    }
+
+    .card-back .code {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 4px;
+      color: #B8976A;
+      margin-bottom: 8px;
+    }
+
+    .card-back .redeem {
+      font-size: 6px;
+      font-weight: 300;
+      color: #B8976A;
+      opacity: 0.55;
+    }
+
+    .greeting-front {
+      justify-content: flex-start;
+      padding-top: 5%;
+    }
+
+    .greeting-front .logo {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 13px;
+      font-weight: 400;
+      letter-spacing: 6px;
+      color: #B8976A;
+    }
+
+    .greeting-front .hint {
+      font-size: 6px;
+      font-weight: 300;
+      color: #B8976A;
+      opacity: 0.2;
+      position: absolute;
+      bottom: 8%;
+      font-style: italic;
+    }
+
+    .greeting-back .quote {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 20px;
+      font-weight: 300;
+      font-style: italic;
+      color: #B8976A;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .greeting-back .url {
+      position: absolute;
+      bottom: 6%;
+      font-size: 5px;
+      font-weight: 300;
+      letter-spacing: 2px;
+      color: #B8976A;
+      opacity: 0.35;
+    }
+
+    .note {
+      font-size: 9px;
+      color: #8A8578;
+      font-weight: 300;
+      text-align: center;
+      line-height: 2;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-title">SUKODA</div>
+
+  <div class="info">
+    A6 maastik (148 &times; 105 mm) &middot; 3 mm bleed &middot; CMYK &middot; PDF/X-1a:2001<br>
+    Valge taust &middot; Kuumfoolium kuldne &middot; 350&ndash;400g matt &middot; Fondid outlined<br>
+    &Uuml;mbrik C6 (162 &times; 114 mm) + 3 mm bleed &middot; L&otilde;ikem&auml;rke ei lisata
+  </div>
+
+  <!-- KINKEKAART -->
+  <div class="section-label">Kinkekaart</div>
+
+  <div class="card-pair">
+    <div>
+      <div class="side-label">Esipool</div>
+      <div class="card card-front">
+        <div class="logo">SUKODA</div>
+      </div>
+    </div>
+    <div>
+      <div class="side-label">Tagapool</div>
+      <div class="card card-back">
+        <div class="message">Sina v&auml;&auml;rid parimat.</div>
+        <div class="code">SUKO-A7K2-M9X3</div>
+        <div class="redeem">sukoda.ee/lunasta</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TERVITUSKAART -->
+  <div class="section-label">Tervituskaart</div>
+
+  <div class="card-pair">
+    <div>
+      <div class="side-label">Esipool</div>
+      <div class="card greeting-front">
+        <div class="logo">SUKODA</div>
+      </div>
+    </div>
+    <div>
+      <div class="side-label">Tagapool &mdash; tr&uuml;kitud</div>
+      <div class="card greeting-back">
+        <div class="quote">Tulid koju.<br>K&otilde;ik on korras.</div>
+        <div class="url">sukoda.ee</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    Kinkekaart: universaalne disain, ainult kood erineb.
+  </div>
+
+</body>
+</html>

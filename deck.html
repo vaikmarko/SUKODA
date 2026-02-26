@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUKODA — Koostöö</title>
+    <link rel="icon" type="image/svg+xml" href="assets/logo/icon-s-black.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --black: #111111;
+            --paper: #FAF8F5;
+            --cream: #F5F0EB;
+            --accent: #B8976A;
+            --muted: #6B6560;
+            --border: #E8E3DD;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--black);
+            color: var(--black);
+            overflow: hidden;
+            cursor: default;
+        }
+
+        ::selection {
+            background: var(--black);
+            color: var(--paper);
+        }
+
+        .slide {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .slide.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .font-serif { font-family: 'Cormorant Garamond', Georgia, serif; }
+        .font-sans { font-family: 'Inter', system-ui, sans-serif; }
+
+        .accent-line {
+            width: 40px;
+            height: 1px;
+            background: var(--accent);
+        }
+
+        /* Slide content animations */
+        .slide.active .slide-tag { animation: fadeIn 0.6s ease-out 0.2s both; }
+        .slide.active .slide-title { animation: slideUp 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s both; }
+        .slide.active .slide-body { animation: slideUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.5s both; }
+        .slide.active .slide-detail { animation: slideUp 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.7s both; }
+        .slide.active .slide-cta { animation: fadeIn 0.6s ease-out 0.9s both; }
+        .slide.active .slide-visual { animation: scaleIn 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.2s both; }
+        .slide.active .slide-number { animation: fadeIn 0.5s ease-out 0.1s both; }
+        .slide.active .slide-stat { animation: slideUp 0.6s ease-out both; }
+        .slide.active .slide-stat:nth-child(1) { animation-delay: 0.4s; }
+        .slide.active .slide-stat:nth-child(2) { animation-delay: 0.55s; }
+        .slide.active .slide-stat:nth-child(3) { animation-delay: 0.7s; }
+        .slide.active .slide-card { animation: slideUp 0.7s ease-out both; }
+        .slide.active .slide-card:nth-child(1) { animation-delay: 0.5s; }
+        .slide.active .slide-card:nth-child(2) { animation-delay: 0.65s; }
+        .slide.active .slide-card:nth-child(3) { animation-delay: 0.8s; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(1.06); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Navigation */
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: linear-gradient(to top, rgba(0,0,0,0.06) 0%, transparent 100%);
+        }
+
+        .nav-dots {
+            display: flex;
+            gap: 10px;
+        }
+        .nav-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border);
+            border: none;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            padding: 0;
+        }
+        .nav-dot.active {
+            background: var(--accent);
+            width: 28px;
+            border-radius: 4px;
+        }
+
+        .nav-hint {
+            font-size: 10px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--muted);
+            opacity: 0.6;
+        }
+
+        .slide-number-indicator {
+            position: fixed;
+            top: 32px;
+            right: 40px;
+            z-index: 100;
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            letter-spacing: 0.15em;
+            color: var(--muted);
+        }
+
+        /* Slide-specific */
+        .stat-number {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 300;
+            line-height: 1;
+            color: var(--black);
+        }
+        .stat-label {
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-top: 8px;
+        }
+
+        .offer-card {
+            background: white;
+            border: 1px solid var(--border);
+            padding: clamp(24px, 3vw, 40px);
+            position: relative;
+            transition: border-color 0.4s ease;
+        }
+        .offer-card:hover {
+            border-color: var(--accent);
+        }
+        .offer-card.featured {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px var(--accent);
+        }
+        .offer-card.featured::before {
+            content: 'Populaarseim';
+            position: absolute;
+            top: -10px;
+            left: 24px;
+            background: var(--accent);
+            color: var(--paper);
+            font-size: 9px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            padding: 3px 12px;
+        }
+
+        .price-tag {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(2rem, 4vw, 3.2rem);
+            font-weight: 300;
+            color: var(--black);
+        }
+        .price-from {
+            font-size: 12px;
+            color: var(--muted);
+            font-weight: 300;
+        }
+
+        .check-list {
+            list-style: none;
+        }
+        .check-list li {
+            position: relative;
+            padding-left: 20px;
+            font-size: 13px;
+            color: var(--muted);
+            font-weight: 300;
+            line-height: 1.8;
+        }
+        .check-list li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 9px;
+            width: 8px;
+            height: 4px;
+            border-left: 1.5px solid var(--accent);
+            border-bottom: 1.5px solid var(--accent);
+            transform: rotate(-45deg);
+        }
+
+        @media (max-width: 768px) {
+            .nav-bar { padding: 16px 24px; }
+            .slide-number-indicator { top: 20px; right: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Slide Number -->
+    <div class="slide-number-indicator font-sans" id="slideCounter">01 / 03</div>
+
+    <!-- Navigation -->
+    <nav class="nav-bar">
+        <div class="nav-dots">
+            <button class="nav-dot active" onclick="goTo(0)"></button>
+            <button class="nav-dot" onclick="goTo(1)"></button>
+            <button class="nav-dot" onclick="goTo(2)"></button>
+        </div>
+        <span class="nav-hint font-sans" id="navHint">Vajuta → või kerige</span>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- SLIDE 1: PROBLEEM                            -->
+    <!-- ============================================ -->
+    <section class="slide active" id="slide-0">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; width:100%; height:100%;">
+            
+            <!-- Left: Content -->
+            <div style="background:var(--paper); display:flex; flex-direction:column; justify-content:center; padding: clamp(40px,6vw,100px); border-right:1px solid var(--border);">
+                
+                <div class="slide-number" style="margin-bottom:24px;">
+                    <span style="font-size:10px; letter-spacing:0.25em; text-transform:uppercase; color:var(--muted);">( 01 )</span>
+                </div>
+
+                <div class="accent-line slide-tag" style="margin-bottom:28px;"></div>
+
+                <span class="slide-tag font-sans" style="font-size:10px; letter-spacing:0.25em; text-transform:uppercase; color:var(--accent); border:1px solid rgba(184,151,106,0.4); padding:4px 12px; display:inline-block; width:fit-content; margin-bottom:32px;">
+                    Probleem
+                </span>
+
+                <h1 class="slide-title font-serif" style="font-size:clamp(2.2rem,4.5vw,4.2rem); font-weight:300; line-height:1.1; margin-bottom:32px;">
+                    Iga maakler kingib<br>veini ja šokolaadi.
+                </h1>
+
+                <p class="slide-body font-sans" style="font-size:15px; color:var(--muted); font-weight:300; line-height:1.7; max-width:420px; margin-bottom:48px;">
+                    Kinnisvaratehingu lõpetamisel saab klient pudeli veini, mille ta unustab riiulile. Järgmine kord, kui ta maaklerit vajab — või soovitust küsitakse — ei tule teie nimi enam meelde.
+                </p>
+
+                <div style="display:flex; gap:clamp(24px,4vw,56px); flex-wrap:wrap;">
+                    <div class="slide-stat">
+                        <div class="stat-number">87%</div>
+                        <div class="stat-label font-sans">klientidest ei mäleta<br>maaklerit aasta pärast</div>
+                    </div>
+                    <div class="slide-stat">
+                        <div class="stat-number">3%</div>
+                        <div class="stat-label font-sans">maaklerite soovitustest<br>tuleb ilma küsimata</div>
+                    </div>
+                    <div class="slide-stat">
+                        <div class="stat-number">~8000</div>
+                        <div class="stat-label font-sans">kinnisvaratehingut<br>Tallinnas aastas</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Visual -->
+            <div class="slide-visual" style="background:var(--cream); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+                <div style="text-align:center; padding:40px;">
+                    <div style="font-size:120px; line-height:1; margin-bottom:32px; opacity:0.15;">🍷</div>
+                    <p class="font-serif" style="font-size:clamp(1.8rem,3vw,2.8rem); font-weight:300; font-style:italic; color:var(--muted); max-width:400px; line-height:1.3;">
+                        "Aitäh toreda koostöö eest!"
+                    </p>
+                    <p class="font-sans" style="font-size:12px; color:var(--muted); opacity:0.5; margin-top:20px; letter-spacing:0.1em;">
+                        — Iga teine maakler, iga tehing
+                    </p>
+                </div>
+                <div style="position:absolute; bottom:40px; right:40px;">
+                    <p class="font-sans" style="font-size:11px; color:var(--muted); opacity:0.4; letter-spacing:0.15em; text-transform:uppercase;">
+                        Tuttav lugu?
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- SLIDE 2: LAHENDUS                            -->
+    <!-- ============================================ -->
+    <section class="slide" id="slide-1">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; width:100%; height:100%;">
+            
+            <!-- Left: Visual atmosphere -->
+            <div class="slide-visual" style="background:var(--black); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+                <div style="text-align:center; padding:40px;">
+                    <div style="margin-bottom:40px;">
+                        <span class="font-serif" style="font-size:clamp(3rem,6vw,5.5rem); font-weight:300; color:var(--paper); letter-spacing:0.08em; display:block;">SUKODA</span>
+                        <div style="width:40px; height:1px; background:var(--accent); margin:20px auto;"></div>
+                        <span class="font-sans" style="font-size:10px; letter-spacing:0.3em; text-transform:uppercase; color:var(--accent);">Premium koduhooldus</span>
+                    </div>
+                    <div style="max-width:360px; margin:0 auto; text-align:left; padding:32px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.03);">
+                        <p class="font-sans" style="font-size:12px; color:rgba(250,248,245,0.5); font-weight:300; line-height:2;">
+                            ✦&ensp;Professionaalne koristus<br>
+                            ✦&ensp;Värsked lilled vaasis<br>
+                            ✦&ensp;Käsitsi kirjutatud tervituskaart<br>
+                            ✦&ensp;Magus üllatus<br>
+                            ✦&ensp;Voodipesu vahetus<br>
+                            ✦&ensp;Hooaja puuviljad kausis
+                        </p>
+                    </div>
+                    <p class="font-serif" style="font-size:18px; font-weight:300; font-style:italic; color:rgba(250,248,245,0.4); margin-top:32px;">
+                        Iga. Kord.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Right: Content -->
+            <div style="background:var(--paper); display:flex; flex-direction:column; justify-content:center; padding: clamp(40px,6vw,100px); border-left:1px solid var(--border);">
+                
+                <div class="slide-number" style="margin-bottom:24px;">
+                    <span style="font-size:10px; letter-spacing:0.25em; text-transform:uppercase; color:var(--muted);">( 02 )</span>
+                </div>
+
+                <div class="accent-line slide-tag" style="margin-bottom:28px;"></div>
+
+                <span class="slide-tag font-sans" style="font-size:10px; letter-spacing:0.25em; text-transform:uppercase; color:var(--accent); border:1px solid rgba(184,151,106,0.4); padding:4px 12px; display:inline-block; width:fit-content; margin-bottom:32px;">
+                    Lahendus
+                </span>
+
+                <h1 class="slide-title font-serif" style="font-size:clamp(2.2rem,4.5vw,4.2rem); font-weight:300; line-height:1.1; margin-bottom:32px;">
+                    Kingitus, mis kestab<br>kuid ja jääb meelde<br>aastaid.
+                </h1>
+
+                <p class="slide-body font-sans" style="font-size:15px; color:var(--muted); font-weight:300; line-height:1.7; max-width:440px; margin-bottom:40px;">
+                    SUKODA kinkekaart muudab tehingu lõpetamise elamuseks. Klient astub uude kodusse — lilled vaasis, puuviljad kausis, tervitus laual. Ja teab, et see hoolitsetud tunne tuleb tagasi. Kord kuus, üle nädala või iga nädal.
+                </p>
+
+                <div class="slide-detail" style="background:var(--cream); padding:28px 32px; max-width:440px; margin-bottom:32px;">
+                    <p class="font-sans" style="font-size:11px; letter-spacing:0.15em; text-transform:uppercase; color:var(--accent); margin-bottom:16px; font-weight:500;">Kuidas see käib</p>
+                    <div class="font-sans" style="font-size:13px; color:var(--muted); font-weight:300; line-height:2;">
+                        <div style="display:flex; gap:12px; align-items:baseline;">
+                            <span style="color:var(--accent); font-family:'Cormorant Garamond',serif; font-size:18px;">01</span>
+                            <span>Teie ostate kinkekaardi — 2 minutit</span>
+                        </div>
+                        <div style="display:flex; gap:12px; align-items:baseline;">
+                            <span style="color:var(--accent); font-family:'Cormorant Garamond',serif; font-size:18px;">02</span>
+                            <span>Annate kliendile üle võtmetega</span>
+                        </div>
+                        <div style="display:flex; gap:12px; align-items:baseline;">
+                            <span style="color:var(--accent); font-family:'Cormorant Garamond',serif; font-size:18px;">03</span>
+                            <span>Klient lunastab ja broneerib ise</span>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="slide-cta font-serif" style="font-size:18px; font-weight:300; font-style:italic; color:var(--muted);">
+                    Teist räägitakse edasi.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- SLIDE 3: PAKKUMINE                           -->
+    <!-- ============================================ -->
+    <section class="slide" id="slide-2">
+        <div style="background:var(--paper); width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; padding:clamp(32px,5vw,80px) clamp(32px,6vw,100px);">
+            
+            <div style="max-width:1200px; margin:0 auto; width:100%;">
+
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:clamp(32px,4vw,56px); flex-wrap:wrap; gap:20px;">
+                    <div>
+                        <div class="slide-number" style="margin-bottom:16px;">
+                            <span style="font-size:10px; letter-spacing:0.25em; text-transform:uppercase; color:var(--muted);">( 03 )</span>
+                        </div>
+                        <div class="accent-line slide-tag" style="margin-bottom:24px;"></div>
+                        <span class="slide-tag font-sans" style="font-size:10px; letter-spacing:0.25em; text-transform:uppercase; color:var(--accent); border:1px solid rgba(184,151,106,0.4); padding:4px 12px; display:inline-block; margin-bottom:24px;">
+                            Pakkumine
+                        </span>
+                        <h1 class="slide-title font-serif" style="font-size:clamp(2rem,3.5vw,3.5rem); font-weight:300; line-height:1.15;">
+                            Valige kinkekaart,<br>mis sobib.
+                        </h1>
+                    </div>
+                    <div class="slide-body" style="text-align:right; padding-top:40px;">
+                        <span class="font-serif" style="font-size:clamp(1.8rem,3vw,2.8rem); font-weight:300; letter-spacing:0.08em;">SUKODA</span>
+                    </div>
+                </div>
+
+                <!-- Three offer cards -->
+                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:clamp(16px,2vw,28px); margin-bottom:clamp(28px,3vw,48px);">
+                    
+                    <!-- Card 1: Üks Hetk -->
+                    <div class="offer-card slide-card">
+                        <span class="font-sans" style="font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:var(--accent); display:block; margin-bottom:16px;">Kinkekaart</span>
+                        <h3 class="font-serif" style="font-size:clamp(1.4rem,2.2vw,2rem); font-weight:300; margin-bottom:8px;">Üks Hetk</h3>
+                        <p class="font-sans" style="font-size:12px; color:var(--muted); font-weight:300; margin-bottom:24px;">1 premium koristus koos lillede ja kaardiga</p>
+                        <div style="margin-bottom:24px;">
+                            <span class="price-from font-sans">alates</span><br>
+                            <span class="price-tag">€219</span>
+                        </div>
+                        <ul class="check-list font-sans">
+                            <li>Professionaalne koristus</li>
+                            <li>Värsked lilled</li>
+                            <li>Käsitsi kirjutatud kaart</li>
+                            <li>Magus üllatus</li>
+                        </ul>
+                        <div style="margin-top:24px; padding-top:16px; border-top:1px solid var(--border);">
+                            <p class="font-sans" style="font-size:11px; color:var(--muted); font-weight:300; font-style:italic;">
+                                Ideaalne: üksiktehingu kingitus
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Kuu Aega (Featured) -->
+                    <div class="offer-card featured slide-card">
+                        <span class="font-sans" style="font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:var(--accent); display:block; margin-bottom:16px;">Kinkekaart</span>
+                        <h3 class="font-serif" style="font-size:clamp(1.4rem,2.2vw,2rem); font-weight:300; margin-bottom:8px;">Kuu Aega</h3>
+                        <p class="font-sans" style="font-size:12px; color:var(--muted); font-weight:300; margin-bottom:24px;">2 premium koristust ühe kuu jooksul</p>
+                        <div style="margin-bottom:24px;">
+                            <span class="price-from font-sans">alates</span><br>
+                            <span class="price-tag">€419</span>
+                        </div>
+                        <ul class="check-list font-sans">
+                            <li>2× professionaalne koristus</li>
+                            <li>Värsked lilled iga kord</li>
+                            <li>Käsitsi kirjutatud kaart</li>
+                            <li>Magus üllatus</li>
+                            <li>Hooaja puuviljad</li>
+                        </ul>
+                        <div style="margin-top:24px; padding-top:16px; border-top:1px solid var(--border);">
+                            <p class="font-sans" style="font-size:11px; color:var(--muted); font-weight:300; font-style:italic;">
+                                Ideaalne: premium kinnisvaratehing
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: Kvartal Vabadust -->
+                    <div class="offer-card slide-card">
+                        <span class="font-sans" style="font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:var(--accent); display:block; margin-bottom:16px;">Kinkekaart</span>
+                        <h3 class="font-serif" style="font-size:clamp(1.4rem,2.2vw,2rem); font-weight:300; margin-bottom:8px;">Kvartal Vabadust</h3>
+                        <p class="font-sans" style="font-size:12px; color:var(--muted); font-weight:300; margin-bottom:24px;">6 premium koristust kolme kuu jooksul</p>
+                        <div style="margin-bottom:24px;">
+                            <span class="price-from font-sans">alates</span><br>
+                            <span class="price-tag">€1099</span>
+                        </div>
+                        <ul class="check-list font-sans">
+                            <li>6× professionaalne koristus</li>
+                            <li>Värsked lilled iga kord</li>
+                            <li>Käsitsi kirjutatud kaart</li>
+                            <li>Magus üllatus</li>
+                            <li>Hooaja puuviljad</li>
+                            <li>Taimede kastmine</li>
+                        </ul>
+                        <div style="margin-top:24px; padding-top:16px; border-top:1px solid var(--border);">
+                            <p class="font-sans" style="font-size:11px; color:var(--muted); font-weight:300; font-style:italic;">
+                                Ideaalne: arendajad ja bürood
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom CTA strip -->
+                <div class="slide-cta" style="display:flex; justify-content:space-between; align-items:center; padding:clamp(20px,2.5vw,32px) clamp(24px,3vw,40px); background:var(--black); flex-wrap:wrap; gap:20px;">
+                    <div>
+                        <p class="font-serif" style="font-size:clamp(1.2rem,2vw,1.8rem); font-weight:300; color:var(--paper); line-height:1.3;">
+                            10+ kaarti? Koostame teile eripakkumise.
+                        </p>
+                        <p class="font-sans" style="font-size:12px; color:var(--muted); font-weight:300; margin-top:6px;">
+                            Hulgihinnad arendajatele ja büroodele · Personaliseeritud kaardid · Üks arve
+                        </p>
+                    </div>
+                    <div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap;">
+                        <a href="mailto:partner@sukoda.ee" style="display:inline-block; background:var(--accent); color:var(--paper); padding:14px 32px; font-size:11px; letter-spacing:0.2em; text-transform:uppercase; text-decoration:none; font-family:'Inter',sans-serif; transition:opacity 0.3s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                            partner@sukoda.ee
+                        </a>
+                        <a href="https://sukoda.ee/partnerlus.html" target="_blank" style="display:inline-block; border:1px solid var(--muted); color:var(--paper); padding:14px 32px; font-size:11px; letter-spacing:0.2em; text-transform:uppercase; text-decoration:none; font-family:'Inter',sans-serif; transition:border-color 0.3s, color 0.3s;" onmouseover="this.style.borderColor='var(--paper)'" onmouseout="this.style.borderColor='var(--muted)'">
+                            sukoda.ee
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        let current = 0;
+        const total = 3;
+        let transitioning = false;
+
+        function goTo(index) {
+            if (index === current || transitioning) return;
+            transitioning = true;
+
+            document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+            document.getElementById(`slide-${index}`).classList.add('active');
+
+            document.querySelectorAll('.nav-dot').forEach((d, i) => {
+                d.classList.toggle('active', i === index);
+            });
+
+            document.getElementById('slideCounter').textContent =
+                String(index + 1).padStart(2, '0') + ' / ' + String(total).padStart(2, '0');
+
+            if (index === total - 1) {
+                document.getElementById('navHint').textContent = '';
+            } else {
+                document.getElementById('navHint').textContent = 'Vajuta → või kerige';
+            }
+
+            current = index;
+            setTimeout(() => { transitioning = false; }, 900);
+        }
+
+        function next() { if (current < total - 1) goTo(current + 1); }
+        function prev() { if (current > 0) goTo(current - 1); }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'ArrowDown') { e.preventDefault(); next(); }
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); prev(); }
+        });
+
+        let touchStartX = 0;
+        let touchStartY = 0;
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+        document.addEventListener('touchend', (e) => {
+            const dx = e.changedTouches[0].clientX - touchStartX;
+            const dy = e.changedTouches[0].clientY - touchStartY;
+            if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+                dx < 0 ? next() : prev();
+            }
+        }, { passive: true });
+
+        let wheelTimeout;
+        document.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            clearTimeout(wheelTimeout);
+            wheelTimeout = setTimeout(() => {
+                e.deltaY > 0 ? next() : prev();
+            }, 80);
+        }, { passive: false });
+
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.nav-dot') || e.target.closest('a') || e.target.closest('.nav-bar')) return;
+            const x = e.clientX / window.innerWidth;
+            if (x > 0.65) next();
+            else if (x < 0.35) prev();
+        });
+    </script>
+
+</body>
+</html>

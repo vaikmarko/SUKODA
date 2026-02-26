@@ -17,30 +17,27 @@ const PRODUCTS = {
       name: 'Üks Hetk',
       description: 'Üks täiuslik koduhoolitsus koos lillede, kaardi ja väikese üllatusega.',
       prices: {
-        small: { amount: 14900, nickname: 'Kuni 50m²' },
-        medium: { amount: 17900, nickname: '51-90m²' },
-        large: { amount: 22900, nickname: '91-120m²' },
-        xlarge: { amount: 27900, nickname: '121-150m²' },
+        small: { amount: 21900, nickname: '1-2 tuba' },
+        medium: { amount: 27900, nickname: '3 tuba' },
+        large: { amount: 34900, nickname: '4 tuba' },
       }
     },
     month: {
       name: 'Kuu Aega',
       description: 'Kaks koduhoolitsust ühe kuu jooksul. Lilled, puuviljad ja aroomiküünal.',
       prices: {
-        small: { amount: 29900, nickname: 'Kuni 50m²' },
-        medium: { amount: 34900, nickname: '51-90m²' },
-        large: { amount: 44900, nickname: '91-120m²' },
-        xlarge: { amount: 54900, nickname: '121-150m²' },
+        small: { amount: 41900, nickname: '1-2 tuba' },
+        medium: { amount: 51900, nickname: '3 tuba' },
+        large: { amount: 64900, nickname: '4 tuba' },
       }
     },
     quarter: {
       name: 'Kvartal Vabadust',
       description: 'Kuus koduhoolitsust kolme kuu jooksul. Lilled, puuviljad, taimede kastmine ja premium koduhooldusvahenid.',
       prices: {
-        small: { amount: 74900, nickname: 'Kuni 50m²' },
-        medium: { amount: 89900, nickname: '51-90m²' },
-        large: { amount: 109900, nickname: '91-120m²' },
-        xlarge: { amount: 129900, nickname: '121-150m²' },
+        small: { amount: 109900, nickname: '1-2 tuba' },
+        medium: { amount: 134900, nickname: '3 tuba' },
+        large: { amount: 169900, nickname: '4 tuba' },
       }
     }
   },
@@ -48,33 +45,30 @@ const PRODUCTS = {
   // PÜSITELLIMUSED (Recurring monthly)
   subscriptions: {
     once: {
-      name: 'Kord Kuus',
+      name: '1× kuus',
       description: 'Üks koduhoolitsus kuus. Lilled, käsitsi kirjutatud kaart, magus üllatus.',
       prices: {
-        small: { amount: 11900, nickname: 'Kuni 50m²' },
-        medium: { amount: 14900, nickname: '51-90m²' },
-        large: { amount: 18900, nickname: '91-120m²' },
-        xlarge: { amount: 22900, nickname: '121-150m²' },
+        small: { amount: 17900, nickname: '1-2 tuba' },
+        medium: { amount: 22900, nickname: '3 tuba' },
+        large: { amount: 28900, nickname: '4 tuba' },
       }
     },
     twice: {
-      name: 'Üle Nädala',
+      name: '2× kuus',
       description: 'Kaks koduhoolitsust kuus. Lilled, kaart, puuviljad. Kõige populaarsem valik.',
       prices: {
-        small: { amount: 19900, nickname: 'Kuni 50m²' },
-        medium: { amount: 24900, nickname: '51-90m²' },
-        large: { amount: 31900, nickname: '91-120m²' },
-        xlarge: { amount: 38900, nickname: '121-150m²' },
+        small: { amount: 31900, nickname: '1-2 tuba' },
+        medium: { amount: 39900, nickname: '3 tuba' },
+        large: { amount: 49900, nickname: '4 tuba' },
       }
     },
     weekly: {
-      name: 'Iga Nädal',
+      name: '4× kuus',
       description: 'Neli koduhoolitsust kuus. Lilled, kaart, puuviljad, taimede kastmine. Täielik vabadus.',
       prices: {
-        small: { amount: 37900, nickname: 'Kuni 50m²' },
-        medium: { amount: 44900, nickname: '51-90m²' },
-        large: { amount: 57900, nickname: '91-120m²' },
-        xlarge: { amount: 69900, nickname: '121-150m²' },
+        small: { amount: 57900, nickname: '1-2 tuba' },
+        medium: { amount: 71900, nickname: '3 tuba' },
+        large: { amount: 89900, nickname: '4 tuba' },
       }
     }
   }

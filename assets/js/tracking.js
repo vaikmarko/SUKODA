@@ -1,7 +1,7 @@
 /**
  * SUKODA Tracking & Analytics
- * Meta Pixel + UTM parameter capture + Conversion events
- * GDPR-compliant: Pixel loads ONLY after user consent
+ * Google Analytics (GA4) + Meta Pixel + UTM parameter capture + Conversion events
+ * GDPR-compliant: All tracking loads ONLY after user consent
  */
 
 (function() {
@@ -11,7 +11,9 @@
     // CONFIGURATION
     // ============================================================
     const META_PIXEL_ID = '2178046653021231';
+    const GA_MEASUREMENT_ID = 'G-JTNKBBE98T';
     const pixelEnabled = META_PIXEL_ID && META_PIXEL_ID !== 'SINU_PIXEL_ID_SIIA';
+    const gaEnabled = GA_MEASUREMENT_ID && GA_MEASUREMENT_ID !== 'G-XXXXXXXXXX';
 
     // ============================================================
     // CONSENT MANAGEMENT
@@ -30,6 +32,35 @@
 
     function hasResponded() {
         return hasConsent() || hasDeclined();
+    }
+
+    // ============================================================
+    // GOOGLE ANALYTICS GA4 (loads only with consent)
+    // ============================================================
+    function initGA() {
+        if (!gaEnabled || window._sukodaGAInitialized) return;
+
+        // Load gtag.js script
+        var script = document.createElement('script');
+        script.async = true;
+        script.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_MEASUREMENT_ID;
+        document.head.appendChild(script);
+
+        // Initialize gtag
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function() { window.dataLayer.push(arguments); };
+        window.gtag('js', new Date());
+        window.gtag('config', GA_MEASUREMENT_ID, {
+            send_page_view: true
+        });
+
+        window._sukodaGAInitialized = true;
+    }
+
+    // Helper: send GA4 event (safe — only fires if GA is initialized)
+    function gaEvent(eventName, params) {
+        if (!gaEnabled || !window._sukodaGAInitialized || !window.gtag) return;
+        window.gtag('event', eventName, params || {});
     }
 
     // ============================================================
@@ -52,9 +83,17 @@
         window._sukodaPixelInitialized = true;
     }
 
+    // ============================================================
+    // INITIALIZE ALL TRACKING (consent-based)
+    // ============================================================
+    function initAllTracking() {
+        initGA();
+        initPixel();
+    }
+
     // Auto-initialize if consent already given
     if (hasConsent()) {
-        initPixel();
+        initAllTracking();
     }
 
     // ============================================================
@@ -96,7 +135,7 @@
         // Consent
         acceptCookies: function() {
             document.cookie = 'sukoda_consent=accepted; path=/; max-age=' + (365 * 24 * 60 * 60) + '; SameSite=Lax';
-            initPixel();
+            initAllTracking();
         },
         declineCookies: function() {
             document.cookie = 'sukoda_consent=declined; path=/; max-age=' + (365 * 24 * 60 * 60) + '; SameSite=Lax';
@@ -118,45 +157,96 @@
 
         // Conversion events (only fire with consent)
         trackViewContent: function(data) {
-            if (!pixelEnabled || !hasConsent()) return;
-            fbq('track', 'ViewContent', {
-                content_name: data.name || '',
-                content_category: data.category || 'cleaning',
-                content_type: 'product',
-                value: data.value || 0,
+            if (!hasConsent()) return;
+            // Meta Pixel
+            if (pixelEnabled) {
+                fbq('track', 'ViewContent', {
+                    content_name: data.name || '',
+                    content_category: data.category || 'cleaning',
+                    content_type: 'product',
+                    value: data.value || 0,
+                    currency: 'EUR',
+                });
+            }
+            // Google Analytics
+            gaEvent('view_item', {
                 currency: 'EUR',
+                value: data.value || 0,
+                items: [{
+                    item_name: data.name || '',
+                    item_category: data.category || 'cleaning',
+                }]
             });
         },
         trackInitiateCheckout: function(data) {
-            if (!pixelEnabled || !hasConsent()) return;
-            fbq('track', 'InitiateCheckout', {
-                content_name: data.name || '',
-                content_category: data.category || 'cleaning',
-                value: data.value || 0,
+            if (!hasConsent()) return;
+            // Meta Pixel
+            if (pixelEnabled) {
+                fbq('track', 'InitiateCheckout', {
+                    content_name: data.name || '',
+                    content_category: data.category || 'cleaning',
+                    value: data.value || 0,
+                    currency: 'EUR',
+                    num_items: 1,
+                });
+            }
+            // Google Analytics
+            gaEvent('begin_checkout', {
                 currency: 'EUR',
-                num_items: 1,
+                value: data.value || 0,
+                items: [{
+                    item_name: data.name || '',
+                    item_category: data.category || 'cleaning',
+                    quantity: 1,
+                }]
             });
         },
         trackPurchase: function(data) {
-            if (!pixelEnabled || !hasConsent()) return;
-            fbq('track', 'Purchase', {
-                content_name: data.name || '',
-                content_category: data.category || 'cleaning',
-                value: data.value || 0,
+            if (!hasConsent()) return;
+            // Meta Pixel
+            if (pixelEnabled) {
+                fbq('track', 'Purchase', {
+                    content_name: data.name || '',
+                    content_category: data.category || 'cleaning',
+                    value: data.value || 0,
+                    currency: 'EUR',
+                    num_items: 1,
+                });
+            }
+            // Google Analytics
+            gaEvent('purchase', {
                 currency: 'EUR',
-                num_items: 1,
+                value: data.value || 0,
+                items: [{
+                    item_name: data.name || '',
+                    item_category: data.category || 'cleaning',
+                    quantity: 1,
+                }]
             });
         },
         trackLead: function(data) {
-            if (!pixelEnabled || !hasConsent()) return;
-            fbq('track', 'Lead', {
-                content_name: data.name || '',
-                content_category: data.category || '',
+            if (!hasConsent()) return;
+            // Meta Pixel
+            if (pixelEnabled) {
+                fbq('track', 'Lead', {
+                    content_name: data.name || '',
+                    content_category: data.category || '',
+                });
+            }
+            // Google Analytics
+            gaEvent('generate_lead', {
+                currency: 'EUR',
+                value: data.value || 0,
             });
         },
         trackContact: function() {
-            if (!pixelEnabled || !hasConsent()) return;
-            fbq('track', 'Contact');
+            if (!hasConsent()) return;
+            // Meta Pixel
+            if (pixelEnabled) {
+                fbq('track', 'Contact');
+            }
+            // Google Analytics
+            gaEvent('contact', {});
         },
     };
 

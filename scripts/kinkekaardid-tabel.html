@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+<meta charset="UTF-8">
+<title>SUKODA Kinkekaardid — Variabeltrüki koodid</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Inter:wght@300;400;500&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  @page { size: A4 portrait; margin: 14mm 12mm; }
+  body { font-family:'Inter',system-ui,sans-serif; font-size:11px; color:#1a1a1a; background:#fff; }
+
+  header { display:flex; justify-content:space-between; align-items:flex-end; padding-bottom:12px; border-bottom:1.5px solid #B8976A; margin-bottom:18px; }
+  header h1 { font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:400; letter-spacing:6px; color:#B8976A; }
+  header .meta { text-align:right; color:#999; font-size:9px; line-height:1.9; }
+  h2 { font-size:8px; letter-spacing:4px; text-transform:uppercase; color:#B8976A; font-weight:500; margin-bottom:9px; }
+
+  .summary { background:#FAF8F5; border-left:2px solid #B8976A; padding:9px 14px; margin-bottom:20px; }
+  .sum-row { display:flex; align-items:center; gap:14px; padding:3px 0; border-bottom:1px solid #EDE9E3; }
+  .sum-row:last-child { border-bottom:none; }
+  .sum-code   { font-family:'Cormorant Garamond',serif; font-size:12.5px; color:#B8976A; letter-spacing:1px; min-width:175px; }
+  .sum-detail { flex:1; color:#666; }
+  .sum-count  { font-weight:500; color:#B8976A; min-width:32px; text-align:right; }
+
+  table { width:100%; border-collapse:collapse; margin-bottom:18px; }
+  th { font-size:7.5px; letter-spacing:3px; text-transform:uppercase; color:#B8976A; font-weight:500; padding:6px 8px; border-bottom:1.5px solid #B8976A; text-align:left; }
+  td { padding:4.5px 8px; border-bottom:1px solid #EDE9E3; vertical-align:middle; }
+  tr:last-child td { border-bottom:none; }
+  tr.pkg-start td { border-top:1.5px solid #D4CFC8; }
+  .num   { color:#ccc; font-size:9px; width:24px; }
+  .code  { font-family:'Cormorant Garamond',serif; font-size:13.5px; letter-spacing:1px; white-space:nowrap; }
+  .pkg   { color:#B8976A; font-weight:500; white-space:nowrap; }
+  .desc  { color:#999; font-size:10px; }
+  .size  { color:#555; white-space:nowrap; }
+  .price { font-weight:500; white-space:nowrap; }
+  .blank { width:55px; border-left:1px dashed #e0dbd5; }
+
+  footer { margin-top:14px; padding-top:8px; border-top:1px solid #EDE9E3; color:#bbb; font-size:8px; display:flex; justify-content:space-between; }
+  @media print { tr { page-break-inside:avoid; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>SUKODA</h1>
+  <div class="meta">
+    Variabeltrüki koodid — kinkekaardid<br>
+    Partii: PRINT-1772102261642<br>
+    26.2.2026 · kokku 50 kaarti
+  </div>
+</header>
+
+<h2>Kokkuvõte partiist</h2>
+<div class="summary">
+        <div class="sum-row">
+          <span class="sum-code">SK219-XXXX-XXXX</span>
+          <span class="sum-detail">Üks Hetk · 1-2 tuba · €219</span>
+          <span class="sum-count">10 tk</span>
+        </div>
+        <div class="sum-row">
+          <span class="sum-code">SK279-XXXX-XXXX</span>
+          <span class="sum-detail">Üks Hetk · 3 tuba · €279</span>
+          <span class="sum-count">8 tk</span>
+        </div>
+        <div class="sum-row">
+          <span class="sum-code">SK349-XXXX-XXXX</span>
+          <span class="sum-detail">Üks Hetk · 4 tuba · €349</span>
+          <span class="sum-count">5 tk</span>
+        </div>
+        <div class="sum-row">
+          <span class="sum-code">SK419-XXXX-XXXX</span>
+          <span class="sum-detail">Kuu Aega · 1-2 tuba · €419</span>
+          <span class="sum-count">6 tk</span>
+        </div>
+        <div class="sum-row">
+          <span class="sum-code">SK519-XXXX-XXXX</span>
+          <span class="sum-detail">Kuu Aega · 3 tuba · €519</span>
+          <span class="sum-count">6 tk</span>
+        </div>
+        <div class="sum-row">
+          <span class="sum-code">SK649-XXXX-XXXX</span>
+          <span class="sum-detail">Kuu Aega · 4 tuba · €649</span>
+          <span class="sum-count">3 tk</span>
+        </div>
+        <div class="sum-row">
+          <span class="sum-code">SK1099-XXXX-XXXX</span>
+          <span class="sum-detail">Kvartal Vabadust · 1-2 tuba · €1099</span>
+          <span class="sum-count">5 tk</span>
+        </div>
+        <div class="sum-row">
+          <span class="sum-code">SK1349-XXXX-XXXX</span>
+          <span class="sum-detail">Kvartal Vabadust · 3 tuba · €1349</span>
+          <span class="sum-count">5 tk</span>
+        </div>
+        <div class="sum-row">
+          <span class="sum-code">SK1699-XXXX-XXXX</span>
+          <span class="sum-detail">Kvartal Vabadust · 4 tuba · €1699</span>
+          <span class="sum-count">2 tk</span>
+        </div>
+</div>
+
+<h2>Kõik koodid (variabeltrükk)</h2>
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Kood — trükitakse kaardile</th>
+      <th>Pakett</th>
+      <th>Sisaldab</th>
+      <th>Tubade arv</th>
+      <th>Hind</th>
+      <th>Märkused</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr class="pkg-start">
+        <td class="num">1</td>
+        <td class="code">SK219-HGZR-F9Z6</td>
+        <td class="pkg">Üks Hetk</td>
+        <td class="desc">1 koristus + lilled + kaart + üllatus</td>
+        <td class="size">1-2 tuba</td>
+        <td class="price">€219</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">2</td>
+        <td class="code">SK219-7G32-PJEP</td>
+        <td class="pkg">Üks Hetk</td>
+        <td class="desc">1 koristus + lilled + kaart + üllatus</td>
+        <td class="size">1-2 tuba</td>
+        <td class="price">€219</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">3</td>
+        <td class="code">SK219-9B52-DK68</td>
+        <td class="pkg">Üks Hetk</td>
+        <td class="desc">1 koristus + lilled + kaart + üllatus</td>
+        <td class="size">1-2 tuba</td>
+        <td class="price">€219</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">4</td>
+        <td class="code">SK219-UKZ3-U8PK</td>
+        <td class="pkg">Üks Hetk</td>
+        <td class="desc">1 koristus + lilled + kaart + üllatus</td>
+        <td class="size">1-2 tuba</td>
+        <td class="price">€219</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">5</td>
+        <td class="code">SK219-H32B-5ACC</td>
+        <td class="pkg">Üks Hetk</td>
+        <td class="desc">1 koristus + lilled + kaart + üllatus</td>
+        <td class="size">1-2 tuba</td>
+        <td class="price">€219</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">6</td>
+        <td class="code">SK219-BX4B-XSRN</td>
+        <td class="pkg">Üks Hetk</td>
+        <td class="desc">1 koristus + lilled + kaart + üllatus</td>
+        <td class="size">1-2 tuba</td>
+        <td class="price">€219</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">7</td>
+        <td class="code">SK219-ADLK-H64Y</td>
+        <td class="pkg">Üks Hetk</td>
+        <td class="desc">1 koristus + lilled + kaart + üllatus</td>
+        <td class="size">1-2 tuba</td>
+        <td class="price">€219</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">8</td>
+        <td class="code">SK219-KFCD-JH4S</td>
+        <td class="pkg">Üks Hetk</td>
+        <td class="desc">1 koristus + lilled + kaart + üllatus</td>
+        <td class="size">1-2 tuba</td>
+        <td class="price">€219</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">9</td>
+        <td class="code">SK219-BARL-PKYV</td>
+        <td class="pkg">Üks Hetk</td>
+        <td class="desc">1 koristus + lilled + kaart + üllatus</td>
+        <td class="size">1-2 tuba</td>
+        <td class="price">€219</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">10</td>
+        <td class="code">SK219-DA2U-6TJR</td>
+        <td class="pkg">Üks Hetk</td>
+        <td class="desc">1 koristus + lilled + kaart + üllatus</td>
+        <td class="size">1-2 tuba</td>
+        <td class="price">€219</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">11</td>
+        <td class="code">SK279-LE6E-NWLU</td>
+        <td class="pkg">Üks Hetk</td>
+        <td class="desc">1 koristus + lilled + kaart + üllatus</td>
+        <td class="size">3 tuba</td>
+        <td class="price">€279</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">12</td>
+        <td class="code">SK279-K78H-2G94</td>
+        <td class="pkg">Üks Hetk</td>
+        <td class="desc">1 koristus + lilled + kaart + üllatus</td>
+        <td class="size">3 tuba</td>
+        <td class="price">€279</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">13</td>
+        <td class="code">SK279-678V-LMLE</td>
+        <td class="pkg">Üks Hetk</td>
+        <td class="desc">1 koristus + lilled + kaart + üllatus</td>
+        <td class="size">3 tuba</td>
+        <td class="price">€279</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">14</td>
+        <td class="code">SK279-X3HM-FELS</td>
+        <td class="pkg">Üks Hetk</td>
+        <td class="desc">1 koristus + lilled + kaart + üllatus</td>
+        <td class="size">3 tuba</td>
+        <td class="price">€279</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">15</td>
+        <td class="code">SK279-4N78-5JLL</td>
+        <td class="pkg">Üks Hetk</td>
+        <td class="desc">1 koristus + lilled + kaart + üllatus</td>
+        <td class="size">3 tuba</td>
+        <td class="price">€279</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">16</td>
+        <td class="code">SK279-CJVL-9D2B</td>
+        <td class="pkg">Üks Hetk</td>
+        <td class="desc">1 koristus + lilled + kaart + üllatus</td>
+        <td class="size">3 tuba</td>
+        <td class="price">€279</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">17</td>
+        <td class="code">SK279-QBCM-XQFB</td>
+        <td class="pkg">Üks Hetk</td>
+        <td class="desc">1 koristus + lilled + kaart + üllatus</td>
+        <td class="size">3 tuba</td>
+        <td class="price">€279</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">18</td>
+        <td class="code">SK279-RALC-TGDC</td>
+        <td class="pkg">Üks Hetk</td>
+        <td class="desc">1 koristus + lilled + kaart + üllatus</td>
+        <td class="size">3 tuba</td>
+        <td class="price">€279</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">19</td>
+        <td class="code">SK349-MXPB-9J4P</td>
+        <td class="pkg">Üks Hetk</td>
+        <td class="desc">1 koristus + lilled + kaart + üllatus</td>
+        <td class="size">4 tuba</td>
+        <td class="price">€349</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">20</td>
+        <td class="code">SK349-NSQE-NDG2</td>
+        <td class="pkg">Üks Hetk</td>
+        <td class="desc">1 koristus + lilled + kaart + üllatus</td>
+        <td class="size">4 tuba</td>
+        <td class="price">€349</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">21</td>
+        <td class="code">SK349-MRP2-L2CM</td>
+        <td class="pkg">Üks Hetk</td>
+        <td class="desc">1 koristus + lilled + kaart + üllatus</td>
+        <td class="size">4 tuba</td>
+        <td class="price">€349</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">22</td>
+        <td class="code">SK349-3CZR-X7L2</td>
+        <td class="pkg">Üks Hetk</td>
+        <td class="desc">1 koristus + lilled + kaart + üllatus</td>
+        <td class="size">4 tuba</td>
+        <td class="price">€349</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">23</td>
+        <td class="code">SK349-F425-LS57</td>
+        <td class="pkg">Üks Hetk</td>
+        <td class="desc">1 koristus + lilled + kaart + üllatus</td>
+        <td class="size">4 tuba</td>
+        <td class="price">€349</td>
+        <td class="blank"></td>
+      </tr>
+      <tr class="pkg-start">
+        <td class="num">24</td>
+        <td class="code">SK419-HGP4-FAXA</td>
+        <td class="pkg">Kuu Aega</td>
+        <td class="desc">2 koristust 1 kuu jooksul</td>
+        <td class="size">1-2 tuba</td>
+        <td class="price">€419</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">25</td>
+        <td class="code">SK419-YK6K-HU55</td>
+        <td class="pkg">Kuu Aega</td>
+        <td class="desc">2 koristust 1 kuu jooksul</td>
+        <td class="size">1-2 tuba</td>
+        <td class="price">€419</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">26</td>
+        <td class="code">SK419-LAMM-8TQQ</td>
+        <td class="pkg">Kuu Aega</td>
+        <td class="desc">2 koristust 1 kuu jooksul</td>
+        <td class="size">1-2 tuba</td>
+        <td class="price">€419</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">27</td>
+        <td class="code">SK419-XVYJ-4CLA</td>
+        <td class="pkg">Kuu Aega</td>
+        <td class="desc">2 koristust 1 kuu jooksul</td>
+        <td class="size">1-2 tuba</td>
+        <td class="price">€419</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">28</td>
+        <td class="code">SK419-WUJB-Q2Q2</td>
+        <td class="pkg">Kuu Aega</td>
+        <td class="desc">2 koristust 1 kuu jooksul</td>
+        <td class="size">1-2 tuba</td>
+        <td class="price">€419</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">29</td>
+        <td class="code">SK419-HQAP-947U</td>
+        <td class="pkg">Kuu Aega</td>
+        <td class="desc">2 koristust 1 kuu jooksul</td>
+        <td class="size">1-2 tuba</td>
+        <td class="price">€419</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">30</td>
+        <td class="code">SK519-EQLY-YYXN</td>
+        <td class="pkg">Kuu Aega</td>
+        <td class="desc">2 koristust 1 kuu jooksul</td>
+        <td class="size">3 tuba</td>
+        <td class="price">€519</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">31</td>
+        <td class="code">SK519-JTPP-PY8C</td>
+        <td class="pkg">Kuu Aega</td>
+        <td class="desc">2 koristust 1 kuu jooksul</td>
+        <td class="size">3 tuba</td>
+        <td class="price">€519</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">32</td>
+        <td class="code">SK519-2V8H-6WF7</td>
+        <td class="pkg">Kuu Aega</td>
+        <td class="desc">2 koristust 1 kuu jooksul</td>
+        <td class="size">3 tuba</td>
+        <td class="price">€519</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">33</td>
+        <td class="code">SK519-WMNR-L92Q</td>
+        <td class="pkg">Kuu Aega</td>
+        <td class="desc">2 koristust 1 kuu jooksul</td>
+        <td class="size">3 tuba</td>
+        <td class="price">€519</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">34</td>
+        <td class="code">SK519-U3W9-FMML</td>
+        <td class="pkg">Kuu Aega</td>
+        <td class="desc">2 koristust 1 kuu jooksul</td>
+        <td class="size">3 tuba</td>
+        <td class="price">€519</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">35</td>
+        <td class="code">SK519-BP3Y-WAN3</td>
+        <td class="pkg">Kuu Aega</td>
+        <td class="desc">2 koristust 1 kuu jooksul</td>
+        <td class="size">3 tuba</td>
+        <td class="price">€519</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">36</td>
+        <td class="code">SK649-8HPG-VX2F</td>
+        <td class="pkg">Kuu Aega</td>
+        <td class="desc">2 koristust 1 kuu jooksul</td>
+        <td class="size">4 tuba</td>
+        <td class="price">€649</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">37</td>
+        <td class="code">SK649-59N7-P4L4</td>
+        <td class="pkg">Kuu Aega</td>
+        <td class="desc">2 koristust 1 kuu jooksul</td>
+        <td class="size">4 tuba</td>
+        <td class="price">€649</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">38</td>
+        <td class="code">SK649-EVGD-7U2K</td>
+        <td class="pkg">Kuu Aega</td>
+        <td class="desc">2 koristust 1 kuu jooksul</td>
+        <td class="size">4 tuba</td>
+        <td class="price">€649</td>
+        <td class="blank"></td>
+      </tr>
+      <tr class="pkg-start">
+        <td class="num">39</td>
+        <td class="code">SK1099-5SUP-YFSB</td>
+        <td class="pkg">Kvartal Vabadust</td>
+        <td class="desc">6 koristust 3 kuu jooksul</td>
+        <td class="size">1-2 tuba</td>
+        <td class="price">€1099</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">40</td>
+        <td class="code">SK1099-MHY6-JT4T</td>
+        <td class="pkg">Kvartal Vabadust</td>
+        <td class="desc">6 koristust 3 kuu jooksul</td>
+        <td class="size">1-2 tuba</td>
+        <td class="price">€1099</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">41</td>
+        <td class="code">SK1099-287N-UT7X</td>
+        <td class="pkg">Kvartal Vabadust</td>
+        <td class="desc">6 koristust 3 kuu jooksul</td>
+        <td class="size">1-2 tuba</td>
+        <td class="price">€1099</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">42</td>
+        <td class="code">SK1099-7GZ4-X4PJ</td>
+        <td class="pkg">Kvartal Vabadust</td>
+        <td class="desc">6 koristust 3 kuu jooksul</td>
+        <td class="size">1-2 tuba</td>
+        <td class="price">€1099</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">43</td>
+        <td class="code">SK1099-8CFS-CQME</td>
+        <td class="pkg">Kvartal Vabadust</td>
+        <td class="desc">6 koristust 3 kuu jooksul</td>
+        <td class="size">1-2 tuba</td>
+        <td class="price">€1099</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">44</td>
+        <td class="code">SK1349-EPYQ-FATT</td>
+        <td class="pkg">Kvartal Vabadust</td>
+        <td class="desc">6 koristust 3 kuu jooksul</td>
+        <td class="size">3 tuba</td>
+        <td class="price">€1349</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">45</td>
+        <td class="code">SK1349-9EMK-4W47</td>
+        <td class="pkg">Kvartal Vabadust</td>
+        <td class="desc">6 koristust 3 kuu jooksul</td>
+        <td class="size">3 tuba</td>
+        <td class="price">€1349</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">46</td>
+        <td class="code">SK1349-SWVQ-Z2GM</td>
+        <td class="pkg">Kvartal Vabadust</td>
+        <td class="desc">6 koristust 3 kuu jooksul</td>
+        <td class="size">3 tuba</td>
+        <td class="price">€1349</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">47</td>
+        <td class="code">SK1349-PSAE-F7RG</td>
+        <td class="pkg">Kvartal Vabadust</td>
+        <td class="desc">6 koristust 3 kuu jooksul</td>
+        <td class="size">3 tuba</td>
+        <td class="price">€1349</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">48</td>
+        <td class="code">SK1349-N2WP-AW8F</td>
+        <td class="pkg">Kvartal Vabadust</td>
+        <td class="desc">6 koristust 3 kuu jooksul</td>
+        <td class="size">3 tuba</td>
+        <td class="price">€1349</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">49</td>
+        <td class="code">SK1699-9GF4-9MNJ</td>
+        <td class="pkg">Kvartal Vabadust</td>
+        <td class="desc">6 koristust 3 kuu jooksul</td>
+        <td class="size">4 tuba</td>
+        <td class="price">€1699</td>
+        <td class="blank"></td>
+      </tr>
+      <tr>
+        <td class="num">50</td>
+        <td class="code">SK1699-RT53-GCU6</td>
+        <td class="pkg">Kvartal Vabadust</td>
+        <td class="desc">6 koristust 3 kuu jooksul</td>
+        <td class="size">4 tuba</td>
+        <td class="price">€1699</td>
+        <td class="blank"></td>
+      </tr>
+  </tbody>
+</table>
+
+<footer>
+  <span>Lunastamine: sukoda.ee/lunasta · kood sisestatakse veebilehel</span>
+  <span>SUKODA · tere@sukoda.ee</span>
+</footer>
+
+</body>
+</html>

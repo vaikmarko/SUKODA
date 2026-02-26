@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SUKODA Kinkekaart DL - ESIPOOL
+     Puhas formaat: 210x99 mm (landscape, piklik)
+     Koos bleed: 216x105 mm (3mm igalt poolt)
+     Valge paber + kuldne kuumfoolium
+     Fondid: Convert to Outlines
+-->
+<svg width="216mm" height="105mm" viewBox="0 0 216 105" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&amp;family=Inter:wght@300&amp;display=swap');
+    </style>
+  </defs>
+
+  <rect width="216" height="105" fill="#FFFFFF"/>
+
+  <text x="108" y="48"
+        font-family="'Cormorant Garamond', Georgia, serif"
+        font-size="12"
+        font-weight="400"
+        letter-spacing="6"
+        fill="#B8976A"
+        text-anchor="middle">SUKODA</text>
+
+  <line x1="91" y1="56" x2="125" y2="56" stroke="#B8976A" stroke-width="0.3" opacity="0.5"/>
+
+  <text x="108" y="66"
+        font-family="'Cormorant Garamond', Georgia, serif"
+        font-size="3.5"
+        font-weight="300"
+        letter-spacing="4"
+        fill="#B8976A"
+        opacity="0.8"
+        text-anchor="middle">KINKEKAART</text>
+
+</svg>

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SUKODA Kinkekaart DL &mdash; Disain</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #F5F3F0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 60px 40px 120px;
+      gap: 80px;
+    }
+
+    .page-title {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 14px;
+      font-weight: 300;
+      letter-spacing: 6px;
+      color: #B8976A;
+      text-transform: uppercase;
+    }
+    .page-subtitle {
+      font-size: 11px;
+      color: #8A8578;
+      font-weight: 300;
+      margin-top: 8px;
+      text-align: center;
+    }
+
+    .specs {
+      max-width: 520px;
+      width: 100%;
+    }
+    .specs h2 {
+      font-size: 9px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #B8976A;
+      font-weight: 500;
+      margin-bottom: 20px;
+    }
+    .specs .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #EDEBE8;
+    }
+    .specs .row:last-child { border-bottom: none; }
+    .specs .lbl { font-size: 11px; color: #8A8578; font-weight: 300; }
+    .specs .val { font-size: 11px; color: #B8976A; font-weight: 400; }
+
+    .section-label {
+      font-size: 9px;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: #B8976A;
+      text-align: center;
+      font-weight: 500;
+    }
+    .section-note {
+      font-size: 10px;
+      color: #8A8578;
+      font-weight: 300;
+      text-align: center;
+      margin-top: 6px;
+    }
+
+    .side-label {
+      font-size: 8px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #B8976A;
+      opacity: 0.5;
+      margin-bottom: 16px;
+      font-weight: 400;
+      text-align: center;
+    }
+
+    .card-group {
+      display: flex;
+      gap: 50px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .card-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .card-mock {
+      width: 380px;
+      aspect-ratio: 210 / 99;
+      background: #FFFFFF;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04), 0 12px 36px rgba(0,0,0,0.06);
+      border: 1px solid #EDEBE8;
+    }
+
+    .envelope-mock {
+      width: 400px;
+      aspect-ratio: 220 / 110;
+      background: #111111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 16px 40px rgba(0,0,0,0.15);
+    }
+
+    .assembly {
+      display: flex;
+      align-items: center;
+      gap: 40px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .assembly-arrow {
+      font-size: 24px;
+      color: #B8976A;
+      opacity: 0.3;
+    }
+    .assembly-label {
+      font-size: 9px;
+      color: #8A8578;
+      font-weight: 300;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .note {
+      max-width: 500px;
+      text-align: center;
+      color: #B8976A;
+      opacity: 0.6;
+      font-size: 10px;
+      line-height: 2;
+      font-weight: 300;
+    }
+
+    .rationale {
+      max-width: 460px;
+      width: 100%;
+      padding: 28px 32px;
+      background: white;
+      border: 1px solid #EDEBE8;
+    }
+    .rationale h3 {
+      font-size: 9px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #B8976A;
+      font-weight: 500;
+      margin-bottom: 16px;
+    }
+    .rationale p {
+      font-size: 11px;
+      color: #8A8578;
+      font-weight: 300;
+      line-height: 2;
+    }
+  </style>
+</head>
+<body>
+
+  <div style="text-align:center;">
+    <div class="page-title">Kinkekaart + &uuml;mbrik</div>
+    <p class="page-subtitle">210 &times; 99 mm landscape &middot; must &uuml;mbrik &middot; valge kaart &middot; kuld</p>
+  </div>
+
+  <div class="rationale">
+    <h3>L&auml;henemine</h3>
+    <p>
+      Landscape formaat &mdash; inimene avab &uuml;mbriku ja tekst on kohe laiupidi loetav.<br>
+      Kaart: premium valge paber, ainult kuldne kuumfoolium.<br>
+      &Uuml;mbrik: must disainpaber + kuldne SUKODA esik&uuml;ljel.<br>
+      Must &uuml;mbrik &rarr; valge kaart = kontrast avamisel.
+    </p>
+  </div>
+
+  <!-- SPECS -->
+  <div class="specs">
+    <h2>Kinkekaart</h2>
+    <div class="row"><span class="lbl">Formaat</span><span class="val">210 &times; 99 mm (landscape)</span></div>
+    <div class="row"><span class="lbl">Koos bleed-iga</span><span class="val">216 &times; 105 mm (3mm igalt poolt)</span></div>
+    <div class="row"><span class="lbl">Paber</span><span class="val">350&ndash;400g premium matt tekstuurne</span></div>
+    <div class="row"><span class="lbl">Tr&uuml;kk</span><span class="val">Ainult kuldne kuumfoolium (musta taustatr&uuml;kki pole)</span></div>
+  </div>
+
+  <div class="specs">
+    <h2>&Uuml;mbrik</h2>
+    <div class="row"><span class="lbl">Formaat</span><span class="val">DL landscape disainpaber (sobib 210&times;99mm kaardile)</span></div>
+    <div class="row"><span class="lbl">Materjal</span><span class="val">Must disainpaber</span></div>
+    <div class="row"><span class="lbl">Tr&uuml;kk</span><span class="val">Kuldne kuumfoolium SUKODA esik&uuml;ljel</span></div>
+  </div>
+
+  <!-- CARD FRONT + BACK -->
+  <div>
+    <div class="section-label">Kinkekaart</div>
+    <div class="section-note">Valge paber + kuld &middot; landscape</div>
+  </div>
+
+  <div class="card-group">
+    <div class="card-item">
+      <div class="side-label">Esipool</div>
+      <div class="card-mock">
+        <span style="font-family:'Cormorant Garamond',Georgia,serif; font-size:22px; font-weight:400; letter-spacing:10px; color:#B8976A;">SUKODA</span>
+        <div style="width:34px; height:1px; background:#B8976A; opacity:0.25; margin:10px 0;"></div>
+        <span style="font-family:'Cormorant Garamond',Georgia,serif; font-size:7px; font-weight:300; letter-spacing:5px; color:#B8976A; opacity:0.5;">KINKEKAART</span>
+      </div>
+    </div>
+
+    <div class="card-item">
+      <div class="side-label">Tagapool</div>
+      <div class="card-mock" style="gap:6px;">
+        <span style="font-family:'Cormorant Garamond',Georgia,serif; font-size:20px; font-weight:300; font-style:italic; color:#B8976A;">Sina v&auml;&auml;rid parimat.</span>
+        <div style="width:30px; height:1px; background:#B8976A; opacity:0.2; margin:8px 0;"></div>
+        <span style="font-family:'Cormorant Garamond',Georgia,serif; font-size:12px; font-weight:400; letter-spacing:5px; color:#B8976A;">SK199-A7K2-M9X3</span>
+        <span style="font-family:'Inter',sans-serif; font-size:7px; font-weight:300; color:#B8976A; opacity:0.4; margin-top:4px;">sukoda.ee/lunasta</span>
+        <span style="font-family:'Cormorant Garamond',Georgia,serif; font-size:6px; font-weight:300; letter-spacing:3px; color:#B8976A; opacity:0.2; position:absolute; bottom:12px;">SUKODA</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ENVELOPE -->
+  <div>
+    <div class="section-label">&Uuml;mbrik</div>
+    <div class="section-note">Must disainpaber &middot; landscape &middot; kuldne SUKODA esik&uuml;ljel</div>
+  </div>
+
+  <div class="card-group">
+    <div class="card-item">
+      <div class="side-label">Esik&uuml;lg</div>
+      <div class="envelope-mock">
+        <span style="font-family:'Cormorant Garamond',Georgia,serif; font-size:18px; font-weight:400; letter-spacing:7px; color:#B8976A;">SUKODA</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ASSEMBLY -->
+  <div>
+    <div class="section-label">Komplekt</div>
+  </div>
+
+  <div class="assembly">
+    <div>
+      <div class="envelope-mock" style="width:260px;">
+        <span style="font-family:'Cormorant Garamond',Georgia,serif; font-size:12px; font-weight:400; letter-spacing:5px; color:#B8976A;">SUKODA</span>
+      </div>
+      <p class="assembly-label">Must &uuml;mbrik</p>
+    </div>
+
+    <span class="assembly-arrow">&rarr;</span>
+
+    <div>
+      <div style="position:relative; width:280px; height:160px;">
+        <div class="envelope-mock" style="width:260px; position:absolute; bottom:0; left:10px;">
+          <span style="font-family:'Cormorant Garamond',Georgia,serif; font-size:12px; font-weight:400; letter-spacing:5px; color:#B8976A;">SUKODA</span>
+        </div>
+        <div class="card-mock" style="width:240px; position:absolute; top:0; left:20px; z-index:2;">
+          <span style="font-family:'Cormorant Garamond',Georgia,serif; font-size:14px; font-weight:400; letter-spacing:6px; color:#B8976A;">SUKODA</span>
+          <div style="width:20px; height:1px; background:#B8976A; opacity:0.25; margin:6px 0;"></div>
+          <span style="font-family:'Cormorant Garamond',Georgia,serif; font-size:5px; font-weight:300; letter-spacing:3px; color:#B8976A; opacity:0.5;">KINKEKAART</span>
+        </div>
+      </div>
+      <p class="assembly-label">Avamine &mdash; valge kaart mustast &uuml;mbrikust</p>
+    </div>
+  </div>
+
+  <div class="note">
+    Landscape 210 &times; 99 mm &middot; avad &uuml;mbriku, tekst on kohe laiupidi loetav<br>
+    Must &uuml;mbrik &rarr; valge kaart = elegantne kontrast<br>
+    Ainult kood erineb kaartide vahel
+  </div>
+
+</body>
+</html>

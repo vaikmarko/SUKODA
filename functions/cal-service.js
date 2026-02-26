@@ -7,11 +7,8 @@
  * - Cancelling bookings
  * - Getting booking details
  * 
- * SETUP:
- *   firebase functions:config:set cal.api_key="cal_live_..."
+ * Secret CAL_API_KEY is managed via Firebase Secret Manager.
  */
-
-const functions = require('firebase-functions');
 
 const CAL_API_BASE = 'https://api.cal.eu/v2';
 const CAL_API_VERSION = '2024-11-13';
@@ -21,7 +18,6 @@ const EVENT_TYPE_SLUGS = {
   small: 'koristus-50',
   medium: 'koristus-90',
   large: 'koristus-120',
-  xlarge: 'koristus-150',
 };
 
 // Rhythm intervals in days
@@ -32,7 +28,7 @@ const RHYTHM_INTERVALS = {
 };
 
 function getApiKey() {
-  return process.env.CAL_API_KEY || functions.config().cal?.api_key;
+  return process.env.CAL_API_KEY;
 }
 
 /**
@@ -256,13 +252,24 @@ async function findBestSlot(eventTypeSlug, targetDate, preferredDay, preferredTi
     return null;
   }
 
+  // Enforce minimum 48h booking lead time
+  const minBookingTime = new Date();
+  minBookingTime.setHours(minBookingTime.getHours() + 48);
+
+  const eligibleSlots = slots.filter(slot => new Date(slot.time) >= minBookingTime);
+
+  if (eligibleSlots.length === 0) {
+    console.log('No eligible slots (after 48h filter) found near', targetDate.toISOString());
+    return null;
+  }
+
   // Score each slot: prefer same day of week and similar time
   const preferredHour = preferredTime ? parseInt(preferredTime.split(':')[0], 10) : 10;
 
   let bestSlot = null;
   let bestScore = Infinity;
 
-  for (const slot of slots) {
+  for (const slot of eligibleSlots) {
     const slotDate = new Date(slot.time);
     const slotDay = slotDate.getDay();
     const slotHour = slotDate.getHours();

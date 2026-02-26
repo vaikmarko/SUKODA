@@ -3,324 +3,246 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SUKODA Kinkekaardi Disain</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <title>SUKODA Kaartide Disain</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
       font-family: 'Inter', system-ui, sans-serif;
-      background: #111;
-      color: #FAF8F5;
+      background: #F5F3F0;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 60px 40px;
+      padding: 80px 40px;
       gap: 100px;
     }
 
-    .pair-label {
-      font-size: 10px;
-      letter-spacing: 5px;
-      text-transform: uppercase;
+    .page-title {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 14px;
+      font-weight: 300;
+      letter-spacing: 6px;
       color: #B8976A;
-      margin-bottom: 40px;
-      text-align: center;
+      text-transform: uppercase;
     }
 
-    .label {
+    .specs {
+      max-width: 480px;
+      width: 100%;
+    }
+    .specs h2 {
       font-size: 9px;
       letter-spacing: 4px;
       text-transform: uppercase;
-      color: #555;
+      color: #B8976A;
+      font-weight: 500;
       margin-bottom: 20px;
+    }
+    .specs .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #EDEBE8;
+    }
+    .specs .row:last-child { border-bottom: none; }
+    .specs .lbl { font-size: 11px; color: #8A8578; font-weight: 300; }
+    .specs .val { font-size: 11px; color: #B8976A; font-weight: 400; }
+
+    .section-label {
+      font-size: 9px;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: #B8976A;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    .side-label {
+      font-size: 8px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #B8976A;
+      opacity: 0.5;
+      margin-bottom: 24px;
+      font-weight: 400;
     }
 
     .card-pair {
       display: flex;
-      gap: 40px;
+      gap: 50px;
       flex-wrap: wrap;
       justify-content: center;
     }
 
-    /* ======================== */
-    /* CARD FRONT               */
-    /* ======================== */
-    .card-front {
-      width: 440px;
+    /* Card base */
+    .card {
+      width: 420px;
       aspect-ratio: 148 / 105;
-      background: #111111;
+      background: #FFFFFF;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       position: relative;
-      box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 8px 24px rgba(0,0,0,0.05);
     }
 
-    .card-front .frame {
-      position: absolute;
-      inset: 7%;
-      border: 0.5px solid rgba(184, 151, 106, 0.35);
-    }
-
+    /* Kinkekaart front: just the name */
     .card-front .logo {
       font-family: 'Cormorant Garamond', Georgia, serif;
-      font-size: 34px;
+      font-size: 38px;
       font-weight: 400;
-      letter-spacing: 10px;
-      color: #B8976A;
-      margin-bottom: 10px;
-    }
-
-    .card-front .gold-line {
-      width: 36px;
-      height: 0.5px;
-      background: #B8976A;
-      margin-bottom: 12px;
-    }
-
-    .card-front .subtitle {
-      font-size: 7px;
-      font-weight: 500;
-      letter-spacing: 6px;
-      text-transform: uppercase;
+      letter-spacing: 14px;
       color: #B8976A;
     }
 
-    /* ======================== */
-    /* CARD BACK                */
-    /* ======================== */
-    .card-back {
-      width: 440px;
-      aspect-ratio: 148 / 105;
-      background: #FAF8F5;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 36px 40px 24px;
-      position: relative;
-      box-shadow: 0 30px 60px rgba(0,0,0,0.5);
-      color: #111;
-      text-align: center;
-    }
-
-    .card-back .gold-line-top {
-      width: 24px;
-      height: 0.5px;
-      background: #B8976A;
-      margin-bottom: 18px;
-    }
-
-    .card-back .heading {
+    /* Kinkekaart back */
+    .card-back .message {
       font-family: 'Cormorant Garamond', Georgia, serif;
-      font-size: 26px;
+      font-size: 28px;
       font-weight: 300;
-      line-height: 1.25;
-      margin-bottom: 10px;
-      color: #111;
-    }
-
-    .card-back .subtitle-text {
-      font-size: 8px;
-      font-weight: 300;
-      color: #6B6560;
-      margin-bottom: 6px;
-      line-height: 1.6;
-    }
-
-    .card-back .divider {
-      width: 24px;
-      height: 0.5px;
-      background: #B8976A;
-      margin: 14px 0;
-    }
-
-    .card-back .code-label {
-      font-size: 6px;
-      font-weight: 500;
-      letter-spacing: 3px;
-      text-transform: uppercase;
+      font-style: italic;
       color: #B8976A;
-      margin-bottom: 6px;
+      margin-bottom: 40px;
     }
 
     .card-back .code {
       font-family: 'Cormorant Garamond', Georgia, serif;
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 400;
-      letter-spacing: 3px;
-      color: #111;
-      padding: 7px 20px;
-      border: 0.5px solid #E8E3DD;
+      letter-spacing: 4px;
+      color: #B8976A;
       margin-bottom: 12px;
     }
 
     .card-back .redeem {
-      font-size: 9px;
+      font-size: 7px;
       font-weight: 300;
-      color: #6B6560;
-    }
-    .card-back .redeem strong {
-      font-weight: 500;
-      color: #111;
-    }
-
-    .card-back .footer-row {
-      position: absolute;
-      bottom: 14px;
-      left: 40px;
-      right: 40px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .card-back .footer-row .url {
-      font-size: 6px;
-      letter-spacing: 2px;
-      color: #D4CFC8;
-    }
-    .card-back .footer-row .validity {
-      font-size: 6px;
-      color: #D4CFC8;
-      font-weight: 300;
-    }
-
-    /* ======================== */
-    /* ENVELOPE                 */
-    /* ======================== */
-    .envelope {
-      width: 480px;
-      aspect-ratio: 162 / 114;
-      background: #FAF8F5;
-      border: 1px solid #2a2a2a;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      box-shadow: 0 30px 60px rgba(0,0,0,0.5);
-    }
-
-    .envelope .flap-line {
-      position: absolute;
-      top: 33%;
-      left: 0;
-      right: 0;
-      border-top: 1px dashed #E8E3DD;
-    }
-
-    .envelope .flap-content {
-      position: absolute;
-      top: 10%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .envelope .flap-logo {
-      font-family: 'Cormorant Garamond', Georgia, serif;
-      font-size: 18px;
-      font-weight: 400;
-      letter-spacing: 4px;
       color: #B8976A;
-      margin-bottom: 6px;
+      opacity: 0.55;
     }
 
-    .envelope .flap-line-gold {
-      width: 20px;
-      height: 0.5px;
-      background: #B8976A;
+    /* Tervituskaart front: logo top, rest blank for handwriting */
+    .greeting-front {
+      justify-content: flex-start;
+      padding-top: 6%;
     }
 
-    .envelope .bottom-text {
+    .greeting-front .logo {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 16px;
+      font-weight: 400;
+      letter-spacing: 8px;
+      color: #B8976A;
+    }
+
+    .greeting-front .hint {
+      font-size: 7px;
+      font-weight: 300;
+      color: #B8976A;
+      opacity: 0.25;
       position: absolute;
-      bottom: 6%;
+      bottom: 10%;
+      font-style: italic;
+    }
+
+    /* Tervituskaart back: quote + sukoda.ee */
+    .greeting-back .quote {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 26px;
+      font-weight: 300;
+      font-style: italic;
+      color: #B8976A;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .greeting-back .url {
+      position: absolute;
+      bottom: 7%;
       font-size: 6px;
+      font-weight: 300;
       letter-spacing: 2px;
-      color: #D4CFC8;
+      color: #B8976A;
+      opacity: 0.35;
     }
 
     .note {
-      max-width: 600px;
+      max-width: 400px;
       text-align: center;
-      color: #555;
-      font-size: 11px;
-      line-height: 1.8;
-      font-weight: 300;
-    }
-    .note strong {
       color: #B8976A;
-      font-weight: 500;
+      opacity: 0.6;
+      font-size: 10px;
+      line-height: 2;
+      font-weight: 300;
     }
   </style>
 </head>
 <body>
 
-  <!-- ===================================== -->
-  <!-- UNIVERSAALNE KINKEKAART               -->
-  <!-- Sama disain koigile pakettidele       -->
-  <!-- Ainult kood erinev                    -->
-  <!-- ===================================== -->
-  <div>
-    <div class="pair-label">Universaalne kinkekaart &mdash; &uuml;ks disain k&otilde;igile</div>
-    <div class="card-pair">
-      <div>
-        <div class="label">Esipool</div>
-        <div class="card-front">
-          <div class="frame"></div>
-          <div class="logo">SUKODA</div>
-          <div class="gold-line"></div>
-          <div class="subtitle">KINGIKAART</div>
-        </div>
+  <div class="page-title">Tr&uuml;kidisain</div>
+
+  <div class="specs">
+    <h2>Spetsifikatsioonid</h2>
+    <div class="row"><span class="lbl">Formaat</span><span class="val">A6 maastik (148 &times; 105 mm)</span></div>
+    <div class="row"><span class="lbl">L&otilde;ikevaru (bleed)</span><span class="val">3 mm</span></div>
+    <div class="row"><span class="lbl">Faili formaat</span><span class="val">154 &times; 111 mm (puhas + bleed)</span></div>
+    <div class="row"><span class="lbl">V&auml;rviruum</span><span class="val">CMYK</span></div>
+    <div class="row"><span class="lbl">V&auml;ljund</span><span class="val">PDF/X-1a:2001 v&otilde;i PDF/X-4:2010</span></div>
+    <div class="row"><span class="lbl">Taust</span><span class="val">Valge (tr&uuml;kkimata)</span></div>
+    <div class="row"><span class="lbl">Paber</span><span class="val">350&ndash;400g matt</span></div>
+    <div class="row"><span class="lbl">&Uuml;mbrik</span><span class="val">C6 (162 &times; 114 mm) + 3 mm bleed</span></div>
+    <div class="row"><span class="lbl">Kuumfoolium</span><span class="val">Kuldne</span></div>
+    <div class="row"><span class="lbl">Fondid</span><span class="val">Outlined (Convert to Outlines)</span></div>
+    <div class="row"><span class="lbl">L&otilde;ikem&auml;rgid</span><span class="val">Ei lisata failile</span></div>
+    <div class="row"><span class="lbl">ICC profiilid</span><span class="val">Ei lisata failile</span></div>
+    <div class="row"><span class="lbl">Turvamarginaal</span><span class="val">Tekst &ge; 3 mm servast</span></div>
+  </div>
+
+  <!-- KINKEKAART -->
+  <div class="section-label">Kinkekaart</div>
+
+  <div class="card-pair">
+    <div>
+      <div class="side-label">Esipool</div>
+      <div class="card card-front">
+        <div class="logo">SUKODA</div>
       </div>
-      <div>
-        <div class="label">Tagapool</div>
-        <div class="card-back">
-          <div class="gold-line-top"></div>
-          <div class="heading">Sinu kodu<br>v&auml;&auml;rib parimat.</div>
-          <div class="subtitle-text">
-            See on kingitus, mis teeb su kodu eriliseks.<br>
-            Sisesta kood ja avasta, mis sind ootab.
-          </div>
-          <div class="divider"></div>
-          <div class="code-label">Kingituse kood</div>
-          <div class="code">SUKO-A7K2-M9X3</div>
-          <div class="redeem">Kasuta: <strong>sukoda.ee/lunasta</strong></div>
-          <div class="footer-row">
-            <div class="url">SUKODA.EE</div>
-            <div class="validity">Kehtib 12 kuud</div>
-          </div>
-        </div>
+    </div>
+    <div>
+      <div class="side-label">Tagapool</div>
+      <div class="card card-back">
+        <div class="message">Sina v&auml;&auml;rid parimat.</div>
+        <div class="code">SUKO-A7K2-M9X3</div>
+        <div class="redeem">sukoda.ee/lunasta</div>
       </div>
     </div>
   </div>
 
-  <!-- ===================================== -->
-  <!-- UMBRIK                                -->
-  <!-- ===================================== -->
-  <div>
-    <div class="pair-label">&Uuml;mbrik &mdash; C6</div>
-    <div class="card-pair">
-      <div>
-        <div class="label">&Uuml;mbriku klapi sisepool</div>
-        <div class="envelope">
-          <div class="flap-line"></div>
-          <div class="flap-content">
-            <div class="flap-logo">SUKODA</div>
-            <div class="flap-line-gold"></div>
-          </div>
-          <div class="bottom-text">SUKODA.EE</div>
-        </div>
+  <!-- TERVITUSKAART -->
+  <div class="section-label">Tervituskaart</div>
+
+  <div class="card-pair">
+    <div>
+      <div class="side-label">Esipool</div>
+      <div class="card greeting-front">
+        <div class="logo">SUKODA</div>
+      </div>
+    </div>
+    <div>
+      <div class="side-label">Tagapool &mdash; tr&uuml;kitud</div>
+      <div class="card greeting-back">
+        <div class="quote">Tulid koju.<br>K&otilde;ik on korras.</div>
+        <div class="url">sukoda.ee</div>
       </div>
     </div>
   </div>
 
-  <!-- Note -->
   <div class="note">
-    <strong>NB!</strong> Kaardi disain on universaalne &mdash; sama esipool ja tagapool k&otilde;igile pakettidele.<br>
-    Ainult kood on igal kaardil erinev. Saaja n&auml;eb alles koodi sisestamisel,<br>
-    mis pakett (perioodi ja k&uuml;lastuste arv) talle m&auml;&auml;ratud on.
+    Kinkekaart: universaalne disain, ainult kood erinev.<br>
+    Tervituskaart: esipool isiklik, tagapool Instagrami moment.
   </div>
 
 </body>

@@ -156,8 +156,10 @@
                 </a>
                 
                 <div class="hidden md:flex gap-10 text-[11px] uppercase tracking-[0.2em] font-sans font-medium text-muted">
+                    <a href="index.html" class="luxury-link hover:text-black transition-colors" x-text="lang === 'et' ? 'Avaleht' : 'Home'">Avaleht</a>
                     <a href="kingitus.html" class="text-black transition-colors" x-text="lang === 'et' ? 'Kingitus' : 'Gift'">Kingitus</a>
                     <a href="partnerlus.html" class="luxury-link hover:text-black transition-colors" x-text="lang === 'et' ? 'Koostöö' : 'Partnership'">Koostöö</a>
+                    <a href="lugu.html" class="luxury-link hover:text-black transition-colors" x-text="lang === 'et' ? 'Lugu' : 'Story'">Lugu</a>
                 </div>
 
                 <div class="flex items-center gap-4 md:gap-6">
@@ -184,8 +186,10 @@
 
             <div x-show="mobileMenu" x-cloak class="md:hidden bg-paper border-t border-[#E8E3DD]">
                 <div class="flex flex-col px-4 py-8 space-y-5 text-[11px] uppercase tracking-[0.2em] font-sans font-medium text-muted">
+                    <a href="index.html" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Avaleht' : 'Home'">Avaleht</a>
                     <a href="kingitus.html" class="py-2 text-black" x-text="lang === 'et' ? 'Kingitus' : 'Gift'">Kingitus</a>
                     <a href="partnerlus.html" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Koostöö' : 'Partnership'">Koostöö</a>
+                    <a href="lugu.html" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Lugu' : 'Story'">Lugu</a>
                     <a href="#telli" @click="mobileMenu = false" class="py-2 text-accent" x-text="lang === 'et' ? 'Telli kingitus' : 'Order gift'">Telli kingitus</a>
                 </div>
             </div>
@@ -254,12 +258,11 @@
         <!-- Gift Options -->
         <section id="paketid" class="grid-line-b" x-data="{ 
             size: 'medium',
-            selectedGiftCard: 'test',
+            selectedGiftCard: 'moment',
             prices: {
-                small: { moment: 169, month: 339, quarter: 849, test: 1 },
-                medium: { moment: 199, month: 389, quarter: 999, test: 1 },
-                large: { moment: 259, month: 499, quarter: 1249, test: 1 },
-                xlarge: { moment: 319, month: 619, quarter: 1449, test: 1 }
+                small: { moment: 219, month: 419, quarter: 1099 },
+                medium: { moment: 279, month: 519, quarter: 1349 },
+                large: { moment: 349, month: 649, quarter: 1699 }
             }
         }">
             <div class="grid md:grid-cols-12 grid-line-b border-[#E8E3DD] reveal">
@@ -271,58 +274,23 @@
                     </div>
                 </div>
                 <div class="md:col-span-8 p-4 md:p-12 flex flex-col md:flex-row md:items-center gap-3 md:gap-6 overflow-x-auto">
-                    <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans whitespace-nowrap" x-text="lang === 'et' ? 'Saaja kodu:' : 'Recipient\'s home:'">Saaja kodu:</span>
+                    <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans whitespace-nowrap" x-text="lang === 'et' ? 'Tubade arv:' : 'Rooms:'">Tubade arv:</span>
                     <span class="text-[9px] text-muted/50 font-sans whitespace-nowrap ml-auto hidden md:inline" x-text="lang === 'et' ? 'Hinnad sis. KM' : 'Prices incl. VAT'">Hinnad sis. KM</span>
                     <div class="flex gap-3 md:gap-5 font-sans text-xs whitespace-nowrap overflow-x-auto pb-2 md:pb-0">
-                        <button @click="size = 'small'" :class="size === 'small' ? 'text-black border-b border-accent' : 'text-muted hover:text-black transition-colors'" class="pb-1" x-text="lang === 'et' ? 'Kuni 50m²' : 'Up to 50m²'">Kuni 50m²</button>
-                        <button @click="size = 'medium'" :class="size === 'medium' ? 'text-black border-b border-accent' : 'text-muted hover:text-black transition-colors'" class="pb-1">51–90m²</button>
-                        <button @click="size = 'large'" :class="size === 'large' ? 'text-black border-b border-accent' : 'text-muted hover:text-black transition-colors'" class="pb-1">91–120m²</button>
-                        <button @click="size = 'xlarge'" :class="size === 'xlarge' ? 'text-black border-b border-accent' : 'text-muted hover:text-black transition-colors'" class="pb-1">121–150m²</button>
-                        <button @click="size = 'estate'" :class="size === 'estate' ? 'text-black border-b border-accent' : 'text-muted hover:text-black transition-colors'" class="pb-1">151m²+</button>
+                        <button @click="size = 'small'" :class="size === 'small' ? 'text-black border-b border-accent' : 'text-muted hover:text-black transition-colors'" class="pb-1" x-text="lang === 'et' ? '1-2 tuba' : '1-2 rooms'">1-2 tuba</button>
+                        <button @click="size = 'medium'" :class="size === 'medium' ? 'text-black border-b border-accent' : 'text-muted hover:text-black transition-colors'" class="pb-1" x-text="lang === 'et' ? '3 tuba' : '3 rooms'">3 tuba</button>
+                        <button @click="size = 'large'" :class="size === 'large' ? 'text-black border-b border-accent' : 'text-muted hover:text-black transition-colors'" class="pb-1" x-text="lang === 'et' ? '4 tuba' : '4 rooms'">4 tuba</button>
+                        <button @click="size = 'estate'" :class="size === 'estate' ? 'text-black border-b border-accent' : 'text-muted hover:text-black transition-colors'" class="pb-1" x-text="lang === 'et' ? '5+ tuba / Maja' : '5+ rooms / House'">5+ tuba / Maja</button>
                     </div>
                 </div>
             </div>
 
-            <div class="grid md:grid-cols-4 items-stretch reveal">
+            <div class="grid md:grid-cols-3 items-stretch reveal">
 
-                <!-- Test €1 -->
-                <div class="p-6 md:p-14 lg:p-16 transition-all duration-500 group relative flex flex-col cursor-pointer border-b md:border-b-0 border-[#E8E3DD]"
-                     :class="selectedGiftCard === 'test' ? 'bg-cream/70 ring-1 ring-accent/30' : 'hover:bg-cream/30'"
-                     @click="selectedGiftCard = 'test'; $dispatch('select-gift', { gift: 'Test (' + (size==='small'?'kuni 50m²':size==='medium'?'51-90m²':size==='large'?'91-120m²':'121-150m²') + ')' })">
-                    <div class="absolute top-4 right-4 md:top-6 md:right-6">
-                        <span class="text-[10px] uppercase tracking-[0.25em] text-accent font-sans border border-accent/40 px-3 py-1">Test</span>
-                    </div>
-                    <span class="text-[10px] uppercase tracking-[0.25em] font-sans mb-6 md:mb-8 block" :class="selectedGiftCard === 'test' ? 'text-black' : 'text-muted'">Testimiseks</span>
-                    <div class="font-serif text-4xl md:text-5xl font-light mb-2">Test</div>
-                    <div class="flex items-baseline gap-1 mb-8 md:mb-10">
-                        <span class="font-serif text-lg text-muted">€</span>
-                        <span class="font-serif text-2xl">1</span>
-                    </div>
-                    
-                    <p class="font-sans text-sm font-light leading-relaxed mb-8" :class="selectedGiftCard === 'test' ? 'text-muted' : 'text-muted/70'">
-                        Testtellimus kogu makse flow kontrollimiseks. Päris 1€ makse Stripe'is.
-                    </p>
-
-                    <div class="mb-auto pb-10 py-3 border-t border-[#E8E3DD]">
-                        <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2">Testib</p>
-                        <p class="text-sm font-sans font-light">Makse, e-kiri, success leht</p>
-                    </div>
-
-                    <!-- Selected state -->
-                    <div x-show="selectedGiftCard === 'test'" class="flex items-center justify-center gap-2 w-full py-4 text-accent">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        <span class="text-[11px] uppercase tracking-[0.2em] font-sans">Valitud</span>
-                    </div>
-                    <!-- Unselected state -->
-                    <div x-show="selectedGiftCard !== 'test'" class="block w-full text-center border border-black/30 py-4 text-[11px] uppercase tracking-[0.2em] font-sans text-muted hover:border-black hover:text-black transition-all duration-500">
-                        Vali see
-                    </div>
-                </div>
-                
                 <!-- Üks Hetk -->
                 <div class="p-6 md:p-14 lg:p-16 grid-line border-b md:border-b-0 border-[#E8E3DD] transition-all duration-500 group relative flex flex-col cursor-pointer"
                      :class="selectedGiftCard === 'moment' ? 'bg-cream/70 ring-1 ring-accent/30' : 'hover:bg-cream/30'"
-                     @click="selectedGiftCard = 'moment'; $dispatch('select-gift', { gift: size === 'estate' ? 'Rätseplahendus' : 'Üks Hetk (' + (size==='small'?'kuni 50m²':size==='medium'?'51-90m²':size==='large'?'91-120m²':'121-150m²') + ')' })">
+                     @click="selectedGiftCard = 'moment'; $dispatch('select-gift', { gift: size === 'estate' ? 'Rätseplahendus' : 'Üks Hetk (' + (size==='small'?'1-2 tuba':size==='medium'?'3 tuba':'4 tuba') + ')' })">
                     <span class="text-[10px] uppercase tracking-[0.25em] font-sans mb-6 md:mb-8 block" :class="selectedGiftCard === 'moment' ? 'text-black' : 'text-muted'" x-text="lang === 'et' ? 'Üks hoolitsus' : 'One visit'">Üks hoolitsus</span>
                     <div class="font-serif text-4xl md:text-5xl font-light mb-2">
                         <span x-show="size !== 'estate'" x-text="lang === 'et' ? 'Üks Hetk' : 'One Moment'">Üks Hetk</span>
@@ -336,12 +304,12 @@
                         <p class="font-serif text-xl italic text-accent" x-text="lang === 'et' ? 'Räägime läbi' : 'Let\'s talk'">Räägime läbi</p>
                     </div>
                     
-                    <p class="font-sans text-sm font-light leading-relaxed mb-8" :class="selectedGiftCard === 'moment' ? 'text-muted' : 'text-muted/70'">
+                    <p class="font-sans text-sm font-light leading-relaxed mb-auto pb-10" :class="selectedGiftCard === 'moment' ? 'text-muted' : 'text-muted/70'">
                         <span x-show="lang === 'et'">Üks täiuslik külastus. Lilled, kaart ja magus üllatus. Eriline hetk kellelegi erilisele.</span>
                         <span x-show="lang === 'en'" x-cloak>One perfect visit. Flowers, card, and a sweet surprise. A special moment for someone special.</span>
                     </p>
 
-                    <div class="mb-auto pb-10 py-3 border-t border-[#E8E3DD]">
+                    <div class="py-3 border-t border-[#E8E3DD]">
                         <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Sisaldab' : 'Includes'">Sisaldab</p>
                         <p class="text-sm font-sans font-light" x-text="lang === 'et' ? 'Lilled, kaart, üllatus, voodipesu vahetus' : 'Flowers, card, surprise, bed linen change'">Lilled, kaart, üllatus, voodipesu vahetus</p>
                     </div>
@@ -360,7 +328,7 @@
                 <!-- Kuu Aega -->
                 <div class="p-6 md:p-14 lg:p-16 transition-all duration-500 relative flex flex-col border-b md:border-b-0 border-[#E8E3DD] cursor-pointer"
                      :class="selectedGiftCard === 'month' ? 'bg-cream/70 ring-1 ring-accent/30' : 'bg-cream/30 hover:bg-cream/50'"
-                     @click="selectedGiftCard = 'month'; $dispatch('select-gift', { gift: size === 'estate' ? 'Rätseplahendus' : 'Kuu Aega (' + (size==='small'?'kuni 50m²':size==='medium'?'51-90m²':size==='large'?'91-120m²':'121-150m²') + ')' })">
+                     @click="selectedGiftCard = 'month'; $dispatch('select-gift', { gift: size === 'estate' ? 'Rätseplahendus' : 'Kuu Aega (' + (size==='small'?'1-2 tuba':size==='medium'?'3 tuba':'4 tuba') + ')' })">
                     <div class="absolute top-4 right-4 md:top-6 md:right-6">
                         <span class="text-[10px] uppercase tracking-[0.25em] text-accent font-sans border border-accent/40 px-3 py-1" x-text="lang === 'et' ? 'Soovitame' : 'Recommended'">Soovitame</span>
                     </div>
@@ -377,7 +345,7 @@
                         <p class="font-serif text-xl italic text-accent" x-text="lang === 'et' ? 'Räägime läbi' : 'Let\'s talk'">Räägime läbi</p>
                     </div>
                     
-                    <p class="font-sans text-sm font-light leading-relaxed mb-8" :class="selectedGiftCard === 'month' ? 'text-muted' : 'text-muted/70'">
+                    <p class="font-sans text-sm font-light leading-relaxed mb-8 pb-2" :class="selectedGiftCard === 'month' ? 'text-muted' : 'text-muted/70'">
                         <span x-show="lang === 'et'">Terve kuu hoolitsust. Kaks külastust lilledega, puuviljadega ja selle erilise tundega.</span>
                         <span x-show="lang === 'en'" x-cloak>A whole month of care. Two visits with flowers, fruits, and that special feeling.</span>
                     </p>
@@ -401,7 +369,7 @@
                 <!-- Kvartal Vabadust -->
                 <div class="p-6 md:p-14 lg:p-16 transition-all duration-500 relative flex flex-col cursor-pointer"
                      :class="selectedGiftCard === 'quarter' ? 'bg-cream/70 ring-1 ring-accent/30' : 'bg-cream/30 hover:bg-cream/50'"
-                     @click="selectedGiftCard = 'quarter'; $dispatch('select-gift', { gift: size === 'estate' ? 'Rätseplahendus' : 'Kvartal Vabadust (' + (size==='small'?'kuni 50m²':size==='medium'?'51-90m²':size==='large'?'91-120m²':'121-150m²') + ')' })">
+                     @click="selectedGiftCard = 'quarter'; $dispatch('select-gift', { gift: size === 'estate' ? 'Rätseplahendus' : 'Kvartal Vabadust (' + (size==='small'?'1-2 tuba':size==='medium'?'3 tuba':'4 tuba') + ')' })">
                     <span class="text-[10px] uppercase tracking-[0.25em] font-sans mb-6 md:mb-8 block" :class="selectedGiftCard === 'quarter' ? 'text-black' : 'text-muted'" x-text="lang === 'et' ? 'Kuus hoolitsust' : 'Six visits'">Kuus hoolitsust</span>
                     <div class="font-serif text-4xl md:text-5xl font-light mb-2">
                         <span x-show="size !== 'estate'" x-text="lang === 'et' ? 'Kvartal Vabadust' : 'Quarter of Freedom'">Kvartal Vabadust</span>
@@ -415,7 +383,7 @@
                         <p class="font-serif text-xl italic text-accent" x-text="lang === 'et' ? 'Räägime läbi' : 'Let\'s talk'">Räägime läbi</p>
                     </div>
                     
-                    <p class="font-sans text-sm font-light leading-relaxed mb-8" :class="selectedGiftCard === 'quarter' ? 'text-muted' : 'text-muted/70'">
+                    <p class="font-sans text-sm font-light leading-relaxed mb-8 pb-2" :class="selectedGiftCard === 'quarter' ? 'text-muted' : 'text-muted/70'">
                         <span x-show="lang === 'et'">Kolm kuud täielikku vabadust. Lilled, puuviljad, hoolitsus. Üle nädala.</span>
                         <span x-show="lang === 'en'" x-cloak>Three months of complete freedom. Flowers, fruits, care. Every other week.</span>
                     </p>
@@ -497,10 +465,10 @@
         <!-- Step-by-step Process -->
         <section id="telli" class="grid md:grid-cols-12 grid-line-b bg-paper" x-data="{ 
             step: 2,
-            selectedGift: 'Test (51-90m²)',
+            selectedGift: 'Üks Hetk (3 tuba)',
             selectedSize: 'medium',
-            selectedGiftType: 'test',
-            giftPrice: 1,
+            selectedGiftType: 'moment',
+            giftPrice: 279,
             name: '', 
             email: '', 
             phone: '',
@@ -510,10 +478,9 @@
             isProcessing: false,
             checkoutError: '',
             prices: {
-                small: { moment: 169, month: 339, quarter: 849, test: 1 },
-                medium: { moment: 199, month: 389, quarter: 999, test: 1 },
-                large: { moment: 259, month: 499, quarter: 1249, test: 1 },
-                xlarge: { moment: 319, month: 619, quarter: 1449, test: 1 }
+                small: { moment: 219, month: 419, quarter: 1099 },
+                medium: { moment: 279, month: 519, quarter: 1349 },
+                large: { moment: 349, month: 649, quarter: 1699 }
             },
             nameError: false,
             emailError: false,
@@ -598,19 +565,17 @@
             }
         }" @select-gift.window="
             selectedGift = $event.detail.gift;
-            const giftMatch = $event.detail.gift.match(/(Test|Üks Hetk|Kuu Aega|Kvartal Vabadust)/);
+            const giftMatch = $event.detail.gift.match(/(Üks Hetk|Kuu Aega|Kvartal Vabadust)/);
             if (giftMatch) {
-                if (giftMatch[0] === 'Test') selectedGiftType = 'test';
-                else if (giftMatch[0] === 'Üks Hetk') selectedGiftType = 'moment';
+                if (giftMatch[0] === 'Üks Hetk') selectedGiftType = 'moment';
                 else if (giftMatch[0] === 'Kuu Aega') selectedGiftType = 'month';
                 else if (giftMatch[0] === 'Kvartal Vabadust') selectedGiftType = 'quarter';
             }
-            const sizeMatch = $event.detail.gift.match(/(kuni 50m²|51-90m²|91-120m²|121-150m²)/i);
+            const sizeMatch = $event.detail.gift.match(/(1-2 tuba|3 tuba|4 tuba)/i);
             if (sizeMatch) {
-                if (sizeMatch[0].includes('50')) selectedSize = 'small';
-                else if (sizeMatch[0].includes('51')) selectedSize = 'medium';
-                else if (sizeMatch[0].includes('91')) selectedSize = 'large';
-                else if (sizeMatch[0].includes('121')) selectedSize = 'xlarge';
+                if (sizeMatch[0].includes('1-2')) selectedSize = 'small';
+                else if (sizeMatch[0].includes('3')) selectedSize = 'medium';
+                else if (sizeMatch[0].includes('4')) selectedSize = 'large';
             }
             if (selectedGiftType && selectedSize) {
                 giftPrice = prices[selectedSize][selectedGiftType] || 0;
@@ -773,32 +738,32 @@
             <div class="grid md:grid-cols-12 py-16 px-6 md:px-12">
                 <div class="md:col-span-4 mb-8 md:mb-0">
                     <a href="index.html" class="font-serif text-2xl tracking-[0.08em] font-light block mb-4">SUKODA</a>
-                    <p class="text-muted text-xs font-sans font-light leading-relaxed max-w-xs">
+                    <p class="text-gray-300 text-xs font-sans font-light leading-relaxed max-w-xs">
                         <span x-show="lang === 'et'">Sinu kodu, meie hoole all.<br>Tallinn, Eesti.</span>
                         <span x-show="lang === 'en'" x-cloak>Your home, our care.<br>Tallinn, Estonia.</span>
                     </p>
                 </div>
                 <div class="md:col-span-4 mb-8 md:mb-0">
-                    <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-4">
+                    <p class="text-[10px] uppercase tracking-[0.25em] text-gray-300 font-sans mb-4">
                         <span x-show="lang === 'et'">Lingid</span>
                         <span x-show="lang === 'en'" x-cloak>Links</span>
                     </p>
-                    <div class="flex flex-col gap-3 text-xs text-muted/70 font-sans font-light">
+                    <div class="flex flex-col gap-3 text-xs text-gray-300 font-sans font-light">
                         <a href="tingimused.html" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Tingimused' : 'Terms'">Tingimused</a>
                         <a href="privaatsus.html" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Privaatsuspoliitika' : 'Privacy'">Privaatsuspoliitika</a>
                     </div>
                 </div>
                 <div class="md:col-span-4">
-                    <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-4">
+                    <p class="text-[10px] uppercase tracking-[0.25em] text-gray-300 font-sans mb-4">
                         <span x-show="lang === 'et'">Kontakt</span>
                         <span x-show="lang === 'en'" x-cloak>Contact</span>
                     </p>
-                    <a href="mailto:tere@sukoda.ee" class="text-xs font-sans font-light text-muted/70 hover:text-paper transition-colors block mb-2">tere@sukoda.ee</a>
-                    <a href="mailto:partner@sukoda.ee" class="text-xs font-sans font-light text-muted/70 hover:text-paper transition-colors block">partner@sukoda.ee</a>
+                    <a href="mailto:tere@sukoda.ee" class="text-xs font-sans font-light text-gray-300 hover:text-paper transition-colors block mb-2">tere@sukoda.ee</a>
+                    <a href="mailto:partner@sukoda.ee" class="text-xs font-sans font-light text-gray-300 hover:text-paper transition-colors block">partner@sukoda.ee</a>
                 </div>
             </div>
             <div class="border-t border-gray-800 py-6 px-6 md:px-12">
-                <p class="text-[10px] text-muted/40 font-sans text-center tracking-wide">
+                <p class="text-[10px] text-gray-400 font-sans text-center tracking-wide">
                     <span x-show="lang === 'et'">© 2026 Epic Ship OÜ · Registrikood 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
                     <span x-show="lang === 'en'" x-cloak>© 2026 Epic Ship OÜ · Reg. code 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
                 </p>

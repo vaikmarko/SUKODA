@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SUKODA Volditav Kinkekaart - SISEPOOL
+     Voldituna: 220x105 mm (DL formaat)
+     Lahti: 440x105 mm
+     Koos bleed: 446x111 mm (3mm igalt poolt)
+     Voldisjoon: x=223mm
+     Valge taust + kuldne kuumfoolium
+     Fondid: Convert to Outlines
+-->
+<svg width="446mm" height="111mm" viewBox="0 0 446 111" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&amp;family=Inter:wght@300&amp;display=swap');
+    </style>
+  </defs>
+
+  <rect width="446" height="111" fill="#FFFFFF"/>
+
+  <!-- Fold line (reference, remove before print) -->
+  <line x1="223" y1="0" x2="223" y2="111" stroke="#E8E3DD" stroke-width="0.2" stroke-dasharray="2,2"/>
+
+  <!-- LEFT PANEL: MESSAGE (x=3..223, center x=113) -->
+
+  <text x="113" y="50"
+        font-family="'Cormorant Garamond', Georgia, serif"
+        font-size="14"
+        font-weight="300"
+        font-style="italic"
+        fill="#B8976A"
+        text-anchor="middle">Sina v&#xE4;&#xE4;rid parimat.</text>
+
+  <line x1="93" y1="62" x2="133" y2="62" stroke="#B8976A" stroke-width="0.3" opacity="0.2"/>
+
+  <text x="113" y="74"
+        font-family="'Cormorant Garamond', Georgia, serif"
+        font-size="4"
+        font-weight="300"
+        letter-spacing="3"
+        fill="#B8976A"
+        opacity="0.3"
+        text-anchor="middle">SUKODA</text>
+
+  <!-- RIGHT PANEL: CODE (x=223..443, center x=333) -->
+
+  <text x="333" y="50"
+        font-family="'Cormorant Garamond', Georgia, serif"
+        font-size="7"
+        font-weight="400"
+        letter-spacing="5"
+        fill="#B8976A"
+        text-anchor="middle">SK199-A7K2-M9X3</text>
+
+  <text x="333" y="64"
+        font-family="'Inter', 'Helvetica Neue', sans-serif"
+        font-size="2.5"
+        font-weight="300"
+        letter-spacing="1"
+        fill="#B8976A"
+        opacity="0.4"
+        text-anchor="middle">sukoda.ee/lunasta</text>
+
+</svg>

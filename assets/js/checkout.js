@@ -65,7 +65,7 @@ async function createCheckout(orderData) {
  */
 async function startSubscriptionCheckout({
   rhythm,      // 'once', 'twice', 'weekly'
-  size,        // 'small', 'medium', 'large', 'xlarge'
+  size,        // 'small', 'medium', 'large'
   customer,    // { name, email, phone, address }
   lang = 'et',
   promoCode,   // optional promo code (e.g. from follow-up email)
@@ -97,7 +97,7 @@ async function startSubscriptionCheckout({
  */
 async function startGiftCheckout({
   giftType,        // 'moment', 'month', 'quarter'
-  size,            // 'small', 'medium', 'large', 'xlarge'
+  size,            // 'small', 'medium', 'large'
   customer,        // { name, email, phone }
   recipient,       // { name, address, message }
   deliveryMethod,  // 'email' or 'post'

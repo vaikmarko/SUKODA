@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SUKODA Tervituskaart - ESIPOOL (kasitsi kirjutamiseks)
+     Puhas formaat: 148x99 mm (landscape, sama korgus kui kinkekaart)
+     Koos bleed: 154x105 mm (3mm igalt poolt)
+     Valge paber + kuldne kuumfoolium (ainult SUKODA logo)
+     Fondid: Convert to Outlines
+-->
+<svg width="154mm" height="105mm" viewBox="0 0 154 105" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&amp;display=swap');
+    </style>
+  </defs>
+
+  <rect width="154" height="105" fill="#FFFFFF"/>
+
+  <text x="77" y="18"
+        font-family="'Cormorant Garamond', Georgia, serif"
+        font-size="9"
+        font-weight="400"
+        letter-spacing="5"
+        fill="#B8976A"
+        text-anchor="middle">SUKODA</text>
+
+</svg>

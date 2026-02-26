@@ -58,8 +58,8 @@ firebase emulators:start
 1. Mine [Stripe Dashboard (Test mode)](https://dashboard.stripe.com/test/products)
 2. Veendu, et oled TEST mode's (vaata ülemist menüüd)
 3. Loo vähemalt üks test toode:
-   - Nimi: "Test - Üks Hetk 51-90m²"
-   - Hind: €179 (one-time)
+   - Nimi: "Test - Üks Hetk 3 tuba"
+   - Hind: €279 (one-time)
 4. Kopeeri Price ID (nt `price_1QaBC...`)
 
 ### 3.2 Seadista Price ID
@@ -132,7 +132,7 @@ stripe listen --forward-to localhost:5001/sukoda-77b52/europe-west1/stripeWebhoo
 ### Stsenaarium A: Kingitus
 
 1. Ava kingitus.html
-2. Vali "Üks Hetk", suurus 51-90m²
+2. Vali "Üks Hetk", tubade arv 3 tuba
 3. Täida andmed:
    - Sinu nimi: Test Tellija
    - E-post: test@example.com
@@ -149,7 +149,7 @@ stripe listen --forward-to localhost:5001/sukoda-77b52/europe-west1/stripeWebhoo
 ### Stsenaarium B: Püsitellimus
 
 1. Ava index.html
-2. Vali "Üle nädala", suurus 51-90m²
+2. Vali "2× kuus", tubade arv 3 tuba
 3. Täida andmed
 4. Maksa
 5. Kontrolli:

@@ -18,24 +18,21 @@ export const STRIPE_PRICES = {
   gifts: {
     // Üks Hetk - üks koristuskord
     moment: {
-      small: 'price_TÄIDA_MOMENT_SMALL',    // 149€ (kuni 50m²)
-      medium: 'price_TÄIDA_MOMENT_MEDIUM',  // 179€ (51-90m²)
-      large: 'price_TÄIDA_MOMENT_LARGE',    // 229€ (91-120m²)
-      xlarge: 'price_TÄIDA_MOMENT_XLARGE',  // 279€ (121-150m²)
+      small: 'price_1T51LQEoH1b07UGQXIx58Ipf',    // 219€
+      medium: 'price_1T51LQEoH1b07UGQs6SVNha0',  // 279€
+      large: 'price_1T51LQEoH1b07UGQrRB2dK4y',    // 349€
     },
     // Kuu Aega - kaks koristuskorda
     month: {
-      small: 'price_TÄIDA_MONTH_SMALL',     // 299€
-      medium: 'price_TÄIDA_MONTH_MEDIUM',   // 349€
-      large: 'price_TÄIDA_MONTH_LARGE',     // 449€
-      xlarge: 'price_TÄIDA_MONTH_XLARGE',   // 549€
+      small: 'price_1T51LREoH1b07UGQmq2lmlqR',     // 419€
+      medium: 'price_1T51LREoH1b07UGQZqOx9ixS',   // 519€
+      large: 'price_1T51LSEoH1b07UGQUhpp0B8u',     // 649€
     },
     // Kvartal Vabadust - kuus koristuskorda
     quarter: {
-      small: 'price_TÄIDA_QUARTER_SMALL',   // 749€
-      medium: 'price_TÄIDA_QUARTER_MEDIUM', // 899€
-      large: 'price_TÄIDA_QUARTER_LARGE',   // 1099€
-      xlarge: 'price_TÄIDA_QUARTER_XLARGE', // 1299€
+      small: 'price_1T51LSEoH1b07UGQJNJkNsH5',   // 1099€
+      medium: 'price_1T51LTEoH1b07UGQmBbzkp04', // 1349€
+      large: 'price_1T51LTEoH1b07UGQWt1dkflE',   // 1699€
     },
   },
 
@@ -43,26 +40,23 @@ export const STRIPE_PRICES = {
   // PÜSITELLIMUSED (recurring monthly)
   // ==========================================
   subscriptions: {
-    // Kord kuus - 1× külastus kuus
+    // 1× kuus - 1× külastus kuus
     once: {
-      small: 'price_TÄIDA_ONCE_SMALL',      // 119€/kuu
-      medium: 'price_TÄIDA_ONCE_MEDIUM',    // 149€/kuu
-      large: 'price_TÄIDA_ONCE_LARGE',      // 189€/kuu
-      xlarge: 'price_TÄIDA_ONCE_XLARGE',    // 229€/kuu
+      small: 'price_1T51LTEoH1b07UGQ6i8FiEix',      // 179€/kuu
+      medium: 'price_1T51LUEoH1b07UGQPsUzybQS',    // 229€/kuu
+      large: 'price_1T51LUEoH1b07UGQs0BYqLx2',      // 289€/kuu
     },
-    // Üle nädala - 2× külastust kuus
+    // 2× kuus - 2× külastust kuus
     twice: {
-      small: 'price_TÄIDA_TWICE_SMALL',     // 199€/kuu
-      medium: 'price_TÄIDA_TWICE_MEDIUM',   // 249€/kuu
-      large: 'price_TÄIDA_TWICE_LARGE',     // 319€/kuu
-      xlarge: 'price_TÄIDA_TWICE_XLARGE',   // 389€/kuu
+      small: 'price_1T51LVEoH1b07UGQp5MscEFb',     // 319€/kuu
+      medium: 'price_1T51LVEoH1b07UGQg8c4tW5t',   // 399€/kuu
+      large: 'price_1T51LVEoH1b07UGQrFg16Y7y',     // 499€/kuu
     },
-    // Iga nädal - 4× külastust kuus
+    // 4× kuus - 4× külastust kuus
     weekly: {
-      small: 'price_TÄIDA_WEEKLY_SMALL',    // 379€/kuu
-      medium: 'price_TÄIDA_WEEKLY_MEDIUM',  // 449€/kuu
-      large: 'price_TÄIDA_WEEKLY_LARGE',    // 579€/kuu
-      xlarge: 'price_TÄIDA_WEEKLY_XLARGE',  // 699€/kuu
+      small: 'price_1T51LWEoH1b07UGQ4Bh1ig1o',    // 579€/kuu
+      medium: 'price_1T51LWEoH1b07UGQ9NLtoAgb',  // 719€/kuu
+      large: 'price_1T51LXEoH1b07UGQmVNjYRf6',    // 899€/kuu
     },
   },
 };
@@ -70,14 +64,14 @@ export const STRIPE_PRICES = {
 // Hinnad (eurodes) - kasutatakse UI-s
 export const PRICES = {
   gifts: {
-    moment: { small: 149, medium: 179, large: 229, xlarge: 279 },
-    month: { small: 299, medium: 349, large: 449, xlarge: 549 },
-    quarter: { small: 749, medium: 899, large: 1099, xlarge: 1299 },
+    moment: { small: 219, medium: 279, large: 349 },
+    month: { small: 419, medium: 519, large: 649 },
+    quarter: { small: 1099, medium: 1349, large: 1699 },
   },
   subscriptions: {
-    once: { small: 119, medium: 149, large: 189, xlarge: 229 },
-    twice: { small: 199, medium: 249, large: 319, xlarge: 389 },
-    weekly: { small: 379, medium: 449, large: 579, xlarge: 699 },
+    once: { small: 179, medium: 229, large: 289 },
+    twice: { small: 319, medium: 399, large: 499 },
+    weekly: { small: 579, medium: 719, large: 899 },
   },
 };
 
@@ -89,17 +83,16 @@ export const PACKAGE_NAMES = {
     quarter: { et: 'Kvartal Vabadust', en: 'Quarter of Freedom' },
   },
   subscriptions: {
-    once: { et: 'Kord kuus', en: 'Once a month' },
-    twice: { et: 'Üle nädala', en: 'Biweekly' },
-    weekly: { et: 'Iga nädal', en: 'Weekly' },
+    once: { et: '1× kuus', en: '1× month' },
+    twice: { et: '2× kuus', en: '2× month' },
+    weekly: { et: '4× kuus', en: '4× month' },
   },
 };
 
 // Suuruste nimed
 export const SIZE_NAMES = {
-  small: { et: 'Kuni 50m²', en: 'Up to 50m²' },
-  medium: { et: '51-90m²', en: '51-90m²' },
-  large: { et: '91-120m²', en: '91-120m²' },
-  xlarge: { et: '121-150m²', en: '121-150m²' },
+  small: { et: '1-2 tuba', en: '1-2 rooms' },
+  medium: { et: '3 tuba', en: '3 rooms' },
+  large: { et: '4 tuba', en: '4 rooms' },
 };
 
