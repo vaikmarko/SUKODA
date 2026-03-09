@@ -71,7 +71,14 @@ async function calApiRequest(method, path, body = null) {
  * Get all event types to find event type IDs
  * Returns map of slug -> eventTypeId
  */
+let _eventTypesCache = null;
+let _eventTypesCacheTime = 0;
+const EVENT_TYPES_CACHE_TTL = 5 * 60 * 1000;
+
 async function getEventTypes() {
+  if (_eventTypesCache && Date.now() - _eventTypesCacheTime < EVENT_TYPES_CACHE_TTL) {
+    return _eventTypesCache;
+  }
   const data = await calApiRequest('GET', '/event-types');
   const eventTypes = {};
 
@@ -102,6 +109,8 @@ async function getEventTypes() {
     }
   }
 
+  _eventTypesCache = eventTypes;
+  _eventTypesCacheTime = Date.now();
   return eventTypes;
 }
 
@@ -163,6 +172,11 @@ async function createBooking(eventTypeSlug, startTime, attendee, metadata = {}) 
     throw new Error(`Event type not found: ${eventTypeSlug}`);
   }
 
+  // Cal.eu attendee email is routed to tere@sukoda.ee to prevent
+  // Cal.eu's built-in confirmation emails from reaching the customer.
+  // Real customer details are stored in metadata for our webhook to use.
+  const CAL_REROUTE_EMAIL = 'tere@sukoda.ee';
+
   const bookingData = {
     eventTypeId: eventType.id,
     start: startTime,
@@ -170,15 +184,17 @@ async function createBooking(eventTypeSlug, startTime, attendee, metadata = {}) 
     language: 'et',
     metadata: {
       ...metadata,
-      source: 'sukoda-auto-scheduler',
+      source: metadata.source || 'sukoda-auto-scheduler',
+      realEmail: attendee.email,
+      realName: attendee.name,
+      realPhone: attendee.phone || '',
     },
     responses: {
       name: attendee.name,
-      email: attendee.email,
+      email: CAL_REROUTE_EMAIL,
     },
   };
 
-  // Add optional booking field responses (phone, address)
   if (attendee.phone) {
     bookingData.responses.phone = attendee.phone;
   }

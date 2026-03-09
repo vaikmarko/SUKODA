@@ -12,7 +12,7 @@
     <!-- Open Graph -->
     <meta property="og:title" content="SUKODA — Koostöö">
     <meta property="og:description" content="Lisa kinnisvaratehingule hing. Premium koduhooldus arendajatele, maakleritele ja kinnisvarabüroodele.">
-    <meta property="og:image" content="https://sukoda.ee/assets/images/hero-luxury.jpg">
+    <meta property="og:image" content="https://sukoda.ee/assets/images/hero-luxury.webp">
     <meta property="og:url" content="https://sukoda.ee/partnerlus.html">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
@@ -22,122 +22,16 @@
     
     <!-- Meta Pixel -->
     <script src="assets/js/tracking.js"></script>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        serif: ['Cormorant Garamond', 'Georgia', 'serif'],
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                    },
-                    colors: {
-                        black: '#111111',
-                        paper: '#FAF8F5',
-                        cream: '#F5F0EB',
-                        accent: '#B8976A',
-                        muted: '#6B6560',
-                    },
-                    spacing: {
-                        '128': '32rem',
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        body {
-            background-color: #FAF8F5;
-            color: #111111;
-        }
-        .grid-line {
-            border-right: 1px solid #E8E3DD;
-        }
-        .grid-line-b {
-            border-bottom: 1px solid #E8E3DD;
-        }
-        ::selection {
-            background: #111;
-            color: #FAF8F5;
-        }
-        [x-cloak] { display: none !important; }
-        /* Animations */
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(40px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        @keyframes scaleIn {
-            from { opacity: 0; transform: scale(1.05); }
-            to { opacity: 1; transform: scale(1); }
-        }
-        .animate-hero-title {
-            animation: slideUp 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s forwards;
-            opacity: 0;
-        }
-        .animate-hero-subtitle {
-            animation: slideUp 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.7s forwards;
-            opacity: 0;
-        }
-        .animate-hero-cta {
-            animation: fadeIn 0.8s ease-out 1.1s forwards;
-            opacity: 0;
-        }
-        .animate-hero-image {
-            animation: scaleIn 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.2s forwards;
-            opacity: 0;
-        }
-        .reveal {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: opacity 0.8s ease, transform 0.8s ease;
-        }
-        .reveal.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        .luxury-link {
-            position: relative;
-            display: inline-block;
-        }
-        .luxury-link::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            width: 0;
-            height: 1px;
-            background: #B8976A;
-            transition: width 0.4s ease;
-        }
-        .luxury-link:hover::after {
-            width: 100%;
-        }
-        .accent-line {
-            width: 40px;
-            height: 1px;
-            background: #B8976A;
-        }
-        .scroll-progress {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 2px;
-            background: #B8976A;
-            z-index: 9998;
-            transition: width 0.1s linear;
-        }
-    </style>
+    <script type="module" src="/assets/js/main.js"></script>
+    <link rel="canonical" href="https://sukoda.ee/partnerlus">
+    <link rel="alternate" hreflang="et" href="https://sukoda.ee/partnerlus">
+    <link rel="alternate" hreflang="en" href="https://sukoda.ee/en/partnerlus">
+    <link rel="alternate" hreflang="x-default" href="https://sukoda.ee/partnerlus">
+    <link rel="preload" href="/assets/fonts/cormorant-garamond-400.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/assets/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
 </head>
 <body class="antialiased" x-data="{ lang: localStorage.getItem('sukoda_lang') || 'et' }" x-init="$watch('lang', val => localStorage.setItem('sukoda_lang', val))">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[10000] focus:bg-accent focus:text-paper focus:px-4 focus:py-2 focus:text-sm focus:font-sans">Skip to main content</a>
 
     <!-- Scroll Progress -->
     <div class="scroll-progress" id="scrollProgress"></div>
@@ -146,7 +40,7 @@
     <div class="max-w-[1440px] mx-auto bg-paper min-h-screen border-x border-[#E8E3DD]">
         
         <!-- Navigation -->
-        <nav class="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm grid-line-b" x-data="{ mobileMenu: false }">
+        <nav class="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm grid-line-b" x-data="{ mobileMenu: false }" aria-label="Main navigation">
             <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12">
                 <a href="index.html" class="font-serif text-2xl md:text-3xl tracking-[0.08em] font-light">
                     SUKODA
@@ -166,11 +60,13 @@
                         <button @click="lang = 'en'" :class="lang === 'en' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">EN</button>
                     </div>
 
+                    <a href="minu.html" class="hidden md:inline-block text-[11px] uppercase tracking-[0.2em] font-sans font-medium text-muted hover:text-black transition-colors" x-text="lang === 'et' ? 'Sisene' : 'Log in'">Sisene</a>
+
                     <a href="mailto:partner@sukoda.ee" class="hidden md:inline-block text-[11px] uppercase tracking-[0.2em] font-sans font-medium border-b border-accent text-accent pb-0.5 hover:text-black hover:border-black transition-all" x-text="lang === 'et' ? 'Räägi meiega' : 'Talk to us'">
                         Räägi meiega
                     </a>
 
-                    <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2">
+                    <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2" aria-label="Toggle menu" :aria-expanded="mobileMenu">
                         <svg x-show="!mobileMenu" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path>
                         </svg>
@@ -188,15 +84,20 @@
                     <a href="kingitus.html" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Kingitus' : 'Gift'">Kingitus</a>
                     <a href="partnerlus.html" class="py-2 text-black" x-text="lang === 'et' ? 'Koostöö' : 'Partnership'">Koostöö</a>
                     <a href="lugu.html" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Lugu' : 'Story'">Lugu</a>
+                    <a href="minu.html" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Sisene' : 'Log in'">Sisene</a>
                     <a href="mailto:partner@sukoda.ee" @click="mobileMenu = false" class="py-2 text-accent" x-text="lang === 'et' ? 'Räägi meiega' : 'Talk to us'">Räägi meiega</a>
                 </div>
             </div>
         </nav>
 
+        <main id="main-content">
         <!-- Hero Section -->
         <header class="relative min-h-[70vh] md:min-h-[85vh] grid-line-b overflow-hidden">
             <div class="absolute inset-0 animate-hero-image">
-                <img src="assets/images/interior-luxury.jpg" alt="Luxury interior" class="w-full h-full object-cover">
+                <picture>
+                    <source type="image/webp" srcset="assets/images/interior-luxury-480w.webp 480w, assets/images/interior-luxury-768w.webp 768w, assets/images/interior-luxury-1024w.webp 1024w" sizes="(max-width: 768px) 100vw, 66vw">
+                    <img src="assets/images/interior-luxury.webp" alt="Luxury interior" width="800" height="500" class="w-full h-full object-cover">
+                </picture>
                 <div class="absolute inset-0 bg-gradient-to-r from-paper via-paper/85 to-paper/40"></div>
             </div>
             
@@ -278,7 +179,10 @@
         <!-- Visual Break: Full-width Image -->
         <section class="grid-line-b reveal">
             <div class="relative h-[250px] md:h-[350px] w-full overflow-hidden">
-                <img src="assets/images/interior-luxury.jpg" alt="Luxury home interior" class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000">
+                <picture>
+                    <source type="image/webp" srcset="assets/images/interior-luxury-480w.webp 480w, assets/images/interior-luxury-768w.webp 768w, assets/images/interior-luxury-1024w.webp 1024w" sizes="(max-width: 768px) 100vw, 66vw">
+                    <img src="assets/images/interior-luxury.webp" alt="Luxury home interior" width="800" height="500" loading="lazy" class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000">
+                </picture>
                 <div class="absolute inset-0 bg-gradient-to-t from-paper/90 via-paper/40 to-transparent"></div>
                 <div class="absolute bottom-6 left-6 md:bottom-10 md:left-16">
                     <p class="font-serif text-2xl md:text-3xl text-black font-light italic" style="text-shadow: 0 1px 8px rgba(255,255,255,0.7);">
@@ -395,6 +299,8 @@
             </div>
         </section>
 
+        </main>
+
         <!-- Footer -->
         <footer class="bg-black text-paper">
             <div class="grid md:grid-cols-12 py-16 px-6 md:px-12">
@@ -426,8 +332,8 @@
             </div>
             <div class="border-t border-gray-800 py-6 px-6 md:px-12">
                 <p class="text-[10px] text-gray-400 font-sans text-center tracking-wide">
-                    <span x-show="lang === 'et'">© 2026 Epic Ship OÜ · Registrikood 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
-                    <span x-show="lang === 'en'" x-cloak>© 2026 Epic Ship OÜ · Reg. code 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
+                    <span x-show="lang === 'et'">© 2026 SUKODA · Registrikood 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
+                    <span x-show="lang === 'en'" x-cloak>© 2026 SUKODA · Reg. code 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
                 </p>
             </div>
         </footer>
@@ -461,35 +367,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Scripts -->
-    <script>
-        // Scroll progress bar
-        window.addEventListener('scroll', () => {
-            const scrollTop = document.documentElement.scrollTop;
-            const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-            const progress = (scrollTop / scrollHeight) * 100;
-            document.getElementById('scrollProgress').style.width = progress + '%';
-        });
-
-        // Scroll reveal with Intersection Observer
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
-            });
-        }, observerOptions);
-
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-        });
-    </script>
 
 </body>
 </html>

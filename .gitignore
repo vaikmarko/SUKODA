@@ -21,6 +21,9 @@ node_modules/
 .env.local
 .env.*.local
 
+# Build output
+dist/
+
 # Firebase
 .firebase/
 assets/js/firebase.js

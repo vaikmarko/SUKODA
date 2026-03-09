@@ -1,0 +1,297 @@
+@import "tailwindcss";
+
+/* ============================================================
+   SUKODA Design Tokens
+   ============================================================ */
+@theme {
+  --color-black: #111111;
+  --color-paper: #FAF8F5;
+  --color-cream: #F5F0EB;
+  --color-accent: #B8976A;
+  --color-muted: #6B6560;
+
+  --font-serif: "Cormorant Garamond", Georgia, serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+
+  --spacing-128: 32rem;
+}
+
+/* ============================================================
+   Base Styles
+   ============================================================ */
+body {
+  background-color: var(--color-paper);
+  color: var(--color-black);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: var(--color-black);
+  color: var(--color-paper);
+}
+
+[x-cloak] {
+  display: none !important;
+}
+
+/* ============================================================
+   Layout Utilities
+   ============================================================ */
+.grid-line {
+  border-right: 1px solid #E8E3DD;
+}
+
+.grid-line-b {
+  border-bottom: 1px solid #E8E3DD;
+}
+
+.accent-line {
+  width: 40px;
+  height: 1px;
+  background: var(--color-accent);
+}
+
+.text-gold {
+  color: var(--color-accent);
+}
+
+/* ============================================================
+   Animations (GPU-composited where possible)
+   ============================================================ */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(1.05); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 1.2s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.8s ease-out 0.3s forwards;
+  opacity: 0;
+}
+
+.animate-hero-title {
+  animation: slideUp 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s forwards;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.animate-hero-subtitle {
+  animation: slideUp 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.7s forwards;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.animate-hero-cta {
+  animation: fadeIn 0.8s ease-out 1.1s forwards;
+  opacity: 0;
+}
+
+.animate-hero-image {
+  animation: scaleIn 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.2s forwards;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* Scroll reveal */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+  will-change: transform, opacity;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ============================================================
+   Luxury Interaction Styles
+   ============================================================ */
+.luxury-link {
+  position: relative;
+  display: inline-block;
+}
+
+.luxury-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: var(--color-accent);
+  transition: width 0.4s ease;
+}
+
+.luxury-link:hover::after {
+  width: 100%;
+}
+
+/* Focus-visible: luxury gold outline instead of browser default */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   Preloader
+   ============================================================ */
+.preloader {
+  position: fixed;
+  inset: 0;
+  background: var(--color-paper);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+.preloader.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.preloader-logo {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  font-weight: 400;
+  letter-spacing: 0.15em;
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+/* ============================================================
+   Scroll Progress
+   ============================================================ */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: var(--color-accent);
+  z-index: 9998;
+  transition: width 0.1s linear;
+}
+
+/* ============================================================
+   Admin-specific styles
+   ============================================================ */
+.modal-backdrop {
+  background: rgba(17, 17, 17, 0.4);
+  backdrop-filter: blur(4px);
+}
+
+.slot-btn {
+  transition: all 0.15s;
+}
+
+.slot-btn:hover {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.slot-btn.selected {
+  background: var(--color-black);
+  color: var(--color-paper);
+  border-color: var(--color-black);
+}
+
+/* Calendar day buttons (lunasta, success) */
+.day-btn {
+  transition: all 0.2s ease;
+}
+
+.day-btn:hover:not(:disabled) {
+  background: var(--color-cream);
+}
+
+.day-btn.has-slots {
+  font-weight: 500;
+}
+
+.day-btn.selected {
+  background: var(--color-black);
+  color: var(--color-paper);
+}
+
+.day-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Checkmark animation (lunasta, success) */
+@keyframes checkmark {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-checkmark {
+  animation: checkmark 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.animate-slide-up-delay {
+  animation: slideUp 0.8s ease-out 0.6s forwards;
+  opacity: 0;
+}
+
+/* 404 page animations */
+.animate-in {
+  animation: slideUp 0.8s ease-out forwards;
+  opacity: 0;
+}
+
+.animate-in-delay {
+  animation: slideUp 0.8s ease-out 0.3s forwards;
+  opacity: 0;
+}
+
+/* ============================================================
+   Reduced Motion
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-slide-up,
+  .animate-slide-up-delay,
+  .animate-checkmark,
+  .animate-in,
+  .animate-in-delay,
+  .animate-hero-title,
+  .animate-hero-subtitle,
+  .animate-hero-cta,
+  .animate-hero-image {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .preloader {
+    transition: none !important;
+  }
+
+  .luxury-link::after {
+    transition: none !important;
+  }
+}

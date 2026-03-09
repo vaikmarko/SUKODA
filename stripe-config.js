@@ -42,7 +42,7 @@ export const STRIPE_PRICES = {
   subscriptions: {
     // 1× kuus - 1× külastus kuus
     once: {
-      small: 'price_1T51LTEoH1b07UGQ6i8FiEix',      // 179€/kuu
+      small: 'price_1T5AJyEoH1b07UGQeSWsu5I0',      // 199€/kuu
       medium: 'price_1T51LUEoH1b07UGQPsUzybQS',    // 229€/kuu
       large: 'price_1T51LUEoH1b07UGQs0BYqLx2',      // 289€/kuu
     },
@@ -69,7 +69,7 @@ export const PRICES = {
     quarter: { small: 1099, medium: 1349, large: 1699 },
   },
   subscriptions: {
-    once: { small: 179, medium: 229, large: 289 },
+    once: { small: 199, medium: 229, large: 289 },
     twice: { small: 319, medium: 399, large: 499 },
     weekly: { small: 579, medium: 719, large: 899 },
   },

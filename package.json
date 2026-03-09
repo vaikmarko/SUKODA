@@ -1,0 +1,26 @@
+{
+  "name": "sukoda",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SUKODA — premium home care service",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "npm run build && firebase deploy --only hosting",
+    "deploy:functions": "firebase deploy --only functions",
+    "deploy:all": "npm run build && firebase deploy"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vaikmarko/SUKODA.git"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.2.1",
+    "alpinejs": "^3.15.8",
+    "sharp": "^0.34.5",
+    "tailwindcss": "^4.2.1",
+    "vite": "^7.3.1",
+    "vite-imagetools": "^9.0.3"
+  }
+}

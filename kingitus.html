@@ -12,7 +12,7 @@
     <!-- Open Graph -->
     <meta property="og:title" content="SUKODA — Kingi aega, mitte asju">
     <meta property="og:description" content="Kõige väärtuslikum kingitus on aeg. Puhas kodu, värsked lilled ja hetk, mis kuulub ainult sulle.">
-    <meta property="og:image" content="https://sukoda.ee/assets/images/gift-hero.jpg">
+    <meta property="og:image" content="https://sukoda.ee/assets/images/gift-hero.webp">
     <meta property="og:url" content="https://sukoda.ee/kingitus.html">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
@@ -20,127 +20,40 @@
     <meta property="og:locale" content="et_EE">
     <meta property="og:site_name" content="SUKODA">
     
-    <!-- Meta Pixel -->
+    <link rel="canonical" href="https://sukoda.ee/kingitus">
+    <link rel="alternate" hreflang="et" href="https://sukoda.ee/kingitus">
+    <link rel="alternate" hreflang="en" href="https://sukoda.ee/en/kingitus">
+    <link rel="alternate" hreflang="x-default" href="https://sukoda.ee/kingitus">
+
     <script src="assets/js/tracking.js"></script>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        serif: ['Cormorant Garamond', 'Georgia', 'serif'],
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                    },
-                    colors: {
-                        black: '#111111',
-                        paper: '#FAF8F5',
-                        cream: '#F5F0EB',
-                        accent: '#B8976A',
-                        muted: '#6B6560',
-                    },
-                    spacing: {
-                        '128': '32rem',
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        body {
-            background-color: #FAF8F5;
-            color: #111111;
-        }
-        .grid-line {
-            border-right: 1px solid #E8E3DD;
-        }
-        .grid-line-b {
-            border-bottom: 1px solid #E8E3DD;
-        }
-        ::selection {
-            background: #111;
-            color: #FAF8F5;
-        }
-        [x-cloak] {
-            display: none !important;
-        }
-        /* Animations */
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(40px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        @keyframes scaleIn {
-            from { opacity: 0; transform: scale(1.05); }
-            to { opacity: 1; transform: scale(1); }
-        }
-        .animate-hero-title {
-            animation: slideUp 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s forwards;
-            opacity: 0;
-        }
-        .animate-hero-subtitle {
-            animation: slideUp 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.7s forwards;
-            opacity: 0;
-        }
-        .animate-hero-cta {
-            animation: fadeIn 0.8s ease-out 1.1s forwards;
-            opacity: 0;
-        }
-        .animate-hero-image {
-            animation: scaleIn 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.2s forwards;
-            opacity: 0;
-        }
-        .reveal {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: opacity 0.8s ease, transform 0.8s ease;
-        }
-        .reveal.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        .luxury-link {
-            position: relative;
-            display: inline-block;
-        }
-        .luxury-link::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            width: 0;
-            height: 1px;
-            background: #B8976A;
-            transition: width 0.4s ease;
-        }
-        .luxury-link:hover::after {
-            width: 100%;
-        }
-        .accent-line {
-            width: 40px;
-            height: 1px;
-            background: #B8976A;
-        }
-        .scroll-progress {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 2px;
-            background: #B8976A;
-            z-index: 9998;
-            transition: width 0.1s linear;
-        }
-    </style>
+    <script type="module" src="/assets/js/main.js"></script>
+
+    <link rel="preload" href="/assets/fonts/cormorant-garamond-400.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/assets/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preconnect" href="https://js.stripe.com">
+
     <script src="assets/js/checkout.js"></script>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": "SUKODA Kingikaart",
+      "description": "Kingi aega, mitte asju. Premium koduhoolduse kingikaart.",
+      "url": "https://sukoda.ee/kingitus",
+      "brand": { "@type": "Brand", "name": "SUKODA" },
+      "offers": {
+        "@type": "AggregateOffer",
+        "priceCurrency": "EUR",
+        "lowPrice": "219",
+        "highPrice": "1699"
+      }
+    }
+    </script>
 </head>
 <body class="antialiased" x-data="{ lang: localStorage.getItem('sukoda_lang') || 'et' }" x-init="$watch('lang', val => localStorage.setItem('sukoda_lang', val))">
+
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[10000] focus:bg-accent focus:text-paper focus:px-4 focus:py-2 focus:text-sm focus:font-sans">Skip to main content</a>
 
     <!-- Scroll Progress -->
     <div class="scroll-progress" id="scrollProgress"></div>
@@ -149,7 +62,7 @@
     <div class="max-w-[1440px] mx-auto bg-paper min-h-screen border-x border-[#E8E3DD]">
         
         <!-- Navigation -->
-        <nav class="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm grid-line-b" x-data="{ mobileMenu: false }">
+        <nav class="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm grid-line-b" x-data="{ mobileMenu: false }" aria-label="Main navigation">
             <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12">
                 <a href="index.html" class="font-serif text-2xl md:text-3xl tracking-[0.08em] font-light">
                     SUKODA
@@ -169,11 +82,13 @@
                         <button @click="lang = 'en'" :class="lang === 'en' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">EN</button>
                     </div>
 
+                    <a href="minu.html" class="hidden md:inline-block text-[11px] uppercase tracking-[0.2em] font-sans font-medium text-muted hover:text-black transition-colors" x-text="lang === 'et' ? 'Sisene' : 'Log in'">Sisene</a>
+
                     <a href="#telli" class="hidden md:inline-block text-[11px] uppercase tracking-[0.2em] font-sans font-medium border-b border-accent text-accent pb-0.5 hover:text-black hover:border-black transition-all" x-text="lang === 'et' ? 'Telli kingitus' : 'Order gift'">
                         Telli kingitus
                     </a>
 
-                    <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2">
+                    <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2" aria-label="Toggle menu" :aria-expanded="mobileMenu">
                         <svg x-show="!mobileMenu" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path>
                         </svg>
@@ -190,15 +105,20 @@
                     <a href="kingitus.html" class="py-2 text-black" x-text="lang === 'et' ? 'Kingitus' : 'Gift'">Kingitus</a>
                     <a href="partnerlus.html" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Koostöö' : 'Partnership'">Koostöö</a>
                     <a href="lugu.html" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Lugu' : 'Story'">Lugu</a>
+                    <a href="minu.html" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Sisene' : 'Log in'">Sisene</a>
                     <a href="#telli" @click="mobileMenu = false" class="py-2 text-accent" x-text="lang === 'et' ? 'Telli kingitus' : 'Order gift'">Telli kingitus</a>
                 </div>
             </div>
         </nav>
 
+        <main id="main-content">
         <!-- Hero Section -->
         <header class="relative min-h-[70vh] md:min-h-[80vh] grid-line-b overflow-hidden">
             <div class="absolute inset-0 animate-hero-image">
-                <img src="assets/images/gift-hero.jpg" alt="Elegant floral arrangement" class="w-full h-full object-cover">
+                <picture>
+                    <source type="image/webp" srcset="assets/images/gift-hero-640w.webp 640w, assets/images/gift-hero-1024w.webp 1024w, assets/images/gift-hero-1440w.webp 1440w, assets/images/gift-hero-1920w.webp 1920w" sizes="100vw">
+                    <img src="assets/images/gift-hero.webp" alt="Elegant floral arrangement" width="1440" height="900" fetchpriority="high" class="w-full h-full object-cover">
+                </picture>
                 <div class="absolute inset-0 bg-gradient-to-r from-paper via-paper/80 to-paper/30"></div>
             </div>
             
@@ -390,7 +310,7 @@
 
                     <div class="mb-auto pb-10 py-3 border-t border-[#E8E3DD]">
                         <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Lisaks põhiteenusele' : 'In addition'">Lisaks põhiteenusele</p>
-                        <p class="text-sm font-sans font-light" x-text="lang === 'et' ? '+ Puuviljad + Taimede kastmine' : '+ Fruits + Plant watering'">+ Puuviljad + Taimede kastmine</p>
+                        <p class="text-sm font-sans font-light" x-text="lang === 'et' ? '+ Puuviljad + Premium koduhooldus' : '+ Fruits + Premium home care'">+ Puuviljad + Premium koduhooldus</p>
                     </div>
 
                     <!-- Selected state -->
@@ -404,6 +324,14 @@
                     </div>
                 </div>
             </div>
+
+            <!-- First visit note -->
+            <div class="px-6 md:px-16 py-6 border-t border-[#E8E3DD] bg-cream/20 reveal">
+                <p class="text-center text-xs font-sans font-light text-muted/50 leading-relaxed max-w-xl mx-auto italic">
+                    <span x-show="lang === 'et'">Kingituse hind sisaldab eriti põhjalikku esimest hoolitsust, kus pühendame lisaaega iga detaili viimistlemisele. Püsiteenuse puhul jaguneb see investeering kuude peale.</span>
+                    <span x-show="lang === 'en'" x-cloak>The gift price includes an especially thorough first visit, where we dedicate extra time to perfecting every detail. With a subscription, this investment is spread across months.</span>
+                </p>
+            </div>
         </section>
 
         <!-- Emotional Quote Section -->
@@ -412,9 +340,13 @@
                 <div class="accent-line mb-4"></div>
                 <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 03 )</span>
                 <h2 class="font-serif text-2xl md:text-4xl font-light mb-6" x-text="lang === 'et' ? 'See tunne' : 'That feeling'">See tunne</h2>
-                <p class="text-muted font-sans font-light leading-relaxed text-sm">
+                <p class="text-muted font-sans font-light leading-relaxed text-sm mb-6">
                     <span x-show="lang === 'et'">Iga kingitusega kaasneb midagi erilist — tunne, et keegi hoolis. Sest parim kingitus on aeg.</span>
                     <span x-show="lang === 'en'" x-cloak>Every gift includes something special — the feeling that someone cared. Because the best gift is time.</span>
+                </p>
+                <p class="text-muted/60 font-sans font-light leading-relaxed text-xs italic">
+                    <span x-show="lang === 'et'">Esimene hoolitsus on alati eriti põhjalik — võtame aega, et tundma õppida iga nurka ja detaili. Seetõttu on kingitus investeering, mis algab eriliselt.</span>
+                    <span x-show="lang === 'en'" x-cloak>The first visit is always especially thorough — we take time to learn every corner and detail. That's why a gift is an investment that begins with something truly special.</span>
                 </p>
             </div>
             <div class="md:col-span-7 p-6 md:p-20 lg:p-24 flex items-center justify-center">
@@ -638,16 +570,16 @@
                             <div class="space-y-6">
                                 <div class="border-b pb-3" :class="nameError ? 'border-red-400' : 'border-[#E8E3DD]'">
                                     <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Sinu nimi' : 'Your name'">Sinu nimi</label>
-                                    <input type="text" x-model="name" @input="nameError = false" class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" :placeholder="lang === 'et' ? 'Eesnimi ja perenimi' : 'First and last name'">
-                                    <p x-show="nameError" x-cloak class="mt-2 text-sm text-accent font-sans font-light" x-text="lang === 'et' ? 'Palun sisesta oma nimi' : 'Please enter your name'"></p>
+                                    <input type="text" x-model="name" @input="nameError = false" class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" :placeholder="lang === 'et' ? 'Eesnimi ja perenimi' : 'First and last name'" aria-describedby="name-error" aria-required="true">
+                                    <p id="name-error" x-show="nameError" x-cloak class="mt-2 text-sm text-accent font-sans font-light" x-text="lang === 'et' ? 'Palun sisesta oma nimi' : 'Please enter your name'" role="alert"></p>
                                 </div>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'E-post' : 'Email'">E-post</label>
                                         <div class="border-b pb-3" :class="emailError ? 'border-red-400' : 'border-[#E8E3DD]'">
-                                            <input type="email" x-model="email" @blur="validateEmail()" @input="emailError = false" class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" :placeholder="lang === 'et' ? 'sinu@email.com' : 'your@email.com'">
+                                            <input type="email" x-model="email" @blur="validateEmail()" @input="emailError = false" class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" :placeholder="lang === 'et' ? 'sinu@email.com' : 'your@email.com'" aria-describedby="email-error" aria-required="true">
                                         </div>
-                                        <p x-show="emailError" x-cloak class="mt-2 text-sm text-accent font-sans font-light" x-text="lang === 'et' ? 'Palun sisesta kehtiv e-posti aadress' : 'Please enter a valid email address'"></p>
+                                        <p id="email-error" x-show="emailError" x-cloak class="mt-2 text-sm text-accent font-sans font-light" x-text="lang === 'et' ? 'Palun sisesta kehtiv e-posti aadress' : 'Please enter a valid email address'" role="alert"></p>
                                     </div>
                                     <div class="border-b border-[#E8E3DD] pb-3">
                                         <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Telefon (valikuline)' : 'Phone (optional)'">Telefon (valikuline)</label>
@@ -662,13 +594,13 @@
                             <div class="space-y-6">
                                 <div class="border-b pb-3" :class="recipientError ? 'border-red-400' : 'border-[#E8E3DD]'">
                                     <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Kingisaaja nimi' : 'Recipient name'">Kingisaaja nimi</label>
-                                    <input type="text" x-model="recipient" @input="recipientError = false" class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" :placeholder="lang === 'et' ? 'Kellele kinkida?' : 'Who is it for?'">
-                                    <p x-show="recipientError" x-cloak class="mt-2 text-sm text-accent font-sans font-light" x-text="lang === 'et' ? 'Palun sisesta kingisaaja nimi' : 'Please enter recipient name'"></p>
+                                    <input type="text" x-model="recipient" @input="recipientError = false" class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" :placeholder="lang === 'et' ? 'Kellele kinkida?' : 'Who is it for?'" aria-describedby="recipient-error" aria-required="true">
+                                    <p id="recipient-error" x-show="recipientError" x-cloak class="mt-2 text-sm text-accent font-sans font-light" x-text="lang === 'et' ? 'Palun sisesta kingisaaja nimi' : 'Please enter recipient name'" role="alert"></p>
                                 </div>
                                 <div class="border-b pb-3" :class="recipientEmailError ? 'border-red-400' : 'border-[#E8E3DD]'">
                                     <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Kingisaaja e-post' : 'Recipient email'">Kingisaaja e-post</label>
-                                    <input type="email" x-model="recipientEmail" @blur="validateRecipientEmail()" @input="recipientEmailError = false" class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" :placeholder="lang === 'et' ? 'kingisaaja@email.com' : 'recipient@email.com'">
-                                    <p x-show="recipientEmailError" x-cloak class="mt-2 text-sm text-accent font-sans font-light" x-text="lang === 'et' ? 'Palun sisesta kehtiv e-posti aadress' : 'Please enter a valid email address'"></p>
+                                    <input type="email" x-model="recipientEmail" @blur="validateRecipientEmail()" @input="recipientEmailError = false" class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" :placeholder="lang === 'et' ? 'kingisaaja@email.com' : 'recipient@email.com'" aria-describedby="recipient-email-error" aria-required="true">
+                                    <p id="recipient-email-error" x-show="recipientEmailError" x-cloak class="mt-2 text-sm text-accent font-sans font-light" x-text="lang === 'et' ? 'Palun sisesta kehtiv e-posti aadress' : 'Please enter a valid email address'" role="alert"></p>
                                 </div>
                                 <div class="border-b border-[#E8E3DD] pb-3">
                                     <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Sõnum kaardile (soovi korral)' : 'Message on card (optional)'">Sõnum kaardile (soovi korral)</label>
@@ -733,6 +665,8 @@
             </div>
         </section>
 
+        </main>
+
         <!-- Footer -->
         <footer class="bg-black text-paper">
             <div class="grid md:grid-cols-12 py-16 px-6 md:px-12">
@@ -764,8 +698,8 @@
             </div>
             <div class="border-t border-gray-800 py-6 px-6 md:px-12">
                 <p class="text-[10px] text-gray-400 font-sans text-center tracking-wide">
-                    <span x-show="lang === 'et'">© 2026 Epic Ship OÜ · Registrikood 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
-                    <span x-show="lang === 'en'" x-cloak>© 2026 Epic Ship OÜ · Reg. code 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
+                    <span x-show="lang === 'et'">© 2026 SUKODA · Registrikood 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
+                    <span x-show="lang === 'en'" x-cloak>© 2026 SUKODA · Reg. code 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
                 </p>
             </div>
         </footer>
@@ -799,26 +733,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Scripts -->
-    <script>
-        window.addEventListener('scroll', () => {
-            const scrollTop = document.documentElement.scrollTop;
-            const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-            const progress = (scrollTop / scrollHeight) * 100;
-            document.getElementById('scrollProgress').style.width = progress + '%';
-        });
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) entry.target.classList.add('visible');
-            });
-        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
-
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-        });
-    </script>
 
 </body>
 </html>

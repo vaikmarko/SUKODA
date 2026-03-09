@@ -12,8 +12,15 @@ const {
   authenticateAdmin, checkRateLimit,
 } = require('./lib/config');
 const calService = require('./cal-service');
-const { checkoutSchema, waitlistSchema, bookGiftSchema, bookSubscriptionSchema, giftUpgradeSchema, validate } = require('./lib/schemas');
+const { checkoutSchema, waitlistSchema, bookGiftSchema, bookSubscriptionSchema, giftUpgradeSchema, estateInquirySchema, validate } = require('./lib/schemas');
 
+function escapeHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
 
 // ============================================================
 // I18N — Email translations (ET / EN)
@@ -79,7 +86,9 @@ const EMAIL_TEXTS = {
     reminderAt: 'kell',
     reminderExpectLabel: 'Mida oodata',
     reminderItems: ['Põhjalik koristus', 'Värsked lilled vaasi', 'Käsitsi kirjutatud tervitus', 'Väike magus üllatus'],
-    reminderAccessNote: 'Palun jäta meile ligipääs kodule. Kui vajad aega muuta, kirjuta meile.',
+    reminderAccessNote: 'Palun jäta meile ligipääs kodule. Kui vajad aega muuta, kirjuta meile aadressil tere@sukoda.ee või halda oma broneeringut aadressil sukoda.ee/minu.',
+    homeProfileNote: 'Kui soovid järgmisel korral midagi teisiti, lisa oma soovid ja eelistused siia:',
+    homeProfileBtn: 'MINU KODU',
 
     // Next visit email
     nextVisitTitle: 'Järgmine külastus on paigas',
@@ -89,6 +98,18 @@ const EMAIL_TEXTS = {
     nextVisitTimeLabel: 'Kinnitatud aeg',
     nextVisitPackageLabel: 'Pakett',
     nextVisitReschedule: 'Kui see aeg ei sobi, kirjuta meile ja leiame parema. Saadame meeldetuletuse päev enne külastust.',
+
+    // Booking confirmation email
+    subjectBookingConfirmed: 'SUKODA | Sinu aeg on kinnitatud',
+    bookingConfirmedTitle: 'Sinu aeg on kinnitatud',
+    bookingConfirmedIntro: (name) => name
+      ? `Tere, ${name}. Sinu koduhoolitsuse aeg on broneeritud.`
+      : 'Sinu koduhoolitsuse aeg on broneeritud.',
+    bookingConfirmedTimeLabel: 'Sinu külastus',
+    bookingConfirmedNote: 'Saadame meeldetuletuse päev enne külastust. Palun jäta meile ligipääs kodule.',
+    bookingConfirmedChangeNote: 'Kui vajad aega muuta, kirjuta meile aadressil tere@sukoda.ee.',
+    bookingConfirmedPortalNote: 'Saad oma broneeringut hallata ja aega muuta isiklikust portaalist:',
+    bookingConfirmedPortalBtn: 'MINU SUKODA',
 
     // Calendar buttons
     calendarAddLabel: 'Lisa kalendrisse',
@@ -108,9 +129,12 @@ const EMAIL_TEXTS = {
     // Subscriber post-visit email (after first visit)
     subjectSubscriberFirstVisit: 'SUKODA | Tere tulemast koju',
     subscriberFirstVisitTitle: 'Tere tulemast koju.',
-    subscriberFirstVisitIntro: (name) => name
-      ? `${name}, loodame, et astusid eile uksest sisse ja tundsid — keegi on sinu eest hoolitsenud.`
-      : 'Loodame, et astusid eile uksest sisse ja tundsid — keegi on sinu eest hoolitsenud.',
+    subscriberFirstVisitIntro: (name, visitDateStr) => {
+      const when = visitDateStr || 'eile';
+      return name
+        ? `${name}, loodame, et astusid ${when} uksest sisse ja tundsid — keegi on sinu eest hoolitsenud.`
+        : `Loodame, et astusid ${when} uksest sisse ja tundsid — keegi on sinu eest hoolitsenud.`;
+    },
     subscriberFirstVisitBody: 'See ongi SUKODA mõte. Mitte lihtsalt koristus, vaid tunne. Et kodu ootab sind. Et keegi hoolib.\n\nMe anname alati parima. Ja kui midagi polnud päris nii, nagu ootasid — kirjuta meile. Soovime, et iga külastus oleks just selline, nagu väärid.',
     subscriberFirstVisitNextLabel: 'Sinu järgmine külastus',
     subscriberFirstVisitNextNote: 'Me hoolitseme selle eest, et see tunne kordub. Saadame meeldetuletuse päev enne järgmist külastust.',
@@ -118,9 +142,12 @@ const EMAIL_TEXTS = {
 
     // Gift recipient → subscriber follow-up: 24h after visit
     followup24hTitle: 'See tunne.',
-    followup24hIntro: (name) => name
-      ? `${name} — mäletad eilset? Astusid uksest sisse ja kõik oli lihtsalt... paigas.`
-      : 'Mäletad eilset? Astusid uksest sisse ja kõik oli lihtsalt... paigas.',
+    followup24hIntro: (name, visitDateStr) => {
+      const when = visitDateStr ? `seda päeva (${visitDateStr})` : 'eilset';
+      return name
+        ? `${name} — mäletad ${when}? Astusid uksest sisse ja kõik oli lihtsalt... paigas.`
+        : `Mäletad ${when}? Astusid uksest sisse ja kõik oli lihtsalt... paigas.`;
+    },
     followup24hBody: 'Lilled vaasis. Puhas kodu. See vaikne rahu, mis tuleb teadmisest, et keegi on sinu eest hoolitsenud.',
     followup24hBody2: 'Kujuta ette, et see tunne ootab sind iga kord, kui koju jõuad.',
     followup24hOfferTitle: 'Ainult sulle',
@@ -128,6 +155,30 @@ const EMAIL_TEXTS = {
     followup24hOfferCode: 'KINGITUS20',
     followup24hOfferNote: 'Pakkumine kehtib 30 päeva.',
     followup24hCta: 'ALUSTA SIIT',
+
+    // Multi-visit gift: 24h/7d/30d — no conversion, just warmth + next visit info
+    giftMulti24hIntro: (name, visitDateStr) => {
+      const when = visitDateStr ? `seda päeva (${visitDateStr})` : 'eilset';
+      return name
+        ? `${name} — mäletad ${when}? Astusid uksest sisse ja kõik oli lihtsalt... paigas.`
+        : `Mäletad ${when}? Astusid uksest sisse ja kõik oli lihtsalt... paigas.`;
+    },
+    giftMulti24hBody: 'Lilled vaasis. Puhas kodu. See vaikne rahu, mis tuleb teadmisest, et keegi on sinu eest hoolitsenud.',
+    giftMulti24hNextTitle: 'Sinu kingitus jätkub',
+    giftMulti24hNextNote: (remaining) => `Sul on veel ${remaining} külastus${remaining > 1 ? 't' : ''} ees. Järgmine kord on sama eriline.`,
+    giftMulti24hProfileNote: 'Kui soovid järgmisel korral midagi teisiti, lisa oma soovid ja eelistused siia:',
+    giftMulti24hProfileBtn: 'MINU KODU',
+    giftMulti7dTitle: 'Kas mäletad seda tunnet?',
+    giftMulti7dIntro: (name) => name
+      ? `${name}, nädal tagasi oli sinu kodu teistsugune.`
+      : 'Nädal tagasi oli sinu kodu teistsugune.',
+    giftMulti7dBody: 'Puhas. Lilled vaasis. Väike üllatus laual. Ja see tunne kordub — sinu kingitus jätkub.',
+    giftMulti7dProfileNote: 'Soovid järgmisel korral midagi teisiti? Lisa oma eelistused:',
+    giftMulti30dTitle: 'Sinu järgmine külastus ootab.',
+    giftMulti30dIntro: (name) => name
+      ? `${name}, sinu kingitus pole veel läbi.`
+      : 'Sinu kingitus pole veel läbi.',
+    giftMulti30dBody: 'Sul on veel külastusi ees. Iga kord sama hoolega — lilled, puhtus, üllatus. Sest sa väärid seda.',
 
     // Gift recipient → subscriber follow-up: 7 days after visit
     followup7dTitle: 'Kas mäletad seda tunnet?',
@@ -175,7 +226,7 @@ const EMAIL_TEXTS = {
     packages: {
       moment: { name: 'Üks Hetk', description: 'Üks täiuslik koduhoolitsus', includes: ['Põhjalik koristus', 'Värsked lilled', 'Käsitsi kirjutatud kaart', 'Väike magus üllatus'] },
       month: { name: 'Kuu Aega', description: 'Kaks koduhoolitsust ühe kuu jooksul', includes: ['2× põhjalik koristus', 'Värsked lilled igal korral', 'Käsitsi kirjutatud kaardid', 'Hooajalised puuviljad', 'Lõõgastav aroomiküünal'] },
-      quarter: { name: 'Kvartal Vabadust', description: 'Kuus koduhoolitsust kolme kuu jooksul', includes: ['6× põhjalik koristus', 'Värsked lilled igal korral', 'Käsitsi kirjutatud kaardid', 'Puuviljad + taimede kastmine', 'Premium koduhooldusvahenid'] },
+      quarter: { name: 'Kvartal Vabadust', description: 'Kuus koduhoolitsust kolme kuu jooksul', includes: ['6× põhjalik koristus', 'Värsked lilled igal korral', 'Käsitsi kirjutatud kaardid', 'Hooajalised puuviljad', 'Premium koduhooldus'] },
       once: { name: '1× kuus', description: 'Üks külastus kuus' },
       twice: { name: '2× kuus', description: 'Kaks külastust kuus' },
       weekly: { name: '4× kuus', description: 'Neli külastust kuus' },
@@ -239,7 +290,9 @@ const EMAIL_TEXTS = {
     reminderAt: 'at',
     reminderExpectLabel: 'What to expect',
     reminderItems: ['Thorough cleaning', 'Fresh flowers in a vase', 'Handwritten greeting', 'A sweet surprise'],
-    reminderAccessNote: 'Please ensure we have access to your home. If you need to change the time, contact us.',
+    reminderAccessNote: 'Please ensure we have access to your home. If you need to change the time, contact us at tere@sukoda.ee or manage your booking at sukoda.ee/minu.',
+    homeProfileNote: 'If you\'d like something different next time, add your preferences here:',
+    homeProfileBtn: 'MY HOME',
 
     nextVisitTitle: 'Your next visit is scheduled',
     nextVisitIntro: (name) => name
@@ -248,6 +301,18 @@ const EMAIL_TEXTS = {
     nextVisitTimeLabel: 'Confirmed time',
     nextVisitPackageLabel: 'Package',
     nextVisitReschedule: 'If this time doesn\'t work, contact us and we\'ll find a better one. We\'ll send a reminder the day before your visit.',
+
+    // Booking confirmation email
+    subjectBookingConfirmed: 'SUKODA | Your time is confirmed',
+    bookingConfirmedTitle: 'Your time is confirmed',
+    bookingConfirmedIntro: (name) => name
+      ? `Hello, ${name}. Your home care visit has been booked.`
+      : 'Your home care visit has been booked.',
+    bookingConfirmedTimeLabel: 'Your visit',
+    bookingConfirmedNote: 'We\'ll send a reminder the day before your visit. Please ensure we have access to your home.',
+    bookingConfirmedChangeNote: 'If you need to change the time, contact us at tere@sukoda.ee.',
+    bookingConfirmedPortalNote: 'You can manage your booking and change the time from your personal portal:',
+    bookingConfirmedPortalBtn: 'MY SUKODA',
 
     // Calendar buttons
     calendarAddLabel: 'Add to calendar',
@@ -266,9 +331,12 @@ const EMAIL_TEXTS = {
     // Subscriber post-visit email (after first visit)
     subjectSubscriberFirstVisit: 'SUKODA | Welcome home',
     subscriberFirstVisitTitle: 'Welcome home.',
-    subscriberFirstVisitIntro: (name) => name
-      ? `${name}, we hope you walked through the door yesterday and felt it — someone had taken care of you.`
-      : 'We hope you walked through the door yesterday and felt it — someone had taken care of you.',
+    subscriberFirstVisitIntro: (name, visitDateStr) => {
+      const when = visitDateStr || 'yesterday';
+      return name
+        ? `${name}, we hope you walked through the door ${when} and felt it — someone had taken care of you.`
+        : `We hope you walked through the door ${when} and felt it — someone had taken care of you.`;
+    },
     subscriberFirstVisitBody: 'That\'s what SUKODA is about. Not just cleaning, but a feeling. That your home is waiting for you. That someone cares.\n\nWe always give our best. And if something wasn\'t quite right — write to us. We want every visit to be exactly what you deserve.',
     subscriberFirstVisitNextLabel: 'Your next visit',
     subscriberFirstVisitNextNote: 'We\'ll make sure that feeling returns. We\'ll send a reminder the day before your next visit.',
@@ -276,9 +344,12 @@ const EMAIL_TEXTS = {
 
     // Gift recipient → subscriber follow-up: 24h after visit
     followup24hTitle: 'That feeling.',
-    followup24hIntro: (name) => name
-      ? `${name} — remember yesterday? You walked through the door and everything was simply... right.`
-      : 'Remember yesterday? You walked through the door and everything was simply... right.',
+    followup24hIntro: (name, visitDateStr) => {
+      const when = visitDateStr ? `that day (${visitDateStr})` : 'yesterday';
+      return name
+        ? `${name} — remember ${when}? You walked through the door and everything was simply... right.`
+        : `Remember ${when}? You walked through the door and everything was simply... right.`;
+    },
     followup24hBody: 'Flowers in a vase. A clean home. That quiet peace of knowing someone took care of you.',
     followup24hBody2: 'Imagine that feeling waiting for you every time you come home.',
     followup24hOfferTitle: 'Just for you',
@@ -286,6 +357,30 @@ const EMAIL_TEXTS = {
     followup24hOfferCode: 'KINGITUS20',
     followup24hOfferNote: 'Offer valid for 30 days.',
     followup24hCta: 'START HERE',
+
+    // Multi-visit gift: 24h/7d/30d — no conversion, just warmth + next visit info
+    giftMulti24hIntro: (name, visitDateStr) => {
+      const when = visitDateStr ? `that day (${visitDateStr})` : 'yesterday';
+      return name
+        ? `${name} — remember ${when}? You walked through the door and everything was simply... right.`
+        : `Remember ${when}? You walked through the door and everything was simply... right.`;
+    },
+    giftMulti24hBody: 'Flowers in a vase. A clean home. That quiet peace of knowing someone took care of you.',
+    giftMulti24hNextTitle: 'Your gift continues',
+    giftMulti24hNextNote: (remaining) => `You still have ${remaining} visit${remaining > 1 ? 's' : ''} ahead. The next one will be just as special.`,
+    giftMulti24hProfileNote: 'If you\'d like something different next time, add your preferences here:',
+    giftMulti24hProfileBtn: 'MY HOME',
+    giftMulti7dTitle: 'Do you remember that feeling?',
+    giftMulti7dIntro: (name) => name
+      ? `${name}, a week ago your home was different.`
+      : 'A week ago, your home was different.',
+    giftMulti7dBody: 'Clean. Flowers in a vase. A little surprise on the table. And that feeling will return — your gift continues.',
+    giftMulti7dProfileNote: 'Want something different next time? Add your preferences:',
+    giftMulti30dTitle: 'Your next visit awaits.',
+    giftMulti30dIntro: (name) => name
+      ? `${name}, your gift isn't over yet.`
+      : 'Your gift isn\'t over yet.',
+    giftMulti30dBody: 'You still have visits ahead. Each one with the same care — flowers, cleanliness, a surprise. Because you deserve it.',
 
     // Gift recipient → subscriber follow-up: 7 days after visit
     followup7dTitle: 'Do you remember that feeling?',
@@ -331,7 +426,7 @@ const EMAIL_TEXTS = {
     packages: {
       moment: { name: 'One Moment', description: 'One perfect home care experience', includes: ['Deep cleaning', 'Fresh flowers', 'Handwritten card', 'A sweet surprise'] },
       month: { name: 'One Month', description: 'Two home care visits in one month', includes: ['2× deep cleaning', 'Fresh flowers each time', 'Handwritten cards', 'Seasonal fruits', 'Relaxing scented candle'] },
-      quarter: { name: 'Quarter of Freedom', description: 'Six home care visits over three months', includes: ['6× deep cleaning', 'Fresh flowers each time', 'Handwritten cards', 'Fruits + plant watering', 'Premium home care products'] },
+      quarter: { name: 'Quarter of Freedom', description: 'Six home care visits over three months', includes: ['6× deep cleaning', 'Fresh flowers each time', 'Handwritten cards', 'Seasonal fruits', 'Premium home care'] },
       once: { name: '1× month', description: 'One visit per month' },
       twice: { name: '2× month', description: 'Two visits per month' },
       weekly: { name: '4× month', description: 'Four visits per month' },
@@ -346,20 +441,70 @@ function tx(lang) {
   return EMAIL_TEXTS[lang] || EMAIL_TEXTS['et'];
 }
 
-/** Format date in the correct language */
-function formatDate(date, lang) {
+/** Parse a date into its Europe/Tallinn components */
+function tallinnParts(date) {
   const d = date instanceof Date ? date : date.toDate ? date.toDate() : new Date(date);
-  const t = tx(lang);
-  if (lang === 'en') {
-    return `${t.days[d.getDay()]}, ${t.months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Europe/Tallinn',
+    year: 'numeric', month: 'numeric', day: 'numeric',
+    hour: 'numeric', minute: 'numeric', weekday: 'short',
+    hour12: false,
+  });
+  const parts = {};
+  for (const { type, value } of fmt.formatToParts(d)) {
+    parts[type] = value;
   }
-  return `${t.days[d.getDay()]}, ${d.getDate()}. ${t.months[d.getMonth()]} ${d.getFullYear()}`;
+  const wdMap = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  return {
+    year: parseInt(parts.year),
+    month: parseInt(parts.month) - 1,
+    day: parseInt(parts.day),
+    weekday: wdMap[parts.weekday] ?? d.getDay(),
+    hour: parseInt(parts.hour === '24' ? '0' : parts.hour),
+    minute: parseInt(parts.minute),
+  };
 }
 
-/** Format time (same for both languages) */
+/** Format date in the correct language (Europe/Tallinn timezone) */
+function formatDate(date, lang) {
+  const p = tallinnParts(date);
+  const t = tx(lang);
+  if (lang === 'en') {
+    return `${t.days[p.weekday]}, ${t.months[p.month]} ${p.day}, ${p.year}`;
+  }
+  return `${t.days[p.weekday]}, ${p.day}. ${t.months[p.month]} ${p.year}`;
+}
+
+/** Format time in Europe/Tallinn timezone */
 function formatTime(date) {
   const d = date instanceof Date ? date : date.toDate ? date.toDate() : new Date(date);
-  return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+  return d.toLocaleTimeString('et-EE', {
+    timeZone: 'Europe/Tallinn',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+}
+
+/**
+ * Returns null if the visit was "yesterday" (email sent next day), or a formatted
+ * date string if more time has passed — so email copy can say "eile" vs the actual date.
+ */
+function getVisitDateLabel(visitDate, lang) {
+  if (!visitDate) return null;
+  const vd = visitDate instanceof Date ? visitDate : visitDate.toDate ? visitDate.toDate() : new Date(visitDate);
+  const now = new Date();
+  const diffMs = now.getTime() - vd.getTime();
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  if (diffDays < 2) return null; // "yesterday" is fine
+  return formatDate(vd, lang);
+}
+
+/** Total visits included in a gift package (multi-visit gifts skip conversion emails) */
+const GIFT_VISIT_COUNTS = { moment: 1, month: 2, quarter: 6 };
+
+function isMultiVisitGift(giftPackage) {
+  return giftPackage && (GIFT_VISIT_COUNTS[giftPackage] || 0) > 1;
 }
 
 /** Format date for Google Calendar URL (YYYYMMDDTHHmmssZ) */
@@ -492,7 +637,7 @@ const PACKAGES = {
   quarter: {
     name: 'Kvartal Vabadust',
     description: 'Kuus koduhoolitsust kolme kuu jooksul',
-    includes: ['6× põhjalik koristus', 'Värsked lilled igal korral', 'Käsitsi kirjutatud kaardid', 'Puuviljad + taimede kastmine', 'Premium koduhooldusvahenid'],
+    includes: ['6× põhjalik koristus', 'Värsked lilled igal korral', 'Käsitsi kirjutatud kaardid', 'Hooajalised puuviljad', 'Premium koduhooldus'],
   },
   once: { name: '1× kuus', description: 'Üks külastus kuus' },
   twice: { name: '2× kuus', description: 'Kaks külastust kuus' },
@@ -516,17 +661,21 @@ const SIZE_CALENDAR_CODES = {
 /**
  * Generate unique gift code
  */
-function generateGiftCode() {
+async function generateGiftCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = 'SUKO-';
-  for (let i = 0; i < 4; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  for (let attempt = 0; attempt < 5; attempt++) {
+    let code = 'SUKO-';
+    for (let i = 0; i < 4; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    code += '-';
+    for (let i = 0; i < 4; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    const existing = await db.collection('orders').where('giftCode', '==', code).limit(1).get();
+    if (existing.empty) return code;
   }
-  code += '-';
-  for (let i = 0; i < 4; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
+  throw new Error('Failed to generate unique gift code after 5 attempts');
 }
 
 /**
@@ -609,7 +758,7 @@ exports.createCheckoutSession = functions
         }
 
         // Generate gift code for gifts
-        const giftCode = type === 'gift' ? generateGiftCode() : null;
+        const giftCode = type === 'gift' ? await generateGiftCode() : null;
 
         const orderRef = await db.collection('orders').add({
           type,
@@ -1133,18 +1282,18 @@ function generateAdminEmail(order, orderId, packageName, sizeName, isGift) {
 
       <h2 style="color: #2C2824; margin-top: 30px; font-weight: 300; font-family: Georgia, 'Times New Roman', serif;">Tellija</h2>
       <table style="width: 100%; border-collapse: collapse;">
-        <tr><td style="padding: 8px 0;"><strong>Nimi:</strong> ${order.customer?.name || '-'}</td></tr>
-        <tr><td style="padding: 8px 0;"><strong>E-post:</strong> ${order.customer?.email || '-'}</td></tr>
-        <tr><td style="padding: 8px 0;"><strong>Telefon:</strong> ${order.customer?.phone || '-'}</td></tr>
-        <tr><td style="padding: 8px 0;"><strong>Aadress:</strong> ${order.customer?.address || '-'}</td></tr>
+        <tr><td style="padding: 8px 0;"><strong>Nimi:</strong> ${escapeHtml(order.customer?.name || '-')}</td></tr>
+        <tr><td style="padding: 8px 0;"><strong>E-post:</strong> ${escapeHtml(order.customer?.email || '-')}</td></tr>
+        <tr><td style="padding: 8px 0;"><strong>Telefon:</strong> ${escapeHtml(order.customer?.phone || '-')}</td></tr>
+        <tr><td style="padding: 8px 0;"><strong>Aadress:</strong> ${escapeHtml(order.customer?.address || '-')}</td></tr>
       </table>
 
       ${isGift ? `
       <h2 style="color: #2C2824; margin-top: 30px; font-weight: 300; font-family: Georgia, 'Times New Roman', serif;">Kingisaaja</h2>
       <table style="width: 100%; border-collapse: collapse;">
-        <tr><td style="padding: 8px 0;"><strong>Nimi:</strong> ${order.recipient?.name || '-'}</td></tr>
-        <tr><td style="padding: 8px 0;"><strong>E-post:</strong> ${order.recipient?.email || '-'}</td></tr>
-        <tr><td style="padding: 8px 0;"><strong>Sõnum:</strong> ${order.recipient?.message || '-'}</td></tr>
+        <tr><td style="padding: 8px 0;"><strong>Nimi:</strong> ${escapeHtml(order.recipient?.name || '-')}</td></tr>
+        <tr><td style="padding: 8px 0;"><strong>E-post:</strong> ${escapeHtml(order.recipient?.email || '-')}</td></tr>
+        <tr><td style="padding: 8px 0;"><strong>Sõnum:</strong> ${escapeHtml(order.recipient?.message || '-')}</td></tr>
       </table>
       ` : ''}
 
@@ -1196,19 +1345,19 @@ function generateAdminBookingEmail({ customerName, customerEmail, customerPhone,
       <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
         <tr style="background: #FAF8F5;">
           <td style="padding: 12px; border: 1px solid #E8E3DD;"><strong>Klient</strong></td>
-          <td style="padding: 12px; border: 1px solid #E8E3DD;">${customerName || '-'}</td>
+          <td style="padding: 12px; border: 1px solid #E8E3DD;">${escapeHtml(customerName || '-')}</td>
         </tr>
         <tr>
           <td style="padding: 12px; border: 1px solid #E8E3DD;"><strong>E-post</strong></td>
-          <td style="padding: 12px; border: 1px solid #E8E3DD;">${customerEmail || '-'}</td>
+          <td style="padding: 12px; border: 1px solid #E8E3DD;">${escapeHtml(customerEmail || '-')}</td>
         </tr>
         <tr style="background: #FAF8F5;">
           <td style="padding: 12px; border: 1px solid #E8E3DD;"><strong>Telefon</strong></td>
-          <td style="padding: 12px; border: 1px solid #E8E3DD;">${customerPhone || '-'}</td>
+          <td style="padding: 12px; border: 1px solid #E8E3DD;">${escapeHtml(customerPhone || '-')}</td>
         </tr>
         <tr>
           <td style="padding: 12px; border: 1px solid #E8E3DD;"><strong>Aadress</strong></td>
-          <td style="padding: 12px; border: 1px solid #E8E3DD;">${address || '-'}</td>
+          <td style="padding: 12px; border: 1px solid #E8E3DD;">${escapeHtml(address || '-')}</td>
         </tr>
         <tr style="background: #FAF8F5;">
           <td style="padding: 12px; border: 1px solid #E8E3DD;"><strong>Suurus</strong></td>
@@ -1227,7 +1376,7 @@ function generateAdminBookingEmail({ customerName, customerEmail, customerPhone,
         ${additionalInfo ? `
         <tr>
           <td style="padding: 12px; border: 1px solid #E8E3DD;"><strong>Lisainfo</strong></td>
-          <td style="padding: 12px; border: 1px solid #E8E3DD;">${additionalInfo}</td>
+          <td style="padding: 12px; border: 1px solid #E8E3DD;">${escapeHtml(additionalInfo)}</td>
         </tr>
         ` : ''}
       </table>
@@ -1240,7 +1389,7 @@ function generateAdminBookingEmail({ customerName, customerEmail, customerPhone,
       ` : ''}
 
       <p style="color: #8A8578; font-size: 12px; margin-top: 30px;">
-        ⚡ Korraldage koristaja: ${dateStr} kell ${timeStr} · ${address || 'aadress puudub'} · ${sizeName}
+        ⚡ Korraldage koristaja: ${dateStr} kell ${timeStr} · ${escapeHtml(address || 'aadress puudub')} · ${sizeName}
       </p>
     </div>
   `;
@@ -1307,7 +1456,7 @@ function generateCustomerEmail(order, orderId, packageName, sizeName, isGift, la
               <p style="margin: 0; color: #8A8578; font-size: 14px;">${sizeName}</p>
               ${order.customer?.address ? `
                 <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E8E3DD; color: #8A8578; font-size: 14px;">
-                  ${t.addressLabel}: <strong style="color: #2C2824; font-weight: 400;">${order.customer.address}</strong>
+                  ${t.addressLabel}: <strong style="color: #2C2824; font-weight: 400;">${escapeHtml(order.customer.address)}</strong>
                 </p>
               ` : ''}
             </div>
@@ -1358,7 +1507,7 @@ function generateCustomerEmail(order, orderId, packageName, sizeName, isGift, la
             ${t.customerTitle(true)}
           </h2>
           <p style="color: #8A8578; line-height: 1.7; margin: 0 0 32px 0; font-size: 15px;">
-            ${t.customerIntro(true, order.recipient?.name)}
+            ${t.customerIntro(true, escapeHtml(order.recipient?.name))}
           </p>
         </div>
 
@@ -1378,7 +1527,7 @@ function generateCustomerEmail(order, orderId, packageName, sizeName, isGift, la
           <p style="margin: 0; color: #8A8578; font-size: 14px;">${sizeName}</p>
           ${order.recipient ? `
             <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E8E3DD; color: #8A8578; font-size: 14px;">
-              ${t.recipientLabel}: <strong style="color: #2C2824; font-weight: 400;">${order.recipient.name}</strong>
+              ${t.recipientLabel}: <strong style="color: #2C2824; font-weight: 400;">${escapeHtml(order.recipient.name)}</strong>
             </p>
           ` : ''}
         </div>
@@ -1389,7 +1538,7 @@ function generateCustomerEmail(order, orderId, packageName, sizeName, isGift, la
           <p style="margin: 0 0 12px 0; color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">${t.giftBuyerYourMessage}</p>
           <div style="background: #FAF8F5; padding: 24px; border-left: 2px solid #B8976A;">
             <p style="font-style: italic; color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-size: 16px; margin: 0; line-height: 1.7;">
-              "${order.recipient.message}"
+              "${escapeHtml(order.recipient.message)}"
             </p>
           </div>
         </div>
@@ -1405,7 +1554,7 @@ function generateCustomerEmail(order, orderId, packageName, sizeName, isGift, la
             <p style="color: #2C2824; font-size: 24px; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; margin: 0 0 8px 0;">${pkg.name || packageName}</p>
             <p style="color: #8A8578; font-size: 13px; margin: 0 0 16px 0;">${pkg.description || ''}</p>
             <div style="width: 30px; height: 1px; background: #B8976A; margin: 0 auto 16px;"></div>
-            <p style="color: #8A8578; font-size: 12px; margin: 0;">${order.recipient?.name || ''}</p>
+            <p style="color: #8A8578; font-size: 12px; margin: 0;">${escapeHtml(order.recipient?.name || '')}</p>
           </div>
         </div>
 
@@ -1424,7 +1573,7 @@ function generateCustomerEmail(order, orderId, packageName, sizeName, isGift, la
           <p style="margin: 0 0 20px 0; color: #2C2824; font-size: 14px; font-weight: 500;">${t.giftBuyerWhatHappens}</p>
           <div style="margin: 0 0 12px 0; display: flex;">
             <span style="color: #B8976A; font-weight: 500; margin-right: 12px; font-size: 14px;">1.</span>
-            <span style="color: #8A8578; font-size: 14px; line-height: 1.5;">${t.giftBuyerStep1(order.recipient?.name)}</span>
+            <span style="color: #8A8578; font-size: 14px; line-height: 1.5;">${t.giftBuyerStep1(escapeHtml(order.recipient?.name))}</span>
           </div>
           <div style="margin: 0 0 12px 0; display: flex;">
             <span style="color: #B8976A; font-weight: 500; margin-right: 12px; font-size: 14px;">2.</span>
@@ -1485,14 +1634,14 @@ function generateGiftCardEmail(order, pkg, lang) {
           <div style="width: 40px; height: 1px; background: #B8976A; margin: 0 auto 32px;"></div>
           
           <p style="font-size: 10px; letter-spacing: 3px; color: #B8976A; margin: 0 0 12px 0; font-weight: 500;">${t.giftRecipientLabel}</p>
-          <h3 style="font-size: 26px; color: #2C2824; margin: 0 0 32px 0; font-family: Georgia, 'Times New Roman', serif; font-weight: 300;">${order.recipient?.name || ''}</h3>
+          <h3 style="font-size: 26px; color: #2C2824; margin: 0 0 32px 0; font-family: Georgia, 'Times New Roman', serif; font-weight: 300;">${escapeHtml(order.recipient?.name || '')}</h3>
           
           ${order.recipient?.message ? `
           <div style="background: #FAF8F5; padding: 28px; margin: 0 0 32px 0; border-left: 2px solid #B8976A;">
             <p style="font-style: italic; color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-size: 16px; margin: 0 0 12px 0; line-height: 1.7;">
-              "${order.recipient.message}"
+              "${escapeHtml(order.recipient.message)}"
             </p>
-            <p style="color: #8A8578; font-size: 12px; margin: 0; letter-spacing: 1px;">– ${order.customer?.name || ''}</p>
+            <p style="color: #8A8578; font-size: 12px; margin: 0; letter-spacing: 1px;">– ${escapeHtml(order.customer?.name || '')}</p>
           </div>
           ` : ''}
           
@@ -1560,21 +1709,24 @@ exports.getOrder = functions
 
         const order = orderDoc.data();
 
+        const safeCustomer = {
+          name: order.customer?.name,
+        };
+        if (order.customer?.email) {
+          const [local, domain] = order.customer.email.split('@');
+          safeCustomer.email = local.slice(0, 2) + '***@' + domain;
+        }
+
         res.status(200).json({
           id: orderId,
           type: order.type,
           package: order.package,
+          packageType: order.packageType || order.package,
           size: order.size,
           status: order.status,
-          customer: {
-            name: order.customer?.name,
-            email: order.customer?.email,
-            phone: order.customer?.phone,
-            address: order.customer?.address,
-            additionalInfo: order.customer?.additionalInfo,
-          },
+          amount: order.amount || null,
+          customer: safeCustomer,
           recipient: order.recipient ? { name: order.recipient.name } : null,
-          giftCode: order.giftCode || null,
           referralCode: order.referralCode || null,
         });
       } catch (error) {
@@ -1601,6 +1753,18 @@ exports.calWebhook = functions
   .https.onRequest(async (req, res) => {
     if (req.method !== 'POST') {
       return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    const calWebhookSecret = (process.env.CAL_WEBHOOK_SECRET || '').trim();
+    if (calWebhookSecret) {
+      const crypto = require('crypto');
+      const signature = req.headers['x-cal-signature-256'] || req.headers['cal-signature'] || '';
+      const body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+      const expected = crypto.createHmac('sha256', calWebhookSecret).update(body).digest('hex');
+      if (signature !== expected) {
+        console.error('Cal.com webhook signature mismatch');
+        return res.status(401).json({ error: 'Invalid signature' });
+      }
     }
 
     try {
@@ -1634,11 +1798,14 @@ exports.calWebhook = functions
  * Handle new booking from Cal.com
  */
 async function handleCalBookingCreated(booking) {
-  const attendeeEmail = booking.attendees?.[0]?.email;
-  const attendeeName = booking.attendees?.[0]?.name;
+  // Real customer details are in metadata (Cal.eu attendee email is
+  // rerouted to tere@sukoda.ee to suppress Cal.eu's built-in emails)
+  const realEmail = booking.metadata?.realEmail || booking.attendees?.[0]?.email;
+  const realName = booking.metadata?.realName || booking.attendees?.[0]?.name;
+  const realPhone = booking.metadata?.realPhone || booking.responses?.phone || '';
 
-  if (!attendeeEmail) {
-    console.error('No attendee email in Cal.com booking');
+  if (!realEmail) {
+    console.error('No customer email in Cal.com booking (checked metadata + attendees)');
     return;
   }
 
@@ -1655,25 +1822,36 @@ async function handleCalBookingCreated(booking) {
   }
 
   // Find the matching order by customer email
-  let orderId = null;
+  let orderId = booking.metadata?.orderId || null;
   let orderData = null;
 
-  const ordersSnapshot = await db.collection('orders')
-    .where('customer.email', '==', attendeeEmail)
-    .where('status', '==', 'paid')
-    .orderBy('createdAt', 'desc')
-    .limit(1)
-    .get();
+  if (orderId) {
+    const orderDoc = await db.collection('orders').doc(orderId).get();
+    if (orderDoc.exists) {
+      orderData = orderDoc.data();
+    } else {
+      orderId = null;
+    }
+  }
 
-  if (!ordersSnapshot.empty) {
-    orderId = ordersSnapshot.docs[0].id;
-    orderData = ordersSnapshot.docs[0].data();
+  if (!orderId) {
+    const ordersSnapshot = await db.collection('orders')
+      .where('customer.email', '==', realEmail)
+      .where('status', '==', 'paid')
+      .orderBy('createdAt', 'desc')
+      .limit(1)
+      .get();
+
+    if (!ordersSnapshot.empty) {
+      orderId = ordersSnapshot.docs[0].id;
+      orderData = ordersSnapshot.docs[0].data();
+    }
   }
 
   // If not found by customer email, check gift orders by recipient email
   if (!orderId) {
     const giftOrdersSnapshot = await db.collection('orders')
-      .where('recipient.email', '==', attendeeEmail)
+      .where('recipient.email', '==', realEmail)
       .where('type', '==', 'gift')
       .where('status', '==', 'paid')
       .orderBy('createdAt', 'desc')
@@ -1698,9 +1876,9 @@ async function handleCalBookingCreated(booking) {
     orderId: orderId,
     calBookingId: booking.id || null,
     calBookingUid: booking.uid || null,
-    customerEmail: attendeeEmail,
-    customerName: attendeeName || orderData?.customer?.name || '',
-    customerPhone: booking.responses?.phone || orderData?.customer?.phone || '',
+    customerEmail: realEmail,
+    customerName: realName || orderData?.customer?.name || '',
+    customerPhone: realPhone || orderData?.customer?.phone || '',
     address: booking.responses?.location?.optionValue || booking.responses?.address || orderData?.customer?.address || '',
     scheduledAt: admin.firestore.Timestamp.fromDate(new Date(booking.startTime)),
     endTime: admin.firestore.Timestamp.fromDate(new Date(booking.endTime)),
@@ -1719,9 +1897,9 @@ async function handleCalBookingCreated(booking) {
   const isAutoScheduled = booking.metadata?.source === 'sukoda-auto-scheduler';
   if (!isAutoScheduled) {
     await sendAdminBookingNotification({
-      customerName: attendeeName || orderData?.customer?.name || '',
-      customerEmail: attendeeEmail,
-      customerPhone: booking.responses?.phone || orderData?.customer?.phone || '',
+      customerName: realName || orderData?.customer?.name || '',
+      customerEmail: realEmail,
+      customerPhone: realPhone || orderData?.customer?.phone || '',
       address: booking.responses?.location?.optionValue || booking.responses?.address || orderData?.customer?.address || '',
       scheduledAt: booking.startTime,
       size: size,
@@ -1740,12 +1918,13 @@ async function handleCalBookingCreated(booking) {
     const nextVisitDue = new Date(scheduledDate);
     nextVisitDue.setDate(nextVisitDue.getDate() + intervalDays);
 
+    const tp = tallinnParts(scheduledDate);
     const updateData = {
       lastVisitAt: admin.firestore.Timestamp.fromDate(scheduledDate),
       nextVisitDue: admin.firestore.Timestamp.fromDate(nextVisitDue),
       totalVisits: admin.firestore.FieldValue.increment(1),
-      preferredDay: scheduledDate.getDay(),
-      preferredTime: `${scheduledDate.getHours().toString().padStart(2, '0')}:${scheduledDate.getMinutes().toString().padStart(2, '0')}`,
+      preferredDay: tp.weekday,
+      preferredTime: `${tp.hour.toString().padStart(2, '0')}:${tp.minute.toString().padStart(2, '0')}`,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
@@ -1820,11 +1999,12 @@ async function handleCalBookingRescheduled(booking) {
         const nextVisitDue = new Date(scheduledDate);
         nextVisitDue.setDate(nextVisitDue.getDate() + intervalDays);
 
+        const tpR = tallinnParts(scheduledDate);
         await db.collection('orders').doc(bookingData.orderId).update({
           lastVisitAt: admin.firestore.Timestamp.fromDate(scheduledDate),
           nextVisitDue: admin.firestore.Timestamp.fromDate(nextVisitDue),
-          preferredDay: scheduledDate.getDay(),
-          preferredTime: `${scheduledDate.getHours().toString().padStart(2, '0')}:${scheduledDate.getMinutes().toString().padStart(2, '0')}`,
+          preferredDay: tpR.weekday,
+          preferredTime: `${tpR.hour.toString().padStart(2, '0')}:${tpR.minute.toString().padStart(2, '0')}`,
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
       }
@@ -2055,6 +2235,22 @@ exports.sendVisitReminders = functions
 // ============================================================
 
 /**
+ * Home profile CTA block for emails — encourages users to add preferences for the cleaner
+ */
+function homeProfileBlock(lang) {
+  const t = tx(lang);
+  return `
+    <div style="background: #FAF8F5; padding: 28px; margin-bottom: 32px; margin-top: 32px; border-left: 2px solid #E8E3DD;">
+      <p style="color: #8A8578; font-size: 14px; line-height: 1.7; margin: 0 0 16px 0;">
+        ${t.homeProfileNote}
+      </p>
+      <a href="https://sukoda.ee/minu.html" style="display: inline-block; background: #111111; color: #FFFFFF; padding: 12px 28px; text-decoration: none; font-size: 11px; letter-spacing: 3px; font-weight: 500;">
+        ${t.homeProfileBtn}
+      </a>
+    </div>`;
+}
+
+/**
  * Email header component (reusable)
  */
 function emailHeader() {
@@ -2140,6 +2336,89 @@ function generateReminderEmail(booking, lang) {
           <p style="color: #8A8578; font-size: 13px; line-height: 1.6; margin-top: 24px;">
             ${t.reminderAccessNote}
           </p>
+
+          ${homeProfileBlock(lang)}
+        </div>
+
+        ${emailFooter(lang)}
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+/**
+ * Booking confirmation email -- sent immediately when a visit is booked (i18n)
+ * ET: "Sinu aeg on kinnitatud"
+ * EN: "Your time is confirmed"
+ */
+function generateBookingConfirmationEmail({ customerName, scheduledAt, endTime, address, lang, portalUrl }) {
+  const t = tx(lang);
+  const dt = scheduledAt instanceof Date ? scheduledAt : new Date(scheduledAt);
+
+  const itemsHtml = t.reminderItems.map((item, i) => {
+    const border = i < t.reminderItems.length - 1 ? 'border-bottom: 1px solid #E8E3DD;' : '';
+    return `<li style="padding: 8px 0; color: #8A8578; font-size: 14px; ${border}">${item}</li>`;
+  }).join('');
+
+  const changeHtml = portalUrl
+    ? `<p style="color: #8A8578; font-size: 13px; line-height: 1.6; margin-top: 8px;">
+            ${t.bookingConfirmedPortalNote}
+          </p>
+          <div style="text-align: center; margin-top: 16px;">
+            <a href="${portalUrl}" style="display: inline-block; background: #111111; color: #FFFFFF; padding: 14px 32px; text-decoration: none; font-size: 11px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">
+              ${t.bookingConfirmedPortalBtn}
+            </a>
+          </div>`
+    : `<p style="color: #8A8578; font-size: 13px; line-height: 1.6; margin-top: 8px;">
+            ${t.bookingConfirmedChangeNote}
+          </p>`;
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+      <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+        ${emailHeader()}
+
+        <div style="padding: 44px 40px;">
+          <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 8px 0;">
+            ${t.bookingConfirmedTitle}
+          </h2>
+          <p style="color: #8A8578; font-size: 14px; margin: 0 0 32px 0; line-height: 1.6;">
+            ${t.bookingConfirmedIntro(customerName)}
+          </p>
+
+          <div style="background: #FFFFFF; padding: 28px; margin-bottom: 32px; border-left: 2px solid #B8976A;">
+            <p style="margin: 0 0 8px 0; color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">${t.bookingConfirmedTimeLabel}</p>
+            <p style="margin: 0 0 4px 0; font-weight: 300; color: #2C2824; font-size: 20px; font-family: Georgia, 'Times New Roman', serif;">
+              ${formatDate(dt, lang)}
+            </p>
+            <p style="margin: 0 0 16px 0; color: #8A8578; font-size: 16px;">
+              ${t.reminderAt} ${formatTime(dt)}
+            </p>
+            ${address ? `
+            <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E8E3DD; color: #8A8578; font-size: 14px;">
+              ${t.addressLabel}: <strong style="color: #2C2824; font-weight: 400;">${escapeHtml(address)}</strong>
+            </p>
+            ` : ''}
+          </div>
+
+          <div style="background: #FAF8F5; padding: 24px; margin-bottom: 32px;">
+            <p style="color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500; margin: 0 0 16px 0;">${t.reminderExpectLabel}</p>
+            <ul style="list-style: none; padding: 0; margin: 0;">
+              ${itemsHtml}
+            </ul>
+          </div>
+
+          ${generateCalendarLinksHtml({ scheduledAt: dt, endTime, address, lang })}
+
+          <p style="color: #8A8578; font-size: 13px; line-height: 1.6; margin-top: 24px;">
+            ${t.bookingConfirmedNote}
+          </p>
+
+          ${changeHtml}
         </div>
 
         ${emailFooter(lang)}
@@ -2201,6 +2480,17 @@ function generateNextVisitEmail(booking, order, lang) {
           <p style="color: #8A8578; font-size: 13px; line-height: 1.6; margin-top: 24px;">
             ${t.nextVisitReschedule}
           </p>
+
+          ${homeProfileBlock(lang)}
+
+          <div style="background: #111111; padding: 24px; margin-top: 24px; text-align: center;">
+            <p style="margin: 0 0 14px 0; color: #8A8578; font-size: 13px;">
+              ${t.bookingConfirmedPortalNote}
+            </p>
+            <a href="https://sukoda.ee/minu" style="display: inline-block; background: #B8976A; color: #FFFFFF; padding: 12px 28px; text-decoration: none; font-size: 11px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">
+              ${t.bookingConfirmedPortalBtn}
+            </a>
+          </div>
         </div>
 
         ${emailFooter(lang)}
@@ -2393,11 +2683,67 @@ function getFollowupOrderUrl(lang, promoCode) {
 
 /**
  * Generate follow-up email: 24h after visit — "Kuidas meeldis?" + -20% offer
+ * For multi-visit gifts: warm follow-up with remaining visits info instead of conversion offer
  */
 function generateFollowup24hEmail(followup, lang) {
   const t = tx(lang);
   const recipientName = followup.recipientName || '';
   const orderUrl = getFollowupOrderUrl(lang, t.followup24hOfferCode);
+  const visitDateLabel = getVisitDateLabel(followup.visitDate, lang);
+  const multiVisit = isMultiVisitGift(followup.giftPackage);
+  const totalVisits = GIFT_VISIT_COUNTS[followup.giftPackage] || 1;
+  const remaining = totalVisits - 1;
+
+  if (multiVisit) {
+    return `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+      <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+        ${emailHeader()}
+        <div style="padding: 44px 40px;">
+          <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 24px 0;">
+            ${t.followup24hTitle}
+          </h2>
+          <p style="color: #8A8578; line-height: 1.8; margin: 0 0 20px 0; font-size: 15px;">
+            ${t.giftMulti24hIntro(recipientName, visitDateLabel)}
+          </p>
+          <p style="color: #2C2824; line-height: 1.8; margin: 0 0 40px 0; font-size: 16px; font-family: Georgia, 'Times New Roman', serif; font-style: italic;">
+            ${t.giftMulti24hBody}
+          </p>
+
+          <div style="text-align: center; margin-bottom: 40px;">
+            <span style="display: inline-block; width: 40px; height: 1px; background: #B8976A;"></span>
+          </div>
+
+          <div style="background: #FFFFFF; padding: 32px; border-left: 3px solid #B8976A; margin-bottom: 32px;">
+            <p style="margin: 0 0 8px 0; color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">
+              ${t.giftMulti24hNextTitle}
+            </p>
+            <p style="margin: 0 0 16px 0; color: #2C2824; font-size: 16px; line-height: 1.7; font-family: Georgia, 'Times New Roman', serif; font-weight: 300;">
+              ${t.giftMulti24hNextNote(remaining)}
+            </p>
+            <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E8E3DD; color: #8A8578; font-size: 13px; line-height: 1.7;">
+              ${t.giftMulti24hProfileNote}
+            </p>
+            <div style="margin-top: 16px;">
+              <a href="https://sukoda.ee/minu.html" style="display: inline-block; background: #111111; color: #FFFFFF; padding: 12px 28px; text-decoration: none; font-size: 11px; letter-spacing: 3px; font-weight: 500;">
+                ${t.giftMulti24hProfileBtn}
+              </a>
+            </div>
+          </div>
+
+          <p style="color: #8A8578; font-size: 14px;">
+            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #2C2824; text-decoration: none; border-bottom: 1px solid #B8976A;">tere@sukoda.ee</a>
+          </p>
+        </div>
+        ${emailFooter(lang)}
+      </div>
+    </body>
+    </html>
+    `;
+  }
 
   return `
     <!DOCTYPE html>
@@ -2411,7 +2757,7 @@ function generateFollowup24hEmail(followup, lang) {
             ${t.followup24hTitle}
           </h2>
           <p style="color: #8A8578; line-height: 1.8; margin: 0 0 20px 0; font-size: 15px;">
-            ${t.followup24hIntro(recipientName)}
+            ${t.followup24hIntro(recipientName, visitDateLabel)}
           </p>
           <p style="color: #2C2824; line-height: 1.8; margin: 0 0 20px 0; font-size: 16px; font-family: Georgia, 'Times New Roman', serif; font-style: italic;">
             ${t.followup24hBody}
@@ -2466,11 +2812,52 @@ function generateFollowup24hEmail(followup, lang) {
 
 /**
  * Generate follow-up email: 7 days after visit — "Sinu järgmine koristus ootab"
+ * For multi-visit gifts: warm reminder with profile link instead of conversion offer
  */
 function generateFollowup7dEmail(followup, lang) {
   const t = tx(lang);
   const recipientName = followup.recipientName || '';
   const orderUrl = getFollowupOrderUrl(lang, t.followup24hOfferCode);
+  const multiVisit = isMultiVisitGift(followup.giftPackage);
+
+  if (multiVisit) {
+    return `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+      <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+        ${emailHeader()}
+        <div style="padding: 44px 40px;">
+          <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 24px 0;">
+            ${t.giftMulti7dTitle}
+          </h2>
+          <p style="color: #8A8578; line-height: 1.8; margin: 0 0 24px 0; font-size: 15px;">
+            ${t.giftMulti7dIntro(recipientName)}
+          </p>
+          <p style="color: #2C2824; line-height: 1.8; margin: 0 0 40px 0; font-size: 16px; font-family: Georgia, 'Times New Roman', serif; font-style: italic;">
+            ${t.giftMulti7dBody}
+          </p>
+
+          <div style="background: #FAF8F5; padding: 28px; margin-bottom: 32px; border-left: 2px solid #E8E3DD;">
+            <p style="color: #8A8578; font-size: 14px; line-height: 1.7; margin: 0 0 16px 0;">
+              ${t.giftMulti7dProfileNote}
+            </p>
+            <a href="https://sukoda.ee/minu.html" style="display: inline-block; background: #111111; color: #FFFFFF; padding: 12px 28px; text-decoration: none; font-size: 11px; letter-spacing: 3px; font-weight: 500;">
+              ${t.giftMulti24hProfileBtn}
+            </a>
+          </div>
+
+          <p style="color: #8A8578; font-size: 14px;">
+            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #2C2824; text-decoration: none; border-bottom: 1px solid #B8976A;">tere@sukoda.ee</a>
+          </p>
+        </div>
+        ${emailFooter(lang)}
+      </div>
+    </body>
+    </html>
+    `;
+  }
 
   return `
     <!DOCTYPE html>
@@ -2519,11 +2906,43 @@ function generateFollowup7dEmail(followup, lang) {
 
 /**
  * Generate follow-up email: 30 days after visit — Final reminder / urgency
+ * For multi-visit gifts: gentle reminder that more visits are coming
  */
 function generateFollowup30dEmail(followup, lang) {
   const t = tx(lang);
   const recipientName = followup.recipientName || '';
   const orderUrl = getFollowupOrderUrl(lang, t.followup24hOfferCode);
+  const multiVisit = isMultiVisitGift(followup.giftPackage);
+
+  if (multiVisit) {
+    return `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+      <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+        ${emailHeader()}
+        <div style="padding: 44px 40px;">
+          <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 24px 0;">
+            ${t.giftMulti30dTitle}
+          </h2>
+          <p style="color: #8A8578; line-height: 1.8; margin: 0 0 24px 0; font-size: 15px;">
+            ${t.giftMulti30dIntro(recipientName)}
+          </p>
+          <p style="color: #2C2824; line-height: 1.8; margin: 0 0 40px 0; font-size: 16px; font-family: Georgia, 'Times New Roman', serif; font-style: italic;">
+            ${t.giftMulti30dBody}
+          </p>
+
+          <p style="color: #8A8578; font-size: 14px;">
+            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #2C2824; text-decoration: none; border-bottom: 1px solid #B8976A;">tere@sukoda.ee</a>
+          </p>
+        </div>
+        ${emailFooter(lang)}
+      </div>
+    </body>
+    </html>
+    `;
+  }
 
   return `
     <!DOCTYPE html>
@@ -2587,6 +3006,7 @@ function generateSubscriberFirstVisitEmail(followup, lang) {
   const t = tx(lang);
   const recipientName = followup.recipientName || '';
   const packageName = getPackageInfo(followup.packageType || 'twice', lang).name || '';
+  const visitDateLabel = getVisitDateLabel(followup.visitDate, lang);
 
   return `
     <!DOCTYPE html>
@@ -2600,7 +3020,7 @@ function generateSubscriberFirstVisitEmail(followup, lang) {
             ${t.subscriberFirstVisitTitle}
           </h2>
           <p style="color: #8A8578; line-height: 1.8; margin: 0 0 24px 0; font-size: 15px;">
-            ${t.subscriberFirstVisitIntro(recipientName)}
+            ${t.subscriberFirstVisitIntro(recipientName, visitDateLabel)}
           </p>
           <p style="color: #2C2824; line-height: 1.8; margin: 0 0 40px 0; font-size: 16px; font-family: Georgia, 'Times New Roman', serif; font-style: italic;">
             ${t.subscriberFirstVisitBody}
@@ -2630,6 +3050,8 @@ function generateSubscriberFirstVisitEmail(followup, lang) {
               ${t.subscriberFirstVisitFeedback}
             </p>
           </div>
+
+          ${homeProfileBlock(lang)}
 
           ${followup.referralCode ? `
           <!-- Elegant divider -->
@@ -2687,8 +3109,9 @@ function generateSubscriberFirstVisitEmail(followup, lang) {
  * @param {string} params.bookingStartTime - ISO string of the booked visit time
  * @param {string} params.lang - Language (et/en)
  * @param {string} params.size - Home size
+ * @param {string} [params.giftPackage] - Gift package type (moment/month/quarter)
  */
-async function createFollowupSequence({ orderId, recipientEmail, recipientName, bookingStartTime, lang, size }) {
+async function createFollowupSequence({ orderId, recipientEmail, recipientName, bookingStartTime, lang, size, giftPackage }) {
   const visitDate = new Date(bookingStartTime);
 
   // Schedule: 24h, 7 days, 30 days after the VISIT (not after booking)
@@ -2703,8 +3126,12 @@ async function createFollowupSequence({ orderId, recipientEmail, recipientName, 
   for (const { stage, delayDays } of stages) {
     const sendAt = new Date(visitDate);
     sendAt.setDate(sendAt.getDate() + delayDays);
-    // Send at 10:00 Tallinn time (UTC+2/+3 depending on DST)
-    sendAt.setHours(10, 0, 0, 0);
+    // Send at 10:00 Tallinn time — Cloud Functions run in UTC, so compute offset
+    const formatter = new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Tallinn', hour: 'numeric', hour12: false });
+    const tallinnNow = parseInt(formatter.format(sendAt), 10);
+    const utcNow = sendAt.getUTCHours();
+    const offset = tallinnNow - utcNow;
+    sendAt.setUTCHours(10 - offset, 0, 0, 0);
 
     const ref = db.collection('followups').doc();
     batch.set(ref, {
@@ -2717,6 +3144,7 @@ async function createFollowupSequence({ orderId, recipientEmail, recipientName, 
       status: 'pending',  // pending → sent → converted / expired
       lang: lang || 'et',
       size: size || 'medium',
+      giftPackage: giftPackage || null,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
   }
@@ -2947,8 +3375,13 @@ async function processReferralReward(referralCode, friendOrderId, friendOrder, f
     try {
       // Look up or use the SOOVITAJA20 coupon ID
       // The coupon must exist in Stripe (created manually: 20% off, duration "once")
-      const coupons = await getStripe().coupons.list({ limit: 100 });
-      const referrerCoupon = coupons.data.find(c => c.name === 'SOOVITAJA20' || c.id === 'SOOVITAJA20');
+      let referrerCoupon;
+      try {
+        referrerCoupon = await getStripe().coupons.retrieve('SOOVITAJA20');
+      } catch (e) {
+        console.error('Coupon SOOVITAJA20 not found:', e.message);
+        referrerCoupon = null;
+      }
 
       if (referrerCoupon) {
         await getStripe().subscriptions.update(referrerOrder.stripeSubscriptionId, {
@@ -3247,10 +3680,20 @@ exports.markVisitComplete = functions
               const isGiftRedeemed = order.type === 'gift';
 
               if (isSubscription && isFirstVisit) {
-                // Schedule subscriber first-visit email for ~24h later
-                const sendAt = new Date();
+                // Schedule subscriber first-visit email for day after the visit at 10:00
+                const visitTime = bookingData.scheduledAt?.toDate
+                  ? bookingData.scheduledAt.toDate()
+                  : new Date(bookingData.scheduledAt || Date.now());
+                const sendAt = new Date(visitTime);
                 sendAt.setDate(sendAt.getDate() + 1);
                 sendAt.setHours(10, 0, 0, 0);
+                // If that time already passed (e.g. visit was Saturday, marked Monday), send next day at 10:00
+                if (sendAt <= new Date()) {
+                  const tomorrow = new Date();
+                  tomorrow.setDate(tomorrow.getDate() + 1);
+                  tomorrow.setHours(10, 0, 0, 0);
+                  sendAt.setTime(tomorrow.getTime());
+                }
 
                 await db.collection('followups').add({
                   orderId: bookingData.orderId,
@@ -3471,9 +3914,8 @@ exports.rescheduleVisit = functions
 
         // 3. Update Firestore booking with new time and Cal.com data
         const newStartDate = new Date(newStartTime);
-        // Estimate end time from event type slug (50min, 90min, 120min, 150min)
-        const durationMatch = eventTypeSlug.match(/(\d+)/);
-        const durationMinutes = durationMatch ? parseInt(durationMatch[1]) : 90;
+        const slugDurations = { 'koristus-50': 120, 'koristus-90': 180, 'koristus-120': 240, 'koristus-150': 300 };
+        const durationMinutes = slugDurations[eventTypeSlug] || 180;
         const newEndDate = new Date(newStartDate.getTime() + durationMinutes * 60 * 1000);
 
         await bookingRef.update({
@@ -3499,11 +3941,12 @@ exports.rescheduleVisit = functions
               const nextVisitDue = new Date(newStartDate);
               nextVisitDue.setDate(nextVisitDue.getDate() + intervalDays);
 
+              const tpN = tallinnParts(newStartDate);
               await db.collection('orders').doc(booking.orderId).update({
                 lastVisitAt: admin.firestore.Timestamp.fromDate(newStartDate),
                 nextVisitDue: admin.firestore.Timestamp.fromDate(nextVisitDue),
-                preferredDay: newStartDate.getDay(),
-                preferredTime: `${newStartDate.getHours().toString().padStart(2, '0')}:${newStartDate.getMinutes().toString().padStart(2, '0')}`,
+                preferredDay: tpN.weekday,
+                preferredTime: `${tpN.hour.toString().padStart(2, '0')}:${tpN.minute.toString().padStart(2, '0')}`,
                 updatedAt: admin.firestore.FieldValue.serverTimestamp(),
               });
             }
@@ -3801,11 +4244,11 @@ exports.estateInquiry = functions
         return res.status(405).json({ error: 'Method not allowed' });
       }
 
-      const { name, email, phone, additionalInfo, selectedRhythm, lang } = req.body || {};
-
-      if (!name || !email) {
-        return res.status(400).json({ error: 'Name and email are required' });
+      const eiv = validate(estateInquirySchema, req.body);
+      if (!eiv.ok) {
+        return res.status(400).json({ error: eiv.error });
       }
+      const { name, email, phone, additionalInfo, selectedRhythm, lang } = eiv.data;
 
       try {
         await db.collection('estate_inquiries').add({
@@ -3826,11 +4269,11 @@ exports.estateInquiry = functions
             <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 500px; padding: 20px;">
               <h2 style="color: #2C2824; font-family: Georgia, serif; font-weight: 300; border-bottom: 1px solid #B8976A; padding-bottom: 10px;">Uus rätseplahenduse päring</h2>
               <table style="width: 100%; margin: 16px 0;">
-                <tr><td style="padding: 6px 0; color: #8A8578;">Nimi:</td><td style="padding: 6px 0;"><strong>${name}</strong></td></tr>
-                <tr><td style="padding: 6px 0; color: #8A8578;">E-post:</td><td style="padding: 6px 0;"><strong>${email}</strong></td></tr>
-                ${phone ? `<tr><td style="padding: 6px 0; color: #8A8578;">Telefon:</td><td style="padding: 6px 0;">${phone}</td></tr>` : ''}
-                ${selectedRhythm ? `<tr><td style="padding: 6px 0; color: #8A8578;">Rütm:</td><td style="padding: 6px 0;">${selectedRhythm}</td></tr>` : ''}
-                ${additionalInfo ? `<tr><td style="padding: 6px 0; color: #8A8578;">Lisainfo:</td><td style="padding: 6px 0;">${additionalInfo}</td></tr>` : ''}
+                <tr><td style="padding: 6px 0; color: #8A8578;">Nimi:</td><td style="padding: 6px 0;"><strong>${escapeHtml(name)}</strong></td></tr>
+                <tr><td style="padding: 6px 0; color: #8A8578;">E-post:</td><td style="padding: 6px 0;"><strong>${escapeHtml(email)}</strong></td></tr>
+                ${phone ? `<tr><td style="padding: 6px 0; color: #8A8578;">Telefon:</td><td style="padding: 6px 0;">${escapeHtml(phone)}</td></tr>` : ''}
+                ${selectedRhythm ? `<tr><td style="padding: 6px 0; color: #8A8578;">Rütm:</td><td style="padding: 6px 0;">${escapeHtml(selectedRhythm)}</td></tr>` : ''}
+                ${additionalInfo ? `<tr><td style="padding: 6px 0; color: #8A8578;">Lisainfo:</td><td style="padding: 6px 0;">${escapeHtml(additionalInfo)}</td></tr>` : ''}
               </table>
               <p style="color: #B8976A; font-size: 13px; font-style: italic;">Palun vasta 24 tunni jooksul.</p>
             </div>
@@ -3847,8 +4290,8 @@ exports.estateInquiry = functions
               </h2>
               <p style="color: #6B6560; line-height: 1.6;">
                 ${lang === 'en'
-                  ? `Dear ${name}, we have received your bespoke home care inquiry. A member of our team will be in touch within 24 hours to discuss your needs.`
-                  : `${name}, oleme sinu rätseplahenduse päringu kätte saanud. Võtame sinuga ühendust 24 tunni jooksul, et arutada sinu soove.`
+                  ? `Dear ${escapeHtml(name)}, we have received your bespoke home care inquiry. A member of our team will be in touch within 24 hours to discuss your needs.`
+                  : `${escapeHtml(name)}, oleme sinu rätseplahenduse päringu kätte saanud. Võtame sinuga ühendust 24 tunni jooksul, et arutada sinu soove.`
                 }
               </p>
               <p style="color: #8A8578; font-size: 13px; margin-top: 20px;">SUKODA — tere@sukoda.ee</p>
@@ -3912,10 +4355,10 @@ exports.waitlist = functions
             <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 500px; padding: 20px;">
               <h2 style="color: #2C2824; font-family: Georgia, serif; font-weight: 300; border-bottom: 1px solid #B8976A; padding-bottom: 10px;">Uus huviline väljastpoolt Tallinna</h2>
               <table style="width: 100%; margin: 16px 0;">
-                <tr><td style="padding: 6px 0; color: #8A8578;">Nimi:</td><td style="padding: 6px 0;"><strong>${name || '-'}</strong></td></tr>
-                <tr><td style="padding: 6px 0; color: #8A8578;">E-post:</td><td style="padding: 6px 0;"><strong>${email}</strong></td></tr>
-                <tr><td style="padding: 6px 0; color: #8A8578;">Linn:</td><td style="padding: 6px 0;"><strong style="color: #B8976A;">${city}</strong></td></tr>
-                ${address ? `<tr><td style="padding: 6px 0; color: #8A8578;">Aadress:</td><td style="padding: 6px 0;">${address}</td></tr>` : ''}
+                <tr><td style="padding: 6px 0; color: #8A8578;">Nimi:</td><td style="padding: 6px 0;"><strong>${escapeHtml(name || '-')}</strong></td></tr>
+                <tr><td style="padding: 6px 0; color: #8A8578;">E-post:</td><td style="padding: 6px 0;"><strong>${escapeHtml(email)}</strong></td></tr>
+                <tr><td style="padding: 6px 0; color: #8A8578;">Linn:</td><td style="padding: 6px 0;"><strong style="color: #B8976A;">${escapeHtml(city)}</strong></td></tr>
+                ${address ? `<tr><td style="padding: 6px 0; color: #8A8578;">Aadress:</td><td style="padding: 6px 0;">${escapeHtml(address)}</td></tr>` : ''}
               </table>
               <p style="color: #8A8578; font-size: 13px; margin-top: 20px;">
                 <a href="https://console.firebase.google.com/project/sukoda-77b52/firestore/data/~2Fwaitlist" style="color: #2C2824;">Vaata kõiki ootejärjekorras →</a>
@@ -3991,12 +4434,12 @@ exports.redeemGift = functions
           et: {
             moment: 'Üks täiuslik koduhoolitsus — koristus, värsked lilled, tervituskaart ja magus üllatus.',
             month: 'Kaks koduhoolitsust ühe kuu jooksul — koristus, lilled, puuviljad ja tervituskaart.',
-            quarter: 'Kuus koduhoolitsust kolme kuu jooksul — koristus, lilled, puuviljad ja taimede kastmine.',
+            quarter: 'Kuus koduhoolitsust kolme kuu jooksul — koristus, lilled, puuviljad ja premium koduhooldus.',
           },
           en: {
             moment: 'One perfect home care — cleaning, fresh flowers, greeting card and a sweet surprise.',
             month: 'Two home care visits over one month — cleaning, flowers, fruit and a greeting card.',
-            quarter: 'Six home care visits over three months — cleaning, flowers, fruit and plant watering.',
+            quarter: 'Six home care visits over three months — cleaning, flowers, fruits and premium home care.',
           },
         };
 
@@ -4011,7 +4454,7 @@ exports.redeemGift = functions
           packageName: packageNames[lang]?.[order.package] || order.package,
           packageDescription: packageDescriptions[lang]?.[order.package] || '',
           sizeName: sizeNames[lang]?.[order.size] || order.size,
-          senderName: order.customer?.name || '',
+          senderName: order.physicalCard ? '' : (order.customer?.name || ''),
           message: order.recipient?.message || '',
         });
 
@@ -4132,24 +4575,39 @@ exports.bookGiftVisit = functions
         return res.status(400).json({ error: 'Missing required fields: code, startTime, email, address' });
       }
 
-      // Validate minimum lead time (48h) and launch date
+      // Validate minimum lead time and launch date
       const minBookingTime = new Date(Date.now() + MIN_BOOKING_LEAD_HOURS * 60 * 60 * 1000);
       const launchMinTime = LAUNCH_DATE ? new Date(LAUNCH_DATE + 'T00:00:00+02:00') : null;
       const effectiveMin = launchMinTime && launchMinTime > minBookingTime ? launchMinTime : minBookingTime;
       if (new Date(startTime) < effectiveMin) {
-        return res.status(400).json({ error: `Broneerida saab vähemalt ${MIN_BOOKING_LEAD_HOURS} tundi ette. Palun valige hilisem aeg.` });
+        const lang = req.body?.lang || 'et';
+        const leadTimeError = lang === 'en'
+          ? `Bookings must be made at least ${MIN_BOOKING_LEAD_HOURS} hours in advance. Please choose a later time.`
+          : `Broneerida saab vähemalt ${MIN_BOOKING_LEAD_HOURS} tundi ette. Palun valige hilisem aeg.`;
+        return res.status(400).json({ error: leadTimeError });
       }
 
       try {
-        // Find and validate gift order (normalize 0→O, 1→I to handle common typos)
-        const normalizedCode = code.trim().toUpperCase().replace(/0/g, 'O').replace(/1/g, 'I');
-        const snapshot = await db.collection('orders')
+        const normalizedCode = normalizeGiftInput(code);
+        console.log('bookGiftVisit: looking up code', JSON.stringify({ raw: code, normalized: normalizedCode }));
+
+        // Try normalized code first, then raw code as fallback
+        let snapshot = await db.collection('orders')
           .where('giftCode', '==', normalizedCode)
           .where('type', '==', 'gift')
           .limit(1)
           .get();
 
+        if (snapshot.empty && normalizedCode !== code.trim().toUpperCase()) {
+          snapshot = await db.collection('orders')
+            .where('giftCode', '==', code.trim().toUpperCase())
+            .where('type', '==', 'gift')
+            .limit(1)
+            .get();
+        }
+
         if (snapshot.empty) {
+          console.error('bookGiftVisit: code not found', JSON.stringify({ raw: code, normalized: normalizedCode }));
           return res.status(404).json({ error: 'Gift code not found' });
         }
 
@@ -4206,6 +4664,7 @@ exports.bookGiftVisit = functions
             bookingStartTime: startTime,
             lang: order.lang || 'et',
             size: order.size || 'medium',
+            giftPackage: order.package || null,
           });
         } catch (followupError) {
           // Don't fail the booking if follow-up creation fails
@@ -4225,6 +4684,46 @@ exports.bookGiftVisit = functions
           giftCode: order.giftCode,
           additionalInfo: additionalInfo || '',
         });
+
+        // Create portal session token for gift recipient
+        const lang = order.lang || 'et';
+        const t = tx(lang);
+        let portalUrl = null;
+        try {
+          const crypto = require('crypto');
+          const rawToken = crypto.randomBytes(32).toString('hex');
+          const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+          const tokenExpiry = new Date();
+          tokenExpiry.setDate(tokenExpiry.getDate() + 30);
+          await doc.ref.update({
+            sessionTokenHash: tokenHash,
+            sessionTokenExpiresAt: admin.firestore.Timestamp.fromDate(tokenExpiry),
+          });
+          portalUrl = `https://sukoda.ee/minu?token=${rawToken}`;
+        } catch (tokenErr) {
+          console.error('Portal token creation failed (non-fatal):', tokenErr);
+        }
+
+        // Send booking confirmation email to recipient with calendar links + portal
+        try {
+          const calSlugDurations = { 'koristus-50': 120, 'koristus-90': 180, 'koristus-120': 240, 'koristus-150': 300 };
+          const durationMin = calSlugDurations[slug] || 180;
+          const endTime = new Date(new Date(startTime).getTime() + durationMin * 60 * 1000);
+          await sendEmail({
+            to: email,
+            subject: t.subjectBookingConfirmed,
+            html: generateBookingConfirmationEmail({
+              customerName: recipientName,
+              scheduledAt: startTime,
+              endTime: endTime.toISOString(),
+              address,
+              lang,
+              portalUrl,
+            }),
+          });
+        } catch (emailErr) {
+          console.error('Booking confirmation email failed (non-fatal):', emailErr);
+        }
 
         // Format date for response
         const bookingDate = new Date(startTime);
@@ -4275,16 +4774,16 @@ exports.bookSubscriptionVisit = functions
       }
       const { orderId, startTime } = bsv.data;
 
-      if (!orderId || !startTime) {
-        return res.status(400).json({ error: 'Missing required fields: orderId, startTime' });
-      }
-
       // Validate minimum lead time (48h) and launch date
       const minBookingTimeSub = new Date(Date.now() + MIN_BOOKING_LEAD_HOURS * 60 * 60 * 1000);
       const launchMinTimeSub = LAUNCH_DATE ? new Date(LAUNCH_DATE + 'T00:00:00+02:00') : null;
       const effectiveMinSub = launchMinTimeSub && launchMinTimeSub > minBookingTimeSub ? launchMinTimeSub : minBookingTimeSub;
       if (new Date(startTime) < effectiveMinSub) {
-        return res.status(400).json({ error: `Broneerida saab vähemalt ${MIN_BOOKING_LEAD_HOURS} tundi ette. Palun valige hilisem aeg.` });
+        const lang = req.body?.lang || 'et';
+        const leadTimeError = lang === 'en'
+          ? `Bookings must be made at least ${MIN_BOOKING_LEAD_HOURS} hours in advance. Please choose a later time.`
+          : `Broneerida saab vähemalt ${MIN_BOOKING_LEAD_HOURS} tundi ette. Palun valige hilisem aeg.`;
+        return res.status(400).json({ error: leadTimeError });
       }
 
       try {
@@ -4345,6 +4844,29 @@ exports.bookSubscriptionVisit = functions
           orderId: orderId,
           additionalInfo: customer.additionalInfo || '',
         });
+
+        // Send booking confirmation email to customer with calendar links + portal
+        const lang = order.lang || 'et';
+        const t = tx(lang);
+        try {
+          const calSlugDurations = { 'koristus-50': 120, 'koristus-90': 180, 'koristus-120': 240, 'koristus-150': 300 };
+          const durationMin = calSlugDurations[slug] || 180;
+          const endTime = new Date(new Date(startTime).getTime() + durationMin * 60 * 1000);
+          await sendEmail({
+            to: customer.email,
+            subject: t.subjectBookingConfirmed,
+            html: generateBookingConfirmationEmail({
+              customerName: customer.name,
+              scheduledAt: startTime,
+              endTime: endTime.toISOString(),
+              address: customer.address,
+              lang,
+              portalUrl: 'https://sukoda.ee/minu',
+            }),
+          });
+        } catch (emailErr) {
+          console.error('Booking confirmation email failed (non-fatal):', emailErr);
+        }
 
         // Format date for response
         const bookingDate = new Date(startTime);
@@ -4462,7 +4984,7 @@ exports.generatePhysicalGiftCards = functions
             let code;
             let attempts = 0;
             do {
-              code = generateGiftCode();
+              code = await generateGiftCode();
               attempts++;
               if (attempts > 50) throw new Error('Could not generate unique code');
               const existing = await db.collection('orders').where('giftCode', '==', code).limit(1).get();
@@ -4659,11 +5181,19 @@ async function authenticateClient(req) {
   const crypto = require('crypto');
   const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
-  const ordersSnapshot = await db.collection('orders')
+  let ordersSnapshot = await db.collection('orders')
     .where('sessionTokenHash', '==', tokenHash)
     .where('type', '==', 'subscription')
     .limit(1)
     .get();
+
+  if (ordersSnapshot.empty) {
+    ordersSnapshot = await db.collection('orders')
+      .where('sessionTokenHash', '==', tokenHash)
+      .where('type', '==', 'gift')
+      .limit(1)
+      .get();
+  }
 
   if (ordersSnapshot.empty) return null;
 
@@ -4693,11 +5223,19 @@ exports.validatePortalToken = functions
         const crypto = require('crypto');
         const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
-        const ordersSnapshot = await db.collection('orders')
+        let ordersSnapshot = await db.collection('orders')
           .where('sessionTokenHash', '==', tokenHash)
           .where('type', '==', 'subscription')
           .limit(1)
           .get();
+
+        if (ordersSnapshot.empty) {
+          ordersSnapshot = await db.collection('orders')
+            .where('sessionTokenHash', '==', tokenHash)
+            .where('type', '==', 'gift')
+            .limit(1)
+            .get();
+        }
 
         if (ordersSnapshot.empty) {
           return res.status(401).json({ error: 'Invalid or expired token' });
@@ -4760,13 +5298,23 @@ exports.sendMagicLink = functions
           }
         }
 
-        const ordersSnapshot = await db.collection('orders')
+        // Search subscriptions first, then redeemed gift orders by recipient email
+        let ordersSnapshot = await db.collection('orders')
           .where('customer.email', '==', normalizedEmail)
           .where('type', '==', 'subscription')
           .where('status', 'in', ['paid', 'cancelling'])
           .orderBy('paidAt', 'desc')
           .limit(1)
           .get();
+
+        if (ordersSnapshot.empty) {
+          ordersSnapshot = await db.collection('orders')
+            .where('recipient.email', '==', normalizedEmail)
+            .where('type', '==', 'gift')
+            .where('giftRedeemed', '==', true)
+            .limit(1)
+            .get();
+        }
 
         // Always return success (don't reveal if email exists)
         if (ordersSnapshot.empty) {

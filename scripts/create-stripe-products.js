@@ -33,7 +33,7 @@ const PRODUCTS = {
     },
     quarter: {
       name: 'Kvartal Vabadust',
-      description: 'Kuus koduhoolitsust kolme kuu jooksul. Lilled, puuviljad, taimede kastmine ja premium koduhooldusvahenid.',
+      description: 'Kuus koduhoolitsust kolme kuu jooksul. Lilled, puuviljad ja premium koduhooldus.',
       prices: {
         small: { amount: 109900, nickname: '1-2 tuba' },
         medium: { amount: 134900, nickname: '3 tuba' },
@@ -48,7 +48,7 @@ const PRODUCTS = {
       name: '1× kuus',
       description: 'Üks koduhoolitsus kuus. Lilled, käsitsi kirjutatud kaart, magus üllatus.',
       prices: {
-        small: { amount: 17900, nickname: '1-2 tuba' },
+        small: { amount: 19900, nickname: '1-2 tuba' },
         medium: { amount: 22900, nickname: '3 tuba' },
         large: { amount: 28900, nickname: '4 tuba' },
       }
@@ -64,7 +64,7 @@ const PRODUCTS = {
     },
     weekly: {
       name: '4× kuus',
-      description: 'Neli koduhoolitsust kuus. Lilled, kaart, puuviljad, taimede kastmine. Täielik vabadus.',
+      description: 'Neli koduhoolitsust kuus. Lilled, kaart, puuviljad. Täielik vabadus.',
       prices: {
         small: { amount: 57900, nickname: '1-2 tuba' },
         medium: { amount: 71900, nickname: '3 tuba' },

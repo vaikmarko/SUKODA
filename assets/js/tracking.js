@@ -134,11 +134,11 @@
     window.SUKODA_TRACKING = {
         // Consent
         acceptCookies: function() {
-            document.cookie = 'sukoda_consent=accepted; path=/; max-age=' + (365 * 24 * 60 * 60) + '; SameSite=Lax';
+            document.cookie = 'sukoda_consent=accepted; path=/; max-age=' + (365 * 24 * 60 * 60) + '; SameSite=Lax; Secure';
             initAllTracking();
         },
         declineCookies: function() {
-            document.cookie = 'sukoda_consent=declined; path=/; max-age=' + (365 * 24 * 60 * 60) + '; SameSite=Lax';
+            document.cookie = 'sukoda_consent=declined; path=/; max-age=' + (365 * 24 * 60 * 60) + '; SameSite=Lax; Secure';
         },
         hasConsent: hasConsent,
         hasResponded: hasResponded,

@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /minu
+Disallow: /success
+Disallow: /test-payment
+Disallow: /api/
+
+Sitemap: https://sukoda.ee/sitemap.xml

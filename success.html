@@ -11,140 +11,12 @@
     
     <!-- Meta Pixel -->
     <script src="assets/js/tracking.js"></script>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        serif: ['Cormorant Garamond', 'Georgia', 'serif'],
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                    },
-                    colors: {
-                        black: '#111111',
-                        paper: '#FAF8F5',
-                        cream: '#F5F0EB',
-                        accent: '#B8976A',
-                        muted: '#6B6560',
-                    },
-                }
-            }
-        }
-    </script>
-    <style>
-        body {
-            background-color: #FAF8F5;
-            color: #111111;
-        }
-        .grid-line-b {
-            border-bottom: 1px solid #E8E3DD;
-        }
-        ::selection {
-            background: #111;
-            color: #FAF8F5;
-        }
-        [x-cloak] {
-            display: none !important;
-        }
-
-        /* Luxury hover effects */
-        .luxury-link {
-            position: relative;
-            display: inline-block;
-        }
-        .luxury-link::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            width: 0;
-            height: 1px;
-            background: #B8976A;
-            transition: width 0.4s ease;
-        }
-        .luxury-link:hover::after {
-            width: 100%;
-        }
-
-        .accent-line {
-            width: 40px;
-            height: 1px;
-            background: #B8976A;
-        }
-
-        @keyframes checkmark {
-            0% { transform: scale(0); opacity: 0; }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        .animate-checkmark {
-            animation: checkmark 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-slide-up {
-            animation: slideUp 0.8s ease-out 0.3s forwards;
-            opacity: 0;
-        }
-        .animate-slide-up-delay {
-            animation: slideUp 0.8s ease-out 0.6s forwards;
-            opacity: 0;
-        }
-
-        /* Scroll progress */
-        .scroll-progress {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 2px;
-            background: #B8976A;
-            z-index: 100;
-            transition: width 0.1s linear;
-        }
-    </style>
+    <script type="module" src="/assets/js/main.js"></script>
+    <link rel="canonical" href="https://sukoda.ee/success">
+    <link rel="preload" href="/assets/fonts/cormorant-garamond-400.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/assets/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
     <script src="assets/js/checkout.js"></script>
 </head>
-<style>
-        /* Calendar slot button */
-        .slot-btn {
-            transition: all 0.2s ease;
-        }
-        .slot-btn:hover {
-            background: #B8976A;
-            color: white;
-            border-color: #B8976A;
-        }
-        .slot-btn.selected {
-            background: #111111;
-            color: #FAF8F5;
-            border-color: #111111;
-        }
-        .day-btn {
-            transition: all 0.2s ease;
-        }
-        .day-btn:hover:not(:disabled) {
-            background: #F5F0EB;
-        }
-        .day-btn.has-slots {
-            font-weight: 500;
-        }
-        .day-btn.selected {
-            background: #111111;
-            color: #FAF8F5;
-        }
-        .day-btn:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
-    </style>
 <body class="antialiased" x-data="{ 
     lang: localStorage.getItem('sukoda_lang') || 'et',
     order: null,
@@ -266,16 +138,20 @@
         const currentYM = now.getFullYear() * 12 + now.getMonth();
         const targetYM = y * 12 + (m - 2);
         if (targetYM < currentYM) return;
-        const d = new Date(y, m - 2, 1);
-        this.currentMonth = d.toISOString().slice(0, 7);
+        const newMonth = m - 1;
+        const newYear = newMonth < 1 ? y - 1 : y;
+        const adjustedMonth = newMonth < 1 ? 12 : newMonth;
+        this.currentMonth = newYear + '-' + String(adjustedMonth).padStart(2, '0');
         this.updateMonthLabel();
         this.loadSlots();
     },
     
     nextMonth() {
         const [y, m] = this.currentMonth.split('-').map(Number);
-        const d = new Date(y, m, 1);
-        this.currentMonth = d.toISOString().slice(0, 7);
+        const newMonth = m + 1;
+        const newYear = newMonth > 12 ? y + 1 : y;
+        const adjustedMonth = newMonth > 12 ? 1 : newMonth;
+        this.currentMonth = newYear + '-' + String(adjustedMonth).padStart(2, '0');
         this.updateMonthLabel();
         this.loadSlots();
     },
@@ -286,7 +162,7 @@
         this.bookingError = '';
         try {
             const startTime = this.selectedDate + 'T' + this.selectedTime + ':00';
-            const dt = new Date(startTime + '+02:00');
+            const dt = new Date(startTime);
             
             const res = await fetch('/api/book-subscription', {
                 method: 'POST',
@@ -310,6 +186,7 @@
         }
     },
 }">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[10000] focus:bg-accent focus:text-paper focus:px-4 focus:py-2 focus:text-sm focus:font-sans">Skip to main content</a>
 
     <!-- Scroll Progress -->
     <div id="scrollProgress" class="scroll-progress" style="width: 0%"></div>
@@ -318,7 +195,7 @@
     <div class="max-w-[1440px] mx-auto bg-paper min-h-screen border-x border-[#E8E3DD]">
         
         <!-- Navigation -->
-        <nav class="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm grid-line-b">
+        <nav class="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm grid-line-b" aria-label="Main navigation">
             <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12">
                 <a href="index.html" class="font-serif text-2xl md:text-3xl tracking-[0.08em] font-light">
                     SUKODA
@@ -335,7 +212,7 @@
         </nav>
 
         <!-- Success Content -->
-        <main class="min-h-[80vh] flex items-center justify-center px-4 py-12 md:py-24">
+        <main id="main-content" class="min-h-[80vh] flex items-center justify-center px-4 py-12 md:py-24">
             <div class="max-w-xl w-full text-center">
                 
                 <!-- Loading -->
@@ -532,11 +409,16 @@
                                     <span class="text-accent font-medium mt-0.5">3.</span>
                                     <span class="text-muted font-light" x-text="lang === 'et' ? 'Saad automaatse meeldetuletuse enne külastust' : 'You\'ll get an automatic reminder before the visit'">Saad automaatse meeldetuletuse enne külastust</span>
                                 </li>
+                                <li class="flex items-start gap-3">
+                                    <span class="text-accent font-medium mt-0.5">4.</span>
+                                    <span class="text-muted font-light" x-text="lang === 'et' ? 'Täida koduprofiil oma portaalis, et teaksime täpselt, kuidas sinu kodu hooldada' : 'Fill in your home profile in your portal so we know exactly how to care for your home'"></span>
+                                </li>
                             </ul>
                             <p class="text-xs text-muted/70 font-sans font-light mt-5 pt-4 border-t border-[#E8E3DD]">
                                 <span x-show="lang === 'et'">📬 Ei leia kirja? Kontrolli ka rämpsposti (Spam/Junk) kausta.</span>
                                 <span x-show="lang === 'en'" x-cloak>📬 Can't find the email? Check your Spam/Junk folder.</span>
                             </p>
+                            <a href="minu.html" class="inline-block mt-4 text-[11px] uppercase tracking-[0.2em] font-sans text-accent hover:text-black border-b border-accent/30 hover:border-black pb-0.5 transition-all" x-text="lang === 'et' ? 'Mine oma portaali →' : 'Go to your portal →'">Mine oma portaali →</a>
                         </div>
 
                         <!-- Next Steps after booking confirmed -->
@@ -555,11 +437,16 @@
                                     <span class="text-accent font-medium mt-0.5">3.</span>
                                     <span class="text-muted font-light" x-text="lang === 'et' ? 'Meie meeskond tuleb kokkulepitud ajal' : 'Our team arrives at the scheduled time'"></span>
                                 </li>
+                                <li class="flex items-start gap-3">
+                                    <span class="text-accent font-medium mt-0.5">4.</span>
+                                    <span class="text-muted font-light" x-text="lang === 'et' ? 'Täida koduprofiil oma portaalis, et teaksime täpselt, kuidas sinu kodu hooldada' : 'Fill in your home profile in your portal so we know exactly how to care for your home'"></span>
+                                </li>
                             </ul>
                             <p class="text-xs text-muted/70 font-sans font-light mt-5 pt-4 border-t border-[#E8E3DD]">
                                 <span x-show="lang === 'et'">📬 Ei leia kirja? Kontrolli ka rämpsposti (Spam/Junk) kausta.</span>
                                 <span x-show="lang === 'en'" x-cloak>📬 Can't find the email? Check your Spam/Junk folder.</span>
                             </p>
+                            <a href="minu.html" class="inline-block mt-4 text-[11px] uppercase tracking-[0.2em] font-sans text-accent hover:text-black border-b border-accent/30 hover:border-black pb-0.5 transition-all" x-text="lang === 'et' ? 'Mine oma portaali →' : 'Go to your portal →'">Mine oma portaali →</a>
                         </div>
 
                         <!-- Next Steps for gifts -->
@@ -686,8 +573,8 @@
             </div>
             <div class="border-t border-gray-800 py-6 px-6 md:px-12">
                 <p class="text-[10px] text-gray-400 font-sans text-center tracking-wide">
-                    <span x-show="lang === 'et'">© 2026 Epic Ship OÜ · Registrikood 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
-                    <span x-show="lang === 'en'" x-cloak>© 2026 Epic Ship OÜ · Reg. code 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
+                    <span x-show="lang === 'et'">© 2026 SUKODA · Registrikood 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
+                    <span x-show="lang === 'en'" x-cloak>© 2026 SUKODA · Reg. code 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
                 </p>
             </div>
         </footer>
@@ -721,17 +608,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Scripts -->
-    <script>
-        // Scroll progress bar
-        window.addEventListener('scroll', () => {
-            const scrollTop = document.documentElement.scrollTop;
-            const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-            const progress = (scrollTop / scrollHeight) * 100;
-            document.getElementById('scrollProgress').style.width = progress + '%';
-        });
-    </script>
 
 </body>
 </html>

@@ -12,7 +12,7 @@
     <!-- Open Graph -->
     <meta property="og:title" content="SUKODA — Kodu, mis Sind ootab">
     <meta property="og:description" content="Astud sisse ja kõik on paigas. Lilled vaasis, puuviljad kausis, laual ootab käsitsi kirjutatud tervitus.">
-    <meta property="og:image" content="https://sukoda.ee/assets/images/hero-luxury.jpg">
+    <meta property="og:image" content="https://sukoda.ee/assets/images/hero-luxury.webp">
     <meta property="og:url" content="https://sukoda.ee">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
@@ -20,189 +20,62 @@
     <meta property="og:locale" content="et_EE">
     <meta property="og:site_name" content="SUKODA">
     
-    <!-- Meta Pixel (noscript fallback is at end of body) -->
+    <link rel="canonical" href="https://sukoda.ee">
+    <link rel="alternate" hreflang="et" href="https://sukoda.ee">
+    <link rel="alternate" hreflang="en" href="https://sukoda.ee/en">
+    <link rel="alternate" hreflang="x-default" href="https://sukoda.ee">
+
     <script src="assets/js/tracking.js"></script>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        serif: ['Cormorant Garamond', 'Georgia', 'serif'],
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                    },
-                    colors: {
-                        black: '#111111',
-                        paper: '#FAF8F5',
-                        cream: '#F5F0EB',
-                        accent: '#B8976A',
-                        muted: '#6B6560',
-                    },
-                    spacing: {
-                        '128': '32rem',
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        body {
-            background-color: #FAF8F5;
-            color: #111111;
-        }
-        .grid-line {
-            border-right: 1px solid #E8E3DD;
-        }
-        .grid-line-b {
-            border-bottom: 1px solid #E8E3DD;
-        }
-        ::selection {
-            background: #111;
-            color: #FAF8F5;
-        }
-        [x-cloak] {
-            display: none !important;
-        }
+    <script type="module" src="/assets/js/main.js"></script>
 
-        /* Luxury animations */
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(40px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes letterReveal {
-            from { opacity: 0; letter-spacing: 0.3em; }
-            to { opacity: 1; letter-spacing: normal; }
-        }
-        @keyframes scaleIn {
-            from { opacity: 0; transform: scale(1.05); }
-            to { opacity: 1; transform: scale(1); }
-        }
+    <link rel="preload" href="/assets/fonts/cormorant-garamond-400.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/assets/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preconnect" href="https://js.stripe.com">
 
-        .animate-fade-in {
-            animation: fadeIn 1.2s ease-out forwards;
-        }
-        .animate-slide-up {
-            animation: slideUp 1s ease-out forwards;
-        }
-        .animate-hero-title {
-            animation: slideUp 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s forwards;
-            opacity: 0;
-        }
-        .animate-hero-subtitle {
-            animation: slideUp 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.7s forwards;
-            opacity: 0;
-        }
-        .animate-hero-cta {
-            animation: fadeIn 0.8s ease-out 1.1s forwards;
-            opacity: 0;
-        }
-        .animate-hero-image {
-            animation: scaleIn 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.2s forwards;
-            opacity: 0;
-        }
-
-        /* Scroll reveal */
-        .reveal {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: opacity 0.8s ease, transform 0.8s ease;
-        }
-        .reveal.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* Luxury hover effects */
-        .luxury-link {
-            position: relative;
-            display: inline-block;
-        }
-        .luxury-link::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            width: 0;
-            height: 1px;
-            background: #B8976A;
-            transition: width 0.4s ease;
-        }
-        .luxury-link:hover::after {
-            width: 100%;
-        }
-
-        /* Accent line */
-        .accent-line {
-            width: 40px;
-            height: 1px;
-            background: #B8976A;
-        }
-
-        /* Gold accent text */
-        .text-gold {
-            color: #B8976A;
-        }
-
-        /* Preloader */
-        .preloader {
-            position: fixed;
-            inset: 0;
-            background: #FAF8F5;
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 0.6s ease, visibility 0.6s ease;
-        }
-        .preloader.hidden {
-            opacity: 0;
-            visibility: hidden;
-        }
-        .preloader-logo {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 2rem;
-            font-weight: 400;
-            letter-spacing: 0.15em;
-            animation: letterReveal 1.2s ease-out forwards;
-        }
-
-        /* Scroll progress */
-        .scroll-progress {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 2px;
-            background: #B8976A;
-            z-index: 9998;
-            transition: width 0.1s linear;
-        }
-    </style>
     <script src="assets/js/checkout.js"></script>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "SUKODA",
+      "description": "Premium koduhooldus Tallinnas. Värsked lilled, puhas kodu, käsitsi kirjutatud tervitus.",
+      "url": "https://sukoda.ee",
+      "image": "https://sukoda.ee/assets/images/hero-luxury.webp",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Kiikri tn 6/2",
+        "addressLocality": "Tallinn",
+        "postalCode": "10159",
+        "addressCountry": "EE"
+      },
+      "areaServed": {
+        "@type": "City",
+        "name": "Tallinn"
+      },
+      "priceRange": "€€€",
+      "email": "tere@sukoda.ee",
+      "sameAs": []
+    }
+    </script>
 </head>
 <body class="antialiased" x-data="{ lang: localStorage.getItem('sukoda_lang') || 'et' }" x-init="$watch('lang', val => localStorage.setItem('sukoda_lang', val))">
 
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[10000] focus:bg-accent focus:text-paper focus:px-4 focus:py-2 focus:text-sm focus:font-sans">Skip to main content</a>
+
     <!-- Preloader -->
-    <div class="preloader" id="preloader">
+    <div class="preloader" id="preloader" aria-hidden="true">
         <div class="preloader-logo">SUKODA</div>
     </div>
 
     <!-- Scroll Progress -->
-    <div class="scroll-progress" id="scrollProgress"></div>
+    <div class="scroll-progress" id="scrollProgress" role="progressbar" aria-label="Page scroll progress"></div>
 
     <!-- Grid Container -->
     <div class="max-w-[1440px] mx-auto bg-paper min-h-screen border-x border-[#E8E3DD]">
         
         <!-- Navigation -->
-        <nav class="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm grid-line-b" x-data="{ mobileMenu: false }">
+        <nav class="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm grid-line-b" x-data="{ mobileMenu: false }" aria-label="Main navigation">
             <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12">
                 <a href="index.html" class="font-serif text-2xl md:text-3xl tracking-[0.08em] font-light">
                     SUKODA
@@ -222,12 +95,9 @@
                         <button @click="lang = 'en'" :class="lang === 'en' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">EN</button>
                     </div>
 
-                    <a href="#liitu" class="hidden md:inline-block text-[11px] uppercase tracking-[0.2em] font-sans font-medium border-b border-accent text-accent pb-0.5 hover:text-black hover:border-black transition-all" x-text="lang === 'et' ? 'Alusta' : 'Begin'">
-                        Alusta
-                    </a>
+                    <a href="minu.html" class="hidden md:inline-block bg-black text-paper px-5 py-2 text-[11px] uppercase tracking-[0.2em] font-sans font-medium hover:bg-accent transition-colors duration-500" x-text="lang === 'et' ? 'Sisene' : 'Log in'">Sisene</a>
 
-                    <!-- Mobile Menu Button -->
-                    <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2">
+                    <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2" :aria-expanded="mobileMenu" aria-label="Toggle menu">
                         <svg x-show="!mobileMenu" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path>
                         </svg>
@@ -245,89 +115,22 @@
                     <a href="kingitus.html" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Kingitus' : 'Gift'">Kingitus</a>
                     <a href="partnerlus.html" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Koostöö' : 'Partnership'">Koostöö</a>
                     <a href="lugu.html" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Lugu' : 'Story'">Lugu</a>
-                    <a href="#liitu" @click="mobileMenu = false" class="py-2 text-accent" x-text="lang === 'et' ? 'Alusta' : 'Begin'">Alusta</a>
+                    <a href="minu.html" @click="mobileMenu = false" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Sisene' : 'Log in'">Sisene</a>
                 </div>
             </div>
         </nav>
 
 
-        <!-- Referral Banner (shown when arriving via ?ref=SOOVITA-XXXXX) -->
-        <div x-data="{
-                refCode: new URLSearchParams(window.location.search).get('ref'),
-                show: false,
-                referrerName: '',
-                async init() {
-                    if (!this.refCode) return;
-                    try {
-                        const res = await fetch('/api/validate-referral?code=' + encodeURIComponent(this.refCode));
-                        if (res.ok) {
-                            const data = await res.json();
-                            this.referrerName = data.referrerName || '';
-                            this.show = true;
-                        }
-                    } catch (e) { console.log('Referral validation failed:', e); }
-                }
-             }" x-show="show" x-cloak
-             x-transition:enter="transition ease-out duration-700"
-             x-transition:enter-start="opacity-0 -translate-y-2"
-             x-transition:enter-end="opacity-100 translate-y-0"
-             class="bg-black text-paper py-5 px-6 border-b border-accent/10 relative">
-            <div class="max-w-3xl mx-auto flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 text-center md:text-left">
-                <div class="flex items-center gap-4">
-                    <div class="flex flex-col items-center">
-                        <span class="text-accent text-3xl font-serif font-light leading-none">-20%</span>
-                        <span class="text-white/30 text-[9px] uppercase tracking-[0.2em] mt-1" x-text="lang === 'et' ? '3 kuud' : '3 months'">3 kuud</span>
-                    </div>
-                    <div class="border-l border-white/10 pl-4">
-                        <p class="text-sm font-sans font-light leading-relaxed">
-                            <span x-show="lang === 'et'"><span x-text="referrerName" class="text-paper font-normal"></span> soovitab sulle SUKODA-t. <span class="text-accent">Esimesed 3 kuud soodsamalt.</span></span>
-                            <span x-show="lang === 'en'" x-cloak><span x-text="referrerName" class="text-paper font-normal"></span> recommends SUKODA. <span class="text-accent">First 3 months at a discount.</span></span>
-                        </p>
-                    </div>
-                </div>
-                <a href="#liitu" class="bg-accent text-white px-6 py-2.5 text-[10px] uppercase tracking-[0.25em] font-sans hover:bg-accent/80 transition-all duration-300 whitespace-nowrap"
-                   x-text="lang === 'et' ? 'Alusta siit' : 'Start here'">Alusta siit</a>
-            </div>
-            <button @click="show = false" class="absolute top-3 right-3 text-white/20 hover:text-paper transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-        </div>
-
-        <!-- Promo Banner (shown when arriving from follow-up email with ?promo=KINGITUS20) -->
-        <div x-data="{ promoCode: new URLSearchParams(window.location.search).get('promo'), show: !!new URLSearchParams(window.location.search).get('promo') }" x-show="show" x-cloak
-             x-transition:enter="transition ease-out duration-700"
-             x-transition:enter-start="opacity-0 -translate-y-2"
-             x-transition:enter-end="opacity-100 translate-y-0"
-             class="bg-black text-paper py-5 px-6 border-b border-accent/10 relative">
-            <div class="max-w-3xl mx-auto flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 text-center md:text-left">
-                <div class="flex items-center gap-4">
-                    <div class="flex flex-col items-center">
-                        <span class="text-accent text-3xl font-serif font-light leading-none">-20%</span>
-                        <span class="text-white/30 text-[9px] uppercase tracking-[0.2em] mt-1" x-text="lang === 'et' ? '3 kuud' : '3 months'">3 kuud</span>
-                    </div>
-                    <div class="border-l border-white/10 pl-4">
-                        <p class="text-sm font-sans font-light leading-relaxed">
-                            <span x-show="lang === 'et'">See tunne, kui tuled koju ja kõik on paigas. <span class="text-accent">Sinu pakkumine ootab.</span></span>
-                            <span x-show="lang === 'en'" x-cloak>That feeling when you come home and everything is right. <span class="text-accent">Your offer awaits.</span></span>
-                        </p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-3">
-                    <span class="bg-white/5 border border-white/10 px-4 py-2 text-accent font-mono text-sm tracking-[0.25em]" x-text="promoCode"></span>
-                    <a href="#liitu" class="bg-accent text-white px-6 py-2.5 text-[10px] uppercase tracking-[0.25em] font-sans hover:bg-accent/80 transition-all duration-300 whitespace-nowrap"
-                       x-text="lang === 'et' ? 'Alusta siit' : 'Start here'">Alusta siit</a>
-                </div>
-            </div>
-            <button @click="show = false" class="absolute top-3 right-3 text-white/20 hover:text-paper transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-        </div>
+        <main id="main-content">
 
         <!-- Hero Section -->
         <header class="relative min-h-[85vh] md:min-h-[90vh] grid-line-b overflow-hidden">
             <!-- Background Image -->
             <div class="absolute inset-0 animate-hero-image">
-                <img src="assets/images/hero-luxury.jpg" alt="Minimalist luxury interior" class="w-full h-full object-cover">
+                <picture>
+                    <source type="image/webp" srcset="assets/images/hero-luxury-640w.webp 640w, assets/images/hero-luxury-1024w.webp 1024w, assets/images/hero-luxury-1440w.webp 1440w, assets/images/hero-luxury-1920w.webp 1920w" sizes="100vw">
+                    <img src="assets/images/hero-luxury.webp" alt="Minimalist luxury interior" class="w-full h-full object-cover" width="1440" height="900" fetchpriority="high">
+                </picture>
                 <div class="absolute inset-0 bg-gradient-to-r from-paper via-paper/85 to-paper/40"></div>
             </div>
             
@@ -339,8 +142,8 @@
                     <span x-show="lang === 'en'" x-cloak>A home that<br>awaits you.</span>
                 </h1>
                 <p class="text-base md:text-lg text-muted max-w-md font-sans font-light leading-relaxed animate-hero-subtitle">
-                    <span x-show="lang === 'et'">Astud sisse ja kõik on paigas. Lilled vaasis, puuviljad kausis, laual ootab käsitsi kirjutatud tervitus.</span>
-                    <span x-show="lang === 'en'" x-cloak>You walk in and everything is in place. Flowers in a vase, fruits in a bowl, and a handwritten note waiting on the table.</span>
+                    <span x-show="lang === 'et'">Astud sisse ja hingad välja. Keegi on hoolinud enne sind — iga detail räägib ühte keelt: sa oled oodatud.</span>
+                    <span x-show="lang === 'en'" x-cloak>You walk in and breathe out. Someone cared before you. Every detail speaks the same language: you are welcome.</span>
                 </p>
                 <div class="mt-10 md:mt-14 animate-hero-cta">
                     <a href="#hoolitsus" class="inline-block bg-black text-paper px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-colors duration-500" x-text="lang === 'et' ? 'Avasta' : 'Discover'">
@@ -392,187 +195,19 @@
                     </div>
                 </div>
                 <div class="relative h-[350px] w-full overflow-hidden">
-                    <img src="assets/images/interior-luxury.jpg" alt="Minimal clean interior" class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000">
+                    <picture>
+                        <source type="image/webp" srcset="assets/images/interior-luxury-480w.webp 480w, assets/images/interior-luxury-768w.webp 768w, assets/images/interior-luxury-1024w.webp 1024w" sizes="(max-width: 768px) 100vw, 66vw">
+                        <img src="assets/images/interior-luxury.webp" alt="Minimal clean interior" class="w-full h-full object-cover" loading="lazy" width="800" height="350">
+                    </picture>
                 </div>
             </div>
         </section>
 
-        <!-- SUKODA Hoolitsus -->
-        <section id="hoolitsus" class="grid-line-b" x-data="{ 
-            size: 'medium',
-            rhythm: 'twice',
-            prices: {
-                small: { once: 179, twice: 319, weekly: 579 },
-                medium: { once: 229, twice: 399, weekly: 719 },
-                large: { once: 289, twice: 499, weekly: 899 }
-            }
-        }">
-            <!-- Controls -->
-            <div class="grid md:grid-cols-12 grid-line-b reveal">
-                <div class="md:col-span-4 p-6 md:p-12 grid-line flex items-center border-b md:border-b-0 border-[#E8E3DD]">
-                    <div>
-                        <div class="accent-line mb-4"></div>
-                        <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 02 )</span>
-                        <h2 class="font-serif text-2xl md:text-3xl font-light" x-text="lang === 'et' ? 'Vali oma rütm' : 'Choose your rhythm'">Vali oma rütm</h2>
-                    </div>
-                </div>
-                <div class="md:col-span-8 p-4 md:p-12 flex flex-col md:flex-row md:items-center gap-3 md:gap-6 overflow-x-auto">
-                    <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans whitespace-nowrap" x-text="lang === 'et' ? 'Tubade arv:' : 'Rooms:'">Tubade arv:</span>
-                    <span class="text-[9px] text-muted/50 font-sans whitespace-nowrap ml-auto hidden md:inline" x-text="lang === 'et' ? 'Hinnad sis. KM' : 'Prices incl. VAT'">Hinnad sis. KM</span>
-                    <div class="flex gap-3 md:gap-5 font-sans text-xs whitespace-nowrap overflow-x-auto pb-2 md:pb-0">
-                        <button @click="size = 'small'" :class="size === 'small' ? 'text-black border-b border-accent' : 'text-muted hover:text-black transition-colors'" class="pb-1" x-text="lang === 'et' ? '1-2 tuba' : '1-2 rooms'">1-2 tuba</button>
-                        <button @click="size = 'medium'" :class="size === 'medium' ? 'text-black border-b border-accent' : 'text-muted hover:text-black transition-colors'" class="pb-1" x-text="lang === 'et' ? '3 tuba' : '3 rooms'">3 tuba</button>
-                        <button @click="size = 'large'" :class="size === 'large' ? 'text-black border-b border-accent' : 'text-muted hover:text-black transition-colors'" class="pb-1" x-text="lang === 'et' ? '4 tuba' : '4 rooms'">4 tuba</button>
-                        <button @click="size = 'estate'" :class="size === 'estate' ? 'text-black border-b border-accent' : 'text-muted hover:text-black transition-colors'" class="pb-1" x-text="lang === 'et' ? '5+ tuba / Maja' : '5+ rooms / House'">5+ tuba / Maja</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Three Rhythms -->
-            <div class="grid md:grid-cols-3 reveal">
-                
-                <!-- Kord kuus -->
-                <div class="p-6 md:p-14 lg:p-16 grid-line border-b md:border-b-0 border-[#E8E3DD] transition-all duration-500 group relative flex flex-col cursor-pointer"
-                     :class="rhythm === 'once' ? 'bg-cream/70 ring-1 ring-accent/30' : 'hover:bg-cream/30'"
-                     @click="rhythm = 'once'; $dispatch('select-plan', { plan: size === 'estate' ? 'RÄTSEPLAHENDUS' : '1X KUUS (' + (size==='small'?'1-2 tuba':size==='medium'?'3 tuba':'4 tuba') + ')' })">
-                    <span class="text-[10px] uppercase tracking-[0.25em] font-sans mb-6 md:mb-8 block" :class="rhythm === 'once' ? 'text-black' : 'text-muted'" x-text="lang === 'et' ? 'Üks kord kuus' : 'Once a month'">Üks kord kuus</span>
-                    <div class="font-serif text-4xl md:text-5xl font-light mb-2">
-                        <span x-show="size !== 'estate'" x-text="lang === 'et' ? '1× kuus' : '1× month'">1× kuus</span>
-                        <span x-show="size === 'estate'" class="text-2xl" x-text="lang === 'et' ? 'Rätseplahendus' : 'Bespoke'">Rätseplahendus</span>
-                    </div>
-                    <div class="flex items-baseline gap-1 mb-8 md:mb-10" x-show="size !== 'estate'">
-                        <span class="font-serif text-lg text-muted">€</span>
-                        <span class="font-serif text-2xl" x-text="prices[size].once">169</span>
-                        <span class="text-xs text-muted font-sans" x-text="lang === 'et' ? '/kuu' : '/mo'">/kuu</span>
-                    </div>
-                    <div class="mb-8 md:mb-10" x-show="size === 'estate'" x-cloak>
-                        <p class="font-serif text-xl italic text-accent" x-text="lang === 'et' ? 'Räägime läbi' : 'Let\'s talk'">Räägime läbi</p>
-                    </div>
-                    
-                    <p class="font-sans text-sm font-light leading-relaxed mb-auto pb-10" :class="rhythm === 'once' ? 'text-muted' : 'text-muted/70'">
-                        <span x-show="lang === 'et'">Üks täiuslik külastus kuus. Koju tulles ootavad lilled, kaart ja see eriline tunne.</span>
-                        <span x-show="lang === 'en'" x-cloak>One perfect visit per month. Flowers, a card, and that special feeling await when you come home.</span>
-                    </p>
-
-                    <!-- Selected state -->
-                    <div x-show="rhythm === 'once'" class="flex items-center justify-center gap-2 w-full py-4 text-accent">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        <span class="text-[11px] uppercase tracking-[0.2em] font-sans" x-text="lang === 'et' ? 'Valitud' : 'Selected'">Valitud</span>
-                    </div>
-                    <!-- Unselected state -->
-                    <div x-show="rhythm !== 'once'" class="block w-full text-center border border-black/30 py-4 text-[11px] uppercase tracking-[0.2em] font-sans text-muted hover:border-black hover:text-black transition-all duration-500" x-text="lang === 'et' ? (size === 'estate' ? 'Räägi meiega' : 'Vali see rütm') : (size === 'estate' ? 'Talk to us' : 'Choose this rhythm')">
-                        Vali see rütm
-                    </div>
-                </div>
-
-                <!-- Üle nädala -->
-                <div class="p-6 md:p-14 lg:p-16 transition-all duration-500 relative flex flex-col border-b md:border-b-0 border-[#E8E3DD] cursor-pointer"
-                     :class="rhythm === 'twice' ? 'bg-cream/70 ring-1 ring-accent/30' : 'bg-cream/30 hover:bg-cream/50'"
-                     @click="rhythm = 'twice'; $dispatch('select-plan', { plan: size === 'estate' ? 'RÄTSEPLAHENDUS' : '2X KUUS (' + (size==='small'?'1-2 tuba':size==='medium'?'3 tuba':'4 tuba') + ')' })">
-                    <div class="absolute top-4 right-4 md:top-6 md:right-6">
-                        <span class="text-[10px] uppercase tracking-[0.25em] text-accent font-sans border border-accent/40 px-3 py-1" x-text="lang === 'et' ? 'Soovitame' : 'Recommended'">Soovitame</span>
-                    </div>
-                    <span class="text-[10px] uppercase tracking-[0.25em] font-sans mb-6 md:mb-8 block" :class="rhythm === 'twice' ? 'text-black' : 'text-muted'" x-text="lang === 'et' ? 'Kaks korda kuus' : 'Twice a month'">Kaks korda kuus</span>
-                    <div class="font-serif text-4xl md:text-5xl font-light mb-2">
-                        <span x-show="size !== 'estate'" x-text="lang === 'et' ? '2× kuus' : '2× month'">2× kuus</span>
-                        <span x-show="size === 'estate'" class="text-2xl" x-text="lang === 'et' ? 'Rätseplahendus' : 'Bespoke'">Rätseplahendus</span>
-                    </div>
-                    <div class="flex items-baseline gap-1 mb-8 md:mb-10" x-show="size !== 'estate'">
-                        <span class="font-serif text-lg text-muted">€</span>
-                        <span class="font-serif text-2xl" x-text="prices[size].twice">279</span>
-                        <span class="text-xs text-muted font-sans" x-text="lang === 'et' ? '/kuu' : '/mo'">/kuu</span>
-                    </div>
-                    <div class="mb-8 md:mb-10" x-show="size === 'estate'" x-cloak>
-                        <p class="font-serif text-xl italic text-accent" x-text="lang === 'et' ? 'Räägime läbi' : 'Let\'s talk'">Räägime läbi</p>
-                    </div>
-
-                    <p class="font-sans text-sm font-light leading-relaxed mb-8 pb-2" :class="rhythm === 'twice' ? 'text-muted' : 'text-muted/70'">
-                        <span x-show="lang === 'et'">Iga kahe nädala tagant värskus. Lilled, puuviljad ja tunne, et keegi hoolib. Pidevalt.</span>
-                        <span x-show="lang === 'en'" x-cloak>Freshness every two weeks. Flowers, fruits, and the feeling that someone cares. Continuously.</span>
-                    </p>
-
-                    <div class="mb-auto pb-10 py-3 border-t border-[#E8E3DD]">
-                        <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Lisaks põhiteenusele' : 'In addition'">Lisaks põhiteenusele</p>
-                        <p class="text-sm font-sans font-light" x-text="lang === 'et' ? '+ Hooajalised puuviljad kausis' : '+ Seasonal fruits in a bowl'">+ Hooajalised puuviljad kausis</p>
-                    </div>
-
-                    <!-- Selected state -->
-                    <div x-show="rhythm === 'twice'" class="flex items-center justify-center gap-2 w-full py-4 text-accent">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        <span class="text-[11px] uppercase tracking-[0.2em] font-sans" x-text="lang === 'et' ? 'Valitud' : 'Selected'">Valitud</span>
-                    </div>
-                    <!-- Unselected state -->
-                    <div x-show="rhythm !== 'twice'" class="block w-full text-center border border-black/30 py-4 text-[11px] uppercase tracking-[0.2em] font-sans text-muted hover:border-black hover:text-black transition-all duration-500" x-text="lang === 'et' ? (size === 'estate' ? 'Räägi meiega' : 'Vali see rütm') : (size === 'estate' ? 'Talk to us' : 'Choose this rhythm')">
-                        Vali see rütm
-                    </div>
-                </div>
-
-                <!-- Iga nädal -->
-                <div class="p-6 md:p-14 lg:p-16 transition-all duration-500 relative flex flex-col cursor-pointer"
-                     :class="rhythm === 'weekly' ? 'bg-cream/70 ring-1 ring-accent/30' : 'bg-cream/30 hover:bg-cream/50'"
-                     @click="rhythm = 'weekly'; $dispatch('select-plan', { plan: size === 'estate' ? 'RÄTSEPLAHENDUS' : '4X KUUS (' + (size==='small'?'1-2 tuba':size==='medium'?'3 tuba':'4 tuba') + ')' })">
-                    <span class="text-[10px] uppercase tracking-[0.25em] font-sans mb-6 md:mb-8 block" :class="rhythm === 'weekly' ? 'text-black' : 'text-muted'" x-text="lang === 'et' ? 'Neli korda kuus' : 'Four times a month'">Neli korda kuus</span>
-                    <div class="font-serif text-4xl md:text-5xl font-light mb-2">
-                        <span x-show="size !== 'estate'" x-text="lang === 'et' ? '4× kuus' : '4× month'">4× kuus</span>
-                        <span x-show="size === 'estate'" class="text-2xl" x-text="lang === 'et' ? 'Rätseplahendus' : 'Bespoke'">Rätseplahendus</span>
-                    </div>
-                    <div class="flex items-baseline gap-1 mb-8 md:mb-10" x-show="size !== 'estate'">
-                        <span class="font-serif text-lg text-muted">€</span>
-                        <span class="font-serif text-2xl" x-text="prices[size].weekly">499</span>
-                        <span class="text-xs text-muted font-sans" x-text="lang === 'et' ? '/kuu' : '/mo'">/kuu</span>
-                    </div>
-                    <div class="mb-8 md:mb-10" x-show="size === 'estate'" x-cloak>
-                        <p class="font-serif text-xl italic text-accent" x-text="lang === 'et' ? 'Räägime läbi' : 'Let\'s talk'">Räägime läbi</p>
-                    </div>
-
-                    <p class="font-sans text-sm font-light leading-relaxed mb-8 pb-2" :class="rhythm === 'weekly' ? 'text-muted' : 'text-muted/70'">
-                        <span x-show="lang === 'et'">Täielik vabadus. Iga nädal värske kodu, lilled, puuviljad. Sa ei mõtle enam kodutöödele.</span>
-                        <span x-show="lang === 'en'" x-cloak>Complete freedom. Every week a fresh home, flowers, fruits. You never think about housework again.</span>
-                    </p>
-
-                    <div class="mb-auto pb-10 py-3 border-t border-[#E8E3DD]">
-                        <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Lisaks põhiteenusele' : 'In addition'">Lisaks põhiteenusele</p>
-                        <p class="text-sm font-sans font-light" x-text="lang === 'et' ? '+ Puuviljad + Taimede kastmine' : '+ Fruits + Plant watering'">+ Puuviljad + Taimede kastmine</p>
-                    </div>
-
-                    <!-- Selected state -->
-                    <div x-show="rhythm === 'weekly'" class="flex items-center justify-center gap-2 w-full py-4 text-accent">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        <span class="text-[11px] uppercase tracking-[0.2em] font-sans" x-text="lang === 'et' ? 'Valitud' : 'Selected'">Valitud</span>
-                    </div>
-                    <!-- Unselected state -->
-                    <div x-show="rhythm !== 'weekly'" class="block w-full text-center border border-black/30 py-4 text-[11px] uppercase tracking-[0.2em] font-sans text-muted hover:border-black hover:text-black transition-all duration-500" x-text="lang === 'et' ? (size === 'estate' ? 'Räägi meiega' : 'Vali see rütm') : (size === 'estate' ? 'Talk to us' : 'Choose this rhythm')">
-                        Vali see rütm
-                    </div>
-                </div>
-
-            </div>
-        </section>
-
-        <!-- Emotional Section -->
-        <section class="grid md:grid-cols-12 grid-line-b">
-            <div class="md:col-span-5 p-6 md:p-20 lg:p-24 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
-                <div class="accent-line mb-4"></div>
-                <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 03 )</span>
-                <h2 class="font-serif text-2xl md:text-4xl font-light mb-6" x-text="lang === 'et' ? 'See tunne' : 'That feeling'">See tunne</h2>
-                <p class="text-muted font-sans font-light leading-relaxed text-sm">
-                    <span x-show="lang === 'et'">Avad ukse ja hingad välja. Põrandad säravad, voodipesu on värske, lilled ootavad vaasis. Kõik on paigas — sest keegi on hoolinud.</span>
-                    <span x-show="lang === 'en'" x-cloak>You open the door and breathe out. Floors gleaming, fresh linens, flowers waiting in a vase. Everything is in place — because someone cared.</span>
-                </p>
-            </div>
-            <div class="md:col-span-7 p-6 md:p-20 lg:p-24 flex items-center justify-center bg-cream/30 reveal">
-                <p class="font-serif text-2xl md:text-4xl text-center text-muted/50 italic leading-relaxed font-light">
-                    <span x-show="lang === 'et'">"Koju jõudes <br class="md:hidden">on kõik juba tehtud."</span>
-                    <span x-show="lang === 'en'" x-cloak>"When you arrive home, <br class="md:hidden">it's already done."</span>
-                </p>
-            </div>
-        </section>
-
-        <!-- Trust Section -->
+        <!-- Trust Section (Promises) -->
         <section id="protsess" class="grid md:grid-cols-12 grid-line-b">
             <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
                 <div class="accent-line mb-4"></div>
-                <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 04 )</span>
+                <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 02 )</span>
                 <h2 class="font-serif text-2xl md:text-3xl font-light" x-text="lang === 'et' ? 'Meie lubadused' : 'Our promises'">Meie lubadused</h2>
             </div>
             <div class="md:col-span-8 p-6 md:p-20 lg:p-24 reveal">
@@ -605,13 +240,174 @@
                             <span x-show="lang === 'en'" x-cloak>Your home is your private matter. Complete discretion — always.</span>
                         </p>
                     </div>
+                    <div>
+                        <h3 class="font-serif text-xl font-light mb-4" x-text="lang === 'et' ? 'Esimene kord on eriline' : 'The first time is special'">Esimene kord on eriline</h3>
+                        <p class="text-muted font-sans text-sm font-light leading-relaxed">
+                            <span x-show="lang === 'et'">Esimene hoolitsus on meie jaoks eriti oluline. Võtame aega, et tundma õppida iga nurka ja detaili — et sinu kodu saaks just selle hoole, mida ta väärib. Seetõttu kestab esimene külastus tavalisest kauem.</span>
+                            <span x-show="lang === 'en'" x-cloak>The first visit is especially important to us. We take time to learn every corner and detail — so your home receives exactly the care it deserves. That's why the first visit takes longer than usual.</span>
+                        </p>
+                    </div>
+                    <div>
+                        <h3 class="font-serif text-xl font-light mb-4" x-text="lang === 'et' ? 'Sinu isiklik portaal' : 'Your personal portal'">Sinu isiklik portaal</h3>
+                        <p class="text-muted font-sans text-sm font-light leading-relaxed">
+                            <span x-show="lang === 'et'">Sinu isiklikus portaalis saad hallata visiite, lisada eelistusi ja erisoove — et iga järgmine kord oleks veelgi parem. Koristaja näeb sinu soove ja arvestab nendega.</span>
+                            <span x-show="lang === 'en'" x-cloak>In your personal portal you can manage visits, add preferences and special requests — so every next time is even better. Your cleaner sees your wishes and takes them into account.</span>
+                        </p>
+                    </div>
                 </div>
+            </div>
+        </section>
+
+        <!-- SUKODA Hoolitsus -->
+        <section id="hoolitsus" class="grid-line-b" x-data="{ 
+            size: 'medium',
+            rhythm: 'twice',
+            prices: {
+                small: { once: 199, twice: 319, weekly: 579 },
+                medium: { once: 229, twice: 399, weekly: 719 },
+                large: { once: 289, twice: 499, weekly: 899 }
+            }
+        }">
+            <!-- Controls -->
+            <div class="grid md:grid-cols-12 grid-line-b reveal">
+                <div class="md:col-span-4 p-6 md:p-12 grid-line flex items-center border-b md:border-b-0 border-[#E8E3DD]">
+                    <div>
+                        <div class="accent-line mb-4"></div>
+                        <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 03 )</span>
+                        <h2 class="font-serif text-2xl md:text-3xl font-light" x-text="lang === 'et' ? 'Vali oma rütm' : 'Choose your rhythm'">Vali oma rütm</h2>
+                    </div>
+                </div>
+                <div class="md:col-span-8 p-4 md:p-12 flex flex-col md:flex-row md:items-center gap-3 md:gap-6 overflow-x-auto">
+                    <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans whitespace-nowrap" x-text="lang === 'et' ? 'Tubade arv:' : 'Rooms:'">Tubade arv:</span>
+                    <span class="text-[9px] text-muted/50 font-sans whitespace-nowrap ml-auto hidden md:inline" x-text="lang === 'et' ? 'Hinnad sis. KM' : 'Prices incl. VAT'">Hinnad sis. KM</span>
+                    <div class="flex gap-3 md:gap-5 font-sans text-xs whitespace-nowrap overflow-x-auto pb-2 md:pb-0">
+                        <button @click="size = 'small'" :class="size === 'small' ? 'text-black border-b border-accent' : 'text-muted hover:text-black transition-colors'" class="pb-1" x-text="lang === 'et' ? '1-2 tuba' : '1-2 rooms'">1-2 tuba</button>
+                        <button @click="size = 'medium'" :class="size === 'medium' ? 'text-black border-b border-accent' : 'text-muted hover:text-black transition-colors'" class="pb-1" x-text="lang === 'et' ? '3 tuba' : '3 rooms'">3 tuba</button>
+                        <button @click="size = 'large'" :class="size === 'large' ? 'text-black border-b border-accent' : 'text-muted hover:text-black transition-colors'" class="pb-1" x-text="lang === 'et' ? '4 tuba' : '4 rooms'">4 tuba</button>
+                        <button @click="size = 'estate'" :class="size === 'estate' ? 'text-black border-b border-accent' : 'text-muted hover:text-black transition-colors'" class="pb-1" x-text="lang === 'et' ? '5+ tuba / Maja' : '5+ rooms / House'">5+ tuba / Maja</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Three Rhythms -->
+            <div class="grid md:grid-cols-3 reveal">
+                
+                <!-- Kord kuus (visually subdued to steer toward 2x) -->
+                <div class="p-6 md:p-14 lg:p-16 grid-line border-b md:border-b-0 border-[#E8E3DD] transition-all duration-500 group relative flex flex-col cursor-pointer"
+                     :class="rhythm === 'once' ? 'bg-cream/70 ring-1 ring-accent/30 opacity-100' : 'hover:bg-cream/30 opacity-70 hover:opacity-100'"
+                     @click="rhythm = 'once'; $dispatch('select-plan', { plan: size === 'estate' ? 'RÄTSEPLAHENDUS' : '1X KUUS (' + (size==='small'?'1-2 tuba':size==='medium'?'3 tuba':'4 tuba') + ')' })">
+                    <span class="text-[10px] uppercase tracking-[0.25em] font-sans mb-6 md:mb-8 block" :class="rhythm === 'once' ? 'text-black' : 'text-muted'" x-text="lang === 'et' ? 'Üks kord kuus' : 'Once a month'">Üks kord kuus</span>
+                    <div class="font-serif text-3xl md:text-4xl font-light mb-2">
+                        <span x-show="size !== 'estate'" x-text="lang === 'et' ? '1× kuus' : '1× month'">1× kuus</span>
+                        <span x-show="size === 'estate'" class="text-2xl" x-text="lang === 'et' ? 'Rätseplahendus' : 'Bespoke'">Rätseplahendus</span>
+                    </div>
+                    <div class="flex items-baseline gap-1 mb-8 md:mb-10" x-show="size !== 'estate'">
+                        <span class="font-serif text-base text-muted">€</span>
+                        <span class="font-serif text-xl" x-text="prices[size].once">199</span>
+                        <span class="text-xs text-muted font-sans" x-text="lang === 'et' ? '/kuu' : '/mo'">/kuu</span>
+                    </div>
+                    <div class="mb-8 md:mb-10" x-show="size === 'estate'" x-cloak>
+                        <p class="font-serif text-xl italic text-accent" x-text="lang === 'et' ? 'Räägime läbi' : 'Let\'s talk'">Räägime läbi</p>
+                    </div>
+                    
+                    <p class="font-sans text-xs font-light leading-relaxed mb-auto pb-10" :class="rhythm === 'once' ? 'text-muted' : 'text-muted/70'">
+                        <span x-show="lang === 'et'">Üks täiuslik külastus kuus. Koju tulles ootavad lilled, kaart ja see eriline tunne.</span>
+                        <span x-show="lang === 'en'" x-cloak>One perfect visit per month. Flowers, a card, and that special feeling await when you come home.</span>
+                    </p>
+
+                    <!-- Selected state -->
+                    <div x-show="rhythm === 'once'" class="block w-full text-center bg-black text-paper py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-all duration-500" x-text="lang === 'et' ? (size === 'estate' ? 'Küsi pakkumist' : 'Alusta') : (size === 'estate' ? 'Get a quote' : 'Begin')">
+                        Alusta
+                    </div>
+                    <!-- Unselected state -->
+                    <div x-show="rhythm !== 'once'" class="block w-full text-center border border-black/30 py-4 text-[11px] uppercase tracking-[0.2em] font-sans text-muted hover:border-black hover:text-black transition-all duration-500" x-text="lang === 'et' ? (size === 'estate' ? 'Küsi pakkumist' : 'Alusta') : (size === 'estate' ? 'Get a quote' : 'Begin')">
+                        Alusta
+                    </div>
+                </div>
+
+                <!-- Üle nädala (primary recommendation) -->
+                <div class="p-6 md:p-14 lg:p-16 transition-all duration-500 relative flex flex-col border-b md:border-b-0 border-[#E8E3DD] border-l-2 border-l-accent/40 cursor-pointer"
+                     :class="rhythm === 'twice' ? 'bg-cream/70 ring-1 ring-accent/30' : 'bg-cream/50 hover:bg-cream/70'"
+                     @click="rhythm = 'twice'; $dispatch('select-plan', { plan: size === 'estate' ? 'RÄTSEPLAHENDUS' : '2X KUUS (' + (size==='small'?'1-2 tuba':size==='medium'?'3 tuba':'4 tuba') + ')' })">
+                    <span class="text-[10px] uppercase tracking-[0.25em] font-sans mb-6 md:mb-8 block" :class="rhythm === 'twice' ? 'text-black' : 'text-muted'" x-text="lang === 'et' ? 'Kaks korda kuus' : 'Twice a month'">Kaks korda kuus</span>
+                    <div class="font-serif text-4xl md:text-5xl font-light mb-2">
+                        <span x-show="size !== 'estate'" x-text="lang === 'et' ? '2× kuus' : '2× month'">2× kuus</span>
+                        <span x-show="size === 'estate'" class="text-2xl" x-text="lang === 'et' ? 'Rätseplahendus' : 'Bespoke'">Rätseplahendus</span>
+                    </div>
+                    <div class="flex items-baseline gap-1 mb-8 md:mb-10" x-show="size !== 'estate'">
+                        <span class="font-serif text-lg text-muted">€</span>
+                        <span class="font-serif text-2xl" x-text="prices[size].twice">279</span>
+                        <span class="text-xs text-muted font-sans" x-text="lang === 'et' ? '/kuu' : '/mo'">/kuu</span>
+                    </div>
+                    <div class="mb-8 md:mb-10" x-show="size === 'estate'" x-cloak>
+                        <p class="font-serif text-xl italic text-accent" x-text="lang === 'et' ? 'Räägime läbi' : 'Let\'s talk'">Räägime läbi</p>
+                    </div>
+
+                    <p class="font-sans text-sm font-light leading-relaxed mb-8 pb-2" :class="rhythm === 'twice' ? 'text-muted' : 'text-muted/70'">
+                        <span x-show="lang === 'et'">Iga kahe nädala tagant värskus. Lilled, puuviljad ja tunne, et keegi hoolib. Pidevalt.</span>
+                        <span x-show="lang === 'en'" x-cloak>Freshness every two weeks. Flowers, fruits, and the feeling that someone cares. Continuously.</span>
+                    </p>
+
+                    <div class="mb-auto pb-10 py-3 border-t border-[#E8E3DD]">
+                        <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Lisaks põhiteenusele' : 'In addition'">Lisaks põhiteenusele</p>
+                        <p class="text-sm font-sans font-light" x-text="lang === 'et' ? '+ Hooajalised puuviljad kausis' : '+ Seasonal fruits in a bowl'">+ Hooajalised puuviljad kausis</p>
+                    </div>
+
+                    <!-- Selected state -->
+                    <div x-show="rhythm === 'twice'" class="block w-full text-center bg-black text-paper py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-all duration-500" x-text="lang === 'et' ? (size === 'estate' ? 'Küsi pakkumist' : 'Alusta') : (size === 'estate' ? 'Get a quote' : 'Begin')">
+                        Alusta
+                    </div>
+                    <!-- Unselected state -->
+                    <div x-show="rhythm !== 'twice'" class="block w-full text-center border border-black/30 py-4 text-[11px] uppercase tracking-[0.2em] font-sans text-muted hover:border-black hover:text-black transition-all duration-500" x-text="lang === 'et' ? (size === 'estate' ? 'Küsi pakkumist' : 'Alusta') : (size === 'estate' ? 'Get a quote' : 'Begin')">
+                        Alusta
+                    </div>
+                </div>
+
+                <!-- Iga nädal -->
+                <div class="p-6 md:p-14 lg:p-16 transition-all duration-500 relative flex flex-col cursor-pointer"
+                     :class="rhythm === 'weekly' ? 'bg-cream/70 ring-1 ring-accent/30' : 'bg-cream/30 hover:bg-cream/50'"
+                     @click="rhythm = 'weekly'; $dispatch('select-plan', { plan: size === 'estate' ? 'RÄTSEPLAHENDUS' : '4X KUUS (' + (size==='small'?'1-2 tuba':size==='medium'?'3 tuba':'4 tuba') + ')' })">
+                    <span class="text-[10px] uppercase tracking-[0.25em] font-sans mb-6 md:mb-8 block" :class="rhythm === 'weekly' ? 'text-black' : 'text-muted'" x-text="lang === 'et' ? 'Neli korda kuus' : 'Four times a month'">Neli korda kuus</span>
+                    <div class="font-serif text-4xl md:text-5xl font-light mb-2">
+                        <span x-show="size !== 'estate'" x-text="lang === 'et' ? '4× kuus' : '4× month'">4× kuus</span>
+                        <span x-show="size === 'estate'" class="text-2xl" x-text="lang === 'et' ? 'Rätseplahendus' : 'Bespoke'">Rätseplahendus</span>
+                    </div>
+                    <div class="flex items-baseline gap-1 mb-8 md:mb-10" x-show="size !== 'estate'">
+                        <span class="font-serif text-lg text-muted">€</span>
+                        <span class="font-serif text-2xl" x-text="prices[size].weekly">499</span>
+                        <span class="text-xs text-muted font-sans" x-text="lang === 'et' ? '/kuu' : '/mo'">/kuu</span>
+                    </div>
+                    <div class="mb-8 md:mb-10" x-show="size === 'estate'" x-cloak>
+                        <p class="font-serif text-xl italic text-accent" x-text="lang === 'et' ? 'Räägime läbi' : 'Let\'s talk'">Räägime läbi</p>
+                    </div>
+
+                    <p class="font-sans text-sm font-light leading-relaxed mb-8 pb-2" :class="rhythm === 'weekly' ? 'text-muted' : 'text-muted/70'">
+                        <span x-show="lang === 'et'">Täielik vabadus. Iga nädal värske kodu, lilled, puuviljad. Sa ei mõtle enam kodutöödele.</span>
+                        <span x-show="lang === 'en'" x-cloak>Complete freedom. Every week a fresh home, flowers, fruits. You never think about housework again.</span>
+                    </p>
+
+                    <div class="mb-auto pb-10 py-3 border-t border-[#E8E3DD]">
+                        <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Lisaks põhiteenusele' : 'In addition'">Lisaks põhiteenusele</p>
+                        <p class="text-sm font-sans font-light" x-text="lang === 'et' ? '+ Puuviljad + Premium koduhooldus' : '+ Fruits + Premium home care'">+ Puuviljad + Premium koduhooldus</p>
+                    </div>
+
+                    <!-- Selected state -->
+                    <div x-show="rhythm === 'weekly'" class="block w-full text-center bg-black text-paper py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-all duration-500" x-text="lang === 'et' ? (size === 'estate' ? 'Küsi pakkumist' : 'Alusta') : (size === 'estate' ? 'Get a quote' : 'Begin')">
+                        Alusta
+                    </div>
+                    <!-- Unselected state -->
+                    <div x-show="rhythm !== 'weekly'" class="block w-full text-center border border-black/30 py-4 text-[11px] uppercase tracking-[0.2em] font-sans text-muted hover:border-black hover:text-black transition-all duration-500" x-text="lang === 'et' ? (size === 'estate' ? 'Küsi pakkumist' : 'Alusta') : (size === 'estate' ? 'Get a quote' : 'Begin')">
+                        Alusta
+                    </div>
+                </div>
+
             </div>
         </section>
 
         <!-- Step-by-step Process -->
         <section id="liitu" class="grid md:grid-cols-12 grid-line-b bg-paper" x-data="{ 
-            step: 2,
+            step: 0,
+            geoConfirmed: false,
             selectedPackage: '2X KUUS (3 tuba)',
             selectedSize: 'medium',
             selectedRhythm: 'twice',
@@ -638,7 +434,7 @@
             addressMunicipality: '',
             addressSearchTimer: null,
             prices: {
-                small: { once: 179, twice: 319, weekly: 579 },
+                small: { once: 199, twice: 319, weekly: 579 },
                 medium: { once: 229, twice: 399, weekly: 719 },
                 large: { once: 289, twice: 499, weekly: 899 }
             },
@@ -782,22 +578,33 @@
             async sendInquiry() {
                 this.isProcessing = true;
                 try {
-                    // Track as Lead
                     if (window.SUKODA_TRACKING) {
                         SUKODA_TRACKING.trackLead({ name: 'Rätseplahendus 151m²+', category: 'estate_inquiry' });
                     }
-                    const subject = encodeURIComponent('SUKODA rätseplahendus – ' + this.name);
-                    const body = encodeURIComponent('Nimi: ' + this.name + '\nE-post: ' + this.email + (this.phone ? '\nTelefon: ' + this.phone : '') + (this.additionalInfo ? '\n\nLisainfo: ' + this.additionalInfo : ''));
-                    window.location.href = 'mailto:tere@sukoda.ee?subject=' + subject + '&body=' + body;
+                    await fetch('/api/estate-inquiry', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: this.name,
+                            email: this.email,
+                            phone: this.phone || '',
+                            additionalInfo: this.additionalInfo || '',
+                            selectedRhythm: this.selectedRhythm,
+                            lang: this.$data.lang || 'et',
+                        }),
+                    });
                     this.inquirySent = true;
                 } catch(e) {
-                    this.checkoutError = 'Tekkis viga. Palun proovi uuesti.';
+                    this.checkoutError = this.$data.lang === 'en'
+                        ? 'An error occurred. Please try again.'
+                        : 'Tekkis viga. Palun proovi uuesti.';
                 } finally {
                     this.isProcessing = false;
                 }
             },
             prevStep() {
-                if (this.step > 1) this.step--;
+                if (this.step === 2) this.step = 0;
+                else if (this.step > 2) this.step--;
             },
             getTotalPrice() {
                 if (!this.selectedRhythm || !this.selectedSize) return 0;
@@ -846,13 +653,13 @@
                     else if (sizeMatch[0].includes('4')) selectedSize = 'large';
                 }
             }
-            step = 2;
+            step = geoConfirmed ? 2 : 0;
             inquirySent = false;
             $nextTick(() => { document.getElementById('liitu').scrollIntoView({ behavior: 'smooth', block: 'start' }) });
         ">
             
             <!-- Progress Steps -->
-            <div class="md:col-span-12 px-6 md:px-24 pt-12 pb-8 border-b border-[#E8E3DD]" x-show="!isEstate">
+            <div class="md:col-span-12 px-6 md:px-24 pt-12 pb-8 border-b border-[#E8E3DD]" x-show="!isEstate && step >= 1">
                 <div class="flex items-center justify-center gap-4 md:gap-8 max-w-2xl mx-auto">
                     <div class="flex items-center gap-3">
                         <div :class="step >= 1 ? 'bg-black text-paper' : 'bg-[#E8E3DD] text-muted'" class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-serif">1</div>
@@ -868,6 +675,62 @@
                         <div :class="step >= 3 ? 'bg-black text-paper' : 'bg-[#E8E3DD] text-muted'" class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-serif">3</div>
                         <span class="text-[10px] uppercase tracking-[0.2em] font-sans hidden md:inline" :class="step >= 3 ? 'text-black' : 'text-muted'" x-text="lang === 'et' ? 'Maksmine' : 'Payment'">Maksmine</span>
                     </div>
+                </div>
+            </div>
+
+            <!-- Step 0: Geographic Qualification -->
+            <div class="md:col-span-12 p-6 md:p-24" x-show="step === 0">
+                <div class="max-w-xl mx-auto text-center">
+                    <div class="accent-line mb-6 mx-auto"></div>
+                    <h2 class="font-serif text-3xl md:text-4xl font-light mb-3" x-text="lang === 'et' ? 'Alustame' : 'Let\'s begin'">Alustame</h2>
+                    <p class="text-muted font-sans font-light mb-10" x-text="lang === 'et' ? 'Praegu teenindame valitud piirkondi Tallinnas ja lähiümbruses.' : 'We currently serve select areas in and around Tallinn.'"></p>
+                    
+                    <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-6" x-text="lang === 'et' ? 'Kas sinu kodu asub Tallinnas?' : 'Is your home in Tallinn?'"></p>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
+                        <button @click="geoConfirmed = true; step = 2" class="flex-1 bg-black text-paper px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-all duration-500" x-text="lang === 'et' ? 'Jah, Tallinnas' : 'Yes, in Tallinn'">Jah, Tallinnas</button>
+                        <button @click="step = -1" class="flex-1 border border-black px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-black hover:text-paper transition-all duration-500" x-text="lang === 'et' ? 'Mujal Eestis' : 'Elsewhere in Estonia'">Mujal Eestis</button>
+                    </div>
+
+                    <!-- Selected package reminder -->
+                    <div class="mt-10 pt-6 border-t border-[#E8E3DD]" x-show="selectedPackage">
+                        <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Valitud pakett' : 'Selected package'"></p>
+                        <p class="font-serif text-lg font-light" x-text="selectedPackage"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 0b: Non-Tallinn Waitlist -->
+            <div class="md:col-span-12 p-6 md:p-24" x-show="step === -1">
+                <div class="max-w-xl mx-auto text-center">
+                    <div class="w-16 h-16 rounded-full border border-accent/40 flex items-center justify-center mx-auto mb-6">
+                        <svg class="w-7 h-7 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    </div>
+                    <h2 class="font-serif text-3xl md:text-4xl font-light mb-3" x-text="lang === 'et' ? 'Tulemas peagi' : 'Coming soon'">Tulemas peagi</h2>
+                    <p class="text-muted font-sans font-light mb-10 max-w-sm mx-auto" x-text="lang === 'et' ? 'Praegu teenindame ainult valitud piirkondi Tallinnas. Jäta oma kontakt ja kutsume sind, kui laieneme.' : 'We currently serve select areas of Tallinn only. Leave your contact and we\'ll invite you when we expand.'"></p>
+
+                    <div x-show="!waitlistSent" class="max-w-sm mx-auto space-y-4">
+                        <div class="border-b border-[#E8E3DD] pb-2">
+                            <input type="email" x-model="waitlistEmail" class="w-full text-center text-lg font-serif font-light py-2 outline-none bg-transparent" :placeholder="lang === 'et' ? 'sinu@email.com' : 'your@email.com'">
+                        </div>
+                        <div class="border-b border-[#E8E3DD] pb-2">
+                            <input type="text" x-model="waitlistCity" class="w-full text-center text-lg font-serif font-light py-2 outline-none bg-transparent" :placeholder="lang === 'et' ? 'Sinu linn' : 'Your city'">
+                        </div>
+                        <button @click="if(waitlistEmail && waitlistCity) submitWaitlist()" :disabled="waitlistSending || !waitlistEmail || !waitlistCity" class="w-full bg-black text-paper py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-all duration-500 disabled:opacity-50">
+                            <span x-show="!waitlistSending" x-text="lang === 'et' ? 'Teavita mind' : 'Notify me'">Teavita mind</span>
+                            <span x-show="waitlistSending" x-cloak>...</span>
+                        </button>
+                    </div>
+
+                    <div x-show="waitlistSent" x-cloak class="py-6">
+                        <div class="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <p class="font-serif text-xl font-light mb-2" x-text="lang === 'et' ? 'Oleme kirja pannud' : 'We\'ve noted your interest'">Oleme kirja pannud</p>
+                        <p class="text-sm text-muted font-sans font-light" x-text="lang === 'et' ? 'Anname teada kohe, kui sinu linnas alustame.' : 'We\'ll let you know as soon as we launch in your city.'"></p>
+                    </div>
+
+                    <button @click="step = 0" class="mt-6 text-[10px] uppercase tracking-[0.2em] text-muted font-sans hover:text-black transition-colors" x-text="lang === 'et' ? '← Tagasi' : '← Back'">← Tagasi</button>
                 </div>
             </div>
 
@@ -907,14 +770,15 @@
                             <svg class="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"></path></svg>
                         </div>
                         <h3 class="font-serif text-2xl font-light mb-3" x-text="lang === 'et' ? 'Päring saadetud' : 'Inquiry sent'">Päring saadetud</h3>
-                        <p class="text-muted font-sans font-light" x-text="lang === 'et' ? 'Avaneb sinu meiliprogramm. Kui ei avane, kirjuta meile tere@sukoda.ee' : 'Your email client will open. If not, write to tere@sukoda.ee'">Avaneb sinu meiliprogramm.</p>
+                        <p class="text-muted font-sans font-light mb-2" x-text="lang === 'et' ? 'Võtame sinuga ühendust 24 tunni jooksul.' : 'We\'ll get back to you within 24 hours.'"></p>
+                        <p class="text-muted/60 font-sans font-light text-sm" x-text="lang === 'et' ? 'Kinnituse saadame e-postile.' : 'A confirmation will be sent to your email.'"></p>
                     </div>
 
                     <form x-show="!inquirySent" @submit.prevent="nextStep()" class="space-y-6" novalidate>
                         <div class="border-b pb-3" :class="nameError ? 'border-red-400' : 'border-[#E8E3DD]'">
                             <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Sinu nimi' : 'Your name'">Sinu nimi</label>
-                            <input type="text" x-model="name" @input="nameError = false" class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" :placeholder="lang === 'et' ? 'Eesnimi ja perenimi' : 'First and last name'">
-                            <p x-show="nameError" x-cloak class="mt-2 text-sm text-accent font-sans font-light" x-text="lang === 'et' ? 'Palun sisesta oma nimi' : 'Please enter your name'"></p>
+                            <input type="text" x-model="name" @input="nameError = false" class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" :placeholder="lang === 'et' ? 'Eesnimi ja perenimi' : 'First and last name'" aria-describedby="name-error" aria-required="true">
+                            <p id="name-error" x-show="nameError" x-cloak class="mt-2 text-sm text-accent font-sans font-light" x-text="lang === 'et' ? 'Palun sisesta oma nimi' : 'Please enter your name'" role="alert"></p>
                         </div>
 
                         <div class="border-b pb-3" :class="emailError ? 'border-red-400' : 'border-[#E8E3DD]'">
@@ -938,7 +802,7 @@
                                 @keydown.escape="showSuggestions = false"
                                 @keydown.enter.prevent="if(addressSuggestions.length && showSuggestions) { selectAddress(addressSuggestions[0]); }"
                                 autocomplete="off"
-                                class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" :placeholder="lang === 'et' ? 'Hakka tippima aadressi...' : 'Start typing address...'">
+                                class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" :placeholder="lang === 'et' ? 'Hakka tippima aadressi...' : 'Start typing address...'" aria-describedby="address-error" aria-required="true">
 
                             <!-- Autocomplete dropdown -->
                             <div x-show="showSuggestions && addressSuggestions.length > 0" x-cloak
@@ -952,7 +816,7 @@
                                 </template>
                             </div>
 
-                            <p x-show="addressError" x-cloak class="mt-2 text-sm text-accent font-sans font-light" x-text="lang === 'et' ? 'Palun vali aadress nimekirjast' : 'Please select an address from the list'">Palun vali aadress nimekirjast</p>
+                            <p id="address-error" x-show="addressError" x-cloak class="mt-2 text-sm text-accent font-sans font-light" x-text="lang === 'et' ? 'Palun vali aadress nimekirjast' : 'Please select an address from the list'" role="alert">Palun vali aadress nimekirjast</p>
                             <div class="flex items-center gap-2 mt-2" x-show="!showWaitlist && !addressError && !showSuggestions">
                                 <svg class="w-3 h-3 text-muted/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                 <p class="text-[10px] uppercase tracking-[0.15em] text-muted/40 font-sans" x-text="addressMunicipality ? addressMunicipality : (lang === 'et' ? 'Teenindame praegu Tallinna piirkonda' : 'Currently serving the Tallinn area')"></p>
@@ -1007,6 +871,10 @@
                             <button type="button" @click="prevStep()" class="px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans border border-black hover:bg-black hover:text-paper transition-all duration-500" x-text="lang === 'et' ? 'Tagasi' : 'Back'">Tagasi</button>
                             <button type="submit" :disabled="isProcessing" class="flex-1 bg-black text-paper px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-all duration-500 disabled:opacity-50" x-text="isEstate ? (lang === 'et' ? 'Saada päring' : 'Send inquiry') : (lang === 'et' ? 'Järgmine samm' : 'Next step')">Järgmine samm</button>
                         </div>
+                        <p class="text-center text-[10px] text-muted/50 font-sans mt-4">
+                            <span x-show="lang === 'et'">Sinu andmed on krüpteeritud ja me ei jaga neid kunagi. <a href="privaatsus.html" class="underline hover:text-muted transition-colors">Privaatsuspoliitika</a></span>
+                            <span x-show="lang === 'en'" x-cloak>Your data is encrypted and never shared. <a href="privaatsus.html" class="underline hover:text-muted transition-colors">Privacy policy</a></span>
+                        </p>
                     </form>
                 </div>
             </div>
@@ -1049,6 +917,10 @@
                                     <span class="text-accent mt-0.5">—</span>
                                     <span x-text="lang === 'et' ? 'Kõik toimub automaatselt' : 'Everything happens automatically'">Kõik toimub automaatselt</span>
                                 </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="text-accent mt-0.5">—</span>
+                                    <span x-text="lang === 'et' ? 'Saad ligipääsu isiklikule portaalile, kus saad hallata visiite ja täita koduprofiili' : 'You\'ll get access to your personal portal to manage visits and fill in your home profile'">Saad ligipääsu isiklikule portaalile, kus saad hallata visiite ja täita koduprofiili</span>
+                                </li>
                             </ul>
                         </div>
 
@@ -1064,10 +936,13 @@
                                 <span x-text="isProcessing ? (lang === 'et' ? 'Töötleme...' : 'Processing...') : (lang === 'et' ? 'Maksa nüüd' : 'Pay now')">Maksa nüüd</span>
                             </button>
                         </div>
+                        <p class="text-center text-[10px] text-muted/60 font-sans mt-4" x-text="lang === 'et' ? 'Tühista igal ajal. Kehtib perioodi lõpuni.' : 'Cancel anytime. Valid until end of period.'"></p>
                     </form>
                 </div>
             </div>
         </section>
+
+        </main>
 
         <!-- Footer -->
         <footer class="bg-black text-paper">
@@ -1100,12 +975,76 @@
             </div>
             <div class="border-t border-gray-800 py-6 px-6 md:px-12">
                 <p class="text-[10px] text-gray-400 font-sans text-center tracking-wide">
-                    <span x-show="lang === 'et'">© 2026 Epic Ship OÜ · Registrikood 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
-                    <span x-show="lang === 'en'" x-cloak>© 2026 Epic Ship OÜ · Reg. code 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
+                    <span x-show="lang === 'et'">© 2026 SUKODA · Registrikood 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
+                    <span x-show="lang === 'en'" x-cloak>© 2026 SUKODA · Reg. code 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
                 </p>
             </div>
         </footer>
 
+    </div>
+
+    <!-- Sticky Mobile CTA (visible only on mobile, between pricing and checkout sections) -->
+    <div x-data="{
+            visible: false,
+            plan: '',
+            price: 0,
+            isEstate: false,
+            pricingPassed: false,
+            checkoutVisible: false,
+            prices: {
+                small: { once: 199, twice: 319, weekly: 579 },
+                medium: { once: 229, twice: 399, weekly: 719 },
+                large: { once: 289, twice: 499, weekly: 899 }
+            },
+            updateVisibility() {
+                this.visible = this.plan && this.pricingPassed && !this.checkoutVisible && !this.isEstate;
+            },
+            parsePlan(planStr) {
+                this.plan = planStr;
+                this.isEstate = planStr.includes('RÄTSEPLAHENDUS');
+                if (this.isEstate) { this.updateVisibility(); return; }
+                let rhythm = 'twice', size = 'medium';
+                if (planStr.includes('1X')) rhythm = 'once';
+                else if (planStr.includes('4X')) rhythm = 'weekly';
+                if (planStr.includes('1-2')) size = 'small';
+                else if (planStr.includes('4 tuba')) size = 'large';
+                this.price = this.prices[size]?.[rhythm] || 0;
+                this.updateVisibility();
+            },
+            init() {
+                const pricingEl = document.getElementById('hoolitsus');
+                const checkoutEl = document.getElementById('liitu');
+                if (pricingEl) {
+                    new IntersectionObserver(([e]) => {
+                        this.pricingPassed = !e.isIntersecting && e.boundingClientRect.top < 0;
+                        this.updateVisibility();
+                    }, { threshold: 0 }).observe(pricingEl);
+                }
+                if (checkoutEl) {
+                    new IntersectionObserver(([e]) => {
+                        this.checkoutVisible = e.isIntersecting;
+                        this.updateVisibility();
+                    }, { threshold: 0.1 }).observe(checkoutEl);
+                }
+            }
+        }"
+        @select-plan.window="parsePlan($event.detail.plan)"
+        x-show="visible" x-cloak
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="translate-y-full opacity-0"
+        x-transition:enter-end="translate-y-0 opacity-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="translate-y-0 opacity-100"
+        x-transition:leave-end="translate-y-full opacity-0"
+        class="fixed bottom-0 left-0 right-0 z-[9998] bg-black/95 backdrop-blur-sm text-paper px-4 py-3 md:hidden">
+        <div class="flex items-center justify-between gap-3">
+            <div class="flex-1 min-w-0">
+                <p class="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-sans truncate" x-text="plan"></p>
+                <p class="font-serif text-lg font-light">€<span x-text="price"></span><span class="text-xs text-gray-400">/kuu</span></p>
+            </div>
+            <a href="#liitu" class="shrink-0 bg-accent text-paper px-6 py-3 text-[10px] uppercase tracking-[0.2em] font-sans hover:bg-accent/80 transition-colors"
+               x-text="lang === 'et' ? 'Jätka' : 'Continue'">Jätka</a>
+        </div>
     </div>
 
     <!-- Cookie Consent -->
@@ -1136,45 +1075,6 @@
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script>
-        // Preloader — only on first visit per session
-        window.addEventListener('load', () => {
-            const preloader = document.getElementById('preloader');
-            if (sessionStorage.getItem('sukoda_visited')) {
-                preloader.classList.add('hidden');
-            } else {
-                sessionStorage.setItem('sukoda_visited', '1');
-                setTimeout(() => preloader.classList.add('hidden'), 1200);
-            }
-        });
-
-        // Scroll progress bar
-        window.addEventListener('scroll', () => {
-            const scrollTop = document.documentElement.scrollTop;
-            const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-            const progress = (scrollTop / scrollHeight) * 100;
-            document.getElementById('scrollProgress').style.width = progress + '%';
-        });
-
-        // Scroll reveal with Intersection Observer
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
-            });
-        }, observerOptions);
-
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-        });
-    </script>
 
 </body>
 </html>

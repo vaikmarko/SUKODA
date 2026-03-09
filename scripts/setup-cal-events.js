@@ -9,28 +9,28 @@ const CAL_API_BASE = 'https://api.cal.eu/v2';
 
 const eventTypes = [
   {
-    title: 'Koristus kuni 50m²',
+    title: 'Koduhoolitsus 1-2 tuba',
     slug: 'koristus-50',
     lengthInMinutes: 120, // 2 hours
-    description: 'Koduhoolitsus kuni 50m² korterile. Sisaldab põhjalikku koristust, värskeid lilli, käsitsi kirjutatud kaarti ja väikest magust üllatust.',
+    description: 'Koduhoolitsus 1-2 toaga kodule. Sisaldab põhjalikku koristust, värskeid lilli, käsitsi kirjutatud kaarti ja väikest magust üllatust.',
   },
   {
-    title: 'Koristus 51-90m²',
+    title: 'Koduhoolitsus 3 tuba',
     slug: 'koristus-90',
     lengthInMinutes: 180, // 3 hours
-    description: 'Koduhoolitsus 51-90m² korterile. Sisaldab põhjalikku koristust, värskeid lilli, käsitsi kirjutatud kaarti ja väikest magust üllatust.',
+    description: 'Koduhoolitsus 3 toaga kodule. Sisaldab põhjalikku koristust, värskeid lilli, käsitsi kirjutatud kaarti ja väikest magust üllatust.',
   },
   {
-    title: 'Koristus 91-120m²',
+    title: 'Koduhoolitsus 4 tuba',
     slug: 'koristus-120',
     lengthInMinutes: 240, // 4 hours
-    description: 'Koduhoolitsus 91-120m² korterile. Sisaldab põhjalikku koristust, värskeid lilli, käsitsi kirjutatud kaarti ja väikest magust üllatust.',
+    description: 'Koduhoolitsus 4 toaga kodule. Sisaldab põhjalikku koristust, värskeid lilli, käsitsi kirjutatud kaarti ja väikest magust üllatust.',
   },
   {
-    title: 'Koristus 121-150m²',
+    title: 'Koduhoolitsus 5+ tuba',
     slug: 'koristus-150',
     lengthInMinutes: 300, // 5 hours
-    description: 'Koduhoolitsus 121-150m² korterile. Sisaldab põhjalikku koristust, värskeid lilli, käsitsi kirjutatud kaarti ja väikest magust üllatust.',
+    description: 'Koduhoolitsus 5+ toaga kodule. Sisaldab põhjalikku koristust, värskeid lilli, käsitsi kirjutatud kaarti ja väikest magust üllatust.',
   },
 ];
 
