@@ -59,7 +59,7 @@
                     <p class="font-serif text-2xl font-light" x-text="weekBookings.length">0</p>
                 </div>
                 <div class="p-6 border-r border-[#E8E3DD]">
-                    <p class="text-[10px] uppercase tracking-[0.2em] text-muted mb-2">Aktiivsed tellijad</p>
+                    <p class="text-[10px] uppercase tracking-[0.2em] text-muted mb-2">Aktiivsed kliendid</p>
                     <p class="font-serif text-2xl font-light" x-text="activeSubscriptions.length">0</p>
                 </div>
                 <div class="p-6 border-r border-[#E8E3DD]">
@@ -82,7 +82,7 @@
                     See nädal
                 </button>
                 <button @click="activeTab = 'subscriptions'" :class="activeTab === 'subscriptions' ? 'border-b-2 border-accent text-black' : 'text-muted'" class="py-4 text-xs uppercase tracking-[0.15em] transition-colors">
-                    Tellimused
+                    Aktiivsed
                 </button>
                 <button @click="activeTab = 'all'" :class="activeTab === 'all' ? 'border-b-2 border-accent text-black' : 'text-muted'" class="py-4 text-xs uppercase tracking-[0.15em] transition-colors">
                     Kõik tellimused
@@ -163,30 +163,50 @@
 
                 <!-- Active Subscriptions -->
                 <div x-show="activeTab === 'subscriptions' && !loading">
-                    <h2 class="font-serif text-xl font-light mb-4">Aktiivsed tellimused</h2>
+                    <h2 class="font-serif text-xl font-light mb-4">Aktiivsed kliendid</h2>
                     <template x-if="activeSubscriptions.length === 0">
-                        <p class="text-muted font-light py-8 text-center">Aktiivseid tellimusi ei ole.</p>
+                        <p class="text-muted font-light py-8 text-center">Aktiivseid kliente ei ole.</p>
                     </template>
                     <div class="space-y-3">
                         <template x-for="o in activeSubscriptions" :key="o.id">
                             <div @click="openOrderDetail(o)" class="bg-white border border-[#E8E3DD] p-5 cursor-pointer hover:border-accent/50 transition-colors">
                                 <div class="flex flex-col md:flex-row md:items-center gap-4">
                                     <div class="flex-1 min-w-0">
-                                        <p class="font-medium" x-text="o.customer?.name"></p>
-                                        <p class="text-muted text-xs mt-1" x-text="o.customer?.email"></p>
+                                        <p class="font-medium" x-text="o.type === 'gift' ? (o.recipient?.name || o.customer?.name) : o.customer?.name"></p>
+                                        <p class="text-muted text-xs mt-1" x-text="o.type === 'gift' ? (o.recipient?.email || o.customer?.email) : o.customer?.email"></p>
+                                    </div>
+                                    <div class="shrink-0">
+                                        <span class="px-2 py-1 text-[10px] uppercase tracking-wider" :class="o.type === 'gift' ? 'bg-pink-50 text-pink-600' : 'bg-cream text-accent'" x-text="o.type === 'gift' ? 'Kingitus' : 'Tellimus'"></span>
                                     </div>
                                     <div class="text-right shrink-0">
                                         <p class="text-xs uppercase tracking-wider text-accent" x-text="getPackageName(o.package)"></p>
                                         <p class="text-xs text-muted mt-1" x-text="getSizeName(o.size)"></p>
                                     </div>
-                                    <div class="text-right shrink-0">
-                                        <p class="text-[10px] uppercase tracking-wider text-muted">Järgmine</p>
-                                        <p class="text-xs" x-text="o.nextVisitDue ? formatDate(o.nextVisitDue) : 'Pole planeeritud'"></p>
-                                    </div>
-                                    <div class="text-right shrink-0">
-                                        <p class="text-[10px] uppercase tracking-wider text-muted">Külastusi</p>
-                                        <p class="font-serif text-lg" x-text="o.totalVisits || 0"></p>
-                                    </div>
+                                    <template x-if="o.type === 'subscription'">
+                                        <div class="flex gap-6">
+                                            <div class="text-right shrink-0">
+                                                <p class="text-[10px] uppercase tracking-wider text-muted">Järgmine</p>
+                                                <p class="text-xs" x-text="o.nextVisitDue ? formatDate(o.nextVisitDue) : 'Pole planeeritud'"></p>
+                                            </div>
+                                            <div class="text-right shrink-0">
+                                                <p class="text-[10px] uppercase tracking-wider text-muted">Külastusi</p>
+                                                <p class="font-serif text-lg" x-text="o.totalVisits || 0"></p>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template x-if="o.type === 'gift'">
+                                        <div class="text-right shrink-0">
+                                            <template x-if="o.booking?.startTime">
+                                                <div>
+                                                    <p class="text-[10px] uppercase tracking-wider text-muted">Broneeritud</p>
+                                                    <p class="text-xs" x-text="formatDate(o.booking.startTime)"></p>
+                                                </div>
+                                            </template>
+                                            <template x-if="!o.booking?.startTime">
+                                                <span class="px-2 py-1 text-[10px] uppercase tracking-wider bg-orange-50 text-orange-600">Lunastatud</span>
+                                            </template>
+                                        </div>
+                                    </template>
                                 </div>
                             </div>
                         </template>
@@ -198,6 +218,7 @@
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="font-serif text-xl font-light">Kõik tellimused</h2>
                         <div class="flex items-center gap-3">
+                            <input x-model="orderSearch" type="text" placeholder="Otsi nime, emaili, aadressi järgi..." class="border border-[#E8E3DD] px-3 py-1.5 text-xs font-sans w-56 focus:border-accent focus:outline-none">
                             <button x-show="pendingCount > 0" @click="showPending = !showPending" class="text-[10px] uppercase tracking-wider px-3 py-1.5 border transition-colors" :class="showPending ? 'border-accent text-accent bg-cream/50' : 'border-[#E8E3DD] text-muted hover:border-accent/50'">
                                 <span x-show="!showPending">Näita katkestatud (<span x-text="pendingCount"></span>)</span>
                                 <span x-show="showPending">Peida katkestatud</span>
@@ -209,29 +230,28 @@
                             <div @click="openOrderDetail(o)" class="bg-white border border-[#E8E3DD] p-5 cursor-pointer hover:border-accent/50 transition-colors" :class="o.status === 'pending' ? 'opacity-50' : ''">
                                 <div class="flex flex-col md:flex-row md:items-center gap-3">
                                     <div class="flex-1 min-w-0">
-                                        <p class="font-medium" x-text="o.customer?.name"></p>
-                                        <p class="text-muted text-xs mt-1" x-text="o.customer?.email"></p>
+                                        <p class="font-medium" x-text="getOrderDisplayName(o)"></p>
+                                        <p class="text-muted text-xs mt-0.5" x-text="getOrderDisplayEmail(o)"></p>
+                                        <p class="text-muted/60 text-xs mt-0.5 truncate" x-show="getOrderDisplayAddress(o)" x-text="getOrderDisplayAddress(o)"></p>
                                     </div>
                                     <div class="shrink-0">
                                         <span class="px-2 py-1 text-[10px] uppercase tracking-wider" :class="o.type === 'gift' ? 'bg-pink-50 text-pink-600' : 'bg-cream text-accent'" x-text="o.type === 'gift' ? 'Kingitus' : 'Tellimus'"></span>
                                     </div>
-                                    <div class="text-xs text-muted shrink-0" x-text="getPackageName(o.package)"></div>
+                                    <div class="text-xs text-muted shrink-0" x-text="getPackageName(o.package) + ' · ' + getSizeName(o.size)"></div>
                                     <div class="shrink-0">
                                         <span class="px-2 py-1 text-[10px] uppercase tracking-wider" :class="o.status === 'paid' ? 'bg-green-50 text-green-600' : o.status === 'cancelling' ? 'bg-amber-50 text-amber-600' : o.status === 'cancelled' ? 'bg-red-50 text-red-500' : 'bg-gray-50 text-gray-500'" x-text="getStatusName(o.status)"></span>
                                     </div>
-                                    <!-- Gift flow badge -->
                                     <template x-if="getGiftFlowStatus(o)">
                                         <div class="shrink-0">
                                             <span class="px-2 py-1 text-[10px] uppercase tracking-wider" :class="getGiftFlowStatus(o).color" x-text="getGiftFlowStatus(o).label"></span>
                                         </div>
                                     </template>
-                                    <!-- Subscription booking badge -->
                                     <template x-if="getBookingStatus(o)">
                                         <div class="shrink-0">
                                             <span class="px-2 py-1 text-[10px] uppercase tracking-wider" :class="getBookingStatus(o).color" x-text="getBookingStatus(o).label"></span>
                                         </div>
                                     </template>
-                                    <div class="text-xs text-muted shrink-0" x-text="o.createdAt ? new Date(o.createdAt).toLocaleDateString('et-EE') : ''"></div>
+                                    <div class="text-xs text-muted shrink-0" x-text="o.booking?.startTime ? 'Järgmine: ' + formatDate(o.booking.startTime) : (o.createdAt ? new Date(o.createdAt).toLocaleDateString('et-EE') : '')"></div>
                                 </div>
                             </div>
                         </template>
@@ -713,8 +733,11 @@
                     </div>
 
                     <!-- Home Profile (Koduprofiil) -->
-                    <div x-show="selectedOrder.homeProfile" class="px-6 py-5 grid-line-b">
+                    <div class="px-6 py-5 grid-line-b">
                         <p class="text-[10px] uppercase tracking-[0.2em] text-accent font-medium mb-4">Koduprofiil</p>
+                        <div x-show="!selectedOrder.homeProfile || (!selectedOrder.homeProfile.access && !selectedOrder.homeProfile.pets && !selectedOrder.homeProfile.allergies && !selectedOrder.homeProfile.flowerPreference && !selectedOrder.homeProfile.linens && !selectedOrder.homeProfile.towels && !selectedOrder.homeProfile.specialRequests)" class="text-muted text-xs font-light py-3 bg-cream/30 px-4">
+                            Koduprofiil pole veel täidetud — klient saab selle täita oma portaalis.
+                        </div>
                         <div class="space-y-3">
                             <div class="flex items-start gap-3" x-show="selectedOrder.homeProfile?.access">
                                 <svg class="w-4 h-4 text-muted shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"/></svg>
@@ -885,6 +908,29 @@
                         </div>
                     </div>
 
+                    <!-- Gift Visit Progress -->
+                    <div x-show="selectedOrder.type === 'gift'" class="px-6 py-5 grid-line-b">
+                        <p class="text-[10px] uppercase tracking-[0.2em] text-muted font-medium mb-4">Koristuste progress</p>
+                        <div class="flex items-center gap-6">
+                            <div>
+                                <p class="text-[10px] uppercase tracking-wider text-muted">Tehtud</p>
+                                <p class="font-serif text-xl font-light" x-text="getGiftCompletedCount()"></p>
+                            </div>
+                            <div class="text-muted text-xl font-light">/</div>
+                            <div>
+                                <p class="text-[10px] uppercase tracking-wider text-muted">Kokku paketis</p>
+                                <p class="font-serif text-xl font-light" x-text="getGiftVisitCount(selectedOrder.package)"></p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] uppercase tracking-wider text-muted">Planeeritud</p>
+                                <p class="font-serif text-xl font-light" x-text="getGiftScheduledCount()"></p>
+                            </div>
+                        </div>
+                        <div x-show="getGiftCompletedCount() < getGiftVisitCount(selectedOrder.package) && getGiftScheduledCount() === 0" class="mt-4 p-3 bg-amber-50 border border-amber-200 text-xs text-amber-700">
+                            Järgmine koristus pole veel broneeritud! Broneeri allpool uus aeg.
+                        </div>
+                    </div>
+
                     <!-- Linked Bookings -->
                     <div class="px-6 py-5 grid-line-b">
                         <div class="flex items-center justify-between mb-4">
@@ -910,6 +956,42 @@
                                     <svg class="w-4 h-4 text-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"/></svg>
                                 </div>
                             </template>
+                        </div>
+
+                        <!-- Book New Visit -->
+                        <div x-show="selectedOrder.status === 'paid' && !orderBookNewMode" class="mt-4">
+                            <button @click="orderBookNewMode = true; initOrderBookDateTime()" class="w-full px-4 py-3 border border-accent text-xs uppercase tracking-wider text-accent hover:bg-accent hover:text-white transition-colors">
+                                + Broneeri uus aeg
+                            </button>
+                        </div>
+
+                        <!-- Book New Visit: Date & Time Picker -->
+                        <div x-show="orderBookNewMode" class="mt-4 p-4 bg-cream/50 border border-[#E8E3DD]">
+                            <p class="text-[10px] uppercase tracking-[0.2em] text-accent font-medium mb-4">Broneeri uus aeg</p>
+                            <div class="flex items-center gap-3 mb-4">
+                                <div>
+                                    <label class="block text-[10px] uppercase tracking-wider text-muted mb-1">Kuupäev</label>
+                                    <input type="date" x-model="orderBookDate" class="border border-[#E8E3DD] bg-white px-3 py-2 text-xs outline-none focus:border-accent">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] uppercase tracking-wider text-muted mb-1">Kellaaeg</label>
+                                    <input type="time" x-model="orderBookTime" class="border border-[#E8E3DD] bg-white px-3 py-2 text-xs outline-none focus:border-accent">
+                                </div>
+                            </div>
+
+                            <div x-show="orderBookDate && orderBookTime" class="pt-3 border-t border-[#E8E3DD] flex items-center justify-between">
+                                <p class="text-xs">
+                                    <strong x-text="orderBookDate ? formatFullDate(orderBookDate + 'T' + orderBookTime) + ', ' + orderBookTime : ''"></strong>
+                                </p>
+                                <button @click="confirmOrderBookDirect()" :disabled="orderBookLoading" class="px-4 py-2 bg-accent text-white text-xs hover:bg-accent/90 disabled:opacity-50">
+                                    <span x-show="!orderBookLoading">Broneeri</span>
+                                    <span x-show="orderBookLoading">Broneerin...</span>
+                                </button>
+                            </div>
+
+                            <div class="mt-3 text-right">
+                                <button @click="orderBookNewMode = false" class="text-xs text-muted hover:text-black">Tühista</button>
+                            </div>
                         </div>
                     </div>
 
@@ -985,6 +1067,7 @@
             activeSubscriptions: [],
             allOrders: [],
             showPending: false,
+            orderSearch: '',
 
             // Booking detail modal
             showBookingModal: false,
@@ -1025,6 +1108,12 @@
             },
             gcSortField: 'createdAt',
             gcSortDir: 'desc',
+
+            // Order book new visit
+            orderBookNewMode: false,
+            orderBookLoading: false,
+            orderBookDate: '',
+            orderBookTime: '09:00',
 
             // Reschedule
             rescheduleMode: false,
@@ -1102,7 +1191,8 @@
                         const data = await ordersRes.json();
                         this.allOrders = data.orders || [];
                         this.activeSubscriptions = this.allOrders.filter(o => 
-                            o.type === 'subscription' && o.status === 'paid' && o.subscriptionStatus === 'active'
+                            (o.type === 'subscription' && o.status === 'paid' && o.subscriptionStatus === 'active') ||
+                            (o.type === 'gift' && o.status === 'paid' && o.giftRedeemed)
                         );
                     }
                     if (followupRes?.ok) {
@@ -1147,6 +1237,7 @@
                 this.showOrderModal = true;
                 this.orderBookings = [];
                 this.orderBookingsLoading = true;
+                this.orderBookNewMode = false;
 
                 // Load linked bookings
                 try {
@@ -1327,6 +1418,76 @@
                 return slugs[size] || 'koristus-90';
             },
 
+            // ---- Order Book New Visit ----
+
+            getGiftVisitCount(pkg) {
+                const counts = { moment: 1, month: 2, quarter: 6 };
+                return counts[pkg] || 1;
+            },
+
+            getGiftCompletedCount() {
+                const fromBookings = this.orderBookings.filter(b => b.status === 'completed').length;
+                if (fromBookings > 0) return fromBookings;
+                if (this.selectedOrder?.booking?.startTime && new Date(this.selectedOrder.booking.startTime) < new Date()) {
+                    return Math.max(1, fromBookings);
+                }
+                return fromBookings;
+            },
+
+            getGiftScheduledCount() {
+                const fromBookings = this.orderBookings.filter(b => b.status === 'scheduled').length;
+                if (fromBookings > 0) return fromBookings;
+                if (this.selectedOrder?.booking?.startTime && new Date(this.selectedOrder.booking.startTime) >= new Date()) {
+                    return 1;
+                }
+                return fromBookings;
+            },
+
+            initOrderBookDateTime() {
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                this.orderBookDate = tomorrow.toISOString().split('T')[0];
+                this.orderBookTime = '09:00';
+            },
+
+            async confirmOrderBookDirect() {
+                if (!this.orderBookDate || !this.orderBookTime || !this.selectedOrder) return;
+
+                const startTime = this.orderBookDate + 'T' + this.orderBookTime + ':00+02:00';
+                const confirmMsg = `Broneeri koristus:\n\n${this.formatFullDate(startTime)}, ${this.orderBookTime}\n\nKliendile saadetakse teavitus.`;
+
+                if (!confirm(confirmMsg)) return;
+
+                const orderId = this.selectedOrder.id;
+                this.orderBookLoading = true;
+                try {
+                    const res = await this.adminFetch('/api/admin/book', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            orderId: orderId,
+                            startTime: startTime,
+                        }),
+                    });
+                    if (res.ok) {
+                        this.orderBookNewMode = false;
+                        this.closeOrderModal();
+                        await this.loadData();
+                        const updatedOrder = this.allOrders.find(o => o.id === orderId);
+                        if (updatedOrder) {
+                            await this.openOrderDetail(updatedOrder);
+                        }
+                    } else {
+                        const err = await res.json();
+                        alert('Viga broneerimisel: ' + (err.error || 'Tundmatu viga'));
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert('Ühenduse viga');
+                }
+                this.orderBookLoading = false;
+            },
+
             // ---- Gift Card Generator ----
 
             async generateGiftCards() {
@@ -1503,15 +1664,42 @@
             getSizeName(size) { return this.sizes[size] || size || ''; },
             getStatusName(status) { return this.statuses[status] || status || ''; },
 
-            // Filtered orders (hide pending + physical cards which have their own tab)
             get filteredOrders() {
-                let orders = this.allOrders.filter(o => !o.physicalCard);
+                let orders = [...this.allOrders];
                 if (!this.showPending) orders = orders.filter(o => o.status !== 'pending');
+                if (this.orderSearch) {
+                    const q = this.orderSearch.toLowerCase();
+                    orders = orders.filter(o =>
+                        (o.customer?.name || '').toLowerCase().includes(q) ||
+                        (o.customer?.email || '').toLowerCase().includes(q) ||
+                        (o.customer?.address || '').toLowerCase().includes(q) ||
+                        (o.recipient?.name || '').toLowerCase().includes(q) ||
+                        (o.recipient?.email || '').toLowerCase().includes(q) ||
+                        (o.recipient?.address || '').toLowerCase().includes(q) ||
+                        (o.giftCode || '').toLowerCase().includes(q)
+                    );
+                }
                 return orders;
             },
 
             get paidOrdersCount() {
-                return this.allOrders.filter(o => o.status !== 'pending' && !o.physicalCard).length;
+                return this.allOrders.filter(o => o.status !== 'pending').length;
+            },
+
+            getOrderDisplayName(o) {
+                if (o.type === 'gift' && o.recipient?.name) return o.recipient.name;
+                if (o.type === 'gift' && o.recipient?.email) return o.recipient.email;
+                return o.customer?.name || o.customer?.email || '-';
+            },
+
+            getOrderDisplayEmail(o) {
+                if (o.type === 'gift' && o.recipient?.email) return o.recipient.email;
+                return o.customer?.email || '';
+            },
+
+            getOrderDisplayAddress(o) {
+                if (o.type === 'gift' && o.recipient?.address) return o.recipient.address;
+                return o.customer?.address || '';
             },
 
             get pendingCount() {
