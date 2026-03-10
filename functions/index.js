@@ -87,8 +87,8 @@ const EMAIL_TEXTS = {
     reminderExpectLabel: 'Mida oodata',
     reminderItems: ['Põhjalik koristus', 'Värsked lilled vaasi', 'Käsitsi kirjutatud tervitus', 'Väike magus üllatus'],
     reminderAccessNote: 'Palun jäta meile ligipääs kodule. Kui vajad aega muuta, kirjuta meile aadressil tere@sukoda.ee või halda oma broneeringut aadressil sukoda.ee/minu.',
-    homeProfileNote: 'Kui soovid järgmisel korral midagi teisiti, lisa oma soovid ja eelistused siia:',
-    homeProfileBtn: 'MINU KODU',
+    homeProfileNote: 'Täida oma koduprofiil — sissepääsu info, lemmikloomad, allergeenid, lillede eelistus ja erisoovid. Nii saame pakkuda just sulle sobivat teenust:',
+    homeProfileBtn: 'TÄIDA KODUPROFIIL',
 
     // Next visit email
     nextVisitTitle: 'Järgmine külastus on paigas',
@@ -291,8 +291,8 @@ const EMAIL_TEXTS = {
     reminderExpectLabel: 'What to expect',
     reminderItems: ['Thorough cleaning', 'Fresh flowers in a vase', 'Handwritten greeting', 'A sweet surprise'],
     reminderAccessNote: 'Please ensure we have access to your home. If you need to change the time, contact us at tere@sukoda.ee or manage your booking at sukoda.ee/minu.',
-    homeProfileNote: 'If you\'d like something different next time, add your preferences here:',
-    homeProfileBtn: 'MY HOME',
+    homeProfileNote: 'Fill in your home profile — access info, pets, allergies, flower preferences and special requests. This helps us provide the best service for you:',
+    homeProfileBtn: 'FILL HOME PROFILE',
 
     nextVisitTitle: 'Your next visit is scheduled',
     nextVisitIntro: (name) => name
@@ -2244,7 +2244,7 @@ function homeProfileBlock(lang) {
       <p style="color: #8A8578; font-size: 14px; line-height: 1.7; margin: 0 0 16px 0;">
         ${t.homeProfileNote}
       </p>
-      <a href="https://sukoda.ee/minu.html" style="display: inline-block; background: #111111; color: #FFFFFF; padding: 12px 28px; text-decoration: none; font-size: 11px; letter-spacing: 3px; font-weight: 500;">
+      <a href="https://sukoda.ee/minu" style="display: inline-block; background: #111111; color: #FFFFFF; padding: 12px 28px; text-decoration: none; font-size: 11px; letter-spacing: 3px; font-weight: 500;">
         ${t.homeProfileBtn}
       </a>
     </div>`;
@@ -5144,6 +5144,24 @@ exports.bookSubscriptionVisit = functions
           const calSlugDurations = { 'koristus-50': 120, 'koristus-90': 180, 'koristus-120': 240, 'koristus-150': 300 };
           const durationMin = calSlugDurations[slug] || 180;
           const endTime = new Date(new Date(startTime).getTime() + durationMin * 60 * 1000);
+
+          let portalUrl = null;
+          try {
+            const crypto = require('crypto');
+            const rawToken = crypto.randomBytes(32).toString('hex');
+            const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+            const tokenExpiry = new Date();
+            tokenExpiry.setDate(tokenExpiry.getDate() + 30);
+            await orderDoc.ref.update({
+              sessionTokenHash: tokenHash,
+              sessionTokenExpiresAt: admin.firestore.Timestamp.fromDate(tokenExpiry),
+            });
+            portalUrl = `https://sukoda.ee/minu?token=${rawToken}`;
+          } catch (tokenErr) {
+            console.error('Portal token creation failed (non-fatal):', tokenErr);
+            portalUrl = 'https://sukoda.ee/minu';
+          }
+
           await sendEmail({
             to: customer.email,
             subject: t.subjectBookingConfirmed,
@@ -5153,7 +5171,7 @@ exports.bookSubscriptionVisit = functions
               endTime: endTime.toISOString(),
               address: customer.address,
               lang,
-              portalUrl: 'https://sukoda.ee/minu',
+              portalUrl,
             }),
           });
         } catch (emailErr) {
