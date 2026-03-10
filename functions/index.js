@@ -4051,7 +4051,8 @@ exports.adminBookVisit = functions
         const rawName = order.type === 'gift'
           ? (order.recipient?.name || order.customer?.name || '')
           : (order.customer?.name || '');
-        const customerName = (rawName && !rawName.includes('Physical Card')) ? rawName : '';
+        const customerNameForEmail = (rawName && !rawName.includes('Physical Card')) ? rawName : '';
+        const customerNameForCal = customerNameForEmail || 'Klient';
         const customerEmail = order.type === 'gift'
           ? (order.recipient?.email || order.customer?.email || '')
           : (order.customer?.email || '');
@@ -4063,7 +4064,7 @@ exports.adminBookVisit = functions
           : (order.customer?.address || '');
 
         const booking = await calService.createBooking(slug, startTime, {
-          name: customerName,
+          name: customerNameForCal,
           email: customerEmail,
           phone: customerPhone,
           address: customerAddress,
@@ -4082,7 +4083,7 @@ exports.adminBookVisit = functions
         });
 
         await sendAdminBookingNotification({
-          customerName,
+          customerName: customerNameForCal,
           customerEmail,
           customerPhone,
           address: customerAddress,
@@ -4126,7 +4127,7 @@ exports.adminBookVisit = functions
               to: customerEmail,
               subject: t.subjectBookingConfirmed,
               html: generateBookingConfirmationEmail({
-                customerName,
+                customerName: customerNameForEmail,
                 scheduledAt: startTime,
                 endTime: endTime.toISOString(),
                 address: customerAddress,
