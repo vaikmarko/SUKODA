@@ -550,6 +550,7 @@ function generateCalendarLinksHtml({ scheduledAt, endTime, address, lang }) {
     location: address || '',
   });
   const icsUrl = `https://sukoda.ee/api/calendar?${icsParams.toString()}`;
+  const webcalUrl = `webcal://sukoda.ee/api/calendar?${icsParams.toString()}`;
 
   return `
     <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #E8E3DD;">
@@ -558,8 +559,11 @@ function generateCalendarLinksHtml({ scheduledAt, endTime, address, lang }) {
         <a href="${googleUrl}" target="_blank" rel="noopener" style="display: inline-block; padding: 10px 20px; background: #FFFFFF; border: 1px solid #E8E3DD; color: #2C2824; text-decoration: none; font-size: 13px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin-right: 8px; margin-bottom: 8px;">
           ${t.calendarGoogle} &rarr;
         </a>
-        <a href="${icsUrl}" target="_blank" rel="noopener" style="display: inline-block; padding: 10px 20px; background: #FFFFFF; border: 1px solid #E8E3DD; color: #2C2824; text-decoration: none; font-size: 13px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin-bottom: 8px;">
+        <a href="${webcalUrl}" style="display: inline-block; padding: 10px 20px; background: #FFFFFF; border: 1px solid #E8E3DD; color: #2C2824; text-decoration: none; font-size: 13px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin-right: 8px; margin-bottom: 8px;">
           ${t.calendarApple} &rarr;
+        </a>
+        <a href="${icsUrl}" style="display: inline-block; padding: 10px 20px; background: #FFFFFF; border: 1px solid #E8E3DD; color: #2C2824; text-decoration: none; font-size: 13px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin-bottom: 8px;">
+          Outlook &rarr;
         </a>
       </div>
     </div>
