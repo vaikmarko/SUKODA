@@ -4011,10 +4011,31 @@ exports.adminBookVisit = functions
       }
 
       try {
-        const { orderId, startTime } = req.body;
+        const { orderId, date, time, startTime: legacyStartTime } = req.body;
 
-        if (!orderId || !startTime) {
-          return res.status(400).json({ error: 'Missing orderId or startTime' });
+        if (!orderId || (!date && !legacyStartTime)) {
+          return res.status(400).json({ error: 'Missing orderId or date/time' });
+        }
+
+        // Build startTime in Europe/Tallinn timezone
+        // date="2026-03-31", time="11:00" → determine correct UTC offset for that date in Tallinn
+        let startTime;
+        if (date && time) {
+          const tallinnDate = new Date(`${date}T${time}:00`);
+          // Get Tallinn offset for this specific date by formatting
+          const formatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Tallinn', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+          const parts = formatter.formatToParts(tallinnDate);
+          const getPart = (type) => parts.find(p => p.type === type)?.value || '';
+          // Create a date that represents the desired Tallinn local time
+          // by computing the offset between UTC and Tallinn for this date
+          const utcDate = new Date(`${date}T${time}:00Z`);
+          const tallinnStr = `${getPart('year')}-${getPart('month')}-${getPart('day')}T${getPart('hour')}:${getPart('minute')}:${getPart('second')}`;
+          const tallinnAsUtc = new Date(tallinnStr + 'Z');
+          const offsetMs = tallinnAsUtc.getTime() - utcDate.getTime();
+          const targetUtc = new Date(utcDate.getTime() - offsetMs);
+          startTime = targetUtc.toISOString();
+        } else {
+          startTime = legacyStartTime;
         }
 
         const orderDoc = await db.collection('orders').doc(orderId).get();
