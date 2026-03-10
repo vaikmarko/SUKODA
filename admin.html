@@ -872,103 +872,67 @@
                     </div>
 
                     <!-- Gift Booking Info -->
-                    <div x-show="selectedOrder.type === 'gift' && selectedOrder.booking?.startTime" class="px-6 py-5 grid-line-b">
-                        <p class="text-[10px] uppercase tracking-[0.2em] text-green-600 font-medium mb-4">Broneeritud külastus</p>
-                        <div class="flex items-start gap-4">
-                            <div class="w-10 h-10 bg-green-50 flex items-center justify-center shrink-0">
-                                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                            </div>
-                            <div class="flex-1">
-                                <p class="font-medium" x-text="selectedOrder.booking?.startTime ? formatFullDate(selectedOrder.booking.startTime) : ''"></p>
-                                <p class="text-muted text-xs mt-1" x-text="selectedOrder.booking?.startTime ? formatTime(selectedOrder.booking.startTime) : ''"></p>
-                            </div>
-                        </div>
-                        <div class="flex gap-3 mt-4">
-                            <button @click="cancelOrderBooking()" class="px-3 py-1.5 border border-red-200 text-[10px] uppercase tracking-wider text-red-500 hover:bg-red-50">Tühista see aeg</button>
-                            <button @click="orderBookNewMode = true; initOrderBookDateTime()" class="px-3 py-1.5 border border-accent text-[10px] uppercase tracking-wider text-accent hover:bg-cream/50">Muuda aega</button>
-                        </div>
-                    </div>
-
-                    <!-- Subscription Details -->
-                    <div x-show="selectedOrder.type === 'subscription'" class="px-6 py-5 grid-line-b">
-                        <p class="text-[10px] uppercase tracking-[0.2em] text-muted font-medium mb-4">Tellimuse info</p>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <p class="text-[10px] uppercase tracking-wider text-muted">Külastusi</p>
-                                <p class="font-serif text-xl font-light" x-text="selectedOrder.totalVisits || 0"></p>
-                            </div>
-                            <div>
-                                <p class="text-[10px] uppercase tracking-wider text-muted">Järgmine</p>
-                                <p class="text-sm" x-text="selectedOrder.nextVisitDue ? formatDate(selectedOrder.nextVisitDue) : '-'"></p>
-                            </div>
-                            <div>
-                                <p class="text-[10px] uppercase tracking-wider text-muted">Viimane külastus</p>
-                                <p class="text-sm" x-text="selectedOrder.lastVisitAt ? formatDate(selectedOrder.lastVisitAt) : '-'"></p>
-                            </div>
-                            <div>
-                                <p class="text-[10px] uppercase tracking-wider text-muted">Eelistatud aeg</p>
-                                <p class="text-sm" x-text="selectedOrder.preferredTime || '-'"></p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Gift Visit Progress -->
-                    <div x-show="selectedOrder.type === 'gift'" class="px-6 py-5 grid-line-b">
-                        <p class="text-[10px] uppercase tracking-[0.2em] text-muted font-medium mb-4">Koristuste progress</p>
-                        <div class="flex items-center gap-6">
-                            <div>
-                                <p class="text-[10px] uppercase tracking-wider text-muted">Tehtud</p>
-                                <p class="font-serif text-xl font-light" x-text="getGiftCompletedCount()"></p>
-                            </div>
-                            <div class="text-muted text-xl font-light">/</div>
-                            <div>
-                                <p class="text-[10px] uppercase tracking-wider text-muted">Kokku paketis</p>
-                                <p class="font-serif text-xl font-light" x-text="getGiftVisitCount(selectedOrder.package)"></p>
-                            </div>
-                            <div>
-                                <p class="text-[10px] uppercase tracking-wider text-muted">Planeeritud</p>
-                                <p class="font-serif text-xl font-light" x-text="getGiftScheduledCount()"></p>
-                            </div>
-                        </div>
-                        <div x-show="getGiftCompletedCount() < getGiftVisitCount(selectedOrder.package) && getGiftScheduledCount() === 0" class="mt-4 p-3 bg-amber-50 border border-amber-200 text-xs text-amber-700">
-                            Järgmine koristus pole veel broneeritud! Broneeri allpool uus aeg.
-                        </div>
-                    </div>
-
-                    <!-- Linked Bookings -->
+                    <!-- Visits Section -->
                     <div class="px-6 py-5 grid-line-b">
                         <div class="flex items-center justify-between mb-4">
-                            <p class="text-[10px] uppercase tracking-[0.2em] text-muted font-medium">Broneeringud</p>
+                            <p class="text-[10px] uppercase tracking-[0.2em] text-muted font-medium">Külastused</p>
                             <div x-show="orderBookingsLoading" class="w-4 h-4 border border-accent border-t-transparent rounded-full animate-spin"></div>
+                            <template x-if="selectedOrder.type === 'gift' && !orderBookingsLoading">
+                                <p class="text-xs text-muted"><span x-text="getGiftCompletedCount()"></span> tehtud / <span x-text="getGiftVisitCount(selectedOrder.package)"></span> paketis</p>
+                            </template>
+                            <template x-if="selectedOrder.type === 'subscription' && !orderBookingsLoading">
+                                <p class="text-xs text-muted"><span x-text="selectedOrder.totalVisits || 0"></span> külastust</p>
+                            </template>
                         </div>
-                        <div x-show="!orderBookingsLoading && orderBookings.length === 0" class="py-3 text-center">
-                            <p class="text-xs text-muted">Broneeringuid ei ole.</p>
+
+                        <!-- Next visit (from order.booking) -->
+                        <div x-show="selectedOrder.booking?.startTime" class="p-4 bg-cream/30 border border-accent/20 mb-3">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-[10px] uppercase tracking-wider text-accent mb-1">Järgmine</p>
+                                    <p class="text-sm font-medium" x-text="formatFullDate(selectedOrder.booking.startTime)"></p>
+                                    <p class="text-xs text-muted" x-text="'kell ' + formatTime(selectedOrder.booking.startTime)"></p>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button @click="cancelOrderBooking()" class="px-2 py-1 text-[9px] uppercase tracking-wider text-red-400 hover:text-red-600">Tühista</button>
+                                    <button @click="orderBookNewMode = true; initOrderBookDateTime()" class="px-2 py-1 text-[9px] uppercase tracking-wider text-accent hover:text-black">Muuda</button>
+                                </div>
+                            </div>
                         </div>
+
+                        <!-- Warning if no next visit -->
+                        <div x-show="selectedOrder.type === 'gift' && !selectedOrder.booking?.startTime && getGiftCompletedCount() < getGiftVisitCount(selectedOrder.package)" class="p-3 bg-amber-50 border border-amber-200 text-xs text-amber-700 mb-3">
+                            Järgmine aeg on broneerimata.
+                        </div>
+
+                        <!-- Past visits list -->
                         <div class="space-y-2">
                             <template x-for="b in orderBookings" :key="b.id">
-                                <div @click="closeOrderModal(); $nextTick(() => openBookingDetail(b))" class="flex items-center gap-3 p-3 bg-white border border-[#E8E3DD] cursor-pointer hover:border-accent/50 transition-colors">
+                                <div @click="b.isManualEntry ? null : (closeOrderModal(), $nextTick(() => openBookingDetail(b)))" class="flex items-center gap-3 p-3 border border-[#E8E3DD]" :class="b.isManualEntry ? 'bg-paper' : 'bg-white cursor-pointer hover:border-accent/50'">
                                     <div class="shrink-0">
                                         <span class="w-2 h-2 rounded-full inline-block" :class="b.status === 'scheduled' ? 'bg-accent' : b.status === 'completed' ? 'bg-green-500' : 'bg-red-400'"></span>
                                     </div>
                                     <div class="flex-1 min-w-0">
-                                        <p class="text-xs font-medium" x-text="b.scheduledAt ? formatFullDate(b.scheduledAt) : '-'"></p>
-                                        <p class="text-[11px] text-muted" x-text="b.scheduledAt ? formatTime(b.scheduledAt) + (b.endTime ? ' – ' + formatTime(b.endTime) : '') : ''"></p>
+                                        <p class="text-xs" x-text="b.scheduledAt ? formatDate(b.scheduledAt) : '-'"></p>
                                     </div>
                                     <div class="shrink-0">
-                                        <span class="text-[10px] uppercase tracking-wider" :class="b.status === 'scheduled' ? 'text-accent' : b.status === 'completed' ? 'text-green-600' : 'text-red-500'" x-text="b.status === 'scheduled' ? 'Planeeritud' : b.status === 'completed' ? 'Tehtud' : 'Tühistatud'"></span>
+                                        <span class="text-[10px] uppercase tracking-wider" :class="b.status === 'completed' ? 'text-green-600' : b.status === 'scheduled' ? 'text-accent' : 'text-red-500'" x-text="b.status === 'completed' ? 'Tehtud' : b.status === 'scheduled' ? 'Ootel' : 'Tühistatud'"></span>
                                     </div>
-                                    <svg class="w-4 h-4 text-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"/></svg>
                                 </div>
                             </template>
                         </div>
 
-                        <!-- Log Past Visit + Book New Visit -->
+                        <div x-show="!orderBookingsLoading && orderBookings.length === 0 && !selectedOrder.booking?.startTime" class="py-3 text-center">
+                            <p class="text-xs text-muted">Külastusi pole veel.</p>
+                        </div>
+
+                        <!-- Actions -->
                         <div x-show="selectedOrder.status === 'paid' && !orderBookNewMode && !logVisitMode" class="mt-4 flex gap-3">
-                            <button @click="orderBookNewMode = true; initOrderBookDateTime()" class="flex-1 px-4 py-3 border border-accent text-xs uppercase tracking-wider text-accent hover:bg-accent hover:text-white transition-colors">
-                                + Broneeri uus aeg
+                            <button @click="orderBookNewMode = true; initOrderBookDateTime()" class="flex-1 px-3 py-2.5 border border-accent text-[10px] uppercase tracking-wider text-accent hover:bg-accent hover:text-white transition-colors">
+                                + Broneeri aeg
                             </button>
-                            <button @click="logVisitMode = true; logVisitDate = ''" class="px-4 py-3 border border-green-300 text-xs uppercase tracking-wider text-green-600 hover:bg-green-50 transition-colors">
-                                + Lisa tehtud koristus
+                            <button @click="logVisitMode = true; logVisitDate = ''" class="px-3 py-2.5 border border-[#E8E3DD] text-[10px] uppercase tracking-wider text-muted hover:border-green-300 hover:text-green-600 transition-colors">
+                                + Lisa tehtud
                             </button>
                         </div>
 
