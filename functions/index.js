@@ -4051,9 +4051,11 @@ exports.adminBookVisit = functions
         const size = order.size || 'medium';
         const slug = calService.EVENT_TYPE_SLUGS[size] || 'koristus-90';
 
-        const customerName = order.type === 'gift'
-          ? (order.recipient?.name || order.customer?.name || 'Klient')
-          : (order.customer?.name || 'Klient');
+        const isPhysicalCard = order.physicalCard === true;
+        const rawName = order.type === 'gift'
+          ? (order.recipient?.name || order.customer?.name || '')
+          : (order.customer?.name || '');
+        const customerName = (rawName && !rawName.includes('Physical Card')) ? rawName : '';
         const customerEmail = order.type === 'gift'
           ? (order.recipient?.email || order.customer?.email || '')
           : (order.customer?.email || '');
