@@ -4071,6 +4071,38 @@ exports.adminBookVisit = functions
           additionalInfo: order.customer?.additionalInfo || order.recipient?.additionalInfo || '',
         });
 
+        // Send booking confirmation email to client
+        if (customerEmail) {
+          try {
+            const lang = order.lang || 'et';
+            const t = tx(lang);
+            const calSlugDurations = { 'koristus-50': 120, 'koristus-90': 180, 'koristus-120': 240, 'koristus-150': 300 };
+            const durationMin = calSlugDurations[slug] || 180;
+            const endTime = new Date(new Date(startTime).getTime() + durationMin * 60 * 1000);
+
+            let portalUrl = null;
+            if (order.sessionTokenHash) {
+              portalUrl = `https://sukoda.ee/minu`;
+            }
+
+            await sendEmail({
+              to: customerEmail,
+              subject: t.subjectBookingConfirmed,
+              html: generateBookingConfirmationEmail({
+                customerName,
+                scheduledAt: startTime,
+                endTime: endTime.toISOString(),
+                address: customerAddress,
+                lang,
+                portalUrl,
+              }),
+            });
+            console.log('Booking confirmation email sent to:', customerEmail);
+          } catch (emailErr) {
+            console.error('Booking confirmation email failed (non-fatal):', emailErr);
+          }
+        }
+
         res.status(200).json({ success: true, bookingUid: booking.uid || booking.id });
       } catch (error) {
         console.error('Error admin booking visit:', error);
