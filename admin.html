@@ -962,11 +962,30 @@
                             </template>
                         </div>
 
-                        <!-- Book New Visit -->
-                        <div x-show="selectedOrder.status === 'paid' && !orderBookNewMode" class="mt-4">
-                            <button @click="orderBookNewMode = true; initOrderBookDateTime()" class="w-full px-4 py-3 border border-accent text-xs uppercase tracking-wider text-accent hover:bg-accent hover:text-white transition-colors">
+                        <!-- Log Past Visit + Book New Visit -->
+                        <div x-show="selectedOrder.status === 'paid' && !orderBookNewMode && !logVisitMode" class="mt-4 flex gap-3">
+                            <button @click="orderBookNewMode = true; initOrderBookDateTime()" class="flex-1 px-4 py-3 border border-accent text-xs uppercase tracking-wider text-accent hover:bg-accent hover:text-white transition-colors">
                                 + Broneeri uus aeg
                             </button>
+                            <button @click="logVisitMode = true; logVisitDate = ''" class="px-4 py-3 border border-green-300 text-xs uppercase tracking-wider text-green-600 hover:bg-green-50 transition-colors">
+                                + Lisa tehtud koristus
+                            </button>
+                        </div>
+
+                        <!-- Log Past Visit Form -->
+                        <div x-show="logVisitMode" class="mt-4 p-4 bg-green-50/50 border border-green-200">
+                            <p class="text-[10px] uppercase tracking-[0.2em] text-green-600 font-medium mb-4">Lisa tehtud koristus</p>
+                            <div class="flex items-end gap-3">
+                                <div>
+                                    <label class="block text-[10px] uppercase tracking-wider text-muted mb-1">Kuupäev</label>
+                                    <input type="date" x-model="logVisitDate" class="border border-[#E8E3DD] bg-white px-3 py-2 text-xs outline-none focus:border-green-400">
+                                </div>
+                                <button @click="confirmLogVisit()" :disabled="!logVisitDate || logVisitLoading" class="px-4 py-2 bg-green-600 text-white text-xs hover:bg-green-700 disabled:opacity-50">
+                                    <span x-show="!logVisitLoading">Lisa</span>
+                                    <span x-show="logVisitLoading">Lisan...</span>
+                                </button>
+                                <button @click="logVisitMode = false" class="text-xs text-muted hover:text-black">Tühista</button>
+                            </div>
                         </div>
 
                         <!-- Book New Visit: Date & Time Picker -->
@@ -1119,6 +1138,11 @@
             orderBookDate: '',
             orderBookTime: '09:00',
 
+            // Log past visit
+            logVisitMode: false,
+            logVisitDate: '',
+            logVisitLoading: false,
+
             // Reschedule
             rescheduleMode: false,
             availableSlots: {},
@@ -1242,6 +1266,7 @@
                 this.orderBookings = [];
                 this.orderBookingsLoading = true;
                 this.orderBookNewMode = false;
+                this.logVisitMode = false;
 
                 // Load linked bookings
                 try {
@@ -1471,6 +1496,35 @@
                     console.error(e);
                     alert('Ühenduse viga');
                 }
+            },
+
+            async confirmLogVisit() {
+                if (!this.logVisitDate || !this.selectedOrder) return;
+                if (!confirm(`Märgi koristus tehtuks: ${this.logVisitDate}?`)) return;
+
+                const orderId = this.selectedOrder.id;
+                this.logVisitLoading = true;
+                try {
+                    const res = await this.adminFetch('/api/admin/log-visit', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ orderId, date: this.logVisitDate }),
+                    });
+                    if (res.ok) {
+                        this.logVisitMode = false;
+                        this.closeOrderModal();
+                        await this.loadData();
+                        const updated = this.allOrders.find(o => o.id === orderId);
+                        if (updated) await this.openOrderDetail(updated);
+                    } else {
+                        const err = await res.json();
+                        alert('Viga: ' + (err.error || 'Tundmatu viga'));
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert('Ühenduse viga');
+                }
+                this.logVisitLoading = false;
             },
 
             initOrderBookDateTime() {

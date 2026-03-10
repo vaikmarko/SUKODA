@@ -4205,6 +4205,71 @@ exports.adminCancelBooking = functions
   });
 
 /**
+ * Admin: Log a completed visit (creates booking record in Firestore)
+ * For cases where Cal.com webhook didn't create the record
+ * Body: { orderId, date, notes }
+ */
+exports.adminLogVisit = functions
+  .runWith({ secrets: SECRETS }).region('europe-west1')
+  .https.onRequest((req, res) => {
+    cors(req, res, async () => {
+      if (!checkRateLimit(req, res, 'admin', 60, 60000)) return;
+      if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' });
+      }
+      if (!authenticateAdmin(req)) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      try {
+        const { orderId, date, notes } = req.body;
+        if (!orderId || !date) {
+          return res.status(400).json({ error: 'Missing orderId or date' });
+        }
+
+        const orderDoc = await db.collection('orders').doc(orderId).get();
+        if (!orderDoc.exists) {
+          return res.status(404).json({ error: 'Order not found' });
+        }
+
+        const order = orderDoc.data();
+        const customerName = order.type === 'gift'
+          ? (order.recipient?.name || order.customer?.name || 'Klient')
+          : (order.customer?.name || 'Klient');
+        const customerEmail = order.type === 'gift'
+          ? (order.recipient?.email || order.customer?.email || '')
+          : (order.customer?.email || '');
+        const customerAddress = order.type === 'gift'
+          ? (order.recipient?.address || order.customer?.address || '')
+          : (order.customer?.address || '');
+
+        const scheduledAt = new Date(date + 'T09:00:00Z');
+
+        const bookingRef = await db.collection('bookings').add({
+          orderId,
+          customerName,
+          customerEmail,
+          customerPhone: order.recipient?.phone || order.customer?.phone || '',
+          address: customerAddress,
+          scheduledAt: admin.firestore.Timestamp.fromDate(scheduledAt),
+          size: order.size || 'medium',
+          status: 'completed',
+          completedAt: admin.firestore.FieldValue.serverTimestamp(),
+          notes: notes || '',
+          isManualEntry: true,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        res.status(200).json({ success: true, bookingId: bookingRef.id });
+      } catch (error) {
+        console.error('Error logging visit:', error);
+        res.status(500).json({ error: error.message });
+      }
+    });
+  });
+
+/**
  * Admin: Cancel an order (also cancels linked bookings in Cal.com + Stripe subscription)
  * Body: { orderId, password, reason }
  */
