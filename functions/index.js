@@ -4112,6 +4112,72 @@ exports.adminBookVisit = functions
   });
 
 /**
+ * Admin: Cancel a single booking on an order (not the whole order)
+ * Cancels Cal.com booking and clears order.booking field
+ * Body: { orderId }
+ */
+exports.adminCancelBooking = functions
+  .runWith({ secrets: SECRETS }).region('europe-west1')
+  .https.onRequest((req, res) => {
+    cors(req, res, async () => {
+      if (!checkRateLimit(req, res, 'admin', 60, 60000)) return;
+      if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' });
+      }
+      if (!authenticateAdmin(req)) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      try {
+        const { orderId } = req.body;
+        if (!orderId) {
+          return res.status(400).json({ error: 'Missing orderId' });
+        }
+
+        const orderDoc = await db.collection('orders').doc(orderId).get();
+        if (!orderDoc.exists) {
+          return res.status(404).json({ error: 'Order not found' });
+        }
+
+        const order = orderDoc.data();
+        const bookingUid = order.booking?.uid;
+
+        if (bookingUid) {
+          try {
+            await calService.cancelBooking(bookingUid, 'Cancelled by admin');
+            console.log('Cal.com booking cancelled:', bookingUid);
+          } catch (calErr) {
+            console.error('Cal.com cancel failed (continuing):', calErr);
+          }
+        }
+
+        await orderDoc.ref.update({
+          booking: admin.firestore.FieldValue.delete(),
+        });
+
+        // Also cancel matching Firestore booking record if exists
+        const bookingsSnapshot = await db.collection('bookings')
+          .where('orderId', '==', orderId)
+          .where('status', '==', 'scheduled')
+          .get();
+
+        for (const doc of bookingsSnapshot.docs) {
+          await doc.ref.update({
+            status: 'cancelled',
+            cancelReason: 'Tühistatud admini poolt',
+            cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+        }
+
+        res.status(200).json({ success: true });
+      } catch (error) {
+        console.error('Error cancelling booking:', error);
+        res.status(500).json({ error: error.message });
+      }
+    });
+  });
+
+/**
  * Admin: Cancel an order (also cancels linked bookings in Cal.com + Stripe subscription)
  * Body: { orderId, password, reason }
  */

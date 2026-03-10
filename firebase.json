@@ -118,6 +118,13 @@
         }
       },
       {
+        "source": "/api/admin/cancel-booking",
+        "function": {
+          "functionId": "adminCancelBooking",
+          "region": "europe-west1"
+        }
+      },
+      {
         "source": "/api/admin/cancel-order",
         "function": {
           "functionId": "cancelOrder",

@@ -878,10 +878,14 @@
                             <div class="w-10 h-10 bg-green-50 flex items-center justify-center shrink-0">
                                 <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                             </div>
-                            <div>
+                            <div class="flex-1">
                                 <p class="font-medium" x-text="selectedOrder.booking?.startTime ? formatFullDate(selectedOrder.booking.startTime) : ''"></p>
                                 <p class="text-muted text-xs mt-1" x-text="selectedOrder.booking?.startTime ? formatTime(selectedOrder.booking.startTime) : ''"></p>
                             </div>
+                        </div>
+                        <div class="flex gap-3 mt-4">
+                            <button @click="cancelOrderBooking()" class="px-3 py-1.5 border border-red-200 text-[10px] uppercase tracking-wider text-red-500 hover:bg-red-50">Tühista see aeg</button>
+                            <button @click="orderBookNewMode = true; initOrderBookDateTime()" class="px-3 py-1.5 border border-accent text-[10px] uppercase tracking-wider text-accent hover:bg-cream/50">Muuda aega</button>
                         </div>
                     </div>
 
@@ -1441,6 +1445,32 @@
                     return 1;
                 }
                 return fromBookings;
+            },
+
+            async cancelOrderBooking() {
+                if (!this.selectedOrder?.booking?.uid) return;
+                if (!confirm('Tühista see broneering?\n\nCal.com broneering tühistatakse ja kliendile saadetakse teavitus.')) return;
+
+                try {
+                    const res = await this.adminFetch('/api/admin/cancel-booking', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ orderId: this.selectedOrder.id }),
+                    });
+                    if (res.ok) {
+                        const orderId = this.selectedOrder.id;
+                        this.closeOrderModal();
+                        await this.loadData();
+                        const updated = this.allOrders.find(o => o.id === orderId);
+                        if (updated) await this.openOrderDetail(updated);
+                    } else {
+                        const err = await res.json();
+                        alert('Viga: ' + (err.error || 'Tundmatu viga'));
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert('Ühenduse viga');
+                }
             },
 
             initOrderBookDateTime() {
