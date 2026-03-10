@@ -1483,7 +1483,12 @@
             async confirmOrderBookDirect() {
                 if (!this.orderBookDate || !this.orderBookTime || !this.selectedOrder) return;
 
-                const startTime = this.orderBookDate + 'T' + this.orderBookTime + ':00+02:00';
+                const localDate = new Date(this.orderBookDate + 'T' + this.orderBookTime + ':00');
+                const offset = -localDate.getTimezoneOffset();
+                const sign = offset >= 0 ? '+' : '-';
+                const hh = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0');
+                const mm = String(Math.abs(offset) % 60).padStart(2, '0');
+                const startTime = this.orderBookDate + 'T' + this.orderBookTime + ':00' + sign + hh + ':' + mm;
                 const confirmMsg = `Broneeri koristus:\n\n${this.formatFullDate(startTime)}, ${this.orderBookTime}\n\nKliendile saadetakse teavitus.`;
 
                 if (!confirm(confirmMsg)) return;
