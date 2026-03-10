@@ -3602,7 +3602,7 @@ exports.getAdminOrders = functions
           query = query.where('status', '==', req.query.status);
         }
 
-        const limit = Math.min(parseInt(req.query.limit) || 50, 100);
+        const limit = Math.min(parseInt(req.query.limit) || 200, 500);
         query = query.limit(limit);
 
         const ordersSnapshot = await query.get();
@@ -4155,18 +4155,20 @@ exports.adminCancelBooking = functions
           booking: admin.firestore.FieldValue.delete(),
         });
 
-        // Also cancel matching Firestore booking record if exists
-        const bookingsSnapshot = await db.collection('bookings')
-          .where('orderId', '==', orderId)
-          .where('status', '==', 'scheduled')
-          .get();
+        // Cancel only the matching Firestore booking record (by calBookingUid)
+        if (bookingUid) {
+          const bookingsSnapshot = await db.collection('bookings')
+            .where('calBookingUid', '==', bookingUid)
+            .limit(1)
+            .get();
 
-        for (const doc of bookingsSnapshot.docs) {
-          await doc.ref.update({
-            status: 'cancelled',
-            cancelReason: 'Tühistatud admini poolt',
-            cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
-          });
+          for (const doc of bookingsSnapshot.docs) {
+            await doc.ref.update({
+              status: 'cancelled',
+              cancelReason: 'Tühistatud admini poolt',
+              cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+          }
         }
 
         res.status(200).json({ success: true });

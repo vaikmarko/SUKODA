@@ -2,6 +2,7 @@
 <html lang="et" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
+    <style>[x-cloak] { display: none !important; }</style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SUKODA | Lunasta kingitus</title>
     
@@ -668,7 +669,7 @@
 
                             <!-- Weekday headers -->
                             <div class="grid grid-cols-7 gap-1 mb-2">
-                                <template x-for="day in (lang === 'et' ? ['E', 'T', 'K', 'N', 'R', 'L', 'P'] : ['M', 'T', 'W', 'T', 'F', 'S', 'S'])" :key="day">
+                                <template x-for="(day, i) in (lang === 'et' ? ['E', 'T', 'K', 'N', 'R', 'L', 'P'] : ['M', 'T', 'W', 'T', 'F', 'S', 'S'])" :key="i">
                                     <div class="text-center text-[10px] uppercase tracking-[0.2em] text-muted font-sans py-2" x-text="day"></div>
                                 </template>
                             </div>
