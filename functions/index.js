@@ -108,7 +108,7 @@ const EMAIL_TEXTS = {
     bookingConfirmedTimeLabel: 'Sinu külastus',
     bookingConfirmedNote: 'Saadame meeldetuletuse päev enne külastust. Palun jäta meile ligipääs kodule.',
     bookingConfirmedChangeNote: 'Kui vajad aega muuta, kirjuta meile aadressil tere@sukoda.ee.',
-    bookingConfirmedPortalNote: 'Saad oma broneeringut hallata ja aega muuta isiklikust portaalist:',
+    bookingConfirmedPortalNote: 'Sinu isiklikus portaalis saad hallata broneeringuid, muuta aega ja täita koduprofiili — sissepääsu info, lemmikloomad, allergeenid, lillede eelistus ja erisoovid. Nii saame pakkuda just sulle sobivat teenust.',
     bookingConfirmedPortalBtn: 'MINU SUKODA',
 
     // Calendar buttons
@@ -311,7 +311,7 @@ const EMAIL_TEXTS = {
     bookingConfirmedTimeLabel: 'Your visit',
     bookingConfirmedNote: 'We\'ll send a reminder the day before your visit. Please ensure we have access to your home.',
     bookingConfirmedChangeNote: 'If you need to change the time, contact us at tere@sukoda.ee.',
-    bookingConfirmedPortalNote: 'You can manage your booking and change the time from your personal portal:',
+    bookingConfirmedPortalNote: 'In your personal portal you can manage bookings, reschedule visits and fill in your home profile — access info, pets, allergies, flower preferences and special requests. This helps us provide the best service for you.',
     bookingConfirmedPortalBtn: 'MY SUKODA',
 
     // Calendar buttons
@@ -4104,8 +4104,22 @@ exports.adminBookVisit = functions
             const endTime = new Date(new Date(startTime).getTime() + durationMin * 60 * 1000);
 
             let portalUrl = null;
-            if (order.sessionTokenHash) {
-              portalUrl = `https://sukoda.ee/minu`;
+            try {
+              const crypto = require('crypto');
+              const rawToken = crypto.randomBytes(32).toString('hex');
+              const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+              const tokenExpiry = new Date();
+              tokenExpiry.setDate(tokenExpiry.getDate() + 30);
+              await orderDoc.ref.update({
+                sessionTokenHash: tokenHash,
+                sessionTokenExpiresAt: admin.firestore.Timestamp.fromDate(tokenExpiry),
+              });
+              portalUrl = `https://sukoda.ee/minu?token=${rawToken}`;
+            } catch (tokenErr) {
+              console.error('Portal token creation failed (non-fatal):', tokenErr);
+              if (order.sessionTokenHash) {
+                portalUrl = `https://sukoda.ee/minu`;
+              }
             }
 
             await sendEmail({
