@@ -499,6 +499,7 @@
                                                 <span class="px-2 py-0.5 text-[10px] uppercase tracking-wider"
                                                     :class="getGiftFlowStatus(order)?.color || 'bg-gray-50 text-gray-500'"
                                                     x-text="getGiftFlowStatus(order)?.label || getStatusName(order.status)"></span>
+                                                <span x-show="order.salesCard" class="ml-1 px-2 py-0.5 text-[10px] uppercase tracking-wider bg-accent/10 text-accent">Müük</span>
                                             </td>
                                             <td class="py-3 px-4 text-muted" x-text="order.createdAt ? new Date(order.createdAt).toLocaleDateString('et-EE', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'"></td>
                                         </tr>
@@ -837,6 +838,22 @@
                         </p>
                     </div>
 
+                    <!-- Sales Card Toggle (physical cards only) -->
+                    <div x-show="selectedOrder.physicalCard" class="px-6 py-4 grid-line-b">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] uppercase tracking-[0.2em] text-muted font-medium mb-1">Müügikaart</p>
+                                <p class="text-xs text-muted font-light" x-text="selectedOrder.salesCard ? 'Koodi sisestamine avab müügivaate' : 'Koodi sisestamine avab tavapärase broneerimise'"></p>
+                            </div>
+                            <button @click="toggleSalesCard()" :disabled="salesCardToggling"
+                                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none"
+                                :class="selectedOrder.salesCard ? 'bg-accent' : 'bg-[#E8E3DD]'">
+                                <span class="inline-block h-4 w-4 rounded-full bg-white transition-transform duration-200 shadow-sm"
+                                      :class="selectedOrder.salesCard ? 'translate-x-6' : 'translate-x-1'"></span>
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Gift Recipient -->
                     <div x-show="selectedOrder.type === 'gift' && selectedOrder.recipient" class="px-6 py-5 grid-line-b">
                         <p class="text-[10px] uppercase tracking-[0.2em] text-pink-500 font-medium mb-4">Kingisaaja</p>
@@ -1065,6 +1082,7 @@
             selectedOrder: null,
             orderBookings: [],
             orderBookingsLoading: false,
+            salesCardToggling: false,
 
             // Follow-ups
             followupStats: { pending: 0, sent: 0, converted: 0, total: 0 },
@@ -1156,13 +1174,9 @@
             async loadData() {
                 this.loading = true;
                 try {
-                    const today = new Date();
-                    const todayStr = today.toISOString().split('T')[0];
-                    const tomorrowStr = new Date(today.getTime() + 86400000).toISOString().split('T')[0];
-                    
-                    const weekEnd = new Date(today);
-                    weekEnd.setDate(weekEnd.getDate() + 7);
-                    const weekEndStr = weekEnd.toISOString().split('T')[0];
+                    const todayStr = window.SUKODA_TIME.getDateString();
+                    const tomorrowStr = window.SUKODA_TIME.shiftDateString(todayStr, 1);
+                    const weekEndStr = window.SUKODA_TIME.shiftDateString(todayStr, 7);
 
                     const [todayRes, weekRes, ordersRes, followupRes] = await Promise.all([
                         this.adminFetch(`/api/admin/bookings?start=${todayStr}&end=${tomorrowStr}`),
@@ -1251,6 +1265,36 @@
                 this.orderBookings = [];
             },
 
+            async toggleSalesCard() {
+                if (!this.selectedOrder || this.salesCardToggling) return;
+                this.salesCardToggling = true;
+                try {
+                    const newValue = !this.selectedOrder.salesCard;
+                    const res = await this.adminFetch('/api/admin/update-order-flag', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            orderId: this.selectedOrder.id,
+                            flag: 'salesCard',
+                            value: newValue,
+                        }),
+                    });
+                    if (res.ok) {
+                        this.selectedOrder.salesCard = newValue;
+                        const idx = this.allOrders.findIndex(o => o.id === this.selectedOrder.id);
+                        if (idx !== -1) this.allOrders[idx].salesCard = newValue;
+                    } else {
+                        const err = await res.json();
+                        alert('Viga: ' + (err.error || 'Tundmatu viga'));
+                    }
+                } catch (e) {
+                    console.error('Toggle sales card failed:', e);
+                    alert('Viga ühenduses');
+                } finally {
+                    this.salesCardToggling = false;
+                }
+            },
+
             async cancelOrderWithReason(orderId) {
                 const order = this.selectedOrder;
                 let promptMsg = '';
@@ -1336,12 +1380,9 @@
                 this.rescheduleMode = !this.rescheduleMode;
                 if (this.rescheduleMode) {
                     // Default: next 2 weeks
-                    const start = new Date();
-                    start.setDate(start.getDate() + 1);
-                    const end = new Date();
-                    end.setDate(end.getDate() + 15);
-                    this.slotStartDate = start.toISOString().split('T')[0];
-                    this.slotEndDate = end.toISOString().split('T')[0];
+                    const todayStr = window.SUKODA_TIME.getDateString();
+                    this.slotStartDate = window.SUKODA_TIME.shiftDateString(todayStr, 1);
+                    this.slotEndDate = window.SUKODA_TIME.shiftDateString(todayStr, 15);
                     this.availableSlots = {};
                     this.selectedSlot = null;
                     this.slotsSearched = false;
@@ -1492,9 +1533,8 @@
             },
 
             initOrderBookDateTime() {
-                const tomorrow = new Date();
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                this.orderBookDate = tomorrow.toISOString().split('T')[0];
+                const todayStr = window.SUKODA_TIME.getDateString();
+                this.orderBookDate = window.SUKODA_TIME.shiftDateString(todayStr, 1);
                 this.orderBookTime = '09:00';
             },
 
@@ -1691,21 +1731,17 @@
 
             formatTime(isoStr) {
                 if (!isoStr) return '';
-                const d = new Date(isoStr);
-                return d.toLocaleTimeString('et-EE', { hour: '2-digit', minute: '2-digit' });
+                return window.SUKODA_TIME.formatTime(isoStr, 'et-EE', { hour: '2-digit', minute: '2-digit' });
             },
 
             formatDate(isoStr) {
                 if (!isoStr) return '';
-                const d = new Date(isoStr);
-                return d.toLocaleDateString('et-EE', { day: 'numeric', month: 'short' });
+                return window.SUKODA_TIME.formatDate(isoStr, 'et-EE', { day: 'numeric', month: 'short' });
             },
 
             formatFullDate(isoStr) {
                 if (!isoStr) return '';
-                const d = new Date(isoStr);
-                const days = ['Pühapäev', 'Esmaspäev', 'Teisipäev', 'Kolmapäev', 'Neljapäev', 'Reede', 'Laupäev'];
-                return `${days[d.getDay()]}, ${d.toLocaleDateString('et-EE', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+                return window.SUKODA_TIME.formatDate(isoStr, 'et-EE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
             },
 
             getPackageName(pkg) { return this.packages[pkg] || pkg || ''; },

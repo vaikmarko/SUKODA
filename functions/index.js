@@ -12,7 +12,7 @@ const {
   authenticateAdmin, checkRateLimit,
 } = require('./lib/config');
 const calService = require('./cal-service');
-const { checkoutSchema, waitlistSchema, bookGiftSchema, bookSubscriptionSchema, giftUpgradeSchema, estateInquirySchema, validate } = require('./lib/schemas');
+const { checkoutSchema, waitlistSchema, bookGiftSchema, bookSubscriptionSchema, giftUpgradeSchema, estateInquirySchema, salesInquirySchema, validate } = require('./lib/schemas');
 
 function escapeHtml(str) {
   return String(str || '')
@@ -441,6 +441,80 @@ function tx(lang) {
   return EMAIL_TEXTS[lang] || EMAIL_TEXTS['et'];
 }
 
+const TALLINN_TIME_ZONE = 'Europe/Tallinn';
+
+function parseOffsetMinutes(offsetLabel) {
+  const match = /^GMT([+-])(\d{1,2})(?::?(\d{2}))?$/.exec(offsetLabel || '');
+  if (!match) return null;
+  const sign = match[1] === '-' ? -1 : 1;
+  const hours = Number(match[2]);
+  const minutes = Number(match[3] || '0');
+  return sign * ((hours * 60) + minutes);
+}
+
+function getTimeZoneOffsetMinutes(date, timeZone = TALLINN_TIME_ZONE) {
+  const d = date instanceof Date ? date : new Date(date);
+  const offsetFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    timeZoneName: 'shortOffset',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+  const offsetLabel = offsetFormatter.formatToParts(d).find((part) => part.type === 'timeZoneName')?.value;
+  const parsedOffset = parseOffsetMinutes(offsetLabel);
+  if (parsedOffset !== null) return parsedOffset;
+
+  const parts = tallinnParts(d);
+  const asUtcMs = Date.UTC(parts.year, parts.month, parts.day, parts.hour, parts.minute, 0);
+  return Math.round((asUtcMs - d.getTime()) / 60000);
+}
+
+function tallinnLocalDateTimeToISOString(dateStr, timeStr) {
+  const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr || '');
+  const timeMatch = /^(\d{2}):(\d{2})$/.exec(timeStr || '');
+  if (!dateMatch || !timeMatch) {
+    throw new Error('Invalid Tallinn date/time');
+  }
+
+  const year = Number(dateMatch[1]);
+  const month = Number(dateMatch[2]);
+  const day = Number(dateMatch[3]);
+  const hour = Number(timeMatch[1]);
+  const minute = Number(timeMatch[2]);
+  const wallClockUtcMs = Date.UTC(year, month - 1, day, hour, minute, 0);
+
+  let resolvedMs = wallClockUtcMs;
+  for (let i = 0; i < 4; i += 1) {
+    const offsetMinutes = getTimeZoneOffsetMinutes(new Date(resolvedMs), TALLINN_TIME_ZONE);
+    const nextMs = wallClockUtcMs - (offsetMinutes * 60 * 1000);
+    if (nextMs === resolvedMs) break;
+    resolvedMs = nextMs;
+  }
+
+  const candidates = Array.from(new Set([
+    resolvedMs,
+    resolvedMs - (60 * 60 * 1000),
+    resolvedMs + (60 * 60 * 1000),
+  ])).filter((candidateMs) => {
+    const p = tallinnParts(new Date(candidateMs));
+    return (
+      p.year === year &&
+      p.month === month - 1 &&
+      p.day === day &&
+      p.hour === hour &&
+      p.minute === minute
+    );
+  }).sort((a, b) => a - b);
+
+  if (candidates.length === 0) {
+    throw new Error('Invalid Tallinn local time');
+  }
+
+  return new Date(candidates[0]).toISOString();
+}
+
 /** Parse a date into its Europe/Tallinn components */
 function tallinnParts(date) {
   const d = date instanceof Date ? date : date.toDate ? date.toDate() : new Date(date);
@@ -795,8 +869,8 @@ exports.createCheckoutSession = functions
           payment_method_types: ['card'],
           line_items: [{ price: priceId, quantity: 1 }],
           mode: packageType === 'test' ? 'subscription' : (type === 'gift' ? 'payment' : 'subscription'),
-          success_url: `${req.headers.origin || 'https://sukoda.ee'}/success.html?session_id={CHECKOUT_SESSION_ID}&order_id=${orderRef.id}&size=${sizeCode}`,
-          cancel_url: `${req.headers.origin || 'https://sukoda.ee'}/${type === 'gift' ? 'kingitus' : 'index'}.html?cancelled=true`,
+          success_url: `${req.headers.origin || 'https://sukoda.ee'}/success?session_id={CHECKOUT_SESSION_ID}&order_id=${orderRef.id}&size=${sizeCode}`,
+          cancel_url: `${req.headers.origin || 'https://sukoda.ee'}/${type === 'gift' ? 'kingitus' : 'index'}?cancelled=true`,
           customer_email: customer.email,
           // Enable automatic tax calculation (if needed later)
           // automatic_tax: { enabled: true },
@@ -929,8 +1003,16 @@ exports.createCheckoutSession = functions
 exports.stripeWebhook = functions
   .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest(async (req, res) => {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+
     const sig = req.headers['stripe-signature'];
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    const webhookSecret = (process.env.STRIPE_WEBHOOK_SECRET || '').trim();
+    if (!webhookSecret) {
+      console.error('Missing STRIPE_WEBHOOK_SECRET in function environment');
+      return res.status(500).json({ error: 'Webhook not configured' });
+    }
 
     let event;
 
@@ -941,25 +1023,77 @@ exports.stripeWebhook = functions
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    switch (event.type) {
-      case 'checkout.session.completed':
-        await handleCheckoutComplete(event.data.object);
-        break;
-      case 'invoice.paid':
-        await handleInvoicePaid(event.data.object);
-        break;
-      case 'customer.subscription.updated':
-        await handleSubscriptionUpdate(event.data.object);
-        break;
-      case 'customer.subscription.deleted':
-        await handleSubscriptionCancelled(event.data.object);
-        break;
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
+    const eventRef = db.collection('stripeWebhookEvents').doc(event.id);
+    try {
+      await eventRef.create({
+        type: event.type,
+        dataObject: event.data.object,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        stripeCreated: event.created || null,
+        livemode: !!event.livemode,
+        status: 'pending',
+      });
+    } catch (error) {
+      if (isFirestoreAlreadyExistsError(error)) {
+        console.log('Duplicate webhook event received, already queued:', event.id);
+        return res.status(200).json({ received: true, duplicate: true });
+      }
+      console.error('Failed to queue Stripe webhook event:', event.id, error);
+      return res.status(500).json({ error: 'Failed to queue webhook event' });
     }
 
-    res.status(200).json({ received: true });
+    return res.status(200).json({ received: true });
   });
+
+exports.processStripeWebhookEvent = functions
+  .runWith({ secrets: SECRETS, failurePolicy: true }).region('europe-west1')
+  .firestore.document('stripeWebhookEvents/{eventId}')
+  .onCreate(async (snap, context) => {
+    const eventId = context.params.eventId;
+    const data = snap.data() || {};
+    const eventType = data.type;
+    const payload = data.dataObject;
+
+    try {
+      switch (eventType) {
+        case 'checkout.session.completed':
+          await handleCheckoutComplete(payload);
+          break;
+        case 'invoice.paid':
+          await handleInvoicePaid(payload);
+          break;
+        case 'customer.subscription.updated':
+          await handleSubscriptionUpdate(payload);
+          break;
+        case 'customer.subscription.deleted':
+          await handleSubscriptionCancelled(payload);
+          break;
+        default:
+          console.log(`Unhandled event type: ${eventType}`);
+      }
+
+      await snap.ref.update({
+        status: 'processed',
+        processedAt: admin.firestore.FieldValue.serverTimestamp(),
+        lastError: admin.firestore.FieldValue.delete(),
+      });
+    } catch (error) {
+      console.error('Failed processing Stripe webhook event:', eventId, error);
+      await snap.ref.update({
+        status: 'failed',
+        lastError: String(error && error.message ? error.message : error),
+        failedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      throw error;
+    }
+
+    return null;
+  });
+
+function isFirestoreAlreadyExistsError(error) {
+  const msg = String((error && error.message) || '').toLowerCase();
+  return error && (error.code === 6 || error.code === 'already-exists' || msg.includes('already exists'));
+}
 
 /**
  * Handle successful checkout
@@ -1665,7 +1799,7 @@ function generateGiftCardEmail(order, pkg, lang) {
         <!-- Book Now Button -->
         <div style="background: #FFFFFF; margin: 0 28px; padding: 32px; text-align: center; border-top: 1px solid #E8E3DD;">
           <p style="color: #8A8578; font-size: 14px; margin: 0 0 20px 0;">${t.giftChooseTime}</p>
-          <a href="https://sukoda.ee/lunasta.html?code=${encodeURIComponent(order.giftCode || '')}" 
+          <a href="https://sukoda.ee/lunasta?code=${encodeURIComponent(order.giftCode || '')}" 
              style="display: inline-block; background: #B8976A; color: #FFFFFF; padding: 16px 44px; text-decoration: none; font-size: 12px; letter-spacing: 3px; font-weight: 500;">
             ${t.giftBookBtn}
           </a>
@@ -2677,7 +2811,7 @@ function generateRescheduleEmail(booking, oldScheduledAt, newScheduledAt, lang) 
  * Adds coupon code as URL parameter so landing page can auto-apply it
  */
 function getFollowupOrderUrl(lang, promoCode) {
-  const base = 'https://sukoda.ee/index.html';
+  const base = 'https://sukoda.ee';
   return `${base}?promo=${encodeURIComponent(promoCode)}&utm_source=followup&utm_medium=email&utm_campaign=gift_conversion`;
 }
 
@@ -2728,7 +2862,7 @@ function generateFollowup24hEmail(followup, lang) {
               ${t.giftMulti24hProfileNote}
             </p>
             <div style="margin-top: 16px;">
-              <a href="https://sukoda.ee/minu.html" style="display: inline-block; background: #111111; color: #FFFFFF; padding: 12px 28px; text-decoration: none; font-size: 11px; letter-spacing: 3px; font-weight: 500;">
+              <a href="https://sukoda.ee/minu" style="display: inline-block; background: #111111; color: #FFFFFF; padding: 12px 28px; text-decoration: none; font-size: 11px; letter-spacing: 3px; font-weight: 500;">
                 ${t.giftMulti24hProfileBtn}
               </a>
             </div>
@@ -2843,7 +2977,7 @@ function generateFollowup7dEmail(followup, lang) {
             <p style="color: #8A8578; font-size: 14px; line-height: 1.7; margin: 0 0 16px 0;">
               ${t.giftMulti7dProfileNote}
             </p>
-            <a href="https://sukoda.ee/minu.html" style="display: inline-block; background: #111111; color: #FFFFFF; padding: 12px 28px; text-decoration: none; font-size: 11px; letter-spacing: 3px; font-weight: 500;">
+            <a href="https://sukoda.ee/minu" style="display: inline-block; background: #111111; color: #FFFFFF; padding: 12px 28px; text-decoration: none; font-size: 11px; letter-spacing: 3px; font-weight: 500;">
               ${t.giftMulti24hProfileBtn}
             </a>
           </div>
@@ -3076,7 +3210,7 @@ function generateSubscriberFirstVisitEmail(followup, lang) {
               </p>
             </div>
             <br>
-            <a href="https://sukoda.ee/index.html?ref=${encodeURIComponent(followup.referralCode)}" style="display: inline-block; background: #B8976A; color: #FFFFFF; padding: 14px 40px; text-decoration: none; font-size: 11px; letter-spacing: 3px; font-weight: 500;">
+            <a href="https://sukoda.ee/?ref=${encodeURIComponent(followup.referralCode)}" style="display: inline-block; background: #B8976A; color: #FFFFFF; padding: 14px 40px; text-decoration: none; font-size: 11px; letter-spacing: 3px; font-weight: 500;">
               ${t.referralShareLink}
             </a>
             <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #333333;">
@@ -3112,6 +3246,9 @@ function generateSubscriberFirstVisitEmail(followup, lang) {
  * @param {string} [params.giftPackage] - Gift package type (moment/month/quarter)
  */
 async function createFollowupSequence({ orderId, recipientEmail, recipientName, bookingStartTime, lang, size, giftPackage }) {
+  if (!giftPackage) {
+    console.warn(`createFollowupSequence: giftPackage is ${giftPackage} for order ${orderId} — follow-ups will use single-visit template`);
+  }
   const visitDate = new Date(bookingStartTime);
 
   // Schedule: 24h, 7 days, 30 days after the VISIT (not after booking)
@@ -4013,23 +4150,9 @@ exports.adminBookVisit = functions
           return res.status(400).json({ error: 'Missing orderId or date/time' });
         }
 
-        // Build startTime in Europe/Tallinn timezone
-        // date="2026-03-31", time="11:00" → determine correct UTC offset for that date in Tallinn
         let startTime;
         if (date && time) {
-          const tallinnDate = new Date(`${date}T${time}:00`);
-          // Get Tallinn offset for this specific date by formatting
-          const formatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Tallinn', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-          const parts = formatter.formatToParts(tallinnDate);
-          const getPart = (type) => parts.find(p => p.type === type)?.value || '';
-          // Create a date that represents the desired Tallinn local time
-          // by computing the offset between UTC and Tallinn for this date
-          const utcDate = new Date(`${date}T${time}:00Z`);
-          const tallinnStr = `${getPart('year')}-${getPart('month')}-${getPart('day')}T${getPart('hour')}:${getPart('minute')}:${getPart('second')}`;
-          const tallinnAsUtc = new Date(tallinnStr + 'Z');
-          const offsetMs = tallinnAsUtc.getTime() - utcDate.getTime();
-          const targetUtc = new Date(utcDate.getTime() - offsetMs);
-          startTime = targetUtc.toISOString();
+          startTime = tallinnLocalDateTimeToISOString(date, time);
         } else {
           startTime = legacyStartTime;
         }
@@ -4489,6 +4612,15 @@ exports.calendarEvent = functions
       }
 
       const fmtICS = (d) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+      const fmtLocalICS = (d) => {
+        const p = tallinnParts(d);
+        return `${String(p.year).padStart(4, '0')}${String(p.month + 1).padStart(2, '0')}${String(p.day).padStart(2, '0')}T${String(p.hour).padStart(2, '0')}${String(p.minute).padStart(2, '0')}00`;
+      };
+      const escapeICS = (value) => String(value || '')
+        .replace(/\\/g, '\\\\')
+        .replace(/\r?\n/g, '\\n')
+        .replace(/,/g, '\\,')
+        .replace(/;/g, '\\;');
       const uid = `sukoda-${startDate.getTime()}@sukoda.ee`;
       const now = fmtICS(new Date());
 
@@ -4498,26 +4630,46 @@ exports.calendarEvent = functions
         'PRODID:-//SUKODA//Calendar//ET',
         'CALSCALE:GREGORIAN',
         'METHOD:PUBLISH',
+        'X-WR-CALNAME:SUKODA',
+        `X-WR-TIMEZONE:${TALLINN_TIME_ZONE}`,
+        'BEGIN:VTIMEZONE',
+        `TZID:${TALLINN_TIME_ZONE}`,
+        'X-LIC-LOCATION:Europe/Tallinn',
+        'BEGIN:DAYLIGHT',
+        'TZOFFSETFROM:+0200',
+        'TZOFFSETTO:+0300',
+        'TZNAME:EEST',
+        'DTSTART:19700329T030000',
+        'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU',
+        'END:DAYLIGHT',
+        'BEGIN:STANDARD',
+        'TZOFFSETFROM:+0300',
+        'TZOFFSETTO:+0200',
+        'TZNAME:EET',
+        'DTSTART:19701025T040000',
+        'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU',
+        'END:STANDARD',
+        'END:VTIMEZONE',
         'BEGIN:VEVENT',
         `UID:${uid}`,
         `DTSTAMP:${now}`,
-        `DTSTART:${fmtICS(startDate)}`,
-        `DTEND:${fmtICS(endDate)}`,
-        `SUMMARY:${(title || 'SUKODA koduhoolitsus').replace(/[,;]/g, '\\$&')}`,
-        `DESCRIPTION:${(description || '').replace(/\n/g, '\\n').replace(/[,;]/g, '\\$&')}`,
-        `LOCATION:${(location || '').replace(/[,;]/g, '\\$&')}`,
+        `DTSTART;TZID=${TALLINN_TIME_ZONE}:${fmtLocalICS(startDate)}`,
+        `DTEND;TZID=${TALLINN_TIME_ZONE}:${fmtLocalICS(endDate)}`,
+        `SUMMARY:${escapeICS(title || 'SUKODA koduhoolitsus')}`,
+        `DESCRIPTION:${escapeICS(description || '')}`,
+        `LOCATION:${escapeICS(location || '')}`,
         'STATUS:CONFIRMED',
         'BEGIN:VALARM',
         'TRIGGER:-PT1H',
         'ACTION:DISPLAY',
-        'DESCRIPTION:SUKODA koduhoolitsus 1h pärast',
+        'DESCRIPTION:SUKODA koduhoolitsus 1h parast',
         'END:VALARM',
         'END:VEVENT',
         'END:VCALENDAR',
       ].join('\r\n');
 
-      res.set('Content-Type', 'text/calendar; charset=utf-8');
-      res.set('Content-Disposition', 'inline; filename="sukoda-visit.ics"');
+      res.set('Content-Type', 'text/calendar; charset=utf-8; method=PUBLISH');
+      res.set('Content-Disposition', 'attachment; filename="sukoda-visit.ics"');
       return res.status(200).send(icsContent);
     });
   });
@@ -4597,6 +4749,82 @@ exports.estateInquiry = functions
 
       } catch (error) {
         console.error('Estate inquiry error:', error);
+        res.status(500).json({ error: error.message });
+      }
+    });
+  });
+
+// ============================================================
+
+/**
+ * Save sales inquiry from physical gift card landing page
+ * Body: { name, email, phone?, company?, message?, giftCode? }
+ */
+exports.salesInquiry = functions
+  .runWith({ secrets: SECRETS }).region('europe-west1')
+  .https.onRequest((req, res) => {
+    cors(req, res, async () => {
+      if (!checkRateLimit(req, res, 'salesInquiry', 5, 60000)) return;
+      if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' });
+      }
+
+      const sv = validate(salesInquirySchema, req.body);
+      if (!sv.ok) {
+        return res.status(400).json({ error: sv.error });
+      }
+      const { name, email, phone, company, message, giftCode } = sv.data;
+
+      try {
+        await db.collection('salesInquiries').add({
+          name,
+          email,
+          phone: phone || null,
+          company: company || null,
+          message: message || null,
+          giftCode: giftCode || null,
+          status: 'new',
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        await sendEmail({
+          to: NOTIFICATION_EMAIL,
+          subject: `SUKODA | Müügikaardi päring — ${name}`,
+          html: `
+            <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 500px; padding: 20px;">
+              <h2 style="color: #2C2824; font-family: Georgia, serif; font-weight: 300; border-bottom: 1px solid #B8976A; padding-bottom: 10px;">Uus müügikaardi päring</h2>
+              <table style="width: 100%; margin: 16px 0;">
+                <tr><td style="padding: 6px 0; color: #8A8578;">Nimi:</td><td style="padding: 6px 0;"><strong>${escapeHtml(name)}</strong></td></tr>
+                <tr><td style="padding: 6px 0; color: #8A8578;">E-post:</td><td style="padding: 6px 0;"><strong>${escapeHtml(email)}</strong></td></tr>
+                ${phone ? `<tr><td style="padding: 6px 0; color: #8A8578;">Telefon:</td><td style="padding: 6px 0;">${escapeHtml(phone)}</td></tr>` : ''}
+                ${company ? `<tr><td style="padding: 6px 0; color: #8A8578;">Ettevõte:</td><td style="padding: 6px 0;">${escapeHtml(company)}</td></tr>` : ''}
+                ${giftCode ? `<tr><td style="padding: 6px 0; color: #8A8578;">Kaardi kood:</td><td style="padding: 6px 0;">${escapeHtml(giftCode)}</td></tr>` : ''}
+                ${message ? `<tr><td style="padding: 6px 0; color: #8A8578;">Sõnum:</td><td style="padding: 6px 0;">${escapeHtml(message)}</td></tr>` : ''}
+              </table>
+              <p style="color: #B8976A; font-size: 13px; font-style: italic;">Palun vasta 24 tunni jooksul.</p>
+            </div>
+          `,
+        });
+
+        await sendEmail({
+          to: email,
+          subject: 'SUKODA | Täname huvi eest',
+          html: `
+            <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 500px; padding: 20px;">
+              <h2 style="color: #2C2824; font-family: Georgia, serif; font-weight: 300; border-bottom: 1px solid #B8976A; padding-bottom: 10px;">Täname huvi eest</h2>
+              <p style="color: #6B6560; line-height: 1.6;">
+                ${escapeHtml(name)}, oleme sinu päringu kätte saanud. Võtame sinuga ühendust 24 tunni jooksul, et arutada koostöövõimalusi.
+              </p>
+              <p style="color: #8A8578; font-size: 13px; margin-top: 20px;">SUKODA — partner@sukoda.ee</p>
+            </div>
+          `,
+        });
+
+        console.log('Sales inquiry saved:', email, giftCode);
+        res.status(200).json({ success: true });
+
+      } catch (error) {
+        console.error('Sales inquiry error:', error);
         res.status(500).json({ error: error.message });
       }
     });
@@ -4704,8 +4932,8 @@ exports.redeemGift = functions
         const doc = snapshot.docs[0];
         const order = doc.data();
 
-        // Check if already redeemed (has a booking)
-        if (order.giftRedeemed) {
+        // Check if already redeemed (has a booking) — sales cards are reusable
+        if (order.giftRedeemed && !order.salesCard) {
           return res.status(400).json({ error: 'Gift already redeemed', alreadyRedeemed: true });
         }
 
@@ -4749,6 +4977,7 @@ exports.redeemGift = functions
           sizeName: sizeNames[lang]?.[order.size] || order.size,
           senderName: order.physicalCard ? '' : (order.customer?.name || ''),
           message: order.recipient?.message || '',
+          salesCard: order.salesCard || false,
         });
 
       } catch (error) {
@@ -4862,7 +5091,8 @@ exports.bookGiftVisit = functions
       if (!bgv.ok) {
         return res.status(400).json({ error: bgv.error });
       }
-      const { code, startTime, email, phone, address, additionalInfo } = bgv.data;
+      const { code, startTime, date, time, email, phone, address, additionalInfo } = bgv.data;
+      const bookingStartTime = (date && time) ? tallinnLocalDateTimeToISOString(date, time) : startTime;
 
       if (!code || !startTime || !email || !address) {
         return res.status(400).json({ error: 'Missing required fields: code, startTime, email, address' });
@@ -4872,7 +5102,7 @@ exports.bookGiftVisit = functions
       const minBookingTime = new Date(Date.now() + MIN_BOOKING_LEAD_HOURS * 60 * 60 * 1000);
       const launchMinTime = LAUNCH_DATE ? new Date(LAUNCH_DATE + 'T00:00:00+02:00') : null;
       const effectiveMin = launchMinTime && launchMinTime > minBookingTime ? launchMinTime : minBookingTime;
-      if (new Date(startTime) < effectiveMin) {
+      if (new Date(bookingStartTime) < effectiveMin) {
         const lang = req.body?.lang || 'et';
         const leadTimeError = lang === 'en'
           ? `Bookings must be made at least ${MIN_BOOKING_LEAD_HOURS} hours in advance. Please choose a later time.`
@@ -4907,6 +5137,10 @@ exports.bookGiftVisit = functions
         const doc = snapshot.docs[0];
         const order = doc.data();
 
+        if (order.salesCard) {
+          return res.status(400).json({ error: 'Sales cards cannot be booked' });
+        }
+
         if (order.giftRedeemed) {
           return res.status(400).json({ error: 'Gift already redeemed' });
         }
@@ -4921,7 +5155,7 @@ exports.bookGiftVisit = functions
         const recipientName = order.recipient?.name || 'Kingisaaja';
 
         // Create booking via Cal.com
-        const booking = await calService.createBooking(slug, startTime, {
+        const booking = await calService.createBooking(slug, bookingStartTime, {
           name: recipientName,
           email: email,
           phone: phone || '',
@@ -4943,7 +5177,7 @@ exports.bookGiftVisit = functions
           'recipient.additionalInfo': additionalInfo || '',
           'booking': {
             uid: booking.uid || booking.id,
-            startTime: startTime,
+            startTime: bookingStartTime,
             createdAt: new Date().toISOString(),
           },
         });
@@ -4954,10 +5188,10 @@ exports.bookGiftVisit = functions
             orderId: doc.id,
             recipientEmail: email,
             recipientName: order.recipient?.name || '',
-            bookingStartTime: startTime,
+            bookingStartTime: bookingStartTime,
             lang: order.lang || 'et',
             size: order.size || 'medium',
-            giftPackage: order.package || null,
+            giftPackage: order.package || order.packageType || null,
           });
         } catch (followupError) {
           // Don't fail the booking if follow-up creation fails
@@ -4970,7 +5204,7 @@ exports.bookGiftVisit = functions
           customerEmail: email,
           customerPhone: phone || '',
           address: address,
-          scheduledAt: startTime,
+          scheduledAt: bookingStartTime,
           size: effectiveSize,
           type: 'gift',
           orderId: doc.id,
@@ -5001,13 +5235,13 @@ exports.bookGiftVisit = functions
         try {
           const calSlugDurations = { 'koristus-50': 120, 'koristus-90': 180, 'koristus-120': 240, 'koristus-150': 300 };
           const durationMin = calSlugDurations[slug] || 180;
-          const endTime = new Date(new Date(startTime).getTime() + durationMin * 60 * 1000);
+          const endTime = new Date(new Date(bookingStartTime).getTime() + durationMin * 60 * 1000);
           await sendEmail({
             to: email,
             subject: t.subjectBookingConfirmed,
             html: generateBookingConfirmationEmail({
               customerName: recipientName,
-              scheduledAt: startTime,
+              scheduledAt: bookingStartTime,
               endTime: endTime.toISOString(),
               address,
               lang,
@@ -5019,7 +5253,7 @@ exports.bookGiftVisit = functions
         }
 
         // Format date for response
-        const bookingDate = new Date(startTime);
+        const bookingDate = new Date(bookingStartTime);
         const dateStr = bookingDate.toLocaleDateString('et-EE', {
           timeZone: 'Europe/Tallinn',
           weekday: 'long',
@@ -5065,13 +5299,14 @@ exports.bookSubscriptionVisit = functions
       if (!bsv.ok) {
         return res.status(400).json({ error: bsv.error });
       }
-      const { orderId, startTime } = bsv.data;
+      const { orderId, startTime, date, time } = bsv.data;
+      const bookingStartTime = (date && time) ? tallinnLocalDateTimeToISOString(date, time) : startTime;
 
       // Validate minimum lead time (48h) and launch date
       const minBookingTimeSub = new Date(Date.now() + MIN_BOOKING_LEAD_HOURS * 60 * 60 * 1000);
       const launchMinTimeSub = LAUNCH_DATE ? new Date(LAUNCH_DATE + 'T00:00:00+02:00') : null;
       const effectiveMinSub = launchMinTimeSub && launchMinTimeSub > minBookingTimeSub ? launchMinTimeSub : minBookingTimeSub;
-      if (new Date(startTime) < effectiveMinSub) {
+      if (new Date(bookingStartTime) < effectiveMinSub) {
         const lang = req.body?.lang || 'et';
         const leadTimeError = lang === 'en'
           ? `Bookings must be made at least ${MIN_BOOKING_LEAD_HOURS} hours in advance. Please choose a later time.`
@@ -5105,7 +5340,7 @@ exports.bookSubscriptionVisit = functions
         const customer = order.customer || {};
 
         // Create booking via Cal.com
-        const booking = await calService.createBooking(slug, startTime, {
+        const booking = await calService.createBooking(slug, bookingStartTime, {
           name: customer.name || 'Klient',
           email: customer.email || '',
           phone: customer.phone || '',
@@ -5120,7 +5355,7 @@ exports.bookSubscriptionVisit = functions
         await orderDoc.ref.update({
           'booking': {
             uid: booking.uid || booking.id,
-            startTime: startTime,
+            startTime: bookingStartTime,
             createdAt: new Date().toISOString(),
           },
         });
@@ -5131,7 +5366,7 @@ exports.bookSubscriptionVisit = functions
           customerEmail: customer.email || '',
           customerPhone: customer.phone || '',
           address: customer.address || '',
-          scheduledAt: startTime,
+          scheduledAt: bookingStartTime,
           size: order.size || 'medium',
           type: 'subscription',
           orderId: orderId,
@@ -5144,7 +5379,7 @@ exports.bookSubscriptionVisit = functions
         try {
           const calSlugDurations = { 'koristus-50': 120, 'koristus-90': 180, 'koristus-120': 240, 'koristus-150': 300 };
           const durationMin = calSlugDurations[slug] || 180;
-          const endTime = new Date(new Date(startTime).getTime() + durationMin * 60 * 1000);
+          const endTime = new Date(new Date(bookingStartTime).getTime() + durationMin * 60 * 1000);
 
           let portalUrl = null;
           try {
@@ -5168,7 +5403,7 @@ exports.bookSubscriptionVisit = functions
             subject: t.subjectBookingConfirmed,
             html: generateBookingConfirmationEmail({
               customerName: customer.name,
-              scheduledAt: startTime,
+              scheduledAt: bookingStartTime,
               endTime: endTime.toISOString(),
               address: customer.address,
               lang,
@@ -5180,7 +5415,7 @@ exports.bookSubscriptionVisit = functions
         }
 
         // Format date for response
-        const bookingDate = new Date(startTime);
+        const bookingDate = new Date(bookingStartTime);
         const dateStr = bookingDate.toLocaleDateString('et-EE', {
           timeZone: 'Europe/Tallinn',
           weekday: 'long',
@@ -5203,6 +5438,52 @@ exports.bookSubscriptionVisit = functions
 
       } catch (error) {
         console.error('Book subscription visit error:', error);
+        res.status(500).json({ error: error.message });
+      }
+    });
+  });
+
+// ============================================================
+// ADMIN: UPDATE ORDER FLAG
+// ============================================================
+
+/**
+ * Toggle a boolean flag on an order (admin only)
+ * POST /api/admin/update-order-flag
+ * Body: { orderId, flag, value }
+ * Allowed flags: salesCard
+ */
+exports.updateOrderFlag = functions
+  .runWith({ secrets: SECRETS }).region('europe-west1')
+  .https.onRequest((req, res) => {
+    cors(req, res, async () => {
+      if (!checkRateLimit(req, res, 'admin', 60, 60000)) return;
+      if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' });
+      }
+      if (!authenticateAdmin(req)) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { orderId, flag, value } = req.body;
+      const allowedFlags = ['salesCard'];
+
+      if (!orderId || !flag || !allowedFlags.includes(flag)) {
+        return res.status(400).json({ error: 'Invalid request' });
+      }
+
+      try {
+        const orderRef = db.collection('orders').doc(orderId);
+        const orderDoc = await orderRef.get();
+        if (!orderDoc.exists) {
+          return res.status(404).json({ error: 'Order not found' });
+        }
+
+        await orderRef.update({ [flag]: !!value });
+        console.log(`Order flag updated: ${orderId} ${flag}=${!!value}`);
+        res.status(200).json({ success: true });
+      } catch (error) {
+        console.error('Update order flag error:', error);
         res.status(500).json({ error: error.message });
       }
     });
@@ -5333,7 +5614,7 @@ exports.generatePhysicalGiftCards = functions
           batchId,
           count: codes.length,
           codes,
-          redeemUrl: 'https://sukoda.ee/lunasta.html',
+          redeemUrl: 'https://sukoda.ee/lunasta',
         });
 
       } catch (error) {
@@ -5447,8 +5728,8 @@ exports.createGiftUpgrade = functions
             quantity: 1,
           }],
           mode: 'payment',
-          success_url: `${req.headers.origin || 'https://sukoda.ee'}/lunasta.html?code=${encodeURIComponent(normalizedCode)}&upgraded=true`,
-          cancel_url: `${req.headers.origin || 'https://sukoda.ee'}/lunasta.html?code=${encodeURIComponent(normalizedCode)}&upgrade_cancelled=true`,
+          success_url: `${req.headers.origin || 'https://sukoda.ee'}/lunasta?code=${encodeURIComponent(normalizedCode)}&upgraded=true`,
+          cancel_url: `${req.headers.origin || 'https://sukoda.ee'}/lunasta?code=${encodeURIComponent(normalizedCode)}&upgrade_cancelled=true`,
           metadata: {
             type: 'gift_upgrade',
             order_id: doc.id,
@@ -5941,9 +6222,10 @@ exports.clientReschedule = functions
         if (!auth) return res.status(401).json({ error: 'Unauthorized' });
 
         const { orderId, order } = auth;
-        const { bookingId, newStartTime } = req.body;
+        const { bookingId, newStartTime, newDate, newTime: newLocalTime } = req.body;
+        const bookingStartTime = (newDate && newLocalTime) ? tallinnLocalDateTimeToISOString(newDate, newLocalTime) : newStartTime;
 
-        if (!bookingId || !newStartTime) {
+        if (!bookingId || !bookingStartTime) {
           return res.status(400).json({ error: 'Missing bookingId or newStartTime' });
         }
 
@@ -5956,7 +6238,7 @@ exports.clientReschedule = functions
 
         const booking = bookingDoc.data();
 
-        const newTime = new Date(newStartTime);
+        const newTime = new Date(bookingStartTime);
         const minTime = new Date();
         minTime.setHours(minTime.getHours() + MIN_BOOKING_LEAD_HOURS);
         if (newTime < minTime) {
@@ -5981,7 +6263,7 @@ exports.clientReschedule = functions
           try {
             newCalBooking = await calService.createBooking(
               eventTypeSlug,
-              newStartTime,
+              bookingStartTime,
               {
                 name: booking.customerName || order.customer?.name,
                 email: booking.customerEmail || order.customer?.email,

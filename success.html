@@ -44,8 +44,7 @@
         const params = SUKODA.getUrlParams();
         
         // Set current month
-        const now = new Date();
-        this.currentMonth = now.toISOString().slice(0, 7);
+        this.currentMonth = window.SUKODA_TIME.getYearMonth();
         this.updateMonthLabel();
         
         if (params.orderId) {
@@ -107,8 +106,7 @@
         const [y, m] = this.currentMonth.split('-').map(Number);
         const firstDay = new Date(y, m - 1, 1);
         const lastDay = new Date(y, m, 0);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const todayStr = window.SUKODA_TIME.getDateString();
         
         let startDow = firstDay.getDay() - 1;
         if (startDow < 0) startDow = 6;
@@ -119,9 +117,8 @@
         }
         for (let d = 1; d <= lastDay.getDate(); d++) {
             const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-            const dateObj = new Date(y, m - 1, d);
             const hasSlots = this.slots[dateStr] && this.slots[dateStr].length > 0;
-            const isPast = dateObj < today;
+            const isPast = dateStr < todayStr;
             this.calendarDays.push({ day: d, date: dateStr, hasSlots, isPast });
         }
     },
@@ -135,8 +132,8 @@
     
     prevMonth() {
         const [y, m] = this.currentMonth.split('-').map(Number);
-        const now = new Date();
-        const currentYM = now.getFullYear() * 12 + now.getMonth();
+        const [currentYear, currentMonth] = window.SUKODA_TIME.getYearMonth().split('-').map(Number);
+        const currentYM = currentYear * 12 + (currentMonth - 1);
         const targetYM = y * 12 + (m - 2);
         if (targetYM < currentYM) return;
         const newMonth = m - 1;
@@ -162,15 +159,16 @@
         this.bookingLoading = true;
         this.bookingError = '';
         try {
-            const startTime = this.selectedDate + 'T' + this.selectedTime + ':00';
-            const dt = new Date(startTime);
+            const startTime = window.SUKODA_TIME.tallinnDateTimeToIso(this.selectedDate, this.selectedTime);
             
             const res = await fetch('/api/book-subscription', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     orderId: this.order.id,
-                    startTime: dt.toISOString(),
+                    date: this.selectedDate,
+                    time: this.selectedTime,
+                    startTime,
                 }),
             });
             const data = await res.json();
@@ -476,7 +474,7 @@
                         <!-- Referral Section (subscriptions only, after booking or next steps) -->
                         <div x-show="!order?.recipient && order?.referralCode" x-cloak
                              x-data="{ copied: false, shareUrl: '' }"
-                             x-init="shareUrl = 'https://sukoda.ee/index.html?ref=' + (order?.referralCode || '')"
+                             x-init="shareUrl = 'https://sukoda.ee/?ref=' + (order?.referralCode || '')"
                              class="mb-8">
 
                             <!-- Elegant divider -->

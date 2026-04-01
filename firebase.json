@@ -153,6 +153,13 @@
         }
       },
       {
+        "source": "/api/sales-inquiry",
+        "function": {
+          "functionId": "salesInquiry",
+          "region": "europe-west1"
+        }
+      },
+      {
         "source": "/api/waitlist",
         "function": {
           "functionId": "waitlist",
@@ -205,6 +212,13 @@
         "source": "/api/admin/followups",
         "function": {
           "functionId": "getAdminFollowups",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/admin/update-order-flag",
+        "function": {
+          "functionId": "updateOrderFlag",
           "region": "europe-west1"
         }
       },

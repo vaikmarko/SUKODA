@@ -224,8 +224,7 @@
         this.rescheduleTime = '';
         this.rescheduleError = '';
         this.rescheduleSuccess = false;
-        const d = booking.scheduledAt ? new Date(booking.scheduledAt) : new Date();
-        this.rescheduleCurrentMonth = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+        this.rescheduleCurrentMonth = window.SUKODA_TIME.getYearMonth(booking.scheduledAt || new Date());
         this.updateRescheduleMonthLabel();
         this.loadRescheduleSlots();
     },
@@ -264,15 +263,14 @@
     },
 
     getDemoRescheduleSlots() {
-        const [y, m] = (this.rescheduleCurrentMonth || new Date().toISOString().slice(0, 7)).split('-').map(Number);
+        const [y, m] = (this.rescheduleCurrentMonth || window.SUKODA_TIME.getYearMonth()).split('-').map(Number);
         const slots = {};
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const todayStr = window.SUKODA_TIME.getDateString();
         const times = ['09:00', '10:00', '11:00', '14:00'];
         for (let d = 1; d <= 28; d++) {
-            const dateObj = new Date(y, m - 1, d);
-            if (dateObj < today) continue;
             const dateStr = y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+            if (dateStr < todayStr) continue;
+            const dateObj = new Date(dateStr + 'T12:00:00');
             const dow = dateObj.getDay();
             if (dow >= 1 && dow <= 5) slots[dateStr] = times;
         }
@@ -283,8 +281,7 @@
         const [y, m] = (this.rescheduleCurrentMonth || '2026-01').split('-').map(Number);
         const firstDay = new Date(y, m - 1, 1);
         const lastDay = new Date(y, m, 0);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const todayStr = window.SUKODA_TIME.getDateString();
         let startDow = firstDay.getDay() - 1;
         if (startDow < 0) startDow = 6;
         this.rescheduleCalendarDays = [];
@@ -293,9 +290,8 @@
         }
         for (let d = 1; d <= lastDay.getDate(); d++) {
             const dateStr = y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-            const dateObj = new Date(y, m - 1, d);
             const hasSlots = this.rescheduleSlots[dateStr] && this.rescheduleSlots[dateStr].length > 0;
-            this.rescheduleCalendarDays.push({ day: d, date: dateStr, hasSlots, isPast: dateObj < today });
+            this.rescheduleCalendarDays.push({ day: d, date: dateStr, hasSlots, isPast: dateStr < todayStr });
         }
     },
 
@@ -308,8 +304,8 @@
 
     reschedulePrevMonth() {
         const [y, m] = (this.rescheduleCurrentMonth || '2026-01').split('-').map(Number);
-        const now = new Date();
-        const currentYM = now.getFullYear() * 12 + now.getMonth();
+        const [currentYear, currentMonth] = window.SUKODA_TIME.getYearMonth().split('-').map(Number);
+        const currentYM = currentYear * 12 + (currentMonth - 1);
         const targetYM = y * 12 + (m - 2);
         if (targetYM < currentYM) return;
         const newMonth = m - 1;
@@ -343,11 +339,16 @@
         this.rescheduleProcessing = true;
         this.rescheduleError = '';
         try {
-            const dt = new Date(this.rescheduleDate + 'T' + this.rescheduleTime + ':00');
+            const newStartTime = window.SUKODA_TIME.tallinnDateTimeToIso(this.rescheduleDate, this.rescheduleTime);
             const res = await fetch('/api/me/reschedule', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
-                body: JSON.stringify({ bookingId: this.rescheduleBookingId, newStartTime: dt.toISOString() }),
+                body: JSON.stringify({
+                    bookingId: this.rescheduleBookingId,
+                    newDate: this.rescheduleDate,
+                    newTime: this.rescheduleTime,
+                    newStartTime,
+                }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Reschedule failed');
@@ -411,15 +412,13 @@
 
     formatDate(iso) {
         if (!iso) return '';
-        const d = new Date(iso);
         const opts = { weekday: 'long', day: 'numeric', month: 'long' };
-        return d.toLocaleDateString(this.lang === 'et' ? 'et-EE' : 'en-GB', opts);
+        return window.SUKODA_TIME.formatDate(iso, this.lang === 'et' ? 'et-EE' : 'en-GB', opts);
     },
 
     formatTime(iso) {
         if (!iso) return '';
-        const d = new Date(iso);
-        return d.toLocaleTimeString(this.lang === 'et' ? 'et-EE' : 'en-GB', { hour: '2-digit', minute: '2-digit' });
+        return window.SUKODA_TIME.formatTime(iso, this.lang === 'et' ? 'et-EE' : 'en-GB', { hour: '2-digit', minute: '2-digit' });
     },
 }">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[10000] focus:bg-accent focus:text-paper focus:px-4 focus:py-2 focus:text-sm focus:font-sans">Skip to main content</a>

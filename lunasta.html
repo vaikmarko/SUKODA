@@ -68,6 +68,16 @@
     bookingDate: '',
     bookingTime: '',
     
+    // Sales card landing
+    salesFormName: '',
+    salesFormEmail: '',
+    salesFormPhone: '',
+    salesFormCompany: '',
+    salesFormMessage: '',
+    salesFormLoading: false,
+    salesFormError: '',
+    salesFormSent: false,
+    
     init() {
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code');
@@ -82,8 +92,7 @@
             }
         }
         // Set current month
-        const now = new Date();
-        this.currentMonth = now.toISOString().slice(0, 7);
+        this.currentMonth = window.SUKODA_TIME.getYearMonth();
         this.updateMonthLabel();
     },
     
@@ -114,8 +123,12 @@
                 return;
             }
             this.gift = data;
+            // Sales cards: show sales landing page
+            if (data.salesCard) {
+                this.step = 'sales';
+            }
             // After upgrade payment: skip reveal, go straight to contact details
-            if (skipReveal) {
+            else if (skipReveal) {
                 this.step = 2;
             }
             // Physical cards: show package reveal + size confirmation
@@ -281,8 +294,7 @@
         const [y, m] = this.currentMonth.split('-').map(Number);
         const firstDay = new Date(y, m - 1, 1);
         const lastDay = new Date(y, m, 0);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const todayStr = window.SUKODA_TIME.getDateString();
         
         // Monday-based week: getDay() returns 0=Sun, we want 0=Mon
         let startDow = firstDay.getDay() - 1;
@@ -297,9 +309,8 @@
         
         for (let d = 1; d <= lastDay.getDate(); d++) {
             const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-            const dateObj = new Date(y, m - 1, d);
             const hasSlots = this.slots[dateStr] && this.slots[dateStr].length > 0;
-            const isPast = dateObj < today;
+            const isPast = dateStr < todayStr;
             this.calendarDays.push({ day: d, date: dateStr, hasSlots, isPast });
         }
     },
@@ -313,8 +324,8 @@
     
     prevMonth() {
         const [y, m] = this.currentMonth.split('-').map(Number);
-        const now = new Date();
-        const currentYM = now.getFullYear() * 12 + now.getMonth();
+        const [currentYear, currentMonth] = window.SUKODA_TIME.getYearMonth().split('-').map(Number);
+        const currentYM = currentYear * 12 + (currentMonth - 1);
         const targetYM = y * 12 + (m - 2);
         if (targetYM < currentYM) return;
         
@@ -343,17 +354,16 @@
         this.bookingLoading = true;
         this.bookingError = '';
         try {
-            // Build ISO datetime from selected date + time
-            const startTime = this.selectedDate + 'T' + this.selectedTime + ':00';
-            // Convert to proper ISO with timezone
-            const dt = new Date(startTime);
+            const startTime = window.SUKODA_TIME.tallinnDateTimeToIso(this.selectedDate, this.selectedTime);
             
             const res = await fetch('/api/book-gift', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     code: this.giftCode,
-                    startTime: dt.toISOString(),
+                    date: this.selectedDate,
+                    time: this.selectedTime,
+                    startTime,
                     email: this.email,
                     phone: this.phone,
                     address: this.address,
@@ -372,6 +382,42 @@
             this.bookingError = e.message || fallback;
         } finally {
             this.bookingLoading = false;
+        }
+    },
+    
+    async submitSalesForm() {
+        if (!this.salesFormName.trim() || !this.salesFormEmail.trim()) {
+            this.salesFormError = 'Palun täida nimi ja e-post';
+            return;
+        }
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!re.test(this.salesFormEmail)) {
+            this.salesFormError = 'Palun sisesta kehtiv e-posti aadress';
+            return;
+        }
+        this.salesFormLoading = true;
+        this.salesFormError = '';
+        try {
+            const res = await fetch('/api/sales-inquiry', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: this.salesFormName,
+                    email: this.salesFormEmail,
+                    phone: this.salesFormPhone,
+                    company: this.salesFormCompany,
+                    message: this.salesFormMessage,
+                    giftCode: this.giftCode,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            this.salesFormSent = true;
+        } catch (e) {
+            console.error(e);
+            this.salesFormError = 'Tekkis viga. Palun proovi uuesti.';
+        } finally {
+            this.salesFormLoading = false;
         }
     },
 }">
@@ -404,7 +450,7 @@
             <div class="max-w-2xl mx-auto">
 
                 <!-- Progress Steps -->
-                <div class="flex items-center justify-center gap-3 md:gap-6 mb-12" x-show="step < 4">
+                <div class="flex items-center justify-center gap-3 md:gap-6 mb-12" x-show="step !== 'sales' && step < 4">
                     <template x-for="(s, i) in [
                         { et: 'Kood', en: 'Code' },
                         { et: 'Andmed', en: 'Details' },
@@ -536,6 +582,165 @@
 
                     <div class="max-w-md mx-auto mt-3 text-center">
                         <button type="button" @click="step = 1; gift = null; confirmedSize = ''; upgradeNeeded = false" class="text-[11px] uppercase tracking-[0.15em] font-sans text-muted hover:text-black transition-all" x-text="lang === 'et' ? 'Sisesta teine kood' : 'Enter another code'"></button>
+                    </div>
+                </div>
+
+                <!-- ================================ -->
+                <!-- SALES CARD: Landing Page -->
+                <!-- ================================ -->
+                <div x-show="step === 'sales'" x-transition x-cloak>
+                    
+                    <!-- Section 1: Emotional Opening -->
+                    <div class="text-center mb-16 md:mb-20">
+                        <div class="accent-line mx-auto mb-8"></div>
+                        <h1 class="font-serif text-4xl md:text-5xl lg:text-6xl font-light leading-[1.1] mb-6">
+                            Kingitus, mida<br>päriselt tuntakse.
+                        </h1>
+                        <p class="text-muted font-sans font-light text-base md:text-lg max-w-lg mx-auto leading-relaxed">
+                            SUKODA muudab tavalise kingituse kogemuseks, millest räägitakse edasi.
+                        </p>
+                    </div>
+
+                    <!-- Section 2: Experience Description -->
+                    <div class="grid md:grid-cols-3 gap-8 md:gap-6 mb-16 md:mb-20">
+                        <div class="text-center md:text-left p-6 md:p-8 bg-cream/40">
+                            <div class="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mx-auto md:mx-0 mb-5">
+                                <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path></svg>
+                            </div>
+                            <h3 class="font-serif text-xl md:text-2xl font-light mb-3">Esmamulje</h3>
+                            <p class="text-muted font-sans text-sm font-light leading-relaxed">
+                                Uksest sisse astudes ootavad värsked lilled, puuviljad kausis ja käsitsi kirjutatud tervitus.
+                            </p>
+                        </div>
+                        <div class="text-center md:text-left p-6 md:p-8 bg-cream/40">
+                            <div class="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mx-auto md:mx-0 mb-5">
+                                <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                            </div>
+                            <h3 class="font-serif text-xl md:text-2xl font-light mb-3">Hoolitsus</h3>
+                            <p class="text-muted font-sans text-sm font-light leading-relaxed">
+                                Professionaalne koduhooldus, mis on rohkem kui koristus — see on tunne, et keegi hoolib.
+                            </p>
+                        </div>
+                        <div class="text-center md:text-left p-6 md:p-8 bg-cream/40">
+                            <div class="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mx-auto md:mx-0 mb-5">
+                                <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+                            </div>
+                            <h3 class="font-serif text-xl md:text-2xl font-light mb-3">Üllatus</h3>
+                            <p class="text-muted font-sans text-sm font-light leading-relaxed">
+                                Iga külastusega väike magus üllatus. Sest detailid loevad.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Business Value -->
+                    <div class="border-t border-b border-[#E8E3DD] py-12 md:py-16 mb-16 md:mb-20">
+                        <div class="max-w-lg mx-auto text-center">
+                            <p class="text-[10px] uppercase tracking-[0.25em] text-accent font-sans mb-6">Miks see töötab</p>
+                            <div class="space-y-6">
+                                <p class="font-serif text-xl md:text-2xl font-light leading-relaxed italic text-muted">
+                                    "Klient, kes saab midagi ootamatut, räägib sellest edasi."
+                                </p>
+                                <div class="accent-line mx-auto"></div>
+                                <p class="font-serif text-xl md:text-2xl font-light leading-relaxed italic text-muted">
+                                    "Eristumine, mida ei saa lihtsalt tellida."
+                                </p>
+                                <div class="accent-line mx-auto"></div>
+                                <p class="font-serif text-xl md:text-2xl font-light leading-relaxed italic text-muted">
+                                    "Teie nimi jääb meelde — õige põhjusega."
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 4: How It Works -->
+                    <div class="mb-16 md:mb-20">
+                        <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans text-center mb-10">Kuidas see käib</p>
+                        <div class="grid md:grid-cols-3 gap-8 md:gap-12">
+                            <div class="text-center">
+                                <div class="font-serif text-4xl md:text-5xl text-accent/20 mb-4">01</div>
+                                <h4 class="font-serif text-lg font-light mb-2">Teie valite kingituse</h4>
+                                <p class="text-muted font-sans text-sm font-light">Sobiv pakett vastavalt vajadusele — ühekordne hoolitsus või pikemaajalisem hooldus.</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="font-serif text-4xl md:text-5xl text-accent/20 mb-4">02</div>
+                                <h4 class="font-serif text-lg font-light mb-2">Saaja broneerib aja</h4>
+                                <p class="text-muted font-sans text-sm font-light">Kingisaaja valib ise endale mugava aja meie kalendrist.</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="font-serif text-4xl md:text-5xl text-accent/20 mb-4">03</div>
+                                <h4 class="font-serif text-lg font-light mb-2">Meie hoolitseme</h4>
+                                <p class="text-muted font-sans text-sm font-light">Kogu ülejäänu on meie kanda — koristus, lilled, kaart ja üllatus.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 5: CTA — Contact Form -->
+                    <div class="bg-cream/40 border border-[#E8E3DD] p-8 md:p-12 max-w-xl mx-auto">
+                        
+                        <!-- Form (before submit) -->
+                        <div x-show="!salesFormSent">
+                            <div class="text-center mb-8">
+                                <div class="accent-line mx-auto mb-6"></div>
+                                <h2 class="font-serif text-2xl md:text-3xl font-light mb-3">Räägime lähemalt</h2>
+                                <p class="text-muted font-sans text-sm font-light">Jätke oma andmed ja võtame teiega ühendust 24 tunni jooksul.</p>
+                            </div>
+
+                            <form @submit.prevent="submitSalesForm()" class="space-y-5" novalidate>
+                                <div class="border-b border-[#E8E3DD] pb-3">
+                                    <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2">Nimi *</label>
+                                    <input type="text" x-model="salesFormName" class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" placeholder="Teie nimi" required>
+                                </div>
+
+                                <div class="border-b border-[#E8E3DD] pb-3">
+                                    <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2">E-post *</label>
+                                    <input type="email" x-model="salesFormEmail" class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" placeholder="teie@ettevote.ee" required>
+                                </div>
+
+                                <div class="border-b border-[#E8E3DD] pb-3">
+                                    <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2">Telefon</label>
+                                    <input type="tel" x-model="salesFormPhone" class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" placeholder="+372 5xxx xxxx">
+                                </div>
+
+                                <div class="border-b border-[#E8E3DD] pb-3">
+                                    <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2">Ettevõte</label>
+                                    <input type="text" x-model="salesFormCompany" class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent" placeholder="Ettevõtte nimi">
+                                </div>
+
+                                <div class="border-b border-[#E8E3DD] pb-3">
+                                    <label class="block text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-2">Sõnum</label>
+                                    <textarea x-model="salesFormMessage" rows="3" class="w-full text-lg font-serif font-light py-2 outline-none bg-transparent resize-none" placeholder="Mida sooviksite teada?"></textarea>
+                                </div>
+
+                                <p x-show="salesFormError" x-cloak class="text-sm text-accent font-sans font-light text-center" x-text="salesFormError"></p>
+
+                                <button type="submit" :disabled="salesFormLoading" class="w-full bg-black text-paper px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-all duration-500 disabled:opacity-50">
+                                    <span x-show="!salesFormLoading">Saada</span>
+                                    <span x-show="salesFormLoading" x-cloak>
+                                        <svg class="w-5 h-5 animate-spin mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                    </span>
+                                </button>
+                            </form>
+
+                            <div class="mt-6 pt-6 border-t border-[#E8E3DD] text-center">
+                                <p class="text-xs text-muted font-sans font-light mb-1">Või kirjuta meile otse</p>
+                                <a href="mailto:partner@sukoda.ee" class="luxury-link text-sm font-sans text-black">partner@sukoda.ee</a>
+                            </div>
+                        </div>
+
+                        <!-- Thank you (after submit) -->
+                        <div x-show="salesFormSent" x-transition x-cloak class="text-center py-8">
+                            <div class="w-16 h-16 bg-accent rounded-full flex items-center justify-center mx-auto mb-6">
+                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <h3 class="font-serif text-2xl md:text-3xl font-light mb-3">Täname!</h3>
+                            <p class="text-muted font-sans font-light mb-6">Võtame teiega ühendust 24 tunni jooksul.</p>
+                            <a href="index.html" class="inline-block border border-black text-black px-8 py-3 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-black hover:text-paper transition-all duration-500">Avaleht</a>
+                        </div>
+                    </div>
+
+                    <!-- Back to code entry -->
+                    <div class="text-center mt-8">
+                        <button type="button" @click="step = 1; gift = null; salesFormSent = false; salesFormError = ''" class="text-[11px] uppercase tracking-[0.15em] font-sans text-muted hover:text-black transition-all">Sisesta teine kood</button>
                     </div>
                 </div>
 
