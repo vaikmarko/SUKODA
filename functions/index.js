@@ -4813,7 +4813,7 @@ exports.salesInquiry = functions
             <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 500px; padding: 20px;">
               <h2 style="color: #2C2824; font-family: Georgia, serif; font-weight: 300; border-bottom: 1px solid #B8976A; padding-bottom: 10px;">Täname huvi eest</h2>
               <p style="color: #6B6560; line-height: 1.6;">
-                ${escapeHtml(name)}, oleme sinu päringu kätte saanud. Võtame sinuga ühendust 24 tunni jooksul, et arutada koostöövõimalusi.
+                ${escapeHtml(name)}, oleme Teie päringu kätte saanud. Võtame Teiega ühendust 24 tunni jooksul, et arutada koostöövõimalusi.
               </p>
               <p style="color: #8A8578; font-size: 13px; margin-top: 20px;">SUKODA — partner@sukoda.ee</p>
             </div>
