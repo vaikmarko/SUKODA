@@ -13,7 +13,7 @@
     <!-- Meta Pixel -->
     <script src="/assets/js/tracking.js"></script>
     <script type="module" src="/assets/js/main.js"></script>
-    <meta name="description" content="SUKODA teenuse kasutamise tingimused ja korduvtellimuse reeglid.">
+    <meta name="description" content="SUKODA koduportaali ja teenusepakkuja töölaua kasutamise tingimused. Haldab Epic Ship OÜ.">
     <link rel="canonical" href="https://sukoda.ee/tingimused">
     <link rel="alternate" hreflang="et" href="https://sukoda.ee/tingimused">
     <link rel="alternate" hreflang="en" href="https://sukoda.ee/en/tingimused">
@@ -29,40 +29,31 @@
         <!-- Navigation -->
         <nav class="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm grid-line-b" x-data="{ mobileMenu: false }" aria-label="Main navigation">
             <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12">
-                <a href="index.html" class="font-serif text-2xl md:text-3xl tracking-[0.08em] font-light">
-                    SUKODA
-                </a>
-                
+                <a href="/" class="font-serif text-2xl md:text-3xl tracking-[0.08em] font-light">SUKODA</a>
                 <div class="hidden md:flex gap-10 text-[11px] uppercase tracking-[0.2em] font-sans font-medium text-muted">
-                    <a href="kingitus.html" class="hover:text-black transition-colors" x-text="lang === 'et' ? 'Kingitus' : 'Gift'">Kingitus</a>
-                    <a href="partnerlus.html" class="hover:text-black transition-colors" x-text="lang === 'et' ? 'Koostöö' : 'Partnership'">Koostöö</a>
+                    <a href="/#kodule" class="luxury-link hover:text-black transition-colors" x-text="lang === 'et' ? 'Koduomanikule' : 'For homeowners'">Koduomanikule</a>
+                    <a href="/#teenusepakkujale" class="luxury-link hover:text-black transition-colors" x-text="lang === 'et' ? 'Teenusepakkujale' : 'For providers'">Teenusepakkujale</a>
+                    <a href="/lugu" class="luxury-link hover:text-black transition-colors" x-text="lang === 'et' ? 'Lugu' : 'Story'">Lugu</a>
                 </div>
-
                 <div class="flex items-center gap-4 md:gap-6">
                     <div class="flex text-[10px] uppercase tracking-[0.2em] font-sans font-medium gap-2">
                         <button @click="lang = 'et'" :class="lang === 'et' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">ET</button>
                         <span class="text-[#D4CFC8]">/</span>
                         <button @click="lang = 'en'" :class="lang === 'en' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">EN</button>
                     </div>
-
-                    <a href="minu.html" class="hidden md:inline-block text-[11px] uppercase tracking-[0.2em] font-sans font-medium text-muted hover:text-black transition-colors" x-text="lang === 'et' ? 'Sisene' : 'Log in'">Sisene</a>
-
-                    <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2" aria-label="Toggle menu" :aria-expanded="mobileMenu">
-                        <svg x-show="!mobileMenu" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path>
-                        </svg>
-                        <svg x-show="mobileMenu" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
+                    <a href="/minu" class="hidden md:inline-block bg-black text-paper px-5 py-2 text-[11px] uppercase tracking-[0.2em] font-sans font-medium hover:bg-accent transition-colors duration-500" x-text="lang === 'et' ? 'Sisene' : 'Log in'">Sisene</a>
+                    <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2" :aria-expanded="mobileMenu" aria-label="Toggle menu">
+                        <svg x-show="!mobileMenu" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                        <svg x-show="mobileMenu" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
             </div>
-
             <div x-show="mobileMenu" x-cloak class="md:hidden bg-paper border-t border-[#E8E3DD]">
                 <div class="flex flex-col px-4 py-8 space-y-5 text-[11px] uppercase tracking-[0.2em] font-sans font-medium text-muted">
-                    <a href="kingitus.html" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Kingitus' : 'Gift'">Kingitus</a>
-                    <a href="partnerlus.html" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Koostöö' : 'Partnership'">Koostöö</a>
-                    <a href="minu.html" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Sisene' : 'Log in'">Sisene</a>
+                    <a href="/#kodule" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Koduomanikule' : 'For homeowners'">Koduomanikule</a>
+                    <a href="/#teenusepakkujale" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Teenusepakkujale' : 'For providers'">Teenusepakkujale</a>
+                    <a href="/lugu" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Lugu' : 'Story'">Lugu</a>
+                    <a href="/minu" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Sisene' : 'Log in'">Sisene</a>
                 </div>
             </div>
         </nav>
@@ -71,22 +62,26 @@
         <!-- Content -->
         <section class="max-w-3xl mx-auto p-6 md:p-24">
             <div class="accent-line mb-6"></div>
-            <h1 class="font-serif text-4xl md:text-5xl font-light mb-10" x-text="lang === 'et' ? 'Tingimused' : 'Terms of Service'">Tingimused</h1>
-            
-            <div class="space-y-10 text-muted font-sans font-light leading-relaxed text-sm">
-                
+            <h1 class="font-serif text-4xl md:text-5xl font-light mb-4" x-text="lang === 'et' ? 'Tingimused' : 'Terms of Service'">Tingimused</h1>
+            <p class="text-base text-muted font-sans font-light leading-relaxed mb-12 max-w-xl">
+                <span x-show="lang === 'et'">SUKODA on koduportaal ja töölaud neile, kes kodude eest hoolitsevad. Need tingimused kehtivad kõigile, kes portaali kasutavad — koduomanikule, pereliikmele ja teenusepakkujale.</span>
+                <span x-show="lang === 'en'" x-cloak>SUKODA is a home portal, and a desk for the people who care for homes. These terms apply to everyone who uses the portal — homeowners, household members and service providers.</span>
+            </p>
+
+            <div class="space-y-10 text-muted font-sans font-light leading-relaxed text-[15px]">
+
                 <div>
-                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '1. Teenusepakkuja' : '1. Service Provider'">1. Teenusepakkuja</h2>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '1. Kes me oleme' : '1. Who we are'">1. Kes me oleme</h2>
                     <div x-show="lang === 'et'">
-                        <p class="mb-2">SUKODA on kaubamärk, mida haldab:</p>
-                        <p class="mb-1"><strong class="text-black font-normal">SUKODA</strong></p>
+                        <p class="mb-3">SUKODA on kaubamärk ja platvorm, mida haldab:</p>
+                        <p class="mb-1"><strong class="text-black font-normal">Epic Ship OÜ</strong></p>
                         <p class="mb-1">Registrikood: 14713548</p>
                         <p class="mb-1">Aadress: Kiikri tn 6/2, Tallinn 10159, Eesti</p>
                         <p>E-post: <a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a></p>
                     </div>
                     <div x-show="lang === 'en'" x-cloak>
-                        <p class="mb-2">SUKODA is a brand managed by:</p>
-                        <p class="mb-1"><strong class="text-black font-normal">SUKODA</strong></p>
+                        <p class="mb-3">SUKODA is a brand and platform operated by:</p>
+                        <p class="mb-1"><strong class="text-black font-normal">Epic Ship OÜ</strong></p>
                         <p class="mb-1">Registration code: 14713548</p>
                         <p class="mb-1">Address: Kiikri tn 6/2, Tallinn 10159, Estonia</p>
                         <p>Email: <a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a></p>
@@ -94,107 +89,141 @@
                 </div>
 
                 <div>
-                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '2. Teenuse kirjeldus' : '2. Service Description'">2. Teenuse kirjeldus</h2>
-                    <p x-show="lang === 'et'">SUKODA pakub korduvat koduhoolduse teenust. Iga külastus sisaldab põhjalikku koristust, värsked lilled vaasis, käsitsi kirjutatud tervituskaarti ja väikest magusat üllatust. Lisaks võivad sisalduda hooajalised puuviljad ja muud paketti kuuluvad teenused. Kõik veebilehel toodud hinnad sisaldavad käibemaksu (20%).</p>
-                    <p x-show="lang === 'en'" x-cloak>SUKODA provides recurring home care services. Each visit includes thorough cleaning, fresh flowers in a vase, a handwritten greeting card, and a small sweet surprise. Additionally, seasonal fruits and other services included in the package may be provided. All prices on the website include VAT (20%).</p>
-                </div>
-
-                <div>
-                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '3. Tellimine ja makse' : '3. Ordering and Payment'">3. Tellimine ja makse</h2>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '2. Mis SUKODA on ja mis ta ei ole' : '2. What SUKODA is, and is not'">2. Mis SUKODA on ja mis ta ei ole</h2>
                     <div x-show="lang === 'et'">
-                        <p class="mb-3"><strong class="text-black font-normal">Püsitellimus:</strong> Teenust saab tellida meie veebilehel, valides paketi ja täites vajalikud andmed. Makse toimub automaatselt iga kuu arveldusperioodi alguses. Makse võetakse enne teenuse osutamist — see tähendab, et iga makse katab eeloleva perioodi teenuse. Kui makse ebaõnnestub, võime teenust peatada kuni makse on lahendatud.</p>
-                        <p class="mb-3"><strong class="text-black font-normal">Kinkekaart:</strong> Kinkekaardi ost on ühekordne makse. Kinkekaart saadetakse saajale e-kirjaga ja sisaldab unikaalset koodi, mille abil saab teenuse lunastada ja aja broneerida.</p>
-                        <p>Kõigi maksete töötlemisel kasutame turvalist makseteenust Stripe. Meie ei salvesta ega töötle sinu kaardandmeid.</p>
+                        <p class="mb-3">SUKODA on <strong class="text-black font-normal">koduportaal</strong> koduomanikule (ajad ja kalendrikutsed, pere kontaktid, kodu profiil, hooldusrütm, dokumentide lingid, soovide edastamine) ja <strong class="text-black font-normal">töölaud</strong> teenusepakkujale (kliendid, visiidid, korduvad graafikud, soovide kinnitamine, teavitused).</p>
+                        <p class="mb-3">SUKODA ei osuta ise koristust, lillede kohaletoomist, remondi- ega aiatöid. Neid osutab teenusepakkuja — koduhooldaja, florist, remondimees, aednik — kellega koduomanikul on oma kokkulepe. Teenuse sisu, hind, arveldamine ja kvaliteet lepitakse kokku koduomaniku ja teenusepakkuja vahel. SUKODA hoiab aegu, edastab teavitusi ja soove ning teeb selle suhtluse sujuvaks.</p>
+                        <p>Erand on punktis 7 kirjeldatud olukord, kus SUKODA müüb ise kinkekaarti või paketti.</p>
                     </div>
                     <div x-show="lang === 'en'" x-cloak>
-                        <p class="mb-3"><strong class="text-black font-normal">Subscription:</strong> Services can be ordered on our website by selecting a package and filling in the required information. Payment is automatically processed at the beginning of each monthly billing period. Each payment covers the upcoming service period. If payment fails, we may suspend service until payment is resolved.</p>
-                        <p class="mb-3"><strong class="text-black font-normal">Gift card:</strong> Gift card purchase is a one-time payment. The gift card is sent to the recipient by email and contains a unique code to redeem the service and book a visit.</p>
-                        <p>We use the secure payment service Stripe for all payment processing. We do not store or process your card details.</p>
+                        <p class="mb-3">SUKODA is a <strong class="text-black font-normal">home portal</strong> for the homeowner (times and calendar invites, household contacts, home profile, upkeep rhythm, document links, requests) and a <strong class="text-black font-normal">desk</strong> for the service provider (clients, visits, recurring schedules, confirming requests, notifications).</p>
+                        <p class="mb-3">SUKODA does not itself provide cleaning, flower delivery, repairs or garden work. These are provided by a service provider — housekeeper, florist, handyman, gardener — with whom the homeowner has their own agreement. Scope, price, invoicing and quality are agreed between the homeowner and the provider. SUKODA keeps the times, relays notifications and requests, and makes that communication smooth.</p>
+                        <p>The exception is described in section 7, where SUKODA itself sells a gift card or package.</p>
                     </div>
                 </div>
 
                 <div>
-                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '4. Külastuste ajakava' : '4. Visit Schedule'">4. Külastuste ajakava</h2>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '3. Ligipääs ja konto' : '3. Access and account'">3. Ligipääs ja konto</h2>
                     <div x-show="lang === 'et'">
-                        <p class="mb-3">Pärast tellimust valid ise sobiva aja meie online-kalendrist. Aja muutmiseks võta meiega ühendust vähemalt 48 tundi enne planeeritud külastust.</p>
-                        <p><strong class="text-black font-normal">Kinkekaart:</strong> Kinkekaardi saaja valib sobiva aja ise, sisestades saadud koodi meie veebilehel. Broneeringu tegemisel sisestab saaja oma kontaktandmed ja aadressi.</p>
+                        <p class="mb-3">Portaali kasutamine on kutsega. Kodu jõuab portaali teenusepakkuja kaudu, kes seal juba käib, või koduomaniku kutsega oma teenusepakkujale. Paroole ei ole — sisenemine toimub isikliku lingiga, mis saadetakse e-postile. Link on isiklik; seda ei tohi edastada.</p>
+                        <p class="mb-3">Koduomanik otsustab, kes tema perest kodu kontaktides on. Iga lisatud kontakt näeb kodu andmeid (ajad, aadress, profiil, kontaktid, hooldusrütm, dokumendid) ja võib neid muuta. Koduomanik vastutab selle eest, kelle ta lisab.</p>
+                        <p>Teenusepakkuja lisab kliendi kodu portaali ainult kliendi teadmisel ja nõusolekul. Klient saab kohe e-kirja oma portaali lingiga ja võib igal ajal paluda kodu eemaldamist.</p>
                     </div>
                     <div x-show="lang === 'en'" x-cloak>
-                        <p class="mb-3">After placing an order, you choose a suitable time from our online calendar. To change the time, contact us at least 48 hours before the scheduled visit.</p>
-                        <p><strong class="text-black font-normal">Gift card:</strong> The gift card recipient chooses a suitable time by entering the received code on our website. When making a booking, the recipient enters their contact details and address.</p>
+                        <p class="mb-3">Use of the portal is by invitation. A home joins through the service provider who already comes there, or through the homeowner inviting their own provider. There are no passwords — you sign in with a personal link sent to your e-mail. The link is personal and must not be shared.</p>
+                        <p class="mb-3">The homeowner decides who in their household is listed as a contact. Every added contact can see the home's data (times, address, profile, contacts, upkeep rhythm, documents) and change it. The homeowner is responsible for whom they add.</p>
+                        <p>A service provider adds a client's home to the portal only with the client's knowledge and consent. The client immediately receives an e-mail with their own portal link and may ask for the home to be removed at any time.</p>
                     </div>
                 </div>
 
                 <div>
-                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '5. Taganemisõigus' : '5. Right of Withdrawal'">5. Taganemisõigus</h2>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '4. Koduomanikule' : '4. For the homeowner'">4. Koduomanikule</h2>
                     <div x-show="lang === 'et'">
-                        <p class="mb-3">Vastavalt võlaõigusseaduse §-le 56 on teil õigus sidevahendi abil sõlmitud lepingust taganeda 14 päeva jooksul alates lepingu sõlmimisest, teatades sellest meile e-posti teel (<a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a>).</p>
-                        <p class="mb-3"><strong class="text-black font-normal">Püsitellimus:</strong> Taganemisõigus ei kehti, kui teenuse osutamine on teie nõusolekul juba alanud enne taganemistähtaja lõppu (s.t esimene külastus on toimunud).</p>
-                        <p><strong class="text-black font-normal">Kinkekaart:</strong> Taganemisõigus kehtib, kui kinkekaart ei ole veel lunastatud (saaja ei ole koodi kasutanud). Lunastatud kinkekaardi puhul taganemisõigus ei kehti.</p>
+                        <p class="mb-3">Koduportaal on koduomanikule tasuta.</p>
+                        <p class="mb-3">Portaalist saadetud soov (lisakoristus, lilled, remonditöö, aja muutmine) on päring, mitte tellimus. Kokkulepe tekib siis, kui teenusepakkuja soovi kinnitab; kinnitusest saad e-kirja ja kalendrikutse. Kui mõnes valdkonnas teenusepakkujat veel ei ole, registreerime huvi ja anname teada, kui tegija leitakse.</p>
+                        <p class="mb-3">Hooldusrütm ja meeldetuletused on abivahend, mis põhineb üldistel soovitustel ja sinu sisestatud kuupäevadel. Need ei asenda seadmete tootja juhiseid ega spetsialisti hinnangut. Vastutus kodu ja seadmete hoolduse eest jääb koduomanikule.</p>
+                        <p>Kodu dokumentide all hoiame pealkirju, märkmeid ja linke sinu enda valitud kohtadesse (nt pilveketas). Me ei salvesta faile ega vastuta lingitud sisu eest.</p>
                     </div>
                     <div x-show="lang === 'en'" x-cloak>
-                        <p class="mb-3">In accordance with the Law of Obligations Act §56, you have the right to withdraw from a contract concluded via means of communication within 14 days of the conclusion of the contract, by notifying us by email (<a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a>).</p>
-                        <p class="mb-3"><strong class="text-black font-normal">Subscription:</strong> The right of withdrawal does not apply if the provision of the service has already begun with your consent before the end of the withdrawal period (i.e., the first visit has taken place).</p>
-                        <p><strong class="text-black font-normal">Gift card:</strong> The right of withdrawal applies if the gift card has not yet been redeemed (the recipient has not used the code). Redeemed gift cards are non-refundable.</p>
+                        <p class="mb-3">The home portal is free for the homeowner.</p>
+                        <p class="mb-3">A request sent from the portal (extra clean, flowers, a repair, a time change) is an enquiry, not an order. An agreement is formed when the service provider confirms the request; you receive an e-mail and a calendar invite on confirmation. Where no provider exists yet for a category, we register your interest and let you know when someone is found.</p>
+                        <p class="mb-3">The upkeep rhythm and reminders are an aid based on general recommendations and the dates you enter. They do not replace manufacturer instructions or a specialist's assessment. Responsibility for the home and its appliances remains with the homeowner.</p>
+                        <p>Under home documents we keep titles, notes and links to places you choose (e.g. a cloud drive). We do not store files and are not responsible for linked content.</p>
                     </div>
                 </div>
 
                 <div>
-                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '6. Tühistamine ja tagasimakse' : '6. Cancellation and Refund'">6. Tühistamine ja tagasimakse</h2>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '5. Teenusepakkujale' : '5. For the service provider'">5. Teenusepakkujale</h2>
                     <div x-show="lang === 'et'">
-                        <p class="mb-3"><strong class="text-black font-normal">Püsitellimuse tühistamine:</strong> Võid tellimuse tühistada igal ajal, kirjutades meile aadressil <a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a>. Tühistamine jõustub jooksva arveldusperioodi lõpus — see tähendab, et sa saad käimasoleva perioodi eest juba makstud teenuse, aga järgmist makset enam ei tehta. Broneeritud külastused jooksva perioodi sees jäävad kehtima. Juba osutatud teenuste eest tagasimakset ei tehta.</p>
-                        <p class="mb-3"><strong class="text-black font-normal">Kinkekaardi tühistamine:</strong> Lunastamata kinkekaardi eest on võimalik taotleda tagasimakset, kirjutades meile e-postile. Juba lunastatud (kood kasutatud) kinkekaardi eest tagasimakset ei tehta.</p>
-                        <p><strong class="text-black font-normal">Broneeringud:</strong> Tühistamisel kustutatakse kõik tulevased broneeringud, mis jäävad makstud perioodi raamidest välja. Jooksva perioodi sees olevad broneeringud jäävad kehtima ja teenus osutatakse.</p>
+                        <p class="mb-3"><strong class="text-black font-normal">Hind.</strong> Töölaua hind sõltub aktiivsete kodude arvust: <strong class="text-black font-normal">Tasuta</strong> — kuni 3 kodu; <strong class="text-black font-normal">Standard</strong> — 19 €/kuus, kuni 20 kodu; <strong class="text-black font-normal">Stuudio</strong> — 39 €/kuus, piiramatult kodusid. Kõik funktsioonid on igas paketis. Hinnad on eurodes ühe töölaua kohta; käibemaks lisandub, kui see kohaldub. Klient ei maksa SUKODA-le töölaua eest midagi.</p>
+                        <p class="mb-3"><strong class="text-black font-normal">Makse ja tühistamine.</strong> Tasulise paketi makse võtab Stripe kaardilt iga kuu perioodi alguses; arve tuleb e-postile ja on töölaual kättesaadav. Paketi võid tühistada igal ajal töölaual — tühistamine jõustub jooksva perioodi lõpus, tagasimakset perioodi sees ei tehta. Paketi lõppedes jääb töölaud tasuta paketti: kliendid, ajad ja andmed säilivad; uusi kodusid saab lisada tasuta paketi piirini. Paketi vahetamisel arvestatakse vahe jooksva perioodi eest proportsionaalselt.</p>
+                        <p class="mb-3"><strong class="text-black font-normal">Hinnamuutus.</strong> Kui muudame hindu, teavitame sellest vähemalt 30 päeva ette e-postile ja töölaual; uus hind hakkab kehtima järgmisest perioodist pärast teavitusaega. Kui sa uue hinnaga ei nõustu, saad paketi enne seda tühistada.</p>
+                        <p class="mb-3">Teenusepakkuja vastutab ise oma töö kvaliteedi, hindade, arvete, maksude, lubade ja kindlustuse eest. Soovitame omada vastutuskindlustust. SUKODA ei ole teenusepakkuja tööandja ega tema teenuse osapool.</p>
+                        <p class="mb-3">Klientide andmeid (aadress, kontaktid, sisenemisjuhised, eelistused) kasutab teenusepakkuja ainult kokkulepitud teenuse osutamiseks ja hoiab neid konfidentsiaalselt. Andmete edastamine kolmandatele isikutele või kasutamine turunduseks on lubatud ainult kliendi nõusolekul.</p>
+                        <p>SUKODA võib töölaua ligipääsu piirata või lõpetada, kui teenusepakkuja lisab kliente nende teadmata, kasutab andmeid väärkasutuslikult või kahjustab portaali usaldusväärsust.</p>
                     </div>
                     <div x-show="lang === 'en'" x-cloak>
-                        <p class="mb-3"><strong class="text-black font-normal">Subscription cancellation:</strong> You may cancel your subscription at any time by writing to us at <a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a>. Cancellation takes effect at the end of the current billing period — meaning you will receive the service already paid for in the current period, but no further payments will be made. Bookings within the current paid period remain valid. No refunds will be made for services already rendered.</p>
-                        <p class="mb-3"><strong class="text-black font-normal">Gift card cancellation:</strong> A refund may be requested for an unredeemed gift card by writing to us by email. No refunds will be made for already redeemed (code used) gift cards.</p>
-                        <p><strong class="text-black font-normal">Bookings:</strong> Upon cancellation, all future bookings outside the paid period will be cancelled. Bookings within the current paid period remain valid and the service will be provided.</p>
+                        <p class="mb-3"><strong class="text-black font-normal">Price.</strong> The desk is priced by the number of active homes: <strong class="text-black font-normal">Free</strong> — up to 3 homes; <strong class="text-black font-normal">Standard</strong> — €19/month, up to 20 homes; <strong class="text-black font-normal">Studio</strong> — €39/month, unlimited homes. Every feature is in every plan. Prices are in euros per desk; VAT is added where applicable. The client never pays SUKODA for the desk.</p>
+                        <p class="mb-3"><strong class="text-black font-normal">Payment and cancellation.</strong> A paid plan is charged by Stripe to your card monthly at the start of each period; the invoice is e-mailed and available on the desk. You can cancel at any time on the desk — cancellation takes effect at the end of the current period, with no refund for the remainder. When a plan ends the desk stays on the free plan: clients, times and data are kept; new homes can be added up to the free limit. On a plan change the difference is prorated for the current period.</p>
+                        <p class="mb-3"><strong class="text-black font-normal">Price changes.</strong> If we change prices we give at least 30 days' notice by e-mail and on the desk; the new price applies from the first period after the notice. If you do not agree, you can cancel before then.</p>
+                        <p class="mb-3">The provider is solely responsible for the quality of their work, their prices, invoices, taxes, permits and insurance. We recommend carrying liability insurance. SUKODA is not the provider's employer and not a party to their service.</p>
+                        <p class="mb-3">The provider uses client data (address, contacts, entry instructions, preferences) only to deliver the agreed service and keeps it confidential. Passing data to third parties or using it for marketing is allowed only with the client's consent.</p>
+                        <p>SUKODA may restrict or end desk access if a provider adds clients without their knowledge, misuses data or harms the trustworthiness of the portal.</p>
                     </div>
                 </div>
 
                 <div>
-                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '7. Kvaliteedi tagamine' : '7. Quality Assurance'">7. Kvaliteedi tagamine</h2>
-                    <p x-show="lang === 'et'">Kui oled külastuse kvaliteediga rahulolematu, teavita meid kohe. Tuleme tagasi ja parandame tasuta, ilma küsimusteta. See on meie lubadus.</p>
-                    <p x-show="lang === 'en'" x-cloak>If you are not satisfied with the quality of a visit, notify us immediately. We will return and fix it free of charge, no questions asked. This is our promise.</p>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '6. Soovide ja tellimuste edastamine' : '6. Relaying requests and orders'">6. Soovide ja tellimuste edastamine</h2>
+                    <p x-show="lang === 'et'">Kui teenusepakkuja teenus sisaldab lilli või muud, mille valmistab kolmas osapool (nt florist), edastab SUKODA tellimuse info — kellele, mis ajaks, eelistused — sellele osapoolele. Tasumine toimub osapoolte vahel nende endi kokkuleppel. SUKODA ei ole tehingu osapool ega vastuta täitmise eest.</p>
+                    <p x-show="lang === 'en'" x-cloak>Where a provider's service includes flowers or anything else made by a third party (e.g. a florist), SUKODA relays the order details — for whom, by when, preferences — to that party. Payment happens between the parties under their own agreement. SUKODA is not a party to the transaction and is not responsible for its fulfilment.</p>
                 </div>
 
                 <div>
-                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '8. Vastutus ja kindlustus' : '8. Liability and Insurance'">8. Vastutus ja kindlustus</h2>
-                    <p x-show="lang === 'et'">Kõik meie partnerid on kindlustatud. Kui koristuse käigus tekib kahju, käsitleme seda eraldi. Partner on kindlustatud vastutuskindlustusega vähemalt 10 000 € kattega.</p>
-                    <p x-show="lang === 'en'" x-cloak>All our partners are insured. If damage occurs during cleaning, we will handle it separately. The partner is insured with liability insurance with at least €10,000 coverage.</p>
-                </div>
-
-                <div>
-                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '9. Konfidentsiaalsus' : '9. Confidentiality'">9. Konfidentsiaalsus</h2>
-                    <p x-show="lang === 'et'">Sinu kodu on sinu eraasi. Me ei räägi sellest kellelegi. Mitte kunagi. Kõik meie partnerid kohustuvad konfidentsiaalsust säilitama.</p>
-                    <p x-show="lang === 'en'" x-cloak>Your home is your private matter. We don't talk about it to anyone. Ever. All our partners are bound by confidentiality.</p>
-                </div>
-
-                <div>
-                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '10. Muudatused tingimustes' : '10. Changes to Terms'">10. Muudatused tingimustes</h2>
-                    <p x-show="lang === 'et'">Jätame endale õiguse muuta neid tingimusi. Olulistest muudatustest teavitame kliente e-posti teel vähemalt 30 päeva ette.</p>
-                    <p x-show="lang === 'en'" x-cloak>We reserve the right to change these terms. We will notify clients of significant changes by email at least 30 days in advance.</p>
-                </div>
-
-                <div>
-                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '11. Kontakt ja vaidluste lahendamine' : '11. Contact and Dispute Resolution'">11. Kontakt ja vaidluste lahendamine</h2>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '7. Kui SUKODA müüb ise: kinkekaardid ja paketid' : '7. When SUKODA sells directly: gift cards and packages'">7. Kui SUKODA müüb ise</h2>
                     <div x-show="lang === 'et'">
-                        <p class="mb-4">Küsimuste ja kaebuste korral võta meiega ühendust: <a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a></p>
-                        <p class="mb-2">SUKODA · Registrikood 14713548 · Kiikri tn 6/2, Tallinn 10159</p>
-                        <p>Vaidluste korral on teil õigus pöörduda Tarbijakaitse ja Tehnilise Järelevalve Ameti poole (<a href="https://ttja.ee" target="_blank" rel="noopener" class="text-black border-b border-accent hover:text-accent transition-colors">ttja.ee</a>) või kasutada Euroopa Liidu veebipõhist vaidluste lahendamise platvormi (<a href="https://ec.europa.eu/odr" target="_blank" rel="noopener" class="text-black border-b border-accent hover:text-accent transition-colors">ec.europa.eu/odr</a>).</p>
+                        <p class="mb-3">Avalik müük on suletud: SUKODA ei müü praegu kinkekaarte ega koristuspakette ja veebis lunastamine on peatatud. Varem ostetud kinkekaart kehtib — kirjuta <a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a> ja lepime lahenduse kokku isiklikult (teenus meie partneri kaudu või tagasimakse). Kui SUKODA (müüjana Epic Ship OÜ) müüb tulevikus ise kinkekaarti või kuupaketti, kehtib lisaks järgmine.</p>
+                        <p class="mb-3"><strong class="text-black font-normal">Hind ja makse.</strong> Hinnad sisaldavad käibemaksu. Makseid töötleb Stripe; me ei salvesta kaardiandmeid. Kuupaketi makse võetakse perioodi alguses eeloleva perioodi eest.</p>
+                        <p class="mb-3"><strong class="text-black font-normal">Taganemisõigus.</strong> Võlaõigusseaduse § 56 alusel võid sidevahendi abil sõlmitud lepingust taganeda 14 päeva jooksul, teatades sellest e-postil <a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a>. Taganemisõigus ei kehti, kui teenuse osutamine on sinu nõusolekul juba alanud (esimene visiit on toimunud) või kinkekaart on lunastatud.</p>
+                        <p class="mb-3"><strong class="text-black font-normal">Tühistamine.</strong> Kuupaketi võid tühistada igal ajal; tühistamine jõustub jooksva perioodi lõpus ja perioodi sees broneeritud visiidid toimuvad. Lunastamata kinkekaardi eest saab taotleda tagasimakset. Juba osutatud teenuse eest tagasimakset ei tehta.</p>
+                        <p><strong class="text-black font-normal">Kvaliteet.</strong> Kui SUKODA enda müüdud visiidi kvaliteet ei vasta ootusele, anna kohe teada — tuleme tagasi ja parandame tasuta.</p>
                     </div>
                     <div x-show="lang === 'en'" x-cloak>
-                        <p class="mb-4">For questions and complaints, please contact us: <a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a></p>
-                        <p class="mb-2">SUKODA · Registration code 14713548 · Kiikri tn 6/2, Tallinn 10159</p>
-                        <p>In case of disputes, you have the right to contact the Consumer Protection and Technical Regulatory Authority (<a href="https://ttja.ee" target="_blank" rel="noopener" class="text-black border-b border-accent hover:text-accent transition-colors">ttja.ee</a>) or use the European Union Online Dispute Resolution platform (<a href="https://ec.europa.eu/odr" target="_blank" rel="noopener" class="text-black border-b border-accent hover:text-accent transition-colors">ec.europa.eu/odr</a>).</p>
+                        <p class="mb-3">Public sales are closed: SUKODA does not currently sell gift cards or cleaning packages, and online redemption is paused. A previously purchased gift card remains valid — write to <a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a> and we agree a solution personally (service through our partner, or a refund). Should SUKODA (with Epic Ship OÜ as seller) sell a gift card or monthly package itself in future, the following also applies.</p>
+                        <p class="mb-3"><strong class="text-black font-normal">Price and payment.</strong> Prices include VAT. Payments are processed by Stripe; we do not store card details. A monthly package is charged at the start of each period for the period ahead.</p>
+                        <p class="mb-3"><strong class="text-black font-normal">Right of withdrawal.</strong> Under § 56 of the Estonian Law of Obligations Act you may withdraw from a distance contract within 14 days by e-mailing <a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a>. The right does not apply once the service has begun with your consent (the first visit has taken place) or a gift card has been redeemed.</p>
+                        <p class="mb-3"><strong class="text-black font-normal">Cancellation.</strong> A monthly package can be cancelled at any time; cancellation takes effect at the end of the current period and visits booked within it go ahead. A refund can be requested for an unredeemed gift card. No refund is made for services already rendered.</p>
+                        <p><strong class="text-black font-normal">Quality.</strong> If a visit sold by SUKODA itself falls short, tell us right away — we come back and fix it free of charge.</p>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '8. Vastutus' : '8. Liability'">8. Vastutus</h2>
+                    <div x-show="lang === 'et'">
+                        <p class="mb-3">Hoiame portaali töös ja andmeid turvaliselt mõistliku hoolsusega, kuid ei garanteeri katkematut toimimist. Teavitused, kalendrikutsed ja e-kirjad sõltuvad ka kolmandatest teenustest (e-post, kalender), mille katkestuste eest me ei vastuta.</p>
+                        <p>SUKODA ei vastuta teenusepakkuja töö, selle kvaliteedi, hilinemise ega kodus tekkinud kahju eest — need küsimused lahendatakse koduomaniku ja teenusepakkuja vahel. Meie vastutus on piiratud seadusega lubatud ulatuses; tasulise teenuse puhul maksimaalselt viimase 12 kuu jooksul meile makstud summaga.</p>
+                    </div>
+                    <div x-show="lang === 'en'" x-cloak>
+                        <p class="mb-3">We keep the portal running and the data secure with reasonable care, but do not guarantee uninterrupted operation. Notifications, calendar invites and e-mails also depend on third-party services (e-mail, calendar) whose outages we are not responsible for.</p>
+                        <p>SUKODA is not liable for a provider's work, its quality, delays or damage in the home — these are resolved between the homeowner and the provider. Our liability is limited to the extent permitted by law; for paid services, to the amount paid to us in the preceding 12 months.</p>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '9. Konfidentsiaalsus ja andmed' : '9. Confidentiality and data'">9. Konfidentsiaalsus ja andmed</h2>
+                    <p x-show="lang === 'et'">Sinu kodu on sinu eraasi. Kodu andmeid näevad ainult need, kelle sa oled lisanud, ja teenusepakkuja, kes su kodu teenindab — ainult ulatuses, mida teenus nõuab. Isikuandmete töötlemist kirjeldab <a href="/privaatsus" class="text-black border-b border-accent hover:text-accent transition-colors">privaatsuspoliitika</a>.</p>
+                    <p x-show="lang === 'en'" x-cloak>Your home is your private matter. Home data is visible only to the people you have added and to the provider serving your home — only to the extent the service requires. Processing of personal data is described in the <a href="/privaatsus" class="text-black border-b border-accent hover:text-accent transition-colors">privacy policy</a>.</p>
+                </div>
+
+                <div>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '10. Lõpetamine' : '10. Ending use'">10. Lõpetamine</h2>
+                    <p x-show="lang === 'et'">Koduomanik võib igal ajal paluda kodu portaalist eemaldada, kirjutades <a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a>. Teenusepakkuja võib oma töölaua sulgeda samamoodi; tema klientide kodud jäävad klientidele alles. Kodu müügi korral saab omanik paluda kodu andmete kustutamist või, uue omaniku soovil, üleandmist.</p>
+                    <p x-show="lang === 'en'" x-cloak>A homeowner may ask for their home to be removed from the portal at any time by writing to <a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a>. A provider may close their desk the same way; their clients' homes remain with the clients. When a home is sold, the owner can ask for its data to be deleted or, at the new owner's request, handed over.</p>
+                </div>
+
+                <div>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '11. Muudatused tingimustes' : '11. Changes to these terms'">11. Muudatused tingimustes</h2>
+                    <p x-show="lang === 'et'">Võime tingimusi muuta. Olulistest muudatustest teavitame portaali kasutajaid e-posti teel vähemalt 30 päeva ette. Portaali kasutamise jätkamine pärast muudatuse jõustumist tähendab sellega nõustumist.</p>
+                    <p x-show="lang === 'en'" x-cloak>We may change these terms. We notify portal users of significant changes by e-mail at least 30 days in advance. Continuing to use the portal after a change takes effect means you accept it.</p>
+                </div>
+
+                <div>
+                    <h2 class="font-serif text-2xl font-light mb-4 text-black" x-text="lang === 'et' ? '12. Kontakt ja vaidlused' : '12. Contact and disputes'">12. Kontakt ja vaidlused</h2>
+                    <div x-show="lang === 'et'">
+                        <p class="mb-3">Küsimuste ja kaebuste korral: <a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a></p>
+                        <p class="mb-3">Epic Ship OÜ · Registrikood 14713548 · Kiikri tn 6/2, Tallinn 10159</p>
+                        <p>Kohaldub Eesti õigus. Tarbijal on õigus pöörduda Tarbijakaitse ja Tehnilise Järelevalve Ameti poole (<a href="https://ttja.ee" target="_blank" rel="noopener" class="text-black border-b border-accent hover:text-accent transition-colors">ttja.ee</a>) või kasutada Euroopa Liidu vaidluste lahendamise platvormi (<a href="https://ec.europa.eu/odr" target="_blank" rel="noopener" class="text-black border-b border-accent hover:text-accent transition-colors">ec.europa.eu/odr</a>).</p>
+                    </div>
+                    <div x-show="lang === 'en'" x-cloak>
+                        <p class="mb-3">Questions and complaints: <a href="mailto:tere@sukoda.ee" class="text-black border-b border-accent hover:text-accent transition-colors">tere@sukoda.ee</a></p>
+                        <p class="mb-3">Epic Ship OÜ · Registration code 14713548 · Kiikri tn 6/2, Tallinn 10159</p>
+                        <p>Estonian law applies. Consumers may turn to the Consumer Protection and Technical Regulatory Authority (<a href="https://ttja.ee" target="_blank" rel="noopener" class="text-black border-b border-accent hover:text-accent transition-colors">ttja.ee</a>) or use the EU Online Dispute Resolution platform (<a href="https://ec.europa.eu/odr" target="_blank" rel="noopener" class="text-black border-b border-accent hover:text-accent transition-colors">ec.europa.eu/odr</a>).</p>
                     </div>
                 </div>
 
             </div>
 
             <div class="mt-12 pt-8 border-t border-[#E8E3DD]">
-                <p class="text-xs text-muted/60 font-sans" x-text="lang === 'et' ? 'Viimati uuendatud: Veebruar 2026' : 'Last updated: February 2026'">Viimati uuendatud: Veebruar 2026</p>
+                <p class="text-xs text-muted/60 font-sans" x-text="lang === 'et' ? 'Viimati uuendatud: September 2026' : 'Last updated: September 2026'">Viimati uuendatud: September 2026</p>
             </div>
         </section>
 
@@ -202,37 +231,34 @@
 
         <!-- Footer -->
         <footer class="bg-black text-paper">
-            <div class="grid md:grid-cols-12 py-16 px-6 md:px-12">
-                <div class="md:col-span-4 mb-8 md:mb-0">
-                    <a href="index.html" class="font-serif text-2xl tracking-[0.08em] font-light block mb-4">SUKODA</a>
-                    <p class="text-gray-300 text-xs font-sans font-light leading-relaxed max-w-xs">
-                        <span x-show="lang === 'et'">Sinu kodu, meie hoole all.<br>Tallinn, Eesti.</span>
-                        <span x-show="lang === 'en'" x-cloak>Your home, our care.<br>Tallinn, Estonia.</span>
+            <div class="grid md:grid-cols-12 gap-8 py-12 md:py-14 px-6 md:px-12">
+                <div class="md:col-span-4">
+                    <a href="/" class="font-serif text-2xl tracking-[0.08em] font-light block mb-4">SUKODA</a>
+                    <p class="text-gray-300 text-sm font-sans font-light leading-relaxed max-w-xs">
+                        <span x-show="lang === 'et'">Koduportaal ja töölaud neile, kes kodude eest hoolitsevad.<br>Tallinn, Eesti.</span>
+                        <span x-show="lang === 'en'" x-cloak>A home portal, and a desk for those who care for homes.<br>Tallinn, Estonia.</span>
                     </p>
                 </div>
-                <div class="md:col-span-4 mb-8 md:mb-0">
-                    <p class="text-[10px] uppercase tracking-[0.25em] text-gray-300 font-sans mb-4">
-                        <span x-show="lang === 'et'">Lingid</span>
-                        <span x-show="lang === 'en'" x-cloak>Links</span>
-                    </p>
-                    <div class="flex flex-col gap-3 text-xs text-gray-300 font-sans font-light">
-                        <a href="tingimused.html" class="text-paper transition-colors" x-text="lang === 'et' ? 'Tingimused' : 'Terms'">Tingimused</a>
-                        <a href="privaatsus.html" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Privaatsuspoliitika' : 'Privacy'">Privaatsuspoliitika</a>
+                <div class="md:col-span-4">
+                    <p class="text-[10px] uppercase tracking-[0.25em] text-gray-300 font-sans mb-4"><span x-show="lang === 'et'">Lingid</span><span x-show="lang === 'en'" x-cloak>Links</span></p>
+                    <div class="flex flex-col gap-3 text-sm text-gray-300 font-sans font-light">
+                        <a href="/lugu" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Lugu' : 'Story'">Lugu</a>
+                        <a href="/haldus" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Töölaud teenusepakkujale' : 'Provider desk'">Töölaud teenusepakkujale</a>
+                        <a href="/minu" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Minu kodu' : 'My home'">Minu kodu</a>
+                        <a href="/tingimused" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Tingimused' : 'Terms'">Tingimused</a>
+                        <a href="/privaatsus" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Privaatsuspoliitika' : 'Privacy'">Privaatsuspoliitika</a>
                     </div>
                 </div>
                 <div class="md:col-span-4">
-                    <p class="text-[10px] uppercase tracking-[0.25em] text-gray-300 font-sans mb-4">
-                        <span x-show="lang === 'et'">Kontakt</span>
-                        <span x-show="lang === 'en'" x-cloak>Contact</span>
-                    </p>
-                    <a href="mailto:tere@sukoda.ee" class="text-xs font-sans font-light text-gray-300 hover:text-paper transition-colors block mb-2">tere@sukoda.ee</a>
-                    <a href="mailto:partner@sukoda.ee" class="text-xs font-sans font-light text-gray-300 hover:text-paper transition-colors block">partner@sukoda.ee</a>
+                    <p class="text-[10px] uppercase tracking-[0.25em] text-gray-300 font-sans mb-4"><span x-show="lang === 'et'">Kontakt</span><span x-show="lang === 'en'" x-cloak>Contact</span></p>
+                    <a href="mailto:tere@sukoda.ee" class="text-sm font-sans font-light text-gray-300 hover:text-paper transition-colors block mb-2">tere@sukoda.ee</a>
+                    <a href="mailto:partner@sukoda.ee" class="text-sm font-sans font-light text-gray-300 hover:text-paper transition-colors block">partner@sukoda.ee</a>
                 </div>
             </div>
             <div class="border-t border-gray-800 py-6 px-6 md:px-12">
-                <p class="text-[10px] text-gray-400 font-sans text-center tracking-wide">
-                    <span x-show="lang === 'et'">© 2026 SUKODA · Registrikood 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
-                    <span x-show="lang === 'en'" x-cloak>© 2026 SUKODA · Reg. code 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
+                <p class="text-[11px] text-gray-400 font-sans text-center tracking-wide">
+                    <span x-show="lang === 'et'">© 2026 SUKODA on Epic Ship OÜ kaubamärk · Registrikood 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
+                    <span x-show="lang === 'en'" x-cloak>© 2026 SUKODA is a trademark of Epic Ship OÜ · Reg. code 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
                 </p>
             </div>
         </footer>

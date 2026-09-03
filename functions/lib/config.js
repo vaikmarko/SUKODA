@@ -25,7 +25,8 @@ const db = admin.firestore();
 
 let _stripe;
 function getStripe() {
-  if (!_stripe) _stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+  // Secrets pasted with a trailing newline break the Authorization header — always trim
+  if (!_stripe) _stripe = require('stripe')((process.env.STRIPE_SECRET_KEY || '').trim());
   return _stripe;
 }
 
