@@ -4,24 +4,23 @@
     <meta charset="UTF-8">
     <style>[x-cloak] { display: none !important; }</style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SUKODA | Meie lugu</title>
+    <title>SUKODA | Lugu — sündinud kingitusest, kasvanud selle haldamisest</title>
     
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="assets/logo/icon-s-black.svg">
-    <link rel="apple-touch-icon" href="assets/logo/icon-square.svg">
+    <link rel="icon" type="image/svg+xml" href="/assets/logo/icon-s-black.svg">
+    <link rel="apple-touch-icon" href="/assets/logo/icon-square.svg">
     
     <!-- Open Graph -->
-    <meta property="og:title" content="SUKODA — Meie lugu">
-    <meta property="og:description" content="Sündinud soovist pakkuda parimat. Veendumus, et kodu väärib sama hoolikust nagu parim hotell maailmas.">
-    <meta property="og:image" content="https://sukoda.ee/assets/images/hero-luxury.webp">
-    <meta property="og:url" content="https://sukoda.ee/lugu.html">
-    <meta property="og:type" content="website">
+    <meta property="og:title" content="SUKODA — Lugu. Sündinud kingitusest, kasvanud selle haldamisest.">
+    <meta property="og:description" content="Marko Vaik tegi oma naisele jõulukingituse: aasta hoolitsetud kodu. Selle kingituse pidamine näitas, mis kodudel tegelikult puudu on — ja nii sündis koduportaal ja töölaud inimestele, kes kodude eest hoolitsevad.">
+    <meta property="og:image" content="https://sukoda.ee/assets/images/product/minu-ulevaade.png">
+    <meta property="og:url" content="https://sukoda.ee/lugu">
+    <meta property="og:type" content="article">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="description" content="SUKODA lugu. Sündinud soovist pakkuda parimat. Veendumus, et kodu väärib sama hoolikust nagu parim hotell maailmas.">
+    <meta name="description" content="SUKODA lugu. Jõulukingitusest naisele — aasta hoolitsetud kodu — kasvas välja koduportaal perele ja töölaud koduhooldajale, floristile ja remondimehele. Asutaja Marko Vaik, Tallinn.">
     <meta property="og:locale" content="et_EE">
     <meta property="og:site_name" content="SUKODA">
     
-    <!-- Meta Pixel -->
     <script src="/assets/js/tracking.js"></script>
     <script type="module" src="/assets/js/main.js"></script>
     <link rel="canonical" href="https://sukoda.ee/lugu">
@@ -35,7 +34,7 @@
     <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[10000] focus:bg-accent focus:text-paper focus:px-4 focus:py-2 focus:text-sm focus:font-sans">Skip to main content</a>
 
     <!-- Scroll Progress -->
-    <div class="scroll-progress" id="scrollProgress"></div>
+    <div class="scroll-progress" id="scrollProgress" role="progressbar" aria-label="Page scroll progress"></div>
 
     <!-- Grid Container -->
     <div class="max-w-[1440px] mx-auto bg-paper min-h-screen border-x border-[#E8E3DD]">
@@ -43,157 +42,221 @@
         <!-- Navigation -->
         <nav class="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm grid-line-b" x-data="{ mobileMenu: false }" aria-label="Main navigation">
             <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12">
-                <a href="index.html" class="font-serif text-2xl md:text-3xl tracking-[0.08em] font-light">
-                    SUKODA
-                </a>
-                
+                <a href="/" class="font-serif text-2xl md:text-3xl tracking-[0.08em] font-light">SUKODA</a>
                 <div class="hidden md:flex gap-10 text-[11px] uppercase tracking-[0.2em] font-sans font-medium text-muted">
-                    <a href="index.html" class="luxury-link hover:text-black transition-colors" x-text="lang === 'et' ? 'Avaleht' : 'Home'">Avaleht</a>
-                    <a href="kingitus.html" class="luxury-link hover:text-black transition-colors" x-text="lang === 'et' ? 'Kingitus' : 'Gift'">Kingitus</a>
-                    <a href="partnerlus.html" class="luxury-link hover:text-black transition-colors" x-text="lang === 'et' ? 'Koostöö' : 'Partnership'">Koostöö</a>
-                    <a href="lugu.html" class="text-black transition-colors" x-text="lang === 'et' ? 'Lugu' : 'Story'">Lugu</a>
+                    <a href="/#kodule" class="luxury-link hover:text-black transition-colors" x-text="lang === 'et' ? 'Koduomanikule' : 'For homeowners'">Koduomanikule</a>
+                    <a href="/#teenusepakkujale" class="luxury-link hover:text-black transition-colors" x-text="lang === 'et' ? 'Teenusepakkujale' : 'For providers'">Teenusepakkujale</a>
+                    <a href="/lugu" class="luxury-link text-black transition-colors" aria-current="page" x-text="lang === 'et' ? 'Lugu' : 'Story'">Lugu</a>
                 </div>
-
                 <div class="flex items-center gap-4 md:gap-6">
                     <div class="flex text-[10px] uppercase tracking-[0.2em] font-sans font-medium gap-2">
                         <button @click="lang = 'et'" :class="lang === 'et' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">ET</button>
                         <span class="text-[#D4CFC8]">/</span>
                         <button @click="lang = 'en'" :class="lang === 'en' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">EN</button>
                     </div>
-
-                    <a href="minu.html" class="hidden md:inline-block bg-black text-paper px-5 py-2 text-[11px] uppercase tracking-[0.2em] font-sans font-medium hover:bg-accent transition-colors duration-500" x-text="lang === 'et' ? 'Sisene' : 'Log in'">Sisene</a>
-
-                    <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2" aria-label="Toggle menu" :aria-expanded="mobileMenu">
-                        <svg x-show="!mobileMenu" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path>
-                        </svg>
-                        <svg x-show="mobileMenu" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
+                    <a href="/minu" class="hidden md:inline-block bg-black text-paper px-5 py-2 text-[11px] uppercase tracking-[0.2em] font-sans font-medium hover:bg-accent transition-colors duration-500" x-text="lang === 'et' ? 'Sisene' : 'Log in'">Sisene</a>
+                    <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2" :aria-expanded="mobileMenu" aria-label="Toggle menu">
+                        <svg x-show="!mobileMenu" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                        <svg x-show="mobileMenu" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
             </div>
-
             <div x-show="mobileMenu" x-cloak class="md:hidden bg-paper border-t border-[#E8E3DD]">
                 <div class="flex flex-col px-4 py-8 space-y-5 text-[11px] uppercase tracking-[0.2em] font-sans font-medium text-muted">
-                    <a href="index.html" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Avaleht' : 'Home'">Avaleht</a>
-                    <a href="kingitus.html" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Kingitus' : 'Gift'">Kingitus</a>
-                    <a href="partnerlus.html" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Koostöö' : 'Partnership'">Koostöö</a>
-                    <a href="lugu.html" class="py-2 text-black" x-text="lang === 'et' ? 'Lugu' : 'Story'">Lugu</a>
-                    <a href="minu.html" @click="mobileMenu = false" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Sisene' : 'Log in'">Sisene</a>
+                    <a href="/#kodule" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Koduomanikule' : 'For homeowners'">Koduomanikule</a>
+                    <a href="/#teenusepakkujale" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Teenusepakkujale' : 'For providers'">Teenusepakkujale</a>
+                    <a href="/lugu" class="py-2 text-black" x-text="lang === 'et' ? 'Lugu' : 'Story'">Lugu</a>
+                    <a href="/minu" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Sisene' : 'Log in'">Sisene</a>
                 </div>
             </div>
         </nav>
 
         <main id="main-content">
-        <!-- Hero Section -->
-        <header class="relative min-h-[60vh] md:min-h-[70vh] grid-line-b overflow-hidden">
-            <div class="absolute inset-0 animate-hero-image">
-                <picture>
-                    <source type="image/webp" srcset="assets/images/story-inspiration-480w.webp 480w, assets/images/story-inspiration-768w.webp 768w, assets/images/story-inspiration-1024w.webp 1024w" sizes="(max-width: 768px) 100vw, 66vw">
-                    <img src="assets/images/story-inspiration.webp" alt="Luxury boutique hotel suite — the inspiration behind SUKODA" width="800" height="500" class="w-full h-full object-cover">
-                </picture>
-                <div class="absolute inset-0 bg-gradient-to-r from-paper via-paper/80 to-transparent"></div>
-            </div>
-            
-            <div class="relative z-10 max-w-4xl px-6 md:px-16 py-24 md:py-32 flex flex-col justify-center min-h-[60vh] md:min-h-[70vh]">
-                <div class="accent-line mb-8" style="animation: fadeIn 0.8s ease-out forwards;"></div>
-                <h1 class="font-serif text-5xl md:text-7xl lg:text-[5.5rem] leading-[1.08] font-light animate-hero-title">
-                    <span x-show="lang === 'et'">Sündinud soovist<br>pakkuda parimat.</span>
-                    <span x-show="lang === 'en'" x-cloak>Born from the desire<br>to offer the very best.</span>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             HEADER — paper and grid lines; the founder, not a mood image
+             ═══════════════════════════════════════════════════════════════ -->
+        <header class="grid md:grid-cols-12 grid-line-b">
+            <div class="md:col-span-7 px-6 md:px-16 pt-16 pb-12 md:py-28 flex flex-col justify-center grid-line border-b md:border-b-0 border-[#E8E3DD]">
+                <div class="accent-line mb-8 animate-fade-in"></div>
+                <p class="text-[11px] uppercase tracking-[0.22em] text-muted font-sans mb-6 animate-fade-in">
+                    <span x-show="lang === 'et'">Lugu · Marko Vaik, asutaja</span>
+                    <span x-show="lang === 'en'" x-cloak>Story · Marko Vaik, founder</span>
+                </p>
+                <h1 class="font-serif text-5xl md:text-6xl lg:text-[4.75rem] leading-[1.05] mb-8 font-light animate-hero-title">
+                    <span x-show="lang === 'et'">Sündinud kingitusest.<br><span class="text-muted/60">Kasvanud selle haldamisest.</span></span>
+                    <span x-show="lang === 'en'" x-cloak>Born from a gift.<br><span class="text-muted/60">Grown from running it.</span></span>
                 </h1>
+                <p class="text-base md:text-lg text-muted max-w-md font-sans font-light leading-relaxed animate-hero-subtitle">
+                    <span x-show="lang === 'et'">Ma ei plaaninud ettevõtet. Tegin oma naisele jõulukingituse — ja selle kingituse pidamine näitas, mis kodudel tegelikult puudu on.</span>
+                    <span x-show="lang === 'en'" x-cloak>I did not plan a company. I made my wife a Christmas gift — and running that gift showed what homes are actually missing.</span>
+                </p>
+            </div>
+            <div class="md:col-span-5 bg-cream/40 flex items-end justify-center px-6 md:px-12 pt-10 md:pt-16">
+                <figure class="w-full max-w-[380px] animate-hero-image">
+                    <picture>
+                        <source type="image/webp" srcset="/assets/images/marko-vaik-480.webp 480w, /assets/images/marko-vaik.webp 960w" sizes="(max-width: 768px) 80vw, 380px">
+                        <img src="/assets/images/marko-vaik.jpg" srcset="/assets/images/marko-vaik-480.jpg 480w, /assets/images/marko-vaik.jpg 960w" sizes="(max-width: 768px) 80vw, 380px" width="960" height="1200" alt="Marko Vaik, SUKODA asutaja" :alt="lang === 'et' ? 'Marko Vaik, SUKODA asutaja' : 'Marko Vaik, founder of SUKODA'" class="w-full h-auto block border border-[#D4CFC8]" fetchpriority="high">
+                    </picture>
+                    <figcaption class="py-4 text-[11px] uppercase tracking-[0.2em] text-muted font-sans">
+                        <span x-show="lang === 'et'">Marko Vaik, asutaja · Tallinn</span>
+                        <span x-show="lang === 'en'" x-cloak>Marko Vaik, founder · Tallinn</span>
+                    </figcaption>
+                </figure>
             </div>
         </header>
 
-        <!-- Section 01: Origin -->
+        <!-- ═══════════════════════════════════════════════════════════════
+             ( 01 ) KINGITUS — Christmas 2025, a year of a cared-for home
+             ═══════════════════════════════════════════════════════════════ -->
         <section class="grid md:grid-cols-12 grid-line-b">
-            <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
+            <div class="md:col-span-4 p-6 md:p-16 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
                 <div class="accent-line mb-4"></div>
-                <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 01 )</span>
-                <h2 class="font-serif text-2xl md:text-3xl font-light" x-text="lang === 'et' ? 'Algus' : 'The beginning'">Algus</h2>
+                <span class="text-[11px] uppercase tracking-[0.2em] text-muted font-sans block mb-3">( 01 )</span>
+                <h2 class="font-serif text-3xl md:text-4xl font-light">
+                    <span x-show="lang === 'et'">Kingitus</span>
+                    <span x-show="lang === 'en'" x-cloak>The gift</span>
+                </h2>
             </div>
-            <div class="md:col-span-8 p-6 md:p-20 lg:p-24 reveal">
-                <p class="text-xl md:text-3xl font-serif font-light leading-relaxed mb-10 md:mb-14">
-                    <span x-show="lang === 'et'">Maailma parimad hotellid teavad üht lihtsat tõde: tõeline luksus pole see, mida näed. <span class="text-muted/50">See on see, mida tunned.</span></span>
-                    <span x-show="lang === 'en'" x-cloak>The world's finest hotels understand a simple truth: true luxury is not what you see. <span class="text-muted/50">It's what you feel.</span></span>
+            <div class="md:col-span-8 p-6 md:p-16 reveal">
+                <p class="font-serif text-2xl md:text-3xl font-light leading-snug mb-8 max-w-2xl">
+                    <span x-show="lang === 'et'">Jõulud 2025. <span class="text-muted/60">Aasta hoolitsetud kodu Stellale.</span></span>
+                    <span x-show="lang === 'en'" x-cloak>Christmas 2025. <span class="text-muted/60">A year of a cared-for home for Stella.</span></span>
                 </p>
-                <div class="font-sans text-sm leading-relaxed text-muted space-y-6 max-w-lg mb-10 md:mb-14">
-                    <p class="font-light" x-show="lang === 'et'">Astud sisse ja kõik on paigas. Iga detail läbi mõeldud. Puhas, värske, laitmatu. Keegi on hoolinud enne sind.</p>
-                    <p class="font-light" x-show="lang === 'en'" x-cloak>You walk in and everything is in place. Every detail considered. Clean, fresh, immaculate. Someone has cared before you.</p>
-                    <p class="font-light" x-show="lang === 'et'">SUKODA sündis soovist tuua täpselt see tunne sinu koju.</p>
-                    <p class="font-light" x-show="lang === 'en'" x-cloak>SUKODA was born from the desire to bring exactly that feeling to your home.</p>
-                </div>
-                <div class="border-l-2 border-accent/30 pl-6 md:pl-8">
-                    <p class="font-serif text-xl md:text-2xl font-light italic text-muted/70 leading-relaxed">
-                        <span x-show="lang === 'et'">Veendumus, et kodu väärib täpselt sama hoolikust nagu parim hotell maailmas.</span>
-                        <span x-show="lang === 'en'" x-cloak>The conviction that home deserves exactly the same care as the finest hotel in the world.</span>
-                    </p>
+                <div class="text-base text-muted font-sans font-light leading-relaxed space-y-5 max-w-xl">
+                    <p x-show="lang === 'et'">Otsisin abikaasale kingitust, mis ei lõpeks jaanuaris. Sellest sai aasta regulaarset kodukoristust: üks inimene, kes käib meil iga nädala samal ajal, ja värsked lilled igal visiidil. Et see oleks päris kingitus, tegin sellest päris brändi — nimi, kaart ümbrikus, mida kuuse alt avada. Nii sündis SUKODA. Ühe pere jaoks.</p>
+                    <p x-show="lang === 'en'" x-cloak>I was looking for a gift for my wife that would not end in January. It became a year of regular home cleaning: one person who comes to us at the same time every week, and fresh flowers at every visit. To make it a real gift, I made it a real brand — a name, a card in an envelope to open under the tree. That is how SUKODA was born. For one family.</p>
+                    <p x-show="lang === 'et'">Kingitus töötas. Stella tuli koju, kõik oli korras, ja ta ei pidanud teadma, kuidas.</p>
+                    <p x-show="lang === 'en'" x-cloak>The gift worked. Stella came home, everything was in order, and she did not have to know how.</p>
                 </div>
             </div>
         </section>
 
-        <!-- Visual Break -->
-        <section class="grid-line-b reveal">
-            <div class="relative h-[300px] md:h-[450px] w-full overflow-hidden">
-                <picture>
-                    <source type="image/webp" srcset="assets/images/story-interior-480w.webp 480w, assets/images/story-interior-768w.webp 768w, assets/images/story-interior-1024w.webp 1024w" sizes="(max-width: 768px) 100vw, 66vw">
-                    <img src="assets/images/story-interior.webp" alt="Pristine luxury bedroom" width="800" height="500" loading="lazy" class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000">
-                </picture>
-            </div>
-        </section>
-
-        <!-- Section 02: Brand Conviction -->
+        <!-- ═══════════════════════════════════════════════════════════════
+             ( 02 ) MIDA KINGITUSE PIDAMINE ÕPETAS — the gap in the market
+             ═══════════════════════════════════════════════════════════════ -->
         <section class="grid md:grid-cols-12 grid-line-b">
-            <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
+            <div class="md:col-span-4 p-6 md:p-16 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
                 <div class="accent-line mb-4"></div>
-                <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 02 )</span>
-                <h2 class="font-serif text-2xl md:text-3xl font-light" x-text="lang === 'et' ? 'Veendumus' : 'Conviction'">Veendumus</h2>
+                <span class="text-[11px] uppercase tracking-[0.2em] text-muted font-sans block mb-3">( 02 )</span>
+                <h2 class="font-serif text-3xl md:text-4xl font-light">
+                    <span x-show="lang === 'et'">Mida selle pidamine õpetas</span>
+                    <span x-show="lang === 'en'" x-cloak>What running it taught me</span>
+                </h2>
             </div>
-            <div class="md:col-span-8 p-6 md:p-20 lg:p-24 reveal">
-                <div class="space-y-8 md:space-y-12 max-w-xl">
-                    <p class="text-xl md:text-3xl font-serif font-light leading-relaxed">
-                        <span x-show="lang === 'et'">Kodu on kõige isiklikum ruum.</span>
-                        <span x-show="lang === 'en'" x-cloak>Home is the most intimate space.</span>
-                    </p>
-                    <div class="font-sans text-sm leading-relaxed text-muted space-y-6">
-                        <p class="font-light" x-show="lang === 'et'">Ainuke koht, mis on tõeliselt sinu. Kus hommikukohv maitseb kõige paremini. Kus jalad puutuvad põrandat ja sa tead: oled kodus.</p>
-                        <p class="font-light" x-show="lang === 'en'" x-cloak>The only space that's truly yours. Where morning coffee tastes best. Where your feet touch the floor and you know: you're home.</p>
-                    </div>
-                    <div class="accent-line"></div>
-                    <div class="font-sans text-sm leading-relaxed text-muted space-y-6">
-                        <p class="font-light" x-show="lang === 'et'">See koht väärib sama tähelepanu, mida koged maailma parimas hotellis. Sama hoolivust. Sama standardit.</p>
-                        <p class="font-light" x-show="lang === 'en'" x-cloak>This space deserves the same attention you experience at the world's finest hotel. The same devotion. The same standard.</p>
-                        <p class="font-light" x-show="lang === 'et'">Iga detail on valik. Need valikud räägivad sinust.</p>
-                        <p class="font-light" x-show="lang === 'en'" x-cloak>Every detail is a choice. Those choices speak of you.</p>
-                        <p class="font-light" x-show="lang === 'et'">Usaldus algab tuttavast näost. Üks inimene, kes tunneb sinu kodu ja hoolib sellest nii nagu sina.</p>
-                        <p class="font-light" x-show="lang === 'en'" x-cloak>Trust begins with a familiar face. One person who knows your home and cares for it the way you do.</p>
-                    </div>
-                    <p class="text-lg md:text-2xl font-serif font-light leading-relaxed">
-                        <span x-show="lang === 'et'">Sinu kodu. Sinu standard. <span class="text-accent">Meie hool.</span></span>
-                        <span x-show="lang === 'en'" x-cloak>Your home. Your standard. <span class="text-accent">Our care.</span></span>
-                    </p>
+            <div class="md:col-span-8 p-6 md:p-16 reveal">
+                <p class="font-serif text-2xl md:text-3xl font-light leading-snug mb-8 max-w-2xl">
+                    <span x-show="lang === 'et'">Kinkimine võttis ühe õhtu. <span class="text-muted/60">Pidamine võttis iga nädala.</span></span>
+                    <span x-show="lang === 'en'" x-cloak>Giving it took one evening. <span class="text-muted/60">Running it took every week.</span></span>
+                </p>
+                <div class="text-base text-muted font-sans font-light leading-relaxed space-y-5 max-w-xl">
+                    <p x-show="lang === 'et'">Iga visiidi jaoks tuli lilled eraldi tellida. Koduhooldajaga tuli aeg kokku leppida, see enda kalendrisse panna ja Stellale edasi saata, et ka tema teaks. Kui üks nädal ei sobinud, algas sama ring otsast. Ventilatsioonifiltrid, pesumasina hooldus, garantiipaberid — kõik oli olemas, aga laiali: SMS-ides, telefonis, sahtlis ja minu peas.</p>
+                    <p x-show="lang === 'en'" x-cloak>Flowers had to be ordered separately for every visit. A time had to be agreed with the housekeeper, put into my calendar and forwarded to Stella so she would know too. If one week did not suit, the same round started over. Ventilation filters, washing machine maintenance, warranty papers — all of it existed, but scattered: in text messages, on the phone, in a drawer and in my head.</p>
+                    <p x-show="lang === 'et'">Siis sai selgeks, et sellist teenust turul ei ole. Mitte koristust — seda pakuvad paljud. Vaid kohta, kus kodu ja inimesed, kes selle eest hoolitsevad, on ühes süsteemis. Ja teistpidi sama: koduhooldajal, floristil ega remondimehel pole head kohta, kus oma kliente ja aegu hallata. Nad teevad oma tööd hästi ja kulutavad õhtud sõnumitele.</p>
+                    <p x-show="lang === 'en'" x-cloak>That is when it became clear that no such service existed. Not cleaning — plenty of people offer that. But a place where a home and the people who care for it are in one system. And the same the other way round: a housekeeper, a florist or a handyman has no good place to manage their clients and times. They do their work well and spend their evenings on messages.</p>
                 </div>
             </div>
         </section>
 
-        <!-- Closing Quote -->
-        <section class="grid-line-b bg-black text-paper reveal">
-            <div class="py-20 md:py-32 px-6 md:px-16 max-w-3xl mx-auto text-center">
-                <div class="w-10 h-[1px] bg-accent mx-auto mb-10"></div>
-                <p class="font-serif text-2xl md:text-4xl lg:text-5xl font-light leading-relaxed italic">
-                    <span x-show="lang === 'et'">"Kodu väärib parimat.<br>Ja sa väärid kodu,<br>mis sinu eest hoolitseb."</span>
-                    <span x-show="lang === 'en'" x-cloak>"Home deserves the best.<br>And you deserve a home<br>that takes care of you."</span>
+        <!-- ═══════════════════════════════════════════════════════════════
+             ( 03 ) MILLEST SAI SUKODA — the portal and the desk
+             ═══════════════════════════════════════════════════════════════ -->
+        <section class="grid md:grid-cols-12 grid-line-b bg-cream/40">
+            <div class="md:col-span-4 p-6 md:p-16 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
+                <div class="accent-line mb-4"></div>
+                <span class="text-[11px] uppercase tracking-[0.2em] text-muted font-sans block mb-3">( 03 )</span>
+                <h2 class="font-serif text-3xl md:text-4xl font-light">
+                    <span x-show="lang === 'et'">Millest sai SUKODA</span>
+                    <span x-show="lang === 'en'" x-cloak>What SUKODA became</span>
+                </h2>
+            </div>
+            <div class="md:col-span-8 p-6 md:p-16 reveal">
+                <p class="font-serif text-2xl md:text-3xl font-light leading-snug mb-8 max-w-2xl">
+                    <span x-show="lang === 'et'">Koduportaal perele. <span class="text-muted/60">Töölaud neile, kes kodude eest hoolitsevad.</span></span>
+                    <span x-show="lang === 'en'" x-cloak>A home portal for the family. <span class="text-muted/60">A desk for those who care for homes.</span></span>
                 </p>
-                <div class="w-10 h-[1px] bg-accent mx-auto mt-10"></div>
+                <div class="text-base text-muted font-sans font-light leading-relaxed space-y-5 max-w-xl">
+                    <p x-show="lang === 'et'">Nii ehitasin selle, mida ise otsisin. Koduomanikule: ajad kogu pere kalendris, inimesed nimepidi, kodu hooldusrütm ja dokumendid ühes kohas. Teenusepakkujale: töölaud, mis saadab kutsed, muudatused ja meeldetuletused ise — et ühtegi aega ei peaks enam SMS-iga saatma.</p>
+                    <p x-show="lang === 'en'" x-cloak>So I built what I had been looking for. For the homeowner: times in the whole family's calendar, people by name, the home's upkeep rhythm and documents in one place. For the provider: a desk that sends invites, changes and reminders by itself — so no time ever has to be texted again.</p>
+                    <p x-show="lang === 'et'">Esimese töölaua avasin meie oma koduhooldajale Cristelle'ile, ja kodu, millega kõik algas, on esimene kodu portaalis. Koduhooldaja on esimene, sest tema käib kodus kõige sagedamini ja tunneb seda kõige paremini. Tema järel florist, remondimees, aednik.</p>
+                    <p x-show="lang === 'en'" x-cloak>The first desk I opened for our own housekeeper, Cristelle, and the home where it all began is the first home in the portal. The housekeeper comes first because she is in the home most often and knows it best. After her, the florist, the handyman, the gardener.</p>
+                </div>
+                <div class="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-[11px] uppercase tracking-[0.2em] font-sans">
+                    <a href="/#kodule" class="text-accent hover:text-black transition-colors luxury-link" x-text="lang === 'et' ? 'Mida kodu portaalist saab' : 'What a home gets from the portal'">Mida kodu portaalist saab</a>
+                    <a href="/#teenusepakkujale" class="text-accent hover:text-black transition-colors luxury-link" x-text="lang === 'et' ? 'Kuidas töölaud töötab' : 'How the desk works'">Kuidas töölaud töötab</a>
+                </div>
             </div>
         </section>
 
-        <!-- CTA Section -->
-        <section class="grid-line-b reveal">
-            <div class="py-16 md:py-24 px-6 md:px-16 max-w-2xl mx-auto text-center">
-                <a href="index.html#hoolitsus" class="inline-block border-b border-accent text-accent pb-1 text-[11px] uppercase tracking-[0.25em] font-sans hover:text-black hover:border-black transition-all duration-500" x-text="lang === 'et' ? 'Avasta SUKODA' : 'Discover SUKODA'">
-                    Avasta SUKODA
-                </a>
+        <!-- ═══════════════════════════════════════════════════════════════
+             ( 04 ) MILLESSE MA USUN — the principles
+             ═══════════════════════════════════════════════════════════════ -->
+        <section class="grid md:grid-cols-12 grid-line-b">
+            <div class="md:col-span-4 p-6 md:p-16 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
+                <div class="accent-line mb-4"></div>
+                <span class="text-[11px] uppercase tracking-[0.2em] text-muted font-sans block mb-3">( 04 )</span>
+                <h2 class="font-serif text-3xl md:text-4xl font-light mb-6">
+                    <span x-show="lang === 'et'">Millesse ma usun</span>
+                    <span x-show="lang === 'en'" x-cloak>What I believe</span>
+                </h2>
+                <p class="font-serif text-2xl md:text-3xl font-light leading-snug">
+                    <span x-show="lang === 'et'">Kodu ei otsi teenust. <span class="text-muted/60">Kodu usaldab inimest.</span></span>
+                    <span x-show="lang === 'en'" x-cloak>A home does not search for a service. <span class="text-muted/60">A home trusts a person.</span></span>
+                </p>
+            </div>
+            <div class="md:col-span-8 grid sm:grid-cols-2 gap-px bg-[#E8E3DD]">
+                <div class="p-6 md:p-10 bg-paper reveal">
+                    <p class="text-[11px] uppercase tracking-[0.2em] text-accent font-sans mb-5">01</p>
+                    <h3 class="font-serif text-xl md:text-2xl font-light mb-3"><span x-show="lang === 'et'">Usalduse kaudu</span><span x-show="lang === 'en'" x-cloak>Through trust</span></h3>
+                    <p class="text-sm text-muted font-sans font-light leading-relaxed"><span x-show="lang === 'et'">Kodu liitub inimese kaudu, keda ta juba usaldab. Siin ei ole otsingut, võrdlust ega turuplatsi.</span><span x-show="lang === 'en'" x-cloak>A home joins through a person it already trusts. There is no search, no comparison and no marketplace here.</span></p>
+                </div>
+                <div class="p-6 md:p-10 bg-paper reveal" style="transition-delay: 60ms">
+                    <p class="text-[11px] uppercase tracking-[0.2em] text-accent font-sans mb-5">02</p>
+                    <h3 class="font-serif text-xl md:text-2xl font-light mb-3"><span x-show="lang === 'et'">Inimene nimepidi</span><span x-show="lang === 'en'" x-cloak>A person by name</span></h3>
+                    <p class="text-sm text-muted font-sans font-light leading-relaxed"><span x-show="lang === 'et'">Iga kodu juures on inimene, kes seda tunneb. Mitte anonüümne teenus, mis saadab iga kord kellegi teise.</span><span x-show="lang === 'en'" x-cloak>Every home has a person who knows it. Not an anonymous service that sends someone different each time.</span></p>
+                </div>
+                <div class="p-6 md:p-10 bg-paper reveal" style="transition-delay: 120ms">
+                    <p class="text-[11px] uppercase tracking-[0.2em] text-accent font-sans mb-5">03</p>
+                    <h3 class="font-serif text-xl md:text-2xl font-light mb-3"><span x-show="lang === 'et'">Koduomanik ei maksa</span><span x-show="lang === 'en'" x-cloak>The homeowner never pays</span></h3>
+                    <p class="text-sm text-muted font-sans font-light leading-relaxed"><span x-show="lang === 'et'">SUKODA ei võta koduomanikult kunagi midagi. Hinnad ja arved jäävad kodu ja tegija vahele, nagu seni.</span><span x-show="lang === 'en'" x-cloak>SUKODA never charges the homeowner. Prices and invoices stay between the home and the person doing the work, as before.</span></p>
+                </div>
+                <div class="p-6 md:p-10 bg-paper reveal" style="transition-delay: 180ms">
+                    <p class="text-[11px] uppercase tracking-[0.2em] text-accent font-sans mb-5">04</p>
+                    <h3 class="font-serif text-xl md:text-2xl font-light mb-3"><span x-show="lang === 'et'">Vähem sõnumeid</span><span x-show="lang === 'en'" x-cloak>Fewer messages</span></h3>
+                    <p class="text-sm text-muted font-sans font-light leading-relaxed"><span x-show="lang === 'et'">Mitte rohkem tarkvara, vaid vähem sõnumeid. Kõik, mis saab ise liikuda — kutsed, muudatused, meeldetuletused — liigub ise.</span><span x-show="lang === 'en'" x-cloak>Not more software, fewer messages. Everything that can move by itself — invites, changes, reminders — does.</span></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             CLOSING — one sentence, signed; two ways in
+             ═══════════════════════════════════════════════════════════════ -->
+        <section class="grid md:grid-cols-12 grid-line-b bg-cream/40">
+            <div class="md:col-span-8 p-6 md:p-16 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
+                <div class="accent-line mb-8"></div>
+                <p class="font-serif text-2xl md:text-4xl font-light leading-snug max-w-2xl mb-8">
+                    <span x-show="lang === 'et'">Meie kodus on kõik korras. Ainult et nüüd ei pea ma selleks midagi tegema. <span class="text-muted/60">Seda ma soovin igale kodule.</span></span>
+                    <span x-show="lang === 'en'" x-cloak>Our home is in order. Only now I do not have to do anything for it. <span class="text-muted/60">That is what I wish for every home.</span></span>
+                </p>
+                <p class="text-[11px] uppercase tracking-[0.2em] text-muted font-sans">
+                    <span x-show="lang === 'et'">Marko Vaik · asutaja · Tallinn</span>
+                    <span x-show="lang === 'en'" x-cloak>Marko Vaik · founder · Tallinn</span>
+                </p>
+            </div>
+            <div class="md:col-span-4 p-6 md:p-16 flex flex-col justify-center gap-6 reveal">
+                <div>
+                    <p class="text-[11px] uppercase tracking-[0.2em] text-muted font-sans mb-3" x-text="lang === 'et' ? 'Koduomanikule' : 'For homeowners'">Koduomanikule</p>
+                    <a href="/#alusta" class="inline-block bg-black text-paper px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-colors duration-500" x-text="lang === 'et' ? 'Too oma kodu portaali' : 'Bring your home in'">Too oma kodu portaali</a>
+                </div>
+                <div>
+                    <p class="text-[11px] uppercase tracking-[0.2em] text-muted font-sans mb-3" x-text="lang === 'et' ? 'Teenusepakkujale' : 'For providers'">Teenusepakkujale</p>
+                    <a href="/haldus?alusta" class="inline-block border border-black text-black px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-black hover:text-paper transition-all duration-500" x-text="lang === 'et' ? 'Ava oma töölaud' : 'Open your desk'">Ava oma töölaud</a>
+                </div>
+                <p class="text-xs text-muted/80 font-sans font-light tracking-wide">
+                    <span x-show="lang === 'et'">Küsimused: </span>
+                    <span x-show="lang === 'en'" x-cloak>Questions: </span>
+                    <a href="mailto:tere@sukoda.ee" class="text-muted hover:text-black transition-colors border-b border-muted/30 hover:border-black">tere@sukoda.ee</a>
+                </p>
             </div>
         </section>
 
@@ -201,37 +264,34 @@
 
         <!-- Footer -->
         <footer class="bg-black text-paper">
-            <div class="grid md:grid-cols-12 py-16 px-6 md:px-12">
-                <div class="md:col-span-4 mb-8 md:mb-0">
-                    <a href="index.html" class="font-serif text-2xl tracking-[0.08em] font-light block mb-4">SUKODA</a>
-                    <p class="text-gray-300 text-xs font-sans font-light leading-relaxed max-w-xs">
-                        <span x-show="lang === 'et'">Sinu kodu, meie hoole all.<br>Tallinn, Eesti.</span>
-                        <span x-show="lang === 'en'" x-cloak>Your home, our care.<br>Tallinn, Estonia.</span>
+            <div class="grid md:grid-cols-12 gap-8 py-12 md:py-14 px-6 md:px-12">
+                <div class="md:col-span-4">
+                    <a href="/" class="font-serif text-2xl tracking-[0.08em] font-light block mb-4">SUKODA</a>
+                    <p class="text-gray-300 text-sm font-sans font-light leading-relaxed max-w-xs">
+                        <span x-show="lang === 'et'">Koduportaal ja töölaud neile, kes kodude eest hoolitsevad.<br>Tallinn, Eesti.</span>
+                        <span x-show="lang === 'en'" x-cloak>A home portal, and a desk for those who care for homes.<br>Tallinn, Estonia.</span>
                     </p>
                 </div>
-                <div class="md:col-span-4 mb-8 md:mb-0">
-                    <p class="text-[10px] uppercase tracking-[0.25em] text-gray-300 font-sans mb-4">
-                        <span x-show="lang === 'et'">Lingid</span>
-                        <span x-show="lang === 'en'" x-cloak>Links</span>
-                    </p>
-                    <div class="flex flex-col gap-3 text-xs text-gray-300 font-sans font-light">
-                        <a href="tingimused.html" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Tingimused' : 'Terms'">Tingimused</a>
-                        <a href="privaatsus.html" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Privaatsuspoliitika' : 'Privacy'">Privaatsuspoliitika</a>
+                <div class="md:col-span-4">
+                    <p class="text-[10px] uppercase tracking-[0.25em] text-gray-300 font-sans mb-4"><span x-show="lang === 'et'">Lingid</span><span x-show="lang === 'en'" x-cloak>Links</span></p>
+                    <div class="flex flex-col gap-3 text-sm text-gray-300 font-sans font-light">
+                        <a href="/lugu" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Lugu' : 'Story'">Lugu</a>
+                        <a href="/haldus" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Töölaud teenusepakkujale' : 'Provider desk'">Töölaud teenusepakkujale</a>
+                        <a href="/minu" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Minu kodu' : 'My home'">Minu kodu</a>
+                        <a href="/tingimused" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Tingimused' : 'Terms'">Tingimused</a>
+                        <a href="/privaatsus" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Privaatsuspoliitika' : 'Privacy'">Privaatsuspoliitika</a>
                     </div>
                 </div>
                 <div class="md:col-span-4">
-                    <p class="text-[10px] uppercase tracking-[0.25em] text-gray-300 font-sans mb-4">
-                        <span x-show="lang === 'et'">Kontakt</span>
-                        <span x-show="lang === 'en'" x-cloak>Contact</span>
-                    </p>
-                    <a href="mailto:tere@sukoda.ee" class="text-xs font-sans font-light text-gray-300 hover:text-paper transition-colors block mb-2">tere@sukoda.ee</a>
-                    <a href="mailto:partner@sukoda.ee" class="text-xs font-sans font-light text-gray-300 hover:text-paper transition-colors block">partner@sukoda.ee</a>
+                    <p class="text-[10px] uppercase tracking-[0.25em] text-gray-300 font-sans mb-4"><span x-show="lang === 'et'">Kontakt</span><span x-show="lang === 'en'" x-cloak>Contact</span></p>
+                    <a href="mailto:tere@sukoda.ee" class="text-sm font-sans font-light text-gray-300 hover:text-paper transition-colors block mb-2">tere@sukoda.ee</a>
+                    <a href="mailto:partner@sukoda.ee" class="text-sm font-sans font-light text-gray-300 hover:text-paper transition-colors block">partner@sukoda.ee</a>
                 </div>
             </div>
             <div class="border-t border-gray-800 py-6 px-6 md:px-12">
-                <p class="text-[10px] text-gray-400 font-sans text-center tracking-wide">
-                    <span x-show="lang === 'et'">© 2026 SUKODA · Registrikood 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
-                    <span x-show="lang === 'en'" x-cloak>© 2026 SUKODA · Reg. code 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
+                <p class="text-[11px] text-gray-400 font-sans text-center tracking-wide">
+                    <span x-show="lang === 'et'">© 2026 SUKODA on Epic Ship OÜ kaubamärk · Registrikood 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
+                    <span x-show="lang === 'en'" x-cloak>© 2026 SUKODA is a trademark of Epic Ship OÜ · Reg. code 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
                 </p>
             </div>
         </footer>
@@ -248,11 +308,11 @@
             <div class="flex-1">
                 <p class="text-sm font-sans font-light" x-show="lang === 'et'">
                     Kasutame küpsiseid veebilehe kasutuskogemuse parendamiseks ja turunduse tõhususe mõõtmiseks.
-                    <a href="privaatsus.html" class="text-accent hover:underline">Loe lähemalt</a>
+                    <a href="/privaatsus" class="text-accent hover:underline">Loe lähemalt</a>
                 </p>
                 <p class="text-sm font-sans font-light" x-show="lang === 'en'" x-cloak>
                     We use cookies to improve your experience and measure marketing effectiveness.
-                    <a href="privaatsus.html" class="text-accent hover:underline">Learn more</a>
+                    <a href="/privaatsus" class="text-accent hover:underline">Learn more</a>
                 </p>
             </div>
             <div class="flex gap-3 shrink-0">
