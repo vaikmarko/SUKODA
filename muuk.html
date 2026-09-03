@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="et" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUKODA — Müügimemorandum</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" type="image/svg+xml" href="assets/logo/icon-s-black.svg">
+
+    <meta property="og:title" content="SUKODA — Müügimemorandum">
+    <meta property="og:description" content="Müügis on valmis ehitatud premium koduhoolduse äri: bränd, tehnoloogia, teenusstandard ja esimene piloot.">
+    <meta property="og:image" content="https://sukoda.ee/assets/images/hero-luxury.webp">
+    <meta property="og:type" content="website">
+
+    <link rel="preload" href="/assets/fonts/cormorant-garamond-400.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/assets/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
+    <script type="module" src="/assets/js/main.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="scroll-progress" id="scrollProgress"></div>
+
+    <div class="max-w-[1440px] mx-auto bg-paper min-h-screen border-x border-[#E8E3DD]">
+
+        <!-- Sale Banner -->
+        <div class="bg-black text-paper py-2.5 px-4 md:px-12">
+            <div class="flex justify-between items-center">
+                <p class="text-[10px] md:text-[11px] uppercase tracking-[0.3em] font-sans font-medium">
+                    <span class="text-accent">&#9670;</span>&ensp;Valmis äri müügis&ensp;<span class="text-accent">·</span>&ensp;€39 000&ensp;<span class="text-accent">·</span>&ensp;Bränd, platvorm, teenusstandard
+                </p>
+                <div class="flex items-center gap-3">
+                    <span class="text-[9px] uppercase tracking-[0.2em] text-gray-400 font-sans hidden md:inline">Konfidentsiaalne</span>
+                    <a href="sales.html" class="text-[10px] uppercase tracking-[0.2em] font-sans font-medium text-gray-400 hover:text-paper transition-colors border border-gray-600 px-2.5 py-1">EN</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Minimal Header -->
+        <nav class="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm grid-line-b">
+            <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12">
+                <a href="index.html" class="font-serif text-2xl md:text-3xl tracking-[0.08em] font-light">SUKODA</a>
+                <a href="#hind" class="inline-block bg-accent text-paper px-5 py-2 text-[10px] uppercase tracking-[0.2em] font-sans font-medium hover:bg-black transition-colors duration-500">€39 000 · Vaata pakkumist</a>
+            </div>
+        </nav>
+
+        <main>
+
+        <!-- Hero -->
+        <header class="relative min-h-[70vh] md:min-h-[80vh] grid-line-b overflow-hidden">
+            <div class="absolute inset-0 animate-hero-image">
+                <picture>
+                    <source type="image/webp" srcset="assets/images/hero-luxury-640w.webp 640w, assets/images/hero-luxury-1024w.webp 1024w, assets/images/hero-luxury-1440w.webp 1440w, assets/images/hero-luxury-1920w.webp 1920w" sizes="100vw">
+                    <img src="assets/images/hero-luxury.webp" alt="SUKODA premium koduhooldus" class="w-full h-full object-cover" width="1440" height="900" fetchpriority="high">
+                </picture>
+                <div class="absolute inset-0 bg-gradient-to-r from-paper via-paper/90 to-paper/50"></div>
+            </div>
+            <div class="relative z-10 max-w-4xl px-6 md:px-16 py-24 md:py-32 flex flex-col justify-center min-h-[70vh] md:min-h-[80vh]">
+                <span class="text-[10px] uppercase tracking-[0.3em] text-accent font-sans mb-6 animate-fade-in">Müügimemorandum · Juuli 2026</span>
+                <div class="accent-line mb-8 animate-fade-in"></div>
+                <h1 class="font-serif text-4xl md:text-6xl lg:text-7xl leading-[1.08] font-light animate-hero-title mb-8">
+                    Valmis ehitatud<br>premium koduhoolduse<br>äri.
+                </h1>
+                <p class="text-base md:text-lg text-muted max-w-lg font-sans font-light leading-relaxed animate-hero-subtitle">
+                    See ei ole idee ega projekt. Müügis on bränd, tehnoloogia, teenusstandard, tarnijad ja tehtud piloot. Ostja saab alustada müügiga esimesest päevast.
+                </p>
+                <div class="mt-12 animate-hero-cta">
+                    <a href="#positsioneering" class="inline-block bg-black text-paper px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-colors duration-500">
+                        Loe edasi
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Key Facts Strip -->
+        <section class="grid-line-b py-8 md:py-10 px-6 md:px-16 bg-cream/50 reveal">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-10 max-w-5xl mx-auto text-center">
+                <div>
+                    <div class="font-serif text-3xl md:text-4xl font-light text-black">6</div>
+                    <div class="text-[10px] uppercase tracking-[0.2em] text-muted font-sans mt-1">kuud pilooditud</div>
+                </div>
+                <div>
+                    <div class="font-serif text-3xl md:text-4xl font-light text-black">12</div>
+                    <div class="text-[10px] uppercase tracking-[0.2em] text-muted font-sans mt-1">visiiti tehtud</div>
+                </div>
+                <div>
+                    <div class="font-serif text-3xl md:text-4xl font-light text-black">2</div>
+                    <div class="text-[10px] uppercase tracking-[0.2em] text-muted font-sans mt-1">keelt (ET / EN)</div>
+                </div>
+                <div>
+                    <div class="font-serif text-3xl md:text-4xl font-light text-accent">€39k</div>
+                    <div class="text-[10px] uppercase tracking-[0.2em] text-muted font-sans mt-1">kogu terviku eest</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 01: Positsioneering -->
+        <section id="positsioneering" class="grid md:grid-cols-12 grid-line-b">
+            <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
+                <div class="accent-line mb-4"></div>
+                <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 01 )</span>
+                <h2 class="font-serif text-2xl md:text-3xl font-light">Positsioneering</h2>
+            </div>
+            <div class="md:col-span-8 p-6 md:p-20 lg:p-24 reveal">
+                <p class="text-xl md:text-3xl font-serif font-light leading-relaxed mb-10">
+                    Butiikhotelli tunne kodus. <span class="text-muted/50">Mitte koristusfirma, vaid premium koduhoolduse rituaal.</span>
+                </p>
+                <div class="font-sans text-sm leading-relaxed text-muted space-y-5 max-w-xl">
+                    <p class="font-light">SUKODA ei ole koristusfirma. See on premium koduhoolduse rituaal: alati sama inimene, kes tunneb kodu, värsked lilled, hooajalised puuviljad ja käsitsi kirjutatud tervituskaart igal visiidil.</p>
+                    <p class="font-light">Positsioneering on teadlikult kõrgeimas hinnaklassis, kus Eestis tegutseb väga vähe võrreldava kontseptsiooniga ettevõtteid.</p>
+                    <p class="font-light">Bränd on kakskeelne ET/EN, sihtturuks esmalt Tallinna premium elurajoonid, kontseptsioon on laiendatav teistesse linnadesse ja riikidesse.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 02: Teenusstandard -->
+        <section class="grid md:grid-cols-12 grid-line-b">
+            <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
+                <div class="accent-line mb-4"></div>
+                <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 02 )</span>
+                <h2 class="font-serif text-2xl md:text-3xl font-light">Teenusstandard</h2>
+            </div>
+            <div class="md:col-span-8 p-6 md:p-20 lg:p-24 reveal">
+                <p class="text-xl md:text-3xl font-serif font-light leading-relaxed mb-10">
+                    Läbi testitud, <span class="text-muted/50">mitte ainult kavandatud.</span>
+                </p>
+                <div class="font-sans text-sm leading-relaxed text-muted space-y-5 max-w-xl mb-10">
+                    <p class="font-light">Teenus on pilootkliendi juures osutatud kuus kuud ja 12 visiiti. Protsess on algusest lõpuni läbi testitud.</p>
+                    <p class="font-light">Iga hoolitsuse juurde kuuluvad värsked lilled Fleur Royale'ilt, kellega on sõlmitud koostöölepe. Lisandub eksklusiivne šokolaad ning viimistlusena lõhnastatakse kodu itaalia käsitööparfüümiga.</p>
+                    <p class="font-light">Teenust kannab väga suure kogemusega juhtiv teenindaja, kelle käekiri määrab SUKODA detailitaseme: rätikud sätitakse lehvikutesse ning viimistluses kasutatakse butiikhotellile omaseid võtteid. Temaga on kokkulepe jätkata koolitaja ja kvaliteedikontrollijana.</p>
+                </div>
+                <div class="border-l-2 border-accent/30 pl-6">
+                    <p class="font-serif text-lg font-light italic text-muted/70 leading-relaxed">Teenusstandard on kirjalikult dokumenteeritud ega sõltu ainult ühest inimesest. Ostja ei pea seda välja mõtlema — see on olemas ja edasiantav.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Visual: Interior Photo -->
+        <section class="grid-line-b reveal">
+            <div class="relative h-[250px] md:h-[400px] w-full overflow-hidden">
+                <picture>
+                    <source type="image/webp" srcset="assets/images/flowers-interior-480w.webp 480w, assets/images/flowers-interior-1024w.webp 1024w" sizes="100vw">
+                    <img src="assets/images/flowers-interior.webp" alt="SUKODA hoolitsus — lilled, puuviljad ja tervituskaart kliendi laual" class="w-full h-full object-cover" loading="lazy" width="1024" height="400">
+                </picture>
+                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/40 to-transparent p-6 md:p-10">
+                    <p class="text-paper font-sans text-xs font-light tracking-wide">Pilootvisiidilt: lilled, hooajalised puuviljad, eksklusiivne šokolaad ja tervituskaart kliendi koduses lauas.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 03: Ärimudel -->
+        <section class="grid md:grid-cols-12 grid-line-b">
+            <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
+                <div class="accent-line mb-4"></div>
+                <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 03 )</span>
+                <h2 class="font-serif text-2xl md:text-3xl font-light">Ärimudel</h2>
+            </div>
+            <div class="md:col-span-8 p-6 md:p-20 lg:p-24 reveal">
+                <p class="text-xl md:text-3xl font-serif font-light leading-relaxed mb-12">
+                    Püsitellimused ja <span class="text-muted/50">automaatne arveldus.</span>
+                </p>
+
+                <!-- Pricing Cards -->
+                <div class="grid grid-cols-3 gap-4 md:gap-6 mb-10">
+                    <div class="border border-[#E8E3DD] p-5 md:p-8 text-center">
+                        <span class="text-[9px] uppercase tracking-[0.2em] text-muted font-sans block mb-3">1× kuus</span>
+                        <span class="font-serif text-3xl md:text-4xl font-light">€199</span>
+                        <span class="text-xs text-muted font-sans block mt-1">/kuu</span>
+                    </div>
+                    <div class="border border-accent p-5 md:p-8 text-center bg-cream/30">
+                        <span class="text-[9px] uppercase tracking-[0.2em] text-accent font-sans block mb-3">2× kuus</span>
+                        <span class="font-serif text-3xl md:text-4xl font-light">€279</span>
+                        <span class="text-xs text-muted font-sans block mt-1">/kuu</span>
+                    </div>
+                    <div class="border border-[#E8E3DD] p-5 md:p-8 text-center">
+                        <span class="text-[9px] uppercase tracking-[0.2em] text-muted font-sans block mb-3">4× kuus</span>
+                        <span class="font-serif text-3xl md:text-4xl font-light">€499</span>
+                        <span class="text-xs text-muted font-sans block mt-1">/kuu</span>
+                    </div>
+                </div>
+
+                <div class="font-sans text-sm leading-relaxed text-muted space-y-5 max-w-xl">
+                    <p class="font-light">Hinnad on paigas ja lehel avaldatud, kuid neid saab vabalt muuta: juurutuskuu jooksul seadistab müüja hinnad, paketid ja tekstid ümber täpselt ostja äriloogika järgi.</p>
+                    <p class="font-light">Kuutasupõhine mudel annab prognoositava rahavoo alates esimesest kliendist. Lisatulu toovad kinkekaardid, mis sobivad eriti ärikingitusteks ja kinnisvaratehingute kaaskingiks.</p>
+                    <p class="font-light">Kasvuks on läbi töötatud ka platvormimudel, kus teenust osutavad lepingulised partnerid ja SUKODA-le jääb vahendustasu — laienemine ilma suure palgakuluta.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 04: Tehnoloogia -->
+        <section class="grid md:grid-cols-12 grid-line-b">
+            <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
+                <div class="accent-line mb-4"></div>
+                <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 04 )</span>
+                <h2 class="font-serif text-2xl md:text-3xl font-light">Tehnoloogia</h2>
+            </div>
+            <div class="md:col-span-8 p-6 md:p-20 lg:p-24 reveal">
+                <p class="text-xl md:text-3xl font-serif font-light leading-relaxed mb-12">
+                    Valmis platvorm, <span class="text-muted/50">mitte ainult veebileht.</span>
+                </p>
+
+                <div class="grid md:grid-cols-2 gap-8 md:gap-12 mb-10">
+                    <div>
+                        <h4 class="text-[10px] uppercase tracking-[0.25em] text-black mb-3 font-sans font-medium">Kakskeelne veebileht</h4>
+                        <p class="text-sm text-muted font-sans font-light leading-relaxed">Eesti ja inglise keeles: avaleht, kingituste leht, koostööleht ja brändilugu.</p>
+                    </div>
+                    <div>
+                        <h4 class="text-[10px] uppercase tracking-[0.25em] text-black mb-3 font-sans font-medium">Tellimisvoog</h4>
+                        <p class="text-sm text-muted font-sans font-light leading-relaxed">Paketi valik tubade arvu järgi, aadressi valideerimine, kontaktid ja kinnitus.</p>
+                    </div>
+                    <div>
+                        <h4 class="text-[10px] uppercase tracking-[0.25em] text-black mb-3 font-sans font-medium">Stripe maksed</h4>
+                        <p class="text-sm text-muted font-sans font-light leading-relaxed">Igakuine automaatne arveldus püsitellimustena, kinkekaartide ostud ja käibemaksu arvestus.</p>
+                    </div>
+                    <div>
+                        <h4 class="text-[10px] uppercase tracking-[0.25em] text-black mb-3 font-sans font-medium">Kliendiportaal</h4>
+                        <p class="text-sm text-muted font-sans font-light leading-relaxed">Visiitide haldus, koduprofiil, eelistused ja erisoovid, mida teenindaja näeb.</p>
+                    </div>
+                    <div>
+                        <h4 class="text-[10px] uppercase tracking-[0.25em] text-black mb-3 font-sans font-medium">Halduskeskkond</h4>
+                        <p class="text-sm text-muted font-sans font-light leading-relaxed">Klientide, tellimuste ja visiitide haldus teenusepakkuja poolel.</p>
+                    </div>
+                    <div>
+                        <h4 class="text-[10px] uppercase tracking-[0.25em] text-black mb-3 font-sans font-medium">Kinkekaardid</h4>
+                        <p class="text-sm text-muted font-sans font-light leading-relaxed">Digitaalne müük veebis ning füüsilised kaardid ja ümbrikud käest kätte kinkimiseks.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Physical Materials Banner -->
+        <section class="grid-line-b bg-black text-paper reveal">
+            <div class="py-16 md:py-20 px-6 md:px-16 max-w-4xl mx-auto">
+                <div class="grid md:grid-cols-2 gap-10 items-center">
+                    <div>
+                        <span class="text-[10px] uppercase tracking-[0.25em] text-accent font-sans block mb-4">Füüsilised materjalid</span>
+                        <h3 class="font-serif text-2xl md:text-3xl font-light mb-4">Trükitud ja laos</h3>
+                        <p class="text-sm text-gray-300 font-sans font-light leading-relaxed">Kuldfooliumiga mustad ümbrikud, kinkekaardid ja tervituskaardid. Kaasa tulevad trükifailid ning trükikoja kontakt koos tükihindadega — juurdetellimine käib ühe kirjaga.</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="font-serif text-2xl md:text-3xl font-light italic text-accent/80 leading-relaxed">"Tulid koju.<br>Kõik on korras."</p>
+                        <p class="text-xs text-gray-400 font-sans mt-4">— SUKODA tervituskaart</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 05: Tehingu sisu -->
+        <section class="grid md:grid-cols-12 grid-line-b">
+            <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
+                <div class="accent-line mb-4"></div>
+                <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 05 )</span>
+                <h2 class="font-serif text-2xl md:text-3xl font-light">Mis kuulub<br>hinna sisse</h2>
+            </div>
+            <div class="md:col-span-8 p-6 md:p-20 lg:p-24 reveal">
+                <div class="space-y-4 max-w-xl">
+                    <div class="flex items-start gap-4 py-3 border-b border-[#E8E3DD]">
+                        <span class="text-accent mt-0.5 shrink-0">—</span>
+                        <p class="text-sm font-sans font-light text-muted">Domeen <strong class="font-medium text-black">sukoda.ee</strong> ja kogu veebiplatvormi koodibaas</p>
+                    </div>
+                    <div class="flex items-start gap-4 py-3 border-b border-[#E8E3DD]">
+                        <span class="text-accent mt-0.5 shrink-0">—</span>
+                        <p class="text-sm font-sans font-light text-muted">Bränd, logo, disainifailid, trükifailid ja kõik tekstid kahes keeles</p>
+                    </div>
+                    <div class="flex items-start gap-4 py-3 border-b border-[#E8E3DD]">
+                        <span class="text-accent mt-0.5 shrink-0">—</span>
+                        <p class="text-sm font-sans font-light text-muted">Stripe maksekonto seadistuse üleandmine ja dokumentatsioon</p>
+                    </div>
+                    <div class="flex items-start gap-4 py-3 border-b border-[#E8E3DD]">
+                        <span class="text-accent mt-0.5 shrink-0">—</span>
+                        <p class="text-sm font-sans font-light text-muted">Halduskeskkond ja kliendiportaal koos halduse üleandmisega</p>
+                    </div>
+                    <div class="flex items-start gap-4 py-3 border-b border-[#E8E3DD]">
+                        <span class="text-accent mt-0.5 shrink-0">—</span>
+                        <p class="text-sm font-sans font-light text-muted">Füüsiliste materjalide laoseis: ümbrikud, kinkekaardid, tervituskaardid</p>
+                    </div>
+                    <div class="flex items-start gap-4 py-3 border-b border-[#E8E3DD]">
+                        <span class="text-accent mt-0.5 shrink-0">—</span>
+                        <p class="text-sm font-sans font-light text-muted">Koostöölepped ja tarnijad: lillepartner, eksklusiivse šokolaadi ja kodulõhnastajate tarnijad koos kontaktide ja tingimustega</p>
+                    </div>
+                    <div class="flex items-start gap-4 py-3 border-b border-[#E8E3DD]">
+                        <span class="text-accent mt-0.5 shrink-0">—</span>
+                        <p class="text-sm font-sans font-light text-muted">Teenusstandard: hoolitsuse rituaalid, viimistlusvõtted ja kvaliteedinõuded kirjalikult</p>
+                    </div>
+                    <div class="flex items-start gap-4 py-3 border-b border-[#E8E3DD]">
+                        <span class="text-accent mt-0.5 shrink-0">—</span>
+                        <p class="text-sm font-sans font-light text-muted">Kogenud juhtiva teenindaja valmisolek jätkata koolitaja ja kvaliteedikontrollijana</p>
+                    </div>
+                    <div class="flex items-start gap-4 py-3 border-b border-[#E8E3DD]">
+                        <span class="text-accent mt-0.5 shrink-0">—</span>
+                        <p class="text-sm font-sans font-light text-muted">Äriplaan ja lansseerimisplaan: platvormimudel partnervõrgustikuga, kinkekaartide B2B müük ja soovitusprogramm koos kasvuteega</p>
+                    </div>
+                    <div class="flex items-start gap-4 py-3">
+                        <span class="text-accent mt-0.5 shrink-0">—</span>
+                        <p class="text-sm font-sans font-light text-muted"><strong class="font-medium text-black">Üks kuu juurutustuge</strong> müüja poolt pärast üleandmist: hinnastuse ja pakettide muudatused, tekstide kohandamine ja väiksemad arendused ostja soovil</p>
+                    </div>
+                </div>
+
+                <!-- Day One Strip -->
+                <div class="mt-12 bg-cream/50 p-6 md:p-8 border border-[#E8E3DD]">
+                    <p class="text-[10px] uppercase tracking-[0.25em] text-accent font-sans mb-4 font-medium">Esimene päev</p>
+                    <div class="flex flex-wrap gap-x-6 gap-y-2 text-xs font-sans text-muted font-light">
+                        <span>Domeen üle antud</span>
+                        <span class="text-[#E8E3DD]">·</span>
+                        <span>Stripe töötab</span>
+                        <span class="text-[#E8E3DD]">·</span>
+                        <span>Veebileht töötab</span>
+                        <span class="text-[#E8E3DD]">·</span>
+                        <span>Bränd valmis</span>
+                        <span class="text-[#E8E3DD]">·</span>
+                        <span>Trükised laos</span>
+                        <span class="text-[#E8E3DD]">·</span>
+                        <span>Tarnijad lepingus</span>
+                        <span class="text-[#E8E3DD]">·</span>
+                        <span>Koolitaja olemas</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 06: Ostja profiil -->
+        <section class="grid md:grid-cols-12 grid-line-b">
+            <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
+                <div class="accent-line mb-4"></div>
+                <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 06 )</span>
+                <h2 class="font-serif text-2xl md:text-3xl font-light">Kellele see<br>väärtust loob</h2>
+            </div>
+            <div class="md:col-span-8 p-6 md:p-20 lg:p-24 reveal">
+                <div class="grid md:grid-cols-3 gap-8 md:gap-10">
+                    <div class="border border-[#E8E3DD] p-6 md:p-8">
+                        <h4 class="text-[10px] uppercase tracking-[0.25em] text-accent font-sans mb-4 font-medium">Koristusettevõte</h4>
+                        <p class="text-sm text-muted font-sans font-light leading-relaxed">Meeskond ja protsessid on olemas. SUKODA annab kohe kõrgema marginaaliga premium liini, ilma aastapikkuse brändi- ja arendustööta.</p>
+                    </div>
+                    <div class="border border-[#E8E3DD] p-6 md:p-8">
+                        <h4 class="text-[10px] uppercase tracking-[0.25em] text-accent font-sans mb-4 font-medium">Kinnisvarahaldur / arendaja</h4>
+                        <p class="text-sm text-muted font-sans font-light leading-relaxed">Concierge tasemel teenus oma elanikele. Tõstab objekti väärtust ja loob püsiva tuluvoo olemasoleva kliendibaasi pealt.</p>
+                    </div>
+                    <div class="border border-[#E8E3DD] p-6 md:p-8">
+                        <h4 class="text-[10px] uppercase tracking-[0.25em] text-accent font-sans mb-4 font-medium">Alustav ettevõtja</h4>
+                        <p class="text-sm text-muted font-sans font-light leading-relaxed">Valmis äri esimesest päevast. Bränd, tehnoloogia ja materjalid on tehtud, teha jääb ainult teenindus ja müük.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 07: Miks müügis -->
+        <section class="grid md:grid-cols-12 grid-line-b">
+            <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
+                <div class="accent-line mb-4"></div>
+                <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 07 )</span>
+                <h2 class="font-serif text-2xl md:text-3xl font-light">Miks müügis</h2>
+            </div>
+            <div class="md:col-span-8 p-6 md:p-20 lg:p-24 reveal">
+                <p class="text-xl md:text-3xl font-serif font-light leading-relaxed mb-10">
+                    Sündinud kingitusena.
+                </p>
+                <div class="font-sans text-sm leading-relaxed text-muted space-y-5 max-w-xl">
+                    <p class="font-light">SUKODA sündis jõulukingitusest. Müüja otsis abikaasale, kes hindab Hermèsi, Chaneli ja parimaid butiikhotelle, kingituseks eksklusiivset koduhoolduse teenust — ja avastas, et kõrgeima standardiga koduhoolitsust Eestis lihtsalt ei olnud.</p>
+                    <p class="font-light">Siis ehitas ta selle ise: brändi, platvormi ja teenusstandardi, mida sellest memorandumist loete. Kingitus töötas ja pilootklient on siiani väga õnnelik.</p>
+                    <p class="font-light">Eeltöö on tehtud ja kontseptsioon tõestatud. Müüja enda fookus on teiste tehnoloogiaettevõtete arendamisel, seega väärib SUKODA edasine kasv omanikku, kelle valdkond see päriselt on.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 08: Hind ja protsess -->
+        <section class="grid md:grid-cols-12 grid-line-b">
+            <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
+                <div class="accent-line mb-4"></div>
+                <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 08 )</span>
+                <h2 class="font-serif text-2xl md:text-3xl font-light">Hind ja protsess</h2>
+            </div>
+            <div class="md:col-span-8 p-6 md:p-20 lg:p-24 reveal">
+                <p class="text-xl md:text-2xl font-serif font-light leading-relaxed mb-10">
+                    Mida sama terviku ehitamine maksaks:
+                </p>
+
+                <div class="space-y-4 max-w-xl mb-12">
+                    <div class="flex justify-between items-baseline py-3 border-b border-[#E8E3DD]">
+                        <span class="text-sm font-sans font-light text-muted">Bränd, logo, disainisüsteem ja trükidisainid</span>
+                        <span class="text-sm font-sans font-medium text-black whitespace-nowrap ml-4">12–16 000 €</span>
+                    </div>
+                    <div class="flex justify-between items-baseline py-3 border-b border-[#E8E3DD]">
+                        <span class="text-sm font-sans font-light text-muted">Veebiplatvorm, Stripe maksed, portaal ja halduskeskkond</span>
+                        <span class="text-sm font-sans font-medium text-black whitespace-nowrap ml-4">28–38 000 €</span>
+                    </div>
+                    <div class="flex justify-between items-baseline py-3 border-b border-[#E8E3DD]">
+                        <span class="text-sm font-sans font-light text-muted">Tekstid kahes keeles, fotod, trükkimine</span>
+                        <span class="text-sm font-sans font-medium text-black whitespace-nowrap ml-4">5–6 000 €</span>
+                    </div>
+                    <div class="flex justify-between items-baseline py-3 border-b border-[#E8E3DD]">
+                        <span class="text-sm font-sans font-light text-muted">Teenusstandardi ülesehitus, testimine ja häälestamine</span>
+                        <span class="text-sm font-sans font-medium text-black whitespace-nowrap ml-4">3–4 kuud</span>
+                    </div>
+                    <div class="flex justify-between items-baseline py-3 border-b border-[#E8E3DD] text-accent">
+                        <span class="text-sm font-sans font-medium">Sama terviku ehitamine nullist</span>
+                        <span class="text-sm font-sans font-medium whitespace-nowrap ml-4">45–60 000 € + 6–9 kuud</span>
+                    </div>
+                </div>
+
+                <div class="border-l-2 border-accent/30 pl-6 mb-12">
+                    <p class="font-serif text-lg font-light italic text-muted/70 leading-relaxed">Ostja ei säästa ainult raha. Ta säästab vähemalt pool aastat ehitamist, kümnete otsuste tegemist ja kogu katse-eksituse etapi.</p>
+                </div>
+
+                <!-- Price -->
+                <div id="hind" class="bg-black text-paper p-8 md:p-12 text-center">
+                    <span class="text-[10px] uppercase tracking-[0.25em] text-accent font-sans block mb-4">Hind valmis ja töötava terviku eest</span>
+                    <div class="font-serif text-5xl md:text-7xl font-light mb-4">€39 000</div>
+                    <p class="text-sm text-gray-300 font-sans font-light leading-relaxed max-w-md mx-auto">
+                        Hind sisaldab kogu eespool loetletud vara, füüsiliste materjalide laoseisu ja ühe kuu juurutustuge koos muudatustega.
+                    </p>
+                    <div class="w-10 h-[1px] bg-accent mx-auto my-6"></div>
+                    <p class="text-xs text-gray-400 font-sans font-light">
+                        Üleandmine võtab kaks nädalat ja äri on käivitusvalmis esimesest päevast.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact / CTA -->
+        <section class="grid-line-b bg-cream/30 reveal">
+            <div class="py-16 md:py-24 px-6 md:px-16 max-w-3xl mx-auto text-center">
+                <div class="w-10 h-[1px] bg-accent mx-auto mb-8"></div>
+                <h2 class="font-serif text-3xl md:text-4xl font-light mb-4">Võta ühendust</h2>
+                <p class="text-sm text-muted font-sans font-light leading-relaxed max-w-md mx-auto mb-10">
+                    Edasine tehniline dokumentatsioon, finantsdetailid ja demokeskkond avatakse pärast konfidentsiaalsuslepingu sõlmimist ja ostja sobivuse kinnitamist. Huvi korral on võimalik kokku leppida platvormi tutvustav demo.
+                </p>
+                <div class="space-y-3 mb-10">
+                    <p class="font-serif text-xl font-light">Marko Vaik</p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                        <a href="tel:+37256805509" class="text-sm font-sans text-muted hover:text-black transition-colors">+372 5680 5509</a>
+                        <span class="hidden sm:inline text-[#D4CFC8]">·</span>
+                        <a href="mailto:tere@sukoda.ee" class="text-sm font-sans text-muted hover:text-black transition-colors">tere@sukoda.ee</a>
+                    </div>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="mailto:tere@sukoda.ee?subject=SUKODA%20m%C3%BC%C3%BCgimemorandum%20%E2%80%93%20huvi" class="inline-block bg-black text-paper px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-colors duration-500">
+                        Kirjuta
+                    </a>
+                    <a href="/docs/SUKODA-muugimemorandum.pdf" download class="inline-block border border-black text-black px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-black hover:text-paper transition-all duration-500">
+                        ↓ Lae alla PDF
+                    </a>
+                    <a href="https://sukoda.ee" target="_blank" class="inline-block border border-black text-black px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-black hover:text-paper transition-all duration-500">
+                        Vaata sukoda.ee
+                    </a>
+                </div>
+                <p class="text-[10px] text-muted/60 font-sans mt-8">Müüja on Epic Ship OÜ (epicship.ee), kes on kümme aastat ehitanud digitooteid ja teenusbrände.</p>
+            </div>
+        </section>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-black text-paper">
+            <div class="py-8 px-6 md:px-12 text-center">
+                <a href="index.html" class="font-serif text-xl tracking-[0.08em] font-light mb-2 inline-block">SUKODA</a>
+                <p class="text-[10px] text-gray-400 font-sans tracking-wide mt-2">Sinu kodu, meie hoole all · sukoda.ee</p>
+            </div>
+        </footer>
+
+    </div>
+
+</body>
+</html>
