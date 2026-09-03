@@ -13,6 +13,9 @@ const {
 } = require('./lib/config');
 const calService = require('./cal-service');
 const { checkoutSchema, waitlistSchema, bookGiftSchema, bookSubscriptionSchema, giftUpgradeSchema, estateInquirySchema, salesInquirySchema, validate } = require('./lib/schemas');
+const haldusCore = require('./lib/haldus-core');
+// Provider portal module — initialised at the bottom of this file once shared helpers exist
+let haldus;
 
 function escapeHtml(str) {
   return String(str || '')
@@ -1099,6 +1102,8 @@ function isFirestoreAlreadyExistsError(error) {
  * Handle successful checkout
  */
 async function handleCheckoutComplete(session) {
+  // Provider plan (desk subscription) — nothing to do with a household order
+  if (session.metadata?.kind === 'provider_plan') return haldus.billing.onCheckoutComplete(session);
   const orderId = session.metadata?.order_id;
 
   if (!orderId) {
@@ -1191,6 +1196,7 @@ async function handleCheckoutComplete(session) {
 }
 
 async function handleInvoicePaid(invoice) {
+  if (await haldus.billing.onInvoicePaid(invoice)) return;
   const customerId = invoice.customer;
   
   try {
@@ -1215,6 +1221,7 @@ async function handleInvoicePaid(invoice) {
 }
 
 async function handleSubscriptionUpdate(subscription) {
+  if (subscription.metadata?.kind === 'provider_plan') return haldus.billing.onSubscriptionUpdate(subscription);
   const customerId = subscription.customer;
 
   try {
@@ -1248,6 +1255,7 @@ async function handleSubscriptionUpdate(subscription) {
 }
 
 async function handleSubscriptionCancelled(subscription) {
+  if (subscription.metadata?.kind === 'provider_plan') return haldus.billing.onSubscriptionUpdate(subscription);
   const customerId = subscription.customer;
 
   try {
@@ -1334,7 +1342,7 @@ async function sendAllEmails(order, orderId, portalToken) {
  */
 const EMAIL_FROM = 'SUKODA <tere@sukoda.ee>';
 
-async function sendEmail({ to, subject, html }) {
+async function sendEmail({ to, subject, html, replyTo }) {
   // Validate recipient email
   if (!to || typeof to !== 'string' || !to.includes('@')) {
     console.error('sendEmail: invalid or missing recipient:', to);
@@ -1346,6 +1354,7 @@ async function sendEmail({ to, subject, html }) {
     await db.collection('mail').add({
       to,
       message: { subject, html },
+      replyTo: replyTo || null,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
     return;
@@ -1358,6 +1367,7 @@ async function sendEmail({ to, subject, html }) {
       to,
       subject,
       html,
+      ...(replyTo ? { reply_to: replyTo } : {}),
     });
 
     if (error) {
@@ -1365,6 +1375,7 @@ async function sendEmail({ to, subject, html }) {
       await db.collection('mail').add({
         to,
         message: { subject, html },
+        replyTo: replyTo || null,
         error: error.message,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });
@@ -1377,6 +1388,7 @@ async function sendEmail({ to, subject, html }) {
     await db.collection('mail').add({
       to,
       message: { subject, html },
+      replyTo: replyTo || null,
       error: error.message,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
@@ -1523,7 +1535,7 @@ function generateAdminBookingEmail({ customerName, customerEmail, customerPhone,
       ` : ''}
 
       <p style="color: #8A8578; font-size: 12px; margin-top: 30px;">
-        ⚡ Korraldage koristaja: ${dateStr} kell ${timeStr} · ${escapeHtml(address || 'aadress puudub')} · ${sizeName}
+        ⚡ Korraldage koduhooldaja: ${dateStr} kell ${timeStr} · ${escapeHtml(address || 'aadress puudub')} · ${sizeName}
       </p>
     </div>
   `;
@@ -1955,6 +1967,22 @@ async function handleCalBookingCreated(booking) {
     }
   }
 
+  // Reschedule flows (client/provider) pass the Firestore bookingId in metadata and
+  // update calBookingUid themselves. If the webhook wins the race, attach instead of duplicating.
+  if (booking.metadata?.bookingId) {
+    const existingRef = db.collection('bookings').doc(String(booking.metadata.bookingId));
+    const existingDoc = await existingRef.get();
+    if (existingDoc.exists) {
+      await existingRef.update({
+        calBookingUid: booking.uid || null,
+        calBookingId: booking.id || null,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      console.log('Attached Cal booking to existing Firestore booking:', booking.metadata.bookingId);
+      return;
+    }
+  }
+
   // Find the matching order by customer email
   let orderId = booking.metadata?.orderId || null;
   let orderData = null;
@@ -2192,6 +2220,12 @@ exports.autoScheduleVisits = functions
           continue;
         }
 
+        // Partner-managed customers (manual orders / recurring schedule) are scheduled
+        // by generateScheduledVisits, never through Cal.com
+        if (order.source === 'manual' || order.schedule?.active) {
+          continue;
+        }
+
         try {
           await scheduleNextVisit(orderId, order);
         } catch (error) {
@@ -2325,32 +2359,40 @@ exports.sendVisitReminders = functions
         const booking = bookingDoc.data();
 
         try {
-          // Read lang from the linked order (default to 'et')
-          let lang = 'et';
+          // Read the linked order (lang + household contacts)
+          let order = null;
           if (booking.orderId) {
             try {
               const orderDoc = await db.collection('orders').doc(booking.orderId).get();
-              if (orderDoc.exists) {
-                lang = orderDoc.data().lang || 'et';
-              }
+              if (orderDoc.exists) order = orderDoc.data();
             } catch (e) {
-              console.error('Could not fetch order lang for reminder:', e);
+              console.error('Could not fetch order for reminder:', e);
             }
           }
-          const t = tx(lang);
+          const lang = order?.lang || 'et';
 
-          await sendEmail({
-            to: booking.customerEmail,
-            subject: t.subjectReminder,
-            html: generateReminderEmail(booking, lang),
-          });
+          const isPartnerVisit = Boolean(booking.providerId) || order?.source === 'manual' || booking.kind === 'extra';
+          if (isPartnerVisit && order) {
+            // Partner-managed visit: plain reminder (no flowers/surprise promise), sent to every household contact
+            await haldus.sendVisitNotification('reminder', { order, booking });
+          } else {
+            const t = tx(lang);
+            const html = generateReminderEmail(booking, lang);
+            const recipients = order ? haldus.resolveRecipients(order) : [];
+            if (!recipients.some((r) => r.email === String(booking.customerEmail || '').toLowerCase())) {
+              recipients.unshift({ email: booking.customerEmail, name: booking.customerName });
+            }
+            for (const r of recipients) {
+              await sendEmail({ to: r.email, subject: t.subjectReminder, html });
+            }
+          }
 
           await bookingDoc.ref.update({
             reminderSent: true,
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           });
 
-          console.log('Reminder sent to:', booking.customerEmail);
+          console.log('Reminder sent for booking:', bookingDoc.id);
         } catch (error) {
           console.error('Failed to send reminder:', error);
         }
@@ -2369,7 +2411,7 @@ exports.sendVisitReminders = functions
 // ============================================================
 
 /**
- * Home profile CTA block for emails — encourages users to add preferences for the cleaner
+ * Home profile CTA block for emails — encourages users to add preferences for the housekeeper
  */
 function homeProfileBlock(lang) {
   const t = tx(lang);
@@ -3744,11 +3786,30 @@ exports.getAdminOrders = functions
 
         const ordersSnapshot = await query.get();
 
+        // Partner-managed orders have no Cal-driven nextVisitDue; derive the real next
+        // visit from upcoming bookings in one query so the admin card isn't blank.
+        const nextVisitAt = {};
+        const partnerManaged = ordersSnapshot.docs.filter((d) => { const o = d.data(); return o.providerId || o.source === 'manual' || o.schedule?.active; });
+        if (partnerManaged.length) {
+          const upcomingSnap = await db.collection('bookings')
+            .where('scheduledAt', '>', admin.firestore.Timestamp.fromDate(new Date()))
+            .orderBy('scheduledAt', 'asc')
+            .limit(1000)
+            .get();
+          for (const b of upcomingSnap.docs) {
+            const bd = b.data();
+            if (!['scheduled', 'confirmed'].includes(bd.status) || nextVisitAt[bd.orderId]) continue;
+            nextVisitAt[bd.orderId] = bd.scheduledAt?.toDate?.()?.toISOString() || null;
+          }
+        }
+
         const orders = ordersSnapshot.docs.map(doc => {
           const data = doc.data();
           return {
             id: doc.id,
             ...data,
+            schedule: data.schedule ? { ...data.schedule, updatedAt: data.schedule.updatedAt?.toDate?.()?.toISOString() || null } : null,
+            nextVisitAt: nextVisitAt[doc.id] || null,
             createdAt: data.createdAt?.toDate?.()?.toISOString(),
             paidAt: data.paidAt?.toDate?.()?.toISOString(),
             nextVisitDue: data.nextVisitDue?.toDate?.()?.toISOString(),
@@ -5198,7 +5259,7 @@ exports.bookGiftVisit = functions
           console.error('Follow-up sequence creation failed (non-fatal):', followupError);
         }
 
-        // Notify admin about the new booking so they can arrange cleaners
+        // Notify admin about the new booking so they can arrange housekeepers
         await sendAdminBookingNotification({
           customerName: recipientName,
           customerEmail: email,
@@ -5360,7 +5421,7 @@ exports.bookSubscriptionVisit = functions
           },
         });
 
-        // Notify admin about the new booking so they can arrange cleaners
+        // Notify admin about the new booking so they can arrange housekeepers
         await sendAdminBookingNotification({
           customerName: customer.name || 'Klient',
           customerEmail: customer.email || '',
@@ -5787,7 +5848,12 @@ async function authenticateClient(req) {
       .get();
   }
 
-  if (ordersSnapshot.empty) return null;
+  if (ordersSnapshot.empty) {
+    // Household member session (contacts log in with their own e-mail; see portalSessions)
+    const s = await resolvePortalSession(tokenHash);
+    if (!s) return null;
+    return { orderId: s.orderId, order: s.order, viewer: s.viewer };
+  }
 
   const orderDoc = ordersSnapshot.docs[0];
   const order = orderDoc.data();
@@ -5795,7 +5861,28 @@ async function authenticateClient(req) {
   const expiresAt = order.sessionTokenExpiresAt?.toDate?.();
   if (expiresAt && expiresAt < new Date()) return null;
 
-  return { orderId: orderDoc.id, order };
+  return { orderId: orderDoc.id, order, viewer: { email: order.customer?.email || null, name: order.customer?.name || '', primary: true } };
+}
+
+/**
+ * Sessions for household contacts live in portalSessions/{tokenHash}: { orderId, email, name, expiresAt }.
+ * The order's own sessionTokenHash stays the primary customer's session (welcome links, resend, etc.).
+ * Returns { orderId, order, viewer } or null; refreshes expiry on use.
+ */
+async function resolvePortalSession(tokenHash) {
+  const doc = await db.collection('portalSessions').doc(tokenHash).get();
+  if (!doc.exists) return null;
+  const s = doc.data();
+  const exp = s.expiresAt?.toDate?.();
+  if (exp && exp < new Date()) return null;
+  const orderDoc = await db.collection('orders').doc(s.orderId).get();
+  if (!orderDoc.exists) return null;
+  const order = orderDoc.data();
+  const stillMember = (order.contactEmails || []).includes(s.email) || order.customer?.email === s.email;
+  if (!stillMember || !['paid', 'cancelling'].includes(order.status)) return null;
+  const newExpiry = new Date(); newExpiry.setDate(newExpiry.getDate() + 30);
+  await doc.ref.update({ expiresAt: admin.firestore.Timestamp.fromDate(newExpiry), lastSeenAt: admin.firestore.FieldValue.serverTimestamp() });
+  return { orderId: orderDoc.id, order, viewer: { email: s.email, name: s.name || '', primary: false } };
 }
 
 // --- POST /api/auth/validate ---
@@ -5830,7 +5917,9 @@ exports.validatePortalToken = functions
         }
 
         if (ordersSnapshot.empty) {
-          return res.status(401).json({ error: 'Invalid or expired token' });
+          const s = await resolvePortalSession(tokenHash);
+          if (!s) return res.status(401).json({ error: 'Invalid or expired token' });
+          return res.status(200).json({ token, orderId: s.orderId, name: s.viewer.name || s.order.customer?.name || '', viewer: s.viewer });
         }
 
         const orderDoc = ordersSnapshot.docs[0];
@@ -5852,6 +5941,7 @@ exports.validatePortalToken = functions
           token,
           orderId: orderDoc.id,
           name: order.customer?.name || '',
+          viewer: { email: order.customer?.email || null, name: order.customer?.name || '', primary: true },
         });
       } catch (error) {
         console.error('Token validation error:', error);
@@ -5908,12 +5998,19 @@ exports.sendMagicLink = functions
             .get();
         }
 
-        // Always return success (don't reveal if email exists)
+        // Household member? (spouse/partner added as a contact) → own session, same portal
+        let memberOf = null;
         if (ordersSnapshot.empty) {
+          const memberSnap = await db.collection('orders').where('contactEmails', 'array-contains', normalizedEmail).limit(5).get();
+          memberOf = memberSnap.docs.find((d) => ['paid', 'cancelling'].includes(d.data().status)) || null;
+        }
+
+        // Always return success (don't reveal if email exists)
+        if (ordersSnapshot.empty && !memberOf) {
           return res.status(200).json({ sent: true });
         }
 
-        const orderDoc = ordersSnapshot.docs[0];
+        const orderDoc = memberOf || ordersSnapshot.docs[0];
         const order = orderDoc.data();
         const lang = order.lang || 'et';
 
@@ -5922,10 +6019,18 @@ exports.sendMagicLink = functions
         const tokenExpiry = new Date();
         tokenExpiry.setDate(tokenExpiry.getDate() + 30);
 
-        await orderDoc.ref.update({
-          sessionTokenHash: tokenHash,
-          sessionTokenExpiresAt: admin.firestore.Timestamp.fromDate(tokenExpiry),
-        });
+        if (memberOf) {
+          const contact = (order.contacts || []).find((c) => (c.email || '').toLowerCase() === normalizedEmail);
+          await db.collection('portalSessions').doc(tokenHash).set({
+            orderId: orderDoc.id, email: normalizedEmail, name: contact?.name || '',
+            expiresAt: admin.firestore.Timestamp.fromDate(tokenExpiry), createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+        } else {
+          await orderDoc.ref.update({
+            sessionTokenHash: tokenHash,
+            sessionTokenExpiresAt: admin.firestore.Timestamp.fromDate(tokenExpiry),
+          });
+        }
 
         const portalUrl = `https://sukoda.ee/minu?token=${rawToken}`;
         await sendEmail({
@@ -5986,12 +6091,14 @@ exports.getClientProfile = functions
 
         const { orderId, order } = auth;
 
-        // Refresh token expiry on use (same as validatePortalToken)
-        const newExpiry = new Date();
-        newExpiry.setDate(newExpiry.getDate() + 30);
-        await db.collection('orders').doc(orderId).update({
-          sessionTokenExpiresAt: admin.firestore.Timestamp.fromDate(newExpiry),
-        });
+        // Refresh token expiry on use (same as validatePortalToken); member sessions refresh in resolvePortalSession
+        if (auth.viewer?.primary !== false) {
+          const newExpiry = new Date();
+          newExpiry.setDate(newExpiry.getDate() + 30);
+          await db.collection('orders').doc(orderId).update({
+            sessionTokenExpiresAt: admin.firestore.Timestamp.fromDate(newExpiry),
+          });
+        }
 
         const bookingsSnapshot = await db.collection('bookings')
           .where('orderId', '==', orderId)
@@ -5999,25 +6106,45 @@ exports.getClientProfile = functions
           .limit(20)
           .get();
 
-        const bookings = bookingsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          status: doc.data().status,
-          scheduledAt: doc.data().scheduledAt?.toDate?.()?.toISOString(),
-          endTime: doc.data().endTime?.toDate?.()?.toISOString(),
-        }));
+        const lang = order.lang === 'en' ? 'en' : 'et';
+        const bookings = bookingsSnapshot.docs.map(doc => {
+          const b = doc.data();
+          const svc = b.serviceId ? haldusCore.getService(b.serviceId) : null;
+          return {
+            id: doc.id,
+            status: b.status,
+            scheduledAt: b.scheduledAt?.toDate?.()?.toISOString(),
+            endTime: b.endTime?.toDate?.()?.toISOString(),
+            kind: b.kind || (b.serviceId ? 'extra' : 'regular'),
+            serviceId: b.serviceId || null,
+            serviceName: svc ? (svc.name[lang] || svc.name.et) : null,
+            price: b.price || null,
+            customerNote: b.customerNote || '',
+            providerName: b.providerName || order.providerName || null,
+            hasCal: Boolean(b.calBookingUid),
+            canReschedule: Boolean(b.calBookingUid) || b.source === 'schedule' || b.source === 'provider',
+          };
+        });
+
+        const provider = order.providerId ? await haldus.loadProvider(order.providerId) : null;
 
         res.status(200).json({
+          viewer: auth.viewer || null,
           order: {
             id: orderId,
             package: order.package,
             size: order.size,
             status: order.status,
             subscriptionStatus: order.subscriptionStatus,
-            customerName: order.customer?.name,
-            customerEmail: order.customer?.email,
+            source: order.source || 'stripe',
+            customerName: order.type === 'gift' ? (order.recipient?.name || order.customer?.name) : order.customer?.name,
+            customerEmail: order.type === 'gift' ? (order.recipient?.email || order.customer?.email) : order.customer?.email,
             customerPhone: order.customer?.phone,
-            customerAddress: order.customer?.address,
+            customerAddress: order.type === 'gift' ? (order.recipient?.address || order.customer?.address) : order.customer?.address,
             homeProfile: order.homeProfile || null,
+            contacts: Array.isArray(order.contacts) ? order.contacts : [],
+            schedule: order.schedule ? { ...order.schedule, updatedAt: order.schedule.updatedAt?.toDate?.()?.toISOString() || null } : null,
+            provider: provider ? { name: provider.name, businessName: provider.businessName || '', phone: provider.phone || '', email: provider.email } : null,
             pausedAt: order.pausedAt?.toDate?.()?.toISOString() || null,
             pauseExpiresAt: order.pauseExpiresAt?.toDate?.()?.toISOString() || null,
             pauseReason: order.pauseReason || null,
@@ -6062,6 +6189,8 @@ exports.updateHomeProfile = functions
           specialRequests: String(homeProfile.specialRequests || '').slice(0, 500),
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         };
+        // homeType is set separately (POST /api/me/home-type) — keep it across profile saves
+        if (['apartment', 'house', 'summer'].includes(homeProfile.homeType)) sanitized.homeType = homeProfile.homeType;
 
         await db.collection('orders').doc(orderId).update({
           homeProfile: sanitized,
@@ -6121,10 +6250,10 @@ exports.pauseSubscription = functions
           }
         }
 
-        // Cancel upcoming bookings
+        // Cancel upcoming bookings (Cal.com visits are 'scheduled', manual ones may be 'confirmed')
         const upcomingBookings = await db.collection('bookings')
           .where('orderId', '==', orderId)
-          .where('status', '==', 'confirmed')
+          .where('status', 'in', ['scheduled', 'confirmed'])
           .where('scheduledAt', '>', admin.firestore.Timestamp.fromDate(now))
           .get();
 
@@ -6277,14 +6406,42 @@ exports.clientReschedule = functions
         }
 
         const oldScheduledAt = booking.scheduledAt;
+        const oldStartDate = oldScheduledAt?.toDate?.() || null;
+        const oldEndDate = booking.endTime?.toDate?.() || null;
+        const durationMs = oldStartDate && oldEndDate ? (oldEndDate - oldStartDate) : 2 * 60 * 60 * 1000;
+        const newEnd = new Date(newTime.getTime() + durationMs);
         await bookingRef.update({
           scheduledAt: admin.firestore.Timestamp.fromDate(newTime),
+          endTime: admin.firestore.Timestamp.fromDate(newEnd),
           calBookingUid: newCalBooking?.uid ?? null,
           calBookingId: newCalBooking?.id ?? null,
           rescheduledAt: admin.firestore.FieldValue.serverTimestamp(),
           rescheduledBy: 'client',
           previousScheduledAt: oldScheduledAt,
+          ...(newTime.getTime() - Date.now() > 48 * 60 * 60 * 1000 ? { reminderSent: false } : {}),
         });
+
+        // Household contacts + assigned provider learn about the change
+        try {
+          const hasContacts = Array.isArray(order.contacts) && order.contacts.some((c) => c && c.notify !== false && c.email);
+          if (hasContacts || booking.providerId || order.providerId) {
+            await haldus.sendVisitNotification('rescheduled', {
+              order,
+              booking: { ...booking, scheduledAt: newTime, endTime: newEnd },
+              oldStart: oldStartDate,
+            });
+          }
+          const provider = await haldus.loadProvider(booking.providerId || order.providerId);
+          if (provider?.email) {
+            await sendEmail({
+              to: provider.notifyEmail || provider.email,
+              subject: `SUKODA | Klient muutis aega: ${order.customer?.name || ''}`,
+              html: `<p>${escapeHtml(order.customer?.name || 'Klient')} muutis oma visiidi aega.</p><p>Eelmine: ${oldStartDate ? escapeHtml(formatDate(oldStartDate, 'et') + ', ' + formatTime(oldStartDate)) : '-'}<br>Uus: ${escapeHtml(formatDate(newTime, 'et') + ', ' + formatTime(newTime))}</p><p><a href="https://sukoda.ee/haldus">Ava haldus</a></p>`,
+            });
+          }
+        } catch (notifyErr) {
+          console.error('Reschedule notifications failed (non-fatal):', notifyErr);
+        }
 
         res.status(200).json({
           success: true,
@@ -6320,6 +6477,9 @@ exports.logoutAllDevices = functions
           sessionTokenHash: tokenHash,
           sessionTokenExpiresAt: admin.firestore.Timestamp.fromDate(tokenExpiry),
         });
+        // Household member sessions too
+        const sessions = await db.collection('portalSessions').where('orderId', '==', orderId).get();
+        await Promise.all(sessions.docs.map((d) => d.ref.delete()));
 
         res.status(200).json({ success: true });
       } catch (error) {
@@ -6328,3 +6488,36 @@ exports.logoutAllDevices = functions
       }
     });
   });
+
+// ============================================================
+// HALDUS — provider portal, client portal extras, admin providers, schedule cron
+// ============================================================
+
+haldus = require('./haldus')({
+  functions,
+  admin,
+  db,
+  cors,
+  SECRETS,
+  checkRateLimit,
+  authenticateAdmin,
+  authenticateClient,
+  sendEmail,
+  getStripe,
+  emailHeader,
+  emailFooter,
+  formatDate,
+  formatTime,
+  tallinnLocalDateTimeToISOString,
+  tallinnParts,
+  escapeHtml,
+  calService,
+  NOTIFICATION_EMAIL,
+});
+
+exports.haldusApi = haldus.functions.haldusApi;
+exports.portalExtrasApi = haldus.functions.portalExtrasApi;
+exports.adminProvidersApi = haldus.functions.adminProvidersApi;
+exports.generateScheduledVisits = haldus.functions.generateScheduledVisits;
+exports.sendFlowerOrders = haldus.functions.sendFlowerOrders;
+exports.sendMaintenanceReminders = haldus.functions.sendMaintenanceReminders;

@@ -10,9 +10,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         index: resolve(__dirname, 'index.html'),
-        kingitus: resolve(__dirname, 'kingitus.html'),
         lugu: resolve(__dirname, 'lugu.html'),
-        partnerlus: resolve(__dirname, 'partnerlus.html'),
         lunasta: resolve(__dirname, 'lunasta.html'),
         success: resolve(__dirname, 'success.html'),
         admin: resolve(__dirname, 'admin.html'),
@@ -20,6 +18,10 @@ export default defineConfig({
         tingimused: resolve(__dirname, 'tingimused.html'),
         '404': resolve(__dirname, '404.html'),
         minu: resolve(__dirname, 'minu.html'),
+        haldus: resolve(__dirname, 'haldus.html'),
+        muuk: resolve(__dirname, 'muuk.html'),
+        sales: resolve(__dirname, 'sales.html'),
+        arco: resolve(__dirname, 'arco.html'),
       },
     },
   },

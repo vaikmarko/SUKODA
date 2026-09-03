@@ -94,6 +94,9 @@
                 <button @click="activeTab = 'giftcards'" :class="activeTab === 'giftcards' ? 'border-b-2 border-accent text-black' : 'text-muted'" class="py-4 text-xs uppercase tracking-[0.15em] transition-colors">
                     Kinkekaardid
                 </button>
+                <button @click="activeTab = 'providers'; loadProviders()" :class="activeTab === 'providers' ? 'border-b-2 border-accent text-black' : 'text-muted'" class="py-4 text-xs uppercase tracking-[0.15em] transition-colors">
+                    Partnerid
+                </button>
             </div>
 
             <!-- Content -->
@@ -186,7 +189,8 @@
                                         <div class="flex gap-6">
                                             <div class="text-right shrink-0">
                                                 <p class="text-[10px] uppercase tracking-wider text-muted">Järgmine</p>
-                                                <p class="text-xs" x-text="o.nextVisitDue ? formatDate(o.nextVisitDue) : 'Pole planeeritud'"></p>
+                                                <p class="text-xs" x-text="(o.nextVisitAt || o.nextVisitDue) ? formatDate(o.nextVisitAt || o.nextVisitDue) : 'Pole planeeritud'"></p>
+                                                <p class="text-[10px] text-accent" x-show="o.providerName" x-text="o.providerName"></p>
                                             </div>
                                             <div class="text-right shrink-0">
                                                 <p class="text-[10px] uppercase tracking-wider text-muted">Külastusi</p>
@@ -331,6 +335,47 @@
                                 <div class="text-xs text-muted shrink-0">
                                     <span x-show="f.status === 'pending'" x-text="f.sendAt ? 'Saadetakse: ' + new Date(f.sendAt).toLocaleDateString('et-EE', { day: 'numeric', month: 'short' }) : ''"></span>
                                     <span x-show="f.status === 'sent'" x-text="f.sentAt ? 'Saadetud: ' + new Date(f.sentAt).toLocaleDateString('et-EE', { day: 'numeric', month: 'short' }) : ''"></span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Providers (partnerid) -->
+                <div x-show="activeTab === 'providers' && !loading">
+                    <h2 class="font-serif text-xl font-light mb-2">Teenusepakkujad</h2>
+                    <p class="text-muted text-xs font-light mb-8">Teenusepakkujad (koduhooldajad, floristid jm), kes haldavad oma kliente aadressil <span class="font-mono">sukoda.ee/haldus</span>. Partner saab sisenemislingi e-postiga. Kliendi tellimusele saab partneri määrata tellimuse vaates.</p>
+
+                    <div class="bg-white border border-[#E8E3DD] p-6 mb-8">
+                        <p class="text-[10px] uppercase tracking-[0.2em] text-accent font-medium mb-5">Lisa partner</p>
+                        <form @submit.prevent="createProvider()" class="grid md:grid-cols-4 gap-4 items-end">
+                            <div><label class="text-[10px] uppercase tracking-[0.15em] text-muted block mb-1">Nimi *</label><input type="text" x-model="providerForm.name" required class="w-full border border-[#E8E3DD] bg-white px-3 py-2 text-sm font-light outline-none focus:border-accent"></div>
+                            <div><label class="text-[10px] uppercase tracking-[0.15em] text-muted block mb-1">E-post *</label><input type="email" x-model="providerForm.email" required class="w-full border border-[#E8E3DD] bg-white px-3 py-2 text-sm font-light outline-none focus:border-accent"></div>
+                            <div><label class="text-[10px] uppercase tracking-[0.15em] text-muted block mb-1">Telefon</label><input type="tel" x-model="providerForm.phone" class="w-full border border-[#E8E3DD] bg-white px-3 py-2 text-sm font-light outline-none focus:border-accent"></div>
+                            <div><label class="text-[10px] uppercase tracking-[0.15em] text-muted block mb-1">Teenus</label>
+                                <select x-model="providerForm.service" class="w-full border border-[#E8E3DD] bg-white px-3 py-2 text-sm font-light outline-none focus:border-accent"><option value="cleaning">Koristus</option><option value="flowers">Lilled</option></select>
+                            </div>
+                            <div class="md:col-span-3"><label class="text-[10px] uppercase tracking-[0.15em] text-muted block mb-1">Ettevõte (valikuline)</label><input type="text" x-model="providerForm.businessName" class="w-full border border-[#E8E3DD] bg-white px-3 py-2 text-sm font-light outline-none focus:border-accent"></div>
+                            <button type="submit" :disabled="providerSaving" class="px-4 py-2 bg-accent text-white text-xs uppercase tracking-wider hover:bg-accent/90 disabled:opacity-50" x-text="providerSaving ? 'Lisan…' : 'Lisa ja saada link'"></button>
+                        </form>
+                        <p x-show="providerError" x-cloak class="text-xs text-red-500 mt-3" x-text="providerError"></p>
+                        <p x-show="providerInviteUrl" x-cloak class="text-xs text-muted mt-3 break-all">Sisenemislink (kehtib 30 päeva, saadeti ka e-postiga): <span class="font-mono text-black" x-text="providerInviteUrl"></span></p>
+                    </div>
+
+                    <div x-show="providers.length === 0" class="text-muted font-light py-8 text-center text-sm">Partnereid veel pole.</div>
+                    <div class="space-y-3">
+                        <template x-for="p in providers" :key="p.id">
+                            <div class="bg-white border border-[#E8E3DD] p-5 flex flex-col md:flex-row md:items-center gap-4" :class="p.status === 'disabled' ? 'opacity-50' : ''">
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-medium"><span x-text="p.name"></span> <span x-show="p.businessName" class="text-muted font-light" x-text="'· ' + p.businessName"></span></p>
+                                    <p class="text-muted text-xs mt-1 truncate"><span x-text="p.email"></span><span x-show="p.phone" x-text="' · ' + p.phone"></span></p>
+                                </div>
+                                <div class="flex items-center gap-4 text-xs shrink-0">
+                                    <span class="px-2 py-0.5 bg-cream text-[10px] uppercase tracking-wider" x-text="(p.services || []).map(s => ({ cleaning: 'Koristus', flowers: 'Lilled' }[s] || s)).join(', ')"></span>
+                                    <span class="text-muted"><span class="font-serif text-lg text-black" x-text="p.customerCount"></span> klienti</span>
+                                    <span class="text-muted" x-show="p.lastLoginAt" x-text="'Viimati: ' + new Date(p.lastLoginAt).toLocaleDateString('et-EE')"></span>
+                                    <button @click="inviteProvider(p)" class="text-accent hover:underline">Saada link</button>
+                                    <button @click="toggleProvider(p)" class="text-muted hover:text-black" x-text="p.status === 'disabled' ? 'Luba' : 'Keela'"></button>
                                 </div>
                             </div>
                         </template>
@@ -945,9 +990,10 @@
 
                         <!-- Actions -->
                         <div x-show="selectedOrder.status === 'paid' && !orderBookNewMode && !logVisitMode" class="mt-4 flex gap-3">
-                            <button @click="orderBookNewMode = true; initOrderBookDateTime()" class="flex-1 px-3 py-2.5 border border-accent text-[10px] uppercase tracking-wider text-accent hover:bg-accent hover:text-white transition-colors">
+                            <button x-show="!selectedOrder.providerId" @click="orderBookNewMode = true; initOrderBookDateTime()" class="flex-1 px-3 py-2.5 border border-accent text-[10px] uppercase tracking-wider text-accent hover:bg-accent hover:text-white transition-colors">
                                 + Broneeri aeg
                             </button>
+                            <p x-show="selectedOrder.providerId" x-cloak class="flex-1 px-3 py-2.5 text-[10px] text-muted self-center">Aegu haldab partner <span class="text-black" x-text="selectedOrder.providerName"></span> (sukoda.ee/haldus).</p>
                             <button @click="logVisitMode = true; logVisitDate = ''" class="px-3 py-2.5 border border-[#E8E3DD] text-[10px] uppercase tracking-wider text-muted hover:border-green-300 hover:text-green-600 transition-colors">
                                 + Lisa tehtud
                             </button>
@@ -997,6 +1043,30 @@
                                 <button @click="orderBookNewMode = false" class="text-xs text-muted hover:text-black">Tühista</button>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Partner assignment -->
+                    <div class="px-6 py-5 grid-line-b">
+                        <p class="text-[10px] uppercase tracking-[0.2em] text-accent font-medium mb-3">Partner</p>
+                        <div class="grid sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] uppercase tracking-[0.15em] text-muted block mb-1">Koristuspartner</label>
+                                <select @change="assignProvider(selectedOrder, $event.target.value, 'cleaning')" class="w-full border border-[#E8E3DD] bg-white px-3 py-2 text-sm font-light outline-none focus:border-accent">
+                                    <option value="" :selected="!selectedOrder.providerId">— SUKODA (Cal.eu) —</option>
+                                    <template x-for="p in providers.filter(p => (p.services || []).includes('cleaning'))" :key="p.id"><option :value="p.id" :selected="p.id === selectedOrder.providerId" x-text="p.name"></option></template>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[10px] uppercase tracking-[0.15em] text-muted block mb-1">Lillepood</label>
+                                <select @change="assignProvider(selectedOrder, $event.target.value, 'flowers')" class="w-full border border-[#E8E3DD] bg-white px-3 py-2 text-sm font-light outline-none focus:border-accent">
+                                    <option value="" :selected="!selectedOrder.floristId">— SUKODA —</option>
+                                    <template x-for="p in providers.filter(p => (p.services || []).includes('flowers'))" :key="p.id"><option :value="p.id" :selected="p.id === selectedOrder.floristId" x-text="p.name"></option></template>
+                                </select>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-muted mt-3">Määratud partner näeb klienti oma halduses (sukoda.ee/haldus), saab aegu hallata ja saab kliendi lisateenuste soovid. <span x-show="selectedOrder.source === 'manual'" class="text-accent">See klient on partneri enda lisatud (arveldab partner).</span></p>
+                        <p x-show="selectedOrder.contacts?.length" class="text-[10px] text-muted mt-1">Teavituste saajad lisaks tellijale: <span x-text="(selectedOrder.contacts || []).map(c => c.name + (c.email ? ' <' + c.email + '>' : '')).join(', ')"></span></p>
+                        <p x-show="(selectedOrder.awayPeriods || []).some(p => p.to >= new Date().toISOString().slice(0, 10))" x-cloak class="text-[10px] text-amber-700 mt-1">Klient eemal: <span x-text="(selectedOrder.awayPeriods || []).filter(p => p.to >= new Date().toISOString().slice(0, 10)).map(p => p.from + ' – ' + p.to).join(', ')"></span></p>
                     </div>
 
                     <!-- Actions -->
@@ -1103,6 +1173,14 @@
                 result: null,
                 copied: false,
             },
+
+            // Providers (partnerid)
+            providers: [],
+            providersLoaded: false,
+            providerForm: { name: '', email: '', phone: '', businessName: '', service: 'cleaning' },
+            providerSaving: false,
+            providerError: '',
+            providerInviteUrl: '',
 
             // Gift card filters
             gcFilter: {
@@ -1214,6 +1292,88 @@
                 this.loading = false;
             },
 
+            // ---- Providers ----
+
+            async loadProviders() {
+                try {
+                    const res = await this.adminFetch('/api/admin/providers');
+                    if (res.ok) {
+                        const data = await res.json();
+                        this.providers = data.providers || [];
+                        this.providersLoaded = true;
+                    }
+                } catch (e) {
+                    console.error('Failed to load providers:', e);
+                }
+            },
+
+            async createProvider() {
+                if (this.providerSaving) return;
+                this.providerSaving = true;
+                this.providerError = '';
+                this.providerInviteUrl = '';
+                try {
+                    const f = this.providerForm;
+                    const res = await this.adminFetch('/api/admin/providers', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: f.name, email: f.email, phone: f.phone, businessName: f.businessName, services: [f.service] }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Lisamine ebaõnnestus');
+                    this.providerInviteUrl = data.inviteUrl || '';
+                    this.providerForm = { name: '', email: '', phone: '', businessName: '', service: 'cleaning' };
+                    await this.loadProviders();
+                } catch (e) {
+                    this.providerError = e.message;
+                } finally {
+                    this.providerSaving = false;
+                }
+            },
+
+            async inviteProvider(p) {
+                try {
+                    const res = await this.adminFetch('/api/admin/providers/invite', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ providerId: p.id }) });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error);
+                    this.providerInviteUrl = data.inviteUrl || '';
+                    alert('Sisenemislink saadetud: ' + p.email);
+                } catch (e) {
+                    alert('Viga: ' + e.message);
+                }
+            },
+
+            async toggleProvider(p) {
+                const next = p.status === 'disabled' ? 'active' : 'disabled';
+                if (next === 'disabled' && !confirm(`Keela ${p.name} ligipääs haldusele?`)) return;
+                try {
+                    const res = await this.adminFetch('/api/admin/providers/update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ providerId: p.id, status: next }) });
+                    if (!res.ok) throw new Error((await res.json()).error);
+                    await this.loadProviders();
+                } catch (e) {
+                    alert('Viga: ' + e.message);
+                }
+            },
+
+            async assignProvider(order, providerId, role) {
+                try {
+                    let notify = false;
+                    if (providerId && role === 'cleaning') {
+                        const p = this.providers.find(x => x.id === providerId);
+                        notify = confirm(`Saada kliendile ja pere kontaktidele kohe tutvustus?\n\n„${p?.name}“ nimel läheb portaali link + eelseisvad ajad kalendrikutsetega.\n\nOK = saada, Loobu = määra vaikselt.`);
+                    }
+                    const res = await this.adminFetch('/api/admin/assign-provider', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderId: order.id, providerId: providerId || null, role, notify }) });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error);
+                    const p = this.providers.find(x => x.id === providerId) || null;
+                    if (role === 'flowers') { order.floristId = providerId || null; order.floristName = p?.name || null; }
+                    else { order.providerId = providerId || null; order.providerName = p?.name || null; }
+                    await this.loadProviders();
+                } catch (e) {
+                    alert('Viga: ' + e.message);
+                }
+            },
+
             // ---- Booking Detail Modal ----
 
             openBookingDetail(booking) {
@@ -1245,6 +1405,7 @@
                 this.orderBookingsLoading = true;
                 this.orderBookNewMode = false;
                 this.logVisitMode = false;
+                if (!this.providersLoaded) this.loadProviders();
 
                 // Load linked bookings
                 try {

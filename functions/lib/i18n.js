@@ -14,9 +14,7 @@ const DEFAULT_LANG = 'et';
 
 const PAGES = [
   'index',
-  'kingitus',
   'lugu',
-  'partnerlus',
   'lunasta',
   'privaatsus',
   'tingimused',

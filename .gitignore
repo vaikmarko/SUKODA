@@ -40,3 +40,7 @@ assets/js/firebase.js
 
 
 
+
+# Firebase emulator logs
+*.log
+firestore-debug.log

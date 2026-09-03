@@ -2,8 +2,12 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /minu
+Disallow: /haldus
 Disallow: /success
 Disallow: /test-payment
+Disallow: /arco
+Disallow: /muuk
+Disallow: /sales
 Disallow: /api/
 
 Sitemap: https://sukoda.ee/sitemap.xml

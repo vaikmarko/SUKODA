@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="et" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <style>[x-cloak] { display: none !important; } html { font-size: 17px; }</style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <title>SUKODA | Töölaud</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" type="image/svg+xml" href="assets/logo/icon-s-black.svg">
+    <link rel="apple-touch-icon" href="assets/logo/icon-square.svg">
+    <link rel="preload" href="/assets/fonts/cormorant-garamond-400.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/assets/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
+    <script type="module" src="/assets/js/main.js"></script>
+    <style>
+        .h-input { width: 100%; background: transparent; border: 0; border-bottom: 1px solid #E8E3DD; padding: 10px 0; font-size: 15px; font-weight: 300; outline: none; transition: border-color .2s; }
+        .h-input:focus { border-color: #B8976A; }
+        .h-select { width: 100%; background: #fff; border: 1px solid #E8E3DD; padding: 10px 12px; font-size: 15px; font-weight: 300; outline: none; }
+        .h-select:focus { border-color: #B8976A; }
+        .h-label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .18em; color: #6B6560; margin-bottom: 6px; }
+        .h-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 22px; font-size: 12px; text-transform: uppercase; letter-spacing: .16em; transition: all .3s; white-space: nowrap; }
+        .h-btn-primary { background: #111; color: #FAF8F5; }
+        .h-btn-primary:hover { background: #B8976A; }
+        .h-btn-outline { border: 1px solid #111; color: #111; }
+        .h-btn-outline:hover { background: #111; color: #FAF8F5; }
+        .h-btn-ghost { color: #6B6560; }
+        .h-btn-ghost:hover { color: #111; }
+        .h-btn:disabled { opacity: .45; cursor: not-allowed; }
+        .h-chip { display: inline-block; font-size: 11px; text-transform: uppercase; letter-spacing: .12em; padding: 3px 8px; border-radius: 999px; }
+        .cal-cell { min-height: 84px; }
+        @media (max-width: 767px) { .cal-cell { min-height: 56px; } }
+    </style>
+</head>
+<body class="antialiased" x-data="haldusApp()" x-init="init()">
+
+    <div class="max-w-[1200px] mx-auto bg-paper min-h-screen border-x border-[#E8E3DD]">
+
+        <!-- Loading -->
+        <div x-show="loading" class="min-h-screen flex items-center justify-center">
+            <div class="w-10 h-10 border border-accent border-t-transparent rounded-full animate-spin"></div>
+        </div>
+
+        <!-- ═══════════════ LOGIN ═══════════════ -->
+        <div x-show="!loading && !authenticated" x-cloak>
+            <nav class="grid-line-b" aria-label="Main navigation">
+                <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12">
+                    <a href="/" class="font-serif text-2xl md:text-3xl tracking-[0.08em] font-light">SUKODA</a>
+                    <span class="text-[11px] uppercase tracking-[0.18em] text-accent font-sans font-medium">Töölaud</span>
+                </div>
+            </nav>
+            <main class="min-h-[80vh] flex items-center justify-center px-4 py-12 md:py-24">
+                <div class="max-w-md w-full text-center">
+                    <a href="/" class="font-serif text-3xl md:text-4xl tracking-[0.08em] font-light inline-block mb-6">SUKODA</a>
+                    <div class="accent-line mx-auto mb-8"></div>
+                    <h1 class="font-serif text-3xl md:text-4xl font-light mb-3">SUKODA Töölaud</h1>
+
+                    <div x-show="!loginSent && !signupMode">
+                        <p class="text-muted font-sans font-light text-sm mb-10 max-w-sm mx-auto leading-relaxed">Sisesta oma e-post. Saadame sulle privaatse sisenemislingi — parooli pole vaja.</p>
+                        <form @submit.prevent="sendMagicLink()" class="text-left mb-8">
+                            <label class="h-label">E-post</label>
+                            <input type="email" x-model="loginEmail" required placeholder="sinu@email.ee" class="h-input font-sans">
+                            <p x-show="loginError" x-cloak class="text-sm text-red-500 font-sans font-light mt-3" x-text="loginError"></p>
+                            <button type="submit" :disabled="loginSending || !loginEmail" class="h-btn h-btn-primary w-full mt-8 font-sans">
+                                <span x-show="!loginSending">Saada link</span>
+                                <span x-show="loginSending" x-cloak>Saadan…</span>
+                            </button>
+                        </form>
+                    </div>
+                    <!-- Self-serve onboarding: a partner opens their own desk, link arrives at once -->
+                    <div x-show="!loginSent && signupMode" x-cloak>
+                        <p class="text-muted font-sans font-light text-sm mb-8 max-w-sm mx-auto leading-relaxed">Ava oma töölaud. Lisad kliendid, ajad ja graafiku — nemad saavad kalendrikutsed ja portaali, sina rahu. Sisenemislink tuleb kohe e-postile.</p>
+                        <form @submit.prevent="signup()" class="text-left mb-8 space-y-5">
+                            <div class="grid sm:grid-cols-2 gap-4">
+                                <div><label class="h-label">Nimi *</label><input type="text" x-model="signupForm.name" required class="h-input font-sans"></div>
+                                <div><label class="h-label">Ettevõte</label><input type="text" x-model="signupForm.businessName" placeholder="valikuline" class="h-input font-sans"></div>
+                            </div>
+                            <div class="grid sm:grid-cols-2 gap-4">
+                                <div><label class="h-label">E-post *</label><input type="email" x-model="signupForm.email" required class="h-input font-sans"></div>
+                                <div><label class="h-label">Telefon</label><input type="tel" x-model="signupForm.phone" class="h-input font-sans"></div>
+                            </div>
+                            <div>
+                                <label class="h-label">Mida pakud</label>
+                                <div class="flex flex-wrap gap-2 mt-1">
+                                    <template x-for="o in [['cleaning','Koristus'],['flowers','Lilled'],['handyman','Remondimees'],['garden','Aed & õu']]" :key="o[0]">
+                                        <button type="button" @click="toggleSignupService(o[0])" :class="signupForm.services.includes(o[0]) ? 'bg-black text-paper border-black' : 'border-[#D4CFC8] text-muted hover:text-black'" class="px-4 py-2 border text-[11px] uppercase tracking-[0.15em] transition-colors" x-text="o[1]"></button>
+                                    </template>
+                                </div>
+                            </div>
+                            <div><label class="h-label">Piirkond</label><input type="text" x-model="signupForm.city" placeholder="nt Tallinn, Viimsi" class="h-input font-sans"></div>
+                            <p x-show="loginError" x-cloak class="text-sm text-red-500 font-sans font-light" x-text="loginError"></p>
+                            <button type="submit" :disabled="loginSending || !signupForm.name || !signupForm.email" class="h-btn h-btn-primary w-full font-sans">
+                                <span x-show="!loginSending">Ava töölaud</span>
+                                <span x-show="loginSending" x-cloak>Avan…</span>
+                            </button>
+                            <p class="text-xs text-muted font-sans font-light leading-relaxed">Tasuta kuni 3 kodu, kõik funktsioonid. Rohkem kodusid: Standard 19 €/kuus (kuni 20 kodu) või Stuudio 39 €/kuus (piiramatult). Kuu kaupa, tühistatav igal ajal. Klient ei maksa kunagi midagi.</p>
+                        </form>
+                    </div>
+                    <div x-show="loginSent" x-cloak x-transition>
+                        <div class="w-16 h-16 bg-accent rounded-full flex items-center justify-center mx-auto mb-6">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        </div>
+                        <p class="font-serif text-xl font-light mb-2">Kontrolli oma e-posti. Link saadetud.</p>
+                        <p class="text-muted font-sans font-light text-sm">Kui kirja pole, kontrolli rämpsposti või küsi ligipääsu: <a href="mailto:tere@sukoda.ee" class="text-black">tere@sukoda.ee</a></p>
+                    </div>
+                    <div class="border-t border-[#E8E3DD] pt-8 mt-8">
+                        <p class="text-muted font-sans font-light text-sm leading-relaxed">SUKODA Töölaud on koduhooldaja, floristi, remondimehe ja aedniku tööriist: kliendid, ajad, kutsed ja teavitused ühes kohas. Klient saab oma koduportaali.</p>
+                        <button type="button" x-show="!loginSent" @click="signupMode = !signupMode; loginError = ''" class="mt-4 text-[11px] uppercase tracking-[0.18em] text-accent hover:text-black font-sans" x-text="signupMode ? 'Mul on juba ligipääs — logi sisse' : 'Uus partner? Ava oma töölaud'"></button>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- ═══════════════ APP ═══════════════ -->
+        <div x-show="!loading && authenticated" x-cloak>
+
+            <nav class="sticky top-0 z-40 bg-paper/95 backdrop-blur-sm grid-line-b" aria-label="Main navigation">
+                <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12">
+                    <div class="flex items-center gap-3">
+                        <a href="/" class="font-serif text-2xl md:text-3xl tracking-[0.08em] font-light">SUKODA</a>
+                        <span class="text-[11px] uppercase tracking-[0.18em] text-accent font-sans font-medium hidden sm:inline">Töölaud</span>
+                    </div>
+                    <div class="flex items-center gap-4 md:gap-6">
+                        <button type="button" @click="activeTab = 'account'" class="text-xs font-sans font-light text-muted hidden md:inline hover:text-black" x-text="billing.planName + ' · ' + billing.homes + (billing.limit ? '/' + billing.limit : '') + ' kodu'"></button>
+                        <button type="button" @click="loadData()" class="text-xs uppercase tracking-[0.16em] font-sans font-medium text-muted hover:text-black transition-colors">Uuenda</button>
+                        <button type="button" @click="logout()" class="text-xs uppercase tracking-[0.16em] font-sans font-medium text-muted hover:text-black transition-colors">Logi välja</button>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="px-4 md:px-12 py-6 md:py-10 grid-line-b">
+                <div class="accent-line mb-4"></div>
+                <h1 class="font-serif text-3xl md:text-4xl font-light mb-1" x-text="'Tere, ' + firstName(provider?.name)"></h1>
+                <p class="text-muted font-sans font-light text-base">
+                    <span x-text="stats.customers"></span> klienti · <span x-text="stats.weekVisits"></span> visiiti sel nädalal
+                    <span x-show="pendingRequests.length" class="text-accent"> · <span x-text="pendingRequests.length"></span> ootel soovi</span>
+                </p>
+            </div>
+
+            <!-- Tabs -->
+            <div class="px-4 md:px-12 grid-line-b overflow-x-auto">
+                <div class="flex gap-8 md:gap-12 text-xs md:text-[13px] uppercase tracking-[0.16em] font-sans font-medium whitespace-nowrap">
+                    <template x-for="tab in tabs" :key="tab.id">
+                        <button type="button" @click="activeTab = tab.id" :class="activeTab === tab.id ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black'" class="pb-4 pt-4 transition-colors relative">
+                            <span x-text="tab.label"></span>
+                            <span x-show="tab.id === 'requests' && pendingRequests.length" class="absolute top-2 -right-5 bg-accent text-white text-[10px] rounded-full w-[18px] h-[18px] flex items-center justify-center" x-text="pendingRequests.length"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+            <main class="px-4 md:px-12 py-6 md:py-10">
+
+                <p x-show="globalError" x-cloak class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 text-sm font-sans" x-text="globalError"></p>
+                <p x-show="toast" x-cloak x-transition class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] bg-black text-paper px-6 py-3 text-xs font-sans tracking-wide shadow-lg" x-text="toast"></p>
+
+                <!-- ─────────── ÜLEVAADE ─────────── -->
+                <div x-show="activeTab === 'overview'">
+                    <div class="max-w-3xl space-y-10">
+
+                        <div x-show="pendingRequests.length" class="bg-accent/10 border border-accent/40 p-5 flex items-start justify-between gap-4">
+                            <div>
+                                <p class="text-[11px] uppercase tracking-[0.18em] text-accent font-sans mb-1">Ootel soovid</p>
+                                <p class="font-serif text-lg font-light"><span x-text="pendingRequests.length"></span> klienti ootab sinu kinnitust</p>
+                            </div>
+                            <button type="button" @click="activeTab = 'requests'" class="h-btn h-btn-primary font-sans">Vaata</button>
+                        </div>
+
+                        <div x-show="unmarkedPast.length" class="border border-[#E8E3DD] p-5">
+                            <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans mb-3">Möödunud visiidid, mis pole märgitud</p>
+                            <div class="space-y-2">
+                                <template x-for="b in unmarkedPast.slice(0, 5)" :key="b.id">
+                                    <div class="flex items-center justify-between gap-3 text-sm font-sans">
+                                        <span class="font-light"><span x-text="fmtDateShort(b.scheduledAt)"></span> · <span x-text="b.customerName"></span></span>
+                                        <div class="flex gap-3 shrink-0">
+                                            <button type="button" @click="completeVisit(b)" class="text-[11px] uppercase tracking-[0.15em] text-accent hover:text-black">Tehtud</button>
+                                            <button type="button" @click="cancelVisit(b)" class="text-[11px] uppercase tracking-[0.15em] text-muted hover:text-black">Jäi ära</button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Upkeep I own at clients' homes that is due: one glance, tick off from here -->
+                        <div x-show="maintDueAll.length" class="border border-[#E8E3DD] p-5">
+                            <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans mb-3">Hooldus ees · sinu klientide kodudes</p>
+                            <div class="space-y-2">
+                                <template x-for="e in maintDueAll.slice(0, 6)" :key="e.customer.id + e.item.id">
+                                    <div class="flex items-center justify-between gap-3 text-sm font-sans">
+                                        <span class="font-light min-w-0 truncate"><span :class="e.item.state === 'overdue' ? 'text-red-500' : 'text-accent'" x-text="fmtDateShort(e.item.nextDueAt)"></span> · <span x-text="e.item.name"></span> · <span class="text-muted" x-text="e.customer.name"></span></span>
+                                        <button type="button" @click="openCustomerDetail(e.customer)" class="text-[11px] uppercase tracking-[0.15em] text-accent hover:text-black shrink-0">Ava</button>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans">Täna · <span x-text="fmtDateLong(todayStr)"></span></p>
+                                <button type="button" @click="openVisitModal({ date: todayStr })" class="text-[11px] uppercase tracking-[0.16em] text-accent hover:text-black font-sans">+ Lisa visiit</button>
+                            </div>
+                            <div x-show="todayVisits.length === 0" class="bg-cream/40 border border-[#E8E3DD] p-8 text-center text-sm text-muted font-sans font-light">Täna visiite ei ole.</div>
+                            <div class="space-y-3">
+                                <template x-for="b in todayVisits" :key="b.id">
+                                    <div x-html="visitCard(b)" @click="handleCardClick($event, b)"></div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div>
+                            <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans mb-4">Järgmised 14 päeva</p>
+                            <div x-show="upcomingGrouped.length === 0" class="bg-cream/40 border border-[#E8E3DD] p-8 text-center text-sm text-muted font-sans font-light">Eelseisvaid visiite pole. Lisa kliendile graafik või üksik visiit.</div>
+                            <div class="space-y-6">
+                                <template x-for="g in upcomingGrouped" :key="g.date">
+                                    <div>
+                                        <p class="font-serif text-base font-light capitalize mb-2" x-text="fmtDateLong(g.date)"></p>
+                                        <div class="space-y-2">
+                                            <template x-for="b in g.items" :key="b.id">
+                                                <div x-html="visitCard(b)" @click="handleCardClick($event, b)"></div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ─────────── KALENDER ─────────── -->
+                <div x-show="activeTab === 'calendar'">
+                    <div class="flex items-center justify-between mb-6">
+                        <button type="button" @click="calPrev()" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7"/></svg></button>
+                        <h2 class="font-serif text-2xl font-light" x-text="calMonthLabel"></h2>
+                        <button type="button" @click="calNext()" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"/></svg></button>
+                    </div>
+                    <div class="grid grid-cols-7 border-t border-l border-[#E8E3DD] text-center text-[11px] uppercase tracking-[0.16em] text-muted font-sans">
+                        <template x-for="d in ['E','T','K','N','R','L','P']" :key="d"><div class="py-2 border-r border-b border-[#E8E3DD]" x-text="d"></div></template>
+                    </div>
+                    <div class="grid grid-cols-7 border-l border-[#E8E3DD]">
+                        <template x-for="(cell, i) in calCells" :key="i">
+                            <button type="button" @click="cell.date && selectDay(cell.date)"
+                                    :class="{ 'bg-cream/40': cell.date && cell.date < todayStr, 'bg-accent/10': cell.date === selectedDay, 'ring-1 ring-inset ring-accent': cell.date === todayStr }"
+                                    class="cal-cell border-r border-b border-[#E8E3DD] p-1.5 text-left align-top hover:bg-cream/60 transition-colors disabled:cursor-default" :disabled="!cell.date">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-sans" :class="cell.date === todayStr ? 'text-accent font-medium' : 'text-muted'" x-text="cell.day"></span>
+                                    <span x-show="cell.holiday" class="w-1.5 h-1.5 rounded-full bg-red-400" :title="cell.holiday"></span>
+                                </div>
+                                <div class="mt-1 space-y-0.5">
+                                    <template x-for="b in cell.items.slice(0, 3)" :key="b.id">
+                                        <div class="truncate text-[11px] font-sans px-1 py-0.5 rounded" :class="chipClass(b)"><span class="hidden md:inline" x-text="fmtTime(b.scheduledAt) + ' '"></span><span x-text="firstName(b.customerName)"></span></div>
+                                    </template>
+                                    <div x-show="cell.items.length > 3" class="text-[11px] text-muted font-sans px-1">+<span x-text="cell.items.length - 3"></span></div>
+                                </div>
+                            </button>
+                        </template>
+                    </div>
+
+                    <div x-show="selectedDay" x-cloak class="mt-8 max-w-3xl">
+                        <div class="flex items-center justify-between mb-4">
+                            <p class="font-serif text-xl font-light capitalize"><span x-text="fmtDateLong(selectedDay)"></span><span x-show="holidayName(selectedDay)" class="text-red-500 text-sm font-sans ml-3" x-text="holidayName(selectedDay)"></span></p>
+                            <button type="button" @click="openVisitModal({ date: selectedDay })" class="h-btn h-btn-outline font-sans">+ Lisa visiit</button>
+                        </div>
+                        <div x-show="dayVisits(selectedDay).length === 0" class="bg-cream/40 border border-[#E8E3DD] p-6 text-center text-sm text-muted font-sans font-light">Sel päeval visiite pole.</div>
+                        <div class="space-y-2">
+                            <template x-for="b in dayVisits(selectedDay)" :key="b.id">
+                                <div x-html="visitCard(b)" @click="handleCardClick($event, b)"></div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ─────────── KLIENDID ─────────── -->
+                <div x-show="activeTab === 'customers'">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                        <input type="text" x-model="customerSearch" placeholder="Otsi nime või aadressi…" class="h-input font-sans sm:max-w-xs">
+                        <button type="button" @click="openCustomerModal()" class="h-btn h-btn-primary font-sans">+ Lisa klient</button>
+                    </div>
+                    <div x-show="filteredCustomers.length === 0" class="bg-cream/40 border border-[#E8E3DD] p-10 text-center">
+                        <p class="font-serif text-xl font-light mb-2">Kliente veel pole</p>
+                        <p class="text-sm text-muted font-sans font-light mb-6">Lisa oma esimene klient — sisesta nimi, e-post, aadress ja graafik. Klient saab kohe e-kirja portaali lingiga ja kõik ajad kalendrisse.</p>
+                        <button type="button" @click="openCustomerModal()" class="h-btn h-btn-primary font-sans">+ Lisa klient</button>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-3">
+                        <template x-for="c in filteredCustomers" :key="c.id">
+                            <div @click="openCustomerDetail(c)" class="bg-white border border-[#E8E3DD] p-5 cursor-pointer hover:border-accent/60 transition-colors">
+                                <div class="flex items-start justify-between gap-3 mb-2">
+                                    <div class="min-w-0">
+                                        <p class="font-serif text-lg font-light truncate" x-text="c.name"></p>
+                                        <p class="text-xs text-muted font-sans font-light truncate" x-text="c.address"></p>
+                                    </div>
+                                    <div class="flex flex-col items-end gap-1 shrink-0">
+                                        <span x-show="c.status !== 'paid'" class="h-chip bg-gray-100 text-gray-500 font-sans">Arhiveeritud</span>
+                                        <span x-show="c.status === 'paid' && c.pausedAt" class="h-chip bg-amber-50 text-amber-600 font-sans">Pausil</span>
+                                        <span x-show="c.status === 'paid' && awayLabel(c)" class="h-chip bg-amber-50 text-amber-600 font-sans" x-text="awayLabel(c)"></span>
+                                        <span x-show="c.source !== 'manual'" class="h-chip bg-accent/10 text-accent font-sans">SUKODA klient</span>
+                                        <span x-show="c.role === 'flowers'" class="h-chip bg-pink-50 text-pink-500 font-sans">Lilled</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between text-xs font-sans font-light text-muted mt-3">
+                                    <span x-text="scheduleLabel(c.schedule)"></span>
+                                    <span x-show="nextVisitFor(c.id)" x-text="'Järgmine: ' + fmtDateShort(nextVisitFor(c.id)?.scheduledAt)"></span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- ─────────── SOOVID ─────────── -->
+                <div x-show="activeTab === 'requests'">
+                    <div class="max-w-3xl space-y-10">
+                        <div>
+                            <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans mb-4">Ootel</p>
+                            <div x-show="pendingRequests.length === 0" class="bg-cream/40 border border-[#E8E3DD] p-8 text-center text-sm text-muted font-sans font-light">Ootel soove pole. Kui klient tellib portaalist lisateenuse või soovib aega muuta, ilmub see siia ja sinu e-postile.</div>
+                            <div class="space-y-3">
+                                <template x-for="r in pendingRequests" :key="r.id">
+                                    <div class="bg-white border border-accent/40 p-5">
+                                        <div class="flex items-start justify-between gap-3 mb-3">
+                                            <div>
+                                                <p class="text-[11px] uppercase tracking-[0.16em] text-accent font-sans mb-1" x-text="r.type === 'reschedule' ? 'Aja muutmise soov' : 'Lisateenus'"></p>
+                                                <p class="font-serif text-lg font-light" x-text="r.serviceName"></p>
+                                                <p class="text-sm font-sans font-light" x-text="r.customerName"></p>
+                                                <p class="text-xs text-muted font-sans font-light" x-text="r.address"></p>
+                                            </div>
+                                            <p class="text-[11px] text-muted font-sans shrink-0" x-text="fmtDateShort(r.createdAt)"></p>
+                                        </div>
+                                        <div class="text-sm font-sans font-light space-y-1 mb-4">
+                                            <p x-show="r.targetScheduledAt"><span class="text-muted">Praegune aeg:</span> <span x-text="fmtDateShort(r.targetScheduledAt) + ' ' + fmtTime(r.targetScheduledAt)"></span></p>
+                                            <p><span class="text-muted">Soovitud:</span> <span x-text="r.preferredDate ? fmtDateLong(r.preferredDate) : 'esimesel võimalusel'"></span><span x-show="r.timeWindow" x-text="' · ' + timeWindowLabel(r.timeWindow)"></span></p>
+                                            <p x-show="r.note" class="bg-cream/60 p-3 text-xs" x-text="r.note"></p>
+                                        </div>
+                                        <div class="flex flex-wrap gap-3">
+                                            <button type="button" @click="openConfirmRequest(r)" class="h-btn h-btn-primary font-sans">Kinnita aeg</button>
+                                            <button type="button" @click="declineRequest(r)" class="h-btn h-btn-ghost font-sans">Ei saa</button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                        <div x-show="handledRequests.length">
+                            <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans mb-4">Käsitletud</p>
+                            <div class="space-y-2">
+                                <template x-for="r in handledRequests" :key="r.id">
+                                    <div class="border border-[#E8E3DD] p-4 flex items-center justify-between gap-3 text-sm font-sans opacity-80">
+                                        <div class="min-w-0">
+                                            <p class="font-light truncate"><span x-text="r.serviceName"></span> · <span x-text="r.customerName"></span></p>
+                                            <p class="text-xs text-muted font-light" x-text="r.scheduledAt ? fmtDateShort(r.scheduledAt) + ' ' + fmtTime(r.scheduledAt) : fmtDateShort(r.createdAt)"></p>
+                                        </div>
+                                        <span class="h-chip shrink-0" :class="requestChip(r.status)" x-text="requestStatusLabel(r.status)"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ─────────── KOKKUVÕTE ─────────── -->
+                <div x-show="activeTab === 'summary'">
+                    <div class="max-w-3xl">
+                        <div class="flex items-center justify-between mb-6">
+                            <button type="button" @click="summaryShift(-1)" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7"/></svg></button>
+                            <h2 class="font-serif text-2xl font-light" x-text="monthLabel(summaryMonth)"></h2>
+                            <button type="button" @click="summaryShift(1)" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"/></svg></button>
+                        </div>
+                        <p class="text-sm text-muted font-sans font-light mb-6">Kuu kokkuvõte arve tegemiseks. „Tehtud“ on sinu märgitud visiidid; „märkimata“ on möödunud ajad, mida pole veel tehtuks märgitud.</p>
+                        <div class="bg-white border border-[#E8E3DD]">
+                            <div class="grid grid-cols-12 px-5 py-3 text-[11px] uppercase tracking-[0.16em] text-muted font-sans border-b border-[#E8E3DD]">
+                                <div class="col-span-6">Klient</div><div class="col-span-2 text-right">Tehtud</div><div class="col-span-2 text-right">Märkimata</div><div class="col-span-2 text-right">Lisateen.</div>
+                            </div>
+                            <template x-for="row in summaryRows" :key="row.id">
+                                <div class="grid grid-cols-12 px-5 py-4 text-sm font-sans border-b border-[#E8E3DD] last:border-0 items-center">
+                                    <div class="col-span-6 min-w-0"><p class="font-light truncate" x-text="row.name"></p><p class="text-xs text-muted font-light truncate" x-text="row.address"></p></div>
+                                    <div class="col-span-2 text-right font-serif text-lg font-light" x-text="row.completed"></div>
+                                    <div class="col-span-2 text-right font-serif text-lg font-light" :class="row.unmarked ? 'text-amber-600' : 'text-muted'" x-text="row.unmarked"></div>
+                                    <div class="col-span-2 text-right font-serif text-lg font-light" x-text="row.extras"></div>
+                                </div>
+                            </template>
+                            <div x-show="summaryRows.length === 0" class="p-8 text-center text-sm text-muted font-sans font-light">Sel kuul visiite ei olnud.</div>
+                            <div x-show="summaryRows.length" class="grid grid-cols-12 px-5 py-4 text-sm font-sans bg-cream/40 items-center">
+                                <div class="col-span-6 text-[11px] uppercase tracking-[0.16em] text-muted">Kokku</div>
+                                <div class="col-span-2 text-right font-serif text-lg" x-text="summaryTotals.completed"></div>
+                                <div class="col-span-2 text-right font-serif text-lg" x-text="summaryTotals.unmarked"></div>
+                                <div class="col-span-2 text-right font-serif text-lg" x-text="summaryTotals.extras"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ─────────── KONTO: pakett, arved, minu andmed ─────────── -->
+                <div x-show="activeTab === 'account'" x-cloak>
+                    <div class="max-w-3xl space-y-10">
+
+                        <!-- Plan: what it costs, stated plainly, and what you are on -->
+                        <div>
+                            <div class="flex flex-wrap items-end justify-between gap-4 mb-5">
+                                <div>
+                                    <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans mb-1">Pakett</p>
+                                    <p class="font-serif text-2xl font-light"><span x-text="billing.planName"></span> <span class="text-muted text-lg" x-text="'· ' + billing.homes + (billing.limit ? ' / ' + billing.limit : '') + ' kodu'"></span></p>
+                                </div>
+                                <p class="text-sm text-muted font-sans font-light" x-show="billing.hasSubscription && billing.periodEnd" x-text="(billing.cancelAtPeriodEnd ? 'Lõpeb ' : 'Uueneb ') + fmtDateShort(billing.periodEnd) + (billing.status === 'past_due' ? ' · makse ebaõnnestus, proovime uuesti' : '')"></p>
+                            </div>
+                            <p class="text-sm text-muted font-sans font-light leading-relaxed mb-6 max-w-2xl">Hind sõltub ainult sellest, mitu kodu sul töölaual on. Kuu kaupa, tühistatav igal ajal — muutus jõustub perioodi lõpus. Klient ei maksa SUKODA-le kunagi midagi; sinu hinnad ja arved klientidele on sinu enda asi nagu seni.</p>
+
+                            <div class="grid sm:grid-cols-3 gap-3">
+                                <template x-for="p in billing.plans" :key="p.id">
+                                    <div class="border p-5 flex flex-col" :class="billing.plan === p.id ? 'border-black bg-white' : 'border-[#E8E3DD] bg-white/60'">
+                                        <div class="flex items-baseline justify-between mb-1">
+                                            <p class="font-serif text-xl font-light" x-text="p.name"></p>
+                                            <span x-show="billing.plan === p.id" class="text-[10px] uppercase tracking-[0.16em] bg-black text-paper px-2 py-0.5">Praegune</span>
+                                        </div>
+                                        <p class="font-serif text-3xl font-light mb-1"><span x-text="p.price"></span><span class="text-base text-muted"> €/kuus</span></p>
+                                        <p class="text-sm text-muted font-sans font-light leading-relaxed flex-1" x-text="p.blurb"></p>
+                                        <div class="mt-5">
+                                            <button type="button" x-show="billing.plan !== p.id" @click="choosePlan(p)" :disabled="billingBusy" class="h-btn w-full" :class="p.price ? 'h-btn-primary' : 'h-btn-outline'" x-text="billingBusy ? '…' : (p.price ? (billing.hasSubscription ? 'Vaheta' : 'Vali') : (billing.cancelAtPeriodEnd ? 'Lõpeb perioodi lõpus' : 'Mine tasuta paketile'))"></button>
+                                            <button type="button" x-show="billing.plan === p.id && billing.cancelAtPeriodEnd" @click="resumePlan()" :disabled="billingBusy" class="h-btn h-btn-outline w-full">Jätka paketti</button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                            <p class="text-xs text-muted font-sans font-light mt-4">Hinnad on eurodes ühe töölaua kohta. Makse võtab Stripe kaardilt igal kuul; arve PDF tuleb e-postile ja on siin all. Käibemaks lisandub, kui see kohaldub.</p>
+                            <p x-show="billingError" x-cloak class="text-sm text-red-500 font-sans font-light mt-3" x-text="billingError"></p>
+                        </div>
+
+                        <!-- Invoices -->
+                        <div x-show="billing.hasSubscription || invoices.length">
+                            <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans mb-3">Arved</p>
+                            <div class="bg-white border border-[#E8E3DD] divide-y divide-[#E8E3DD]" x-show="invoices.length">
+                                <template x-for="inv in invoices" :key="inv.id">
+                                    <div class="flex items-center justify-between gap-4 px-5 py-3 text-sm font-sans">
+                                        <span class="font-light"><span x-text="fmtDateShort(inv.paidAt)"></span> · <span x-text="inv.number || inv.id"></span></span>
+                                        <span class="flex items-center gap-4"><span class="font-serif text-base" x-text="inv.amount.toFixed(2).replace('.', ',') + ' €'"></span><a :href="inv.pdf || inv.url" target="_blank" rel="noopener" class="text-[11px] uppercase tracking-[0.15em] text-accent hover:text-black">PDF</a></span>
+                                    </div>
+                                </template>
+                            </div>
+                            <p x-show="!invoices.length" class="text-sm text-muted font-sans font-light">Arveid veel pole. Esimene tuleb pärast esimest makset.</p>
+                        </div>
+
+                        <!-- Profile -->
+                        <div>
+                            <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans mb-3">Minu andmed</p>
+                            <form @submit.prevent="saveProfile()" class="bg-white border border-[#E8E3DD] p-5 grid sm:grid-cols-2 gap-4 font-sans">
+                                <div><label class="h-label">Nimi</label><input type="text" x-model="profileForm.name" class="h-input"></div>
+                                <div><label class="h-label">Ettevõte (arvel ja kirjades)</label><input type="text" x-model="profileForm.businessName" class="h-input"></div>
+                                <div><label class="h-label">Telefon</label><input type="tel" x-model="profileForm.phone" class="h-input"></div>
+                                <div><label class="h-label">Teavituste e-post</label><input type="email" x-model="profileForm.notifyEmail" class="h-input"></div>
+                                <p class="sm:col-span-2 text-xs text-muted font-light">Sisenemise e-post on <span x-text="provider?.email"></span>. Kliendid näevad sinu nime, ettevõtet ja telefoni oma portaalis.</p>
+                                <div class="sm:col-span-2 flex items-center gap-4">
+                                    <button type="submit" :disabled="profileSaving" class="h-btn h-btn-primary" x-text="profileSaving ? 'Salvestan…' : 'Salvesta'"></button>
+                                    <span x-show="profileSaved" x-cloak x-transition class="text-sm text-green-600 font-light">Salvestatud</span>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+
+            <!-- ═══════════════ VISIT MODAL (create / reschedule) ═══════════════ -->
+            <div x-show="visitModal.open" x-cloak class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4 bg-black/40" @click.self="visitModal.open = false" @keydown.escape.window="visitModal.open = false">
+                <div class="bg-paper w-full sm:max-w-lg max-h-[92vh] overflow-y-auto border border-[#E8E3DD] p-6 md:p-8 shadow-lg">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-serif text-xl font-light" x-text="visitModal.bookingId ? 'Muuda visiidi aega' : (visitModal.completed ? 'Lisa tehtud visiit' : 'Lisa visiit')"></h3>
+                        <button type="button" @click="visitModal.open = false" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/></svg></button>
+                    </div>
+                    <form @submit.prevent="saveVisit()" class="space-y-5 font-sans">
+                        <div x-show="!visitModal.bookingId">
+                            <label class="h-label">Klient</label>
+                            <select x-model="visitModal.orderId" required class="h-select">
+                                <option value="">— vali klient —</option>
+                                <template x-for="c in activeCustomers" :key="c.id"><option :value="c.id" x-text="c.name + ' · ' + c.address"></option></template>
+                            </select>
+                        </div>
+                        <div x-show="visitModal.bookingId" class="text-sm font-light text-muted"><span x-text="visitModal.customerName"></span> · praegu <span x-text="fmtDateShort(visitModal.currentStart) + ' ' + fmtTime(visitModal.currentStart)"></span></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="h-label">Kuupäev</label><input type="date" x-model="visitModal.date" required class="h-input"></div>
+                            <div><label class="h-label">Kell</label>
+                                <select x-model="visitModal.time" required class="h-select"><template x-for="tm in timeOptions" :key="tm"><option :value="tm" x-text="tm"></option></template></select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="h-label">Kestus</label>
+                                <select x-model.number="visitModal.durationMin" class="h-select"><template x-for="d in durationOptions" :key="d"><option :value="d" x-text="d + ' min'"></option></template></select>
+                            </div>
+                            <div x-show="!visitModal.bookingId"><label class="h-label">Tüüp</label>
+                                <select x-model="visitModal.serviceId" class="h-select">
+                                    <option value="">Tavakoristus</option>
+                                    <template x-for="s in catalogue" :key="s.id"><option :value="s.id" x-text="s.name"></option></template>
+                                </select>
+                            </div>
+                        </div>
+                        <div x-show="!visitModal.bookingId && visitModal.serviceId"><label class="h-label">Hind kliendile (valikuline)</label><input type="text" x-model="visitModal.price" placeholder="nt 45 €" class="h-input"></div>
+                        <div><label class="h-label">Märkus endale</label><input type="text" x-model="visitModal.note" placeholder="Nt võti naabri käest" class="h-input"></div>
+                        <div x-show="!visitModal.completed"><label class="h-label">Sõnum kliendile (läheb kirja)</label><input type="text" x-model="visitModal.customerNote" placeholder="Nt tulen seekord veidi hiljem" class="h-input"></div>
+                        <div x-show="holidayName(visitModal.date)" class="text-xs text-red-500 font-light">See päev on riigipüha: <span x-text="holidayName(visitModal.date)"></span></div>
+                        <div x-show="visitModal.away" x-cloak class="bg-amber-50 border border-amber-200 p-4 text-sm">
+                            <p class="text-amber-700 font-medium">Klient on sel päeval eemal.</p>
+                            <label class="flex items-center gap-2 mt-3 text-amber-800"><input type="checkbox" x-model="visitModal.force"> Salvesta siiski</label>
+                        </div>
+
+                        <div x-show="visitModal.conflicts.length" x-cloak class="bg-amber-50 border border-amber-200 p-4 text-sm">
+                            <p class="text-amber-700 font-medium mb-2">Sul on samal ajal teine visiit:</p>
+                            <template x-for="c in visitModal.conflicts" :key="c.id"><p class="text-amber-700 font-light" x-text="fmtTime(c.scheduledAt) + '–' + fmtTime(c.endTime) + ' · ' + c.customerName"></p></template>
+                            <label class="flex items-center gap-2 mt-3 text-amber-800"><input type="checkbox" x-model="visitModal.force"> Salvesta siiski</label>
+                        </div>
+                        <p x-show="visitModal.error" x-cloak class="text-sm text-red-500 font-light" x-text="visitModal.error"></p>
+                        <label x-show="!visitModal.completed" class="flex items-center gap-2 text-sm font-light text-muted"><input type="checkbox" x-model="visitModal.notify"> Saada kliendile ja pere kontaktidele kinnitus kalendrikutsega</label>
+                        <div class="flex gap-3 pt-2">
+                            <button type="button" @click="visitModal.open = false" class="h-btn h-btn-outline">Loobu</button>
+                            <button type="submit" :disabled="visitModal.saving" class="h-btn h-btn-primary flex-1"><span x-text="visitModal.saving ? 'Salvestan…' : 'Salvesta'"></span></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ═══════════════ CUSTOMER MODAL (create) ═══════════════ -->
+            <div x-show="customerModal.open" x-cloak class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4 bg-black/40" @click.self="customerModal.open = false" @keydown.escape.window="customerModal.open = false">
+                <div class="bg-paper w-full sm:max-w-xl max-h-[92vh] overflow-y-auto border border-[#E8E3DD] p-6 md:p-8 shadow-lg">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-serif text-xl font-light">Lisa klient</h3>
+                        <button type="button" @click="customerModal.open = false" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/></svg></button>
+                    </div>
+                    <form @submit.prevent="saveCustomer()" class="space-y-6 font-sans">
+                        <div class="grid sm:grid-cols-2 gap-4">
+                            <div><label class="h-label">Nimi *</label><input type="text" x-model="customerModal.form.name" required class="h-input"></div>
+                            <div><label class="h-label">E-post *</label><input type="email" x-model="customerModal.form.email" required class="h-input"></div>
+                            <div><label class="h-label">Telefon</label><input type="tel" x-model="customerModal.form.phone" class="h-input"></div>
+                            <div><label class="h-label">Kodu suurus</label>
+                                <select x-model="customerModal.form.size" class="h-select"><option value="small">1–2 tuba</option><option value="medium">3 tuba</option><option value="large">4+ tuba</option></select>
+                            </div>
+                        </div>
+                        <div><label class="h-label">Aadress *</label><input type="text" x-model="customerModal.form.address" required placeholder="Tänav maja-korter, linn" class="h-input"></div>
+
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="h-label mb-0">Kes veel saab teavitusi</label>
+                                <button type="button" @click="customerModal.form.contacts.push({ name: '', email: '', phone: '', notify: true })" class="text-[11px] uppercase tracking-[0.15em] text-accent">+ Lisa</button>
+                            </div>
+                            <p class="text-xs text-muted font-light mb-3">Nt abikaasa või elukaaslane — kõik ajad ja muudatused jõuavad ka temani koos kalendrikutsega.</p>
+                            <template x-for="(ct, i) in customerModal.form.contacts" :key="i">
+                                <div class="grid grid-cols-12 gap-2 mb-2 items-end">
+                                    <input type="text" x-model="ct.name" placeholder="Nimi" class="h-input col-span-5">
+                                    <input type="email" x-model="ct.email" placeholder="E-post" class="h-input col-span-6">
+                                    <button type="button" @click="customerModal.form.contacts.splice(i, 1)" class="col-span-1 text-muted hover:text-black text-lg">×</button>
+                                </div>
+                            </template>
+                        </div>
+
+                        <div class="border border-[#E8E3DD] p-4">
+                            <label class="flex items-center gap-2 text-sm mb-4"><input type="checkbox" x-model="customerModal.form.useSchedule"> <span class="font-light">Määra korduv graafik</span></label>
+                            <div x-show="customerModal.form.useSchedule" class="grid sm:grid-cols-2 gap-4">
+                                <div><label class="h-label">Sagedus</label>
+                                    <select x-model="customerModal.form.schedule.frequency" class="h-select"><option value="weekly">Iga nädal</option><option value="biweekly">Iga 2 nädala tagant</option><option value="monthly">1× kuus (sama nädalapäev)</option></select>
+                                </div>
+                                <div><label class="h-label">Esimene visiit</label><input type="date" x-model="customerModal.form.schedule.anchorDate" class="h-input"></div>
+                                <div><label class="h-label">Kell</label>
+                                    <select x-model="customerModal.form.schedule.time" class="h-select"><template x-for="tm in timeOptions" :key="tm"><option :value="tm" x-text="tm"></option></template></select>
+                                </div>
+                                <div><label class="h-label">Kestus</label>
+                                    <select x-model.number="customerModal.form.schedule.durationMin" class="h-select"><template x-for="d in durationOptions" :key="d"><option :value="d" x-text="d + ' min'"></option></template></select>
+                                </div>
+                                <p class="sm:col-span-2 text-xs text-muted font-light" x-text="schedulePreview(customerModal.form.schedule)"></p>
+                            </div>
+                        </div>
+
+                        <div><label class="h-label">Märkmed endale (klient ei näe)</label><textarea x-model="customerModal.form.providerNotes" rows="2" class="h-input resize-none" placeholder="Nt maksab kuu lõpus arvega"></textarea></div>
+
+                        <label class="flex items-center gap-2 text-sm font-light text-muted"><input type="checkbox" x-model="customerModal.form.sendWelcome"> Saada kliendile tervituskiri portaali lingiga</label>
+
+                        <div x-show="customerModal.existingWarning" x-cloak class="bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800">
+                            <p class="mb-2" x-text="customerModal.existingWarning"></p>
+                            <label class="flex items-center gap-2"><input type="checkbox" x-model="customerModal.form.force"> Jah, see on uus klient — salvesta</label>
+                        </div>
+                        <p x-show="customerModal.error" x-cloak class="text-sm text-red-500 font-light" x-text="customerModal.error"></p>
+                        <button type="button" x-show="customerModal.upgrade" x-cloak @click="customerModal.open = false; activeTab = 'account'" class="h-btn h-btn-outline">Vaata pakette</button>
+                        <div class="flex gap-3 pt-2">
+                            <button type="button" @click="customerModal.open = false" class="h-btn h-btn-outline">Loobu</button>
+                            <button type="submit" :disabled="customerModal.saving" class="h-btn h-btn-primary flex-1"><span x-text="customerModal.saving ? 'Salvestan…' : 'Lisa klient'"></span></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ═══════════════ CUSTOMER DETAIL ═══════════════ -->
+            <div x-show="detail.open" x-cloak class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4 bg-black/40" @click.self="detail.open = false" @keydown.escape.window="detail.open = false">
+                <div class="bg-paper w-full sm:max-w-2xl max-h-[92vh] overflow-y-auto border border-[#E8E3DD] shadow-lg" x-show="detail.customer">
+                    <div class="p-6 md:p-8 grid-line-b flex justify-between items-start">
+                        <div>
+                            <p class="text-[11px] uppercase tracking-[0.16em] text-accent font-sans mb-1" x-text="detail.customer?.source === 'manual' ? 'Sinu klient' : 'SUKODA klient'"></p>
+                            <h3 class="font-serif text-2xl font-light" x-text="detail.customer?.name"></h3>
+                            <p class="text-sm text-muted font-sans font-light" x-text="detail.customer?.address"></p>
+                        </div>
+                        <button type="button" @click="detail.open = false" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/></svg></button>
+                    </div>
+
+                    <div class="p-6 md:p-8 space-y-8 font-sans">
+                        <!-- Contact info -->
+                        <div class="grid sm:grid-cols-2 gap-4 text-sm">
+                            <div><label class="h-label">E-post</label><a :href="'mailto:' + detail.customer?.email" class="font-light text-accent" x-text="detail.customer?.email"></a></div>
+                            <div><label class="h-label">Telefon</label><a :href="'tel:' + detail.customer?.phone" class="font-light text-accent" x-text="detail.customer?.phone || '—'"></a></div>
+                            <div><label class="h-label">Kodu</label><span class="font-light" x-text="sizeLabel(detail.customer?.size)"></span></div>
+                            <div><label class="h-label">Staatus</label><span class="font-light" x-text="detail.customer?.status !== 'paid' ? 'Arhiveeritud' : (detail.customer?.pausedAt ? 'Pausil' : 'Aktiivne')"></span></div>
+                        </div>
+
+                        <!-- Home profile -->
+                        <div x-show="hasHomeProfile(detail.customer)">
+                            <label class="h-label">Koduprofiil (kliendi täidetud)</label>
+                            <div class="bg-cream/50 p-4 text-sm font-light space-y-1.5">
+                                <template x-for="f in homeProfileFields" :key="f.key">
+                                    <p x-show="detail.customer?.homeProfile?.[f.key]"><span class="text-muted" x-text="f.label + ': '"></span><span x-text="detail.customer?.homeProfile?.[f.key]"></span></p>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Schedule -->
+                        <div class="border border-[#E8E3DD] p-5" x-show="detail.customer?.role === 'cleaning' && detail.customer?.status === 'paid'">
+                            <div class="flex items-center justify-between mb-3">
+                                <label class="h-label mb-0">Korduv graafik</label>
+                                <button type="button" x-show="!detail.editSchedule" @click="startEditSchedule()" class="text-[11px] uppercase tracking-[0.15em] text-accent">Muuda</button>
+                            </div>
+                            <p x-show="!detail.editSchedule" class="text-sm font-light" x-text="scheduleLabel(detail.customer?.schedule)"></p>
+                            <div x-show="detail.editSchedule" x-cloak class="space-y-4">
+                                <label class="flex items-center gap-2 text-sm"><input type="checkbox" x-model="detail.scheduleForm.active"> <span class="font-light">Graafik aktiivne</span></label>
+                                <div x-show="detail.scheduleForm.active" class="grid sm:grid-cols-2 gap-4">
+                                    <div><label class="h-label">Sagedus</label>
+                                        <select x-model="detail.scheduleForm.frequency" class="h-select"><option value="weekly">Iga nädal</option><option value="biweekly">Iga 2 nädala tagant</option><option value="monthly">1× kuus (sama nädalapäev)</option></select>
+                                    </div>
+                                    <div><label class="h-label">Alates (esimene visiit)</label><input type="date" x-model="detail.scheduleForm.anchorDate" class="h-input"></div>
+                                    <div><label class="h-label">Kell</label>
+                                        <select x-model="detail.scheduleForm.time" class="h-select"><template x-for="tm in timeOptions" :key="tm"><option :value="tm" x-text="tm"></option></template></select>
+                                    </div>
+                                    <div><label class="h-label">Kestus</label>
+                                        <select x-model.number="detail.scheduleForm.durationMin" class="h-select"><template x-for="d in durationOptions" :key="d"><option :value="d" x-text="d + ' min'"></option></template></select>
+                                    </div>
+                                    <p class="sm:col-span-2 text-xs text-muted font-light" x-text="schedulePreview(detail.scheduleForm)"></p>
+                                </div>
+                                <p class="text-xs text-muted font-light">Graafiku muutmisel tühistame veel toimumata automaatsed ajad ja loome uued. Klient ja pere kontaktid saavad ühe kokkuvõtva kirja kõigi eelseisvate aegadega.</p>
+                                <p x-show="detail.error" x-cloak class="text-sm text-red-500 font-light" x-text="detail.error"></p>
+                                <div class="flex gap-3">
+                                    <button type="button" @click="detail.editSchedule = false" class="h-btn h-btn-outline">Loobu</button>
+                                    <button type="button" @click="saveSchedule()" :disabled="detail.saving" class="h-btn h-btn-primary" x-text="detail.saving ? 'Salvestan…' : 'Salvesta graafik'"></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Flowers: part of my service for this home -->
+                        <div class="border border-[#E8E3DD] p-5" x-show="detail.customer?.role === 'cleaning' && detail.customer?.status === 'paid'">
+                            <div class="flex items-center justify-between mb-3">
+                                <label class="h-label mb-0">Lilled igal visiidil</label>
+                                <button type="button" x-show="!detail.editFlowers" @click="startEditFlowers()" class="text-[11px] uppercase tracking-[0.15em] text-accent" x-text="detail.customer?.flowers?.auto ? 'Muuda' : 'Lülita sisse'"></button>
+                            </div>
+                            <p x-show="!detail.editFlowers" class="text-sm font-light" x-text="flowersLabel(detail.customer)"></p>
+                            <div x-show="detail.editFlowers" x-cloak class="space-y-4">
+                                <label class="flex items-center gap-2 text-sm"><input type="checkbox" x-model="detail.flowersForm.auto"> <span class="font-light">Tellin igaks visiidiks värsked lilled ja toon need kaasa</span></label>
+                                <div x-show="detail.flowersForm.auto" class="grid sm:grid-cols-2 gap-4">
+                                    <div><label class="h-label">Lillepood</label>
+                                        <select x-model="detail.flowersForm.floristId" class="h-select">
+                                            <option value="">— vali —</option>
+                                            <template x-for="f in florists" :key="f.id"><option :value="f.id" x-text="f.businessName || f.name"></option></template>
+                                        </select>
+                                    </div>
+                                    <div><label class="h-label">Tellimus poodi</label>
+                                        <select x-model.number="detail.flowersForm.leadDays" class="h-select"><option :value="1">1 päev enne</option><option :value="2">2 päeva enne</option><option :value="3">3 päeva enne</option></select>
+                                    </div>
+                                </div>
+                                <div x-show="detail.flowersForm.auto" class="grid sm:grid-cols-2 gap-4">
+                                    <div><label class="h-label">Kimp poele</label><input type="text" x-model="detail.flowersForm.budget" placeholder="nt keskmine, ~35 €" class="h-input"></div>
+                                    <div><label class="h-label">Märkus poele</label><input type="text" x-model="detail.flowersForm.note" placeholder="nt vaas on 30 cm" class="h-input"></div>
+                                </div>
+                                <p class="text-xs text-muted font-light">Pood saab ühe kirja kõigi sama päeva kimpudega: igal on silt kliendi ja sinu nimega, aeg, milleks valmis (hommikuks, kui visiit on pärastlõunal), kliendi eelistus<span x-show="detail.customer?.homeProfile?.flowerPreference"> („<span x-text="detail.customer?.homeProfile?.flowerPreference"></span>“)</span> ja kimbu suurus. Sina saad ühe meeldetuletuse, klient koopia. Arveldus poega jääb nagu teil kokku lepitud.</p>
+                                <p x-show="detail.error" x-cloak class="text-sm text-red-500 font-light" x-text="detail.error"></p>
+                                <div class="flex gap-3">
+                                    <button type="button" @click="detail.editFlowers = false" class="h-btn h-btn-outline">Loobu</button>
+                                    <button type="button" @click="saveFlowers()" :disabled="detail.saving" class="h-btn h-btn-primary" x-text="detail.saving ? 'Salvestan…' : 'Salvesta'"></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Hooldusrütm: what I do at this home as part of my service, and what the household does itself -->
+                        <div class="border border-[#E8E3DD] p-5" x-show="detail.customer?.role === 'cleaning' && detail.customer?.status === 'paid'">
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="h-label mb-0">Hooldusrütm</label>
+                                <button type="button" @click="detail.maintAdding = !detail.maintAdding; detail.error = ''" class="text-[11px] uppercase tracking-[0.15em] text-accent" x-text="detail.maintAdding ? 'Sulge' : '+ Lisa'"></button>
+                            </div>
+                            <p class="text-xs text-muted font-light mb-4">Süvapuhastus, kubu filter, pesumasin — mida teed selles kodus ise, märgi siia. Sina saad meeldetuletuse, kui aeg käes; kui märgid tehtuks, saab klient ühe rea teate. Klient ei pea midagi meeles pidama.</p>
+
+                            <div x-show="!detail.customer?.maintenance?.length && !detail.maintAdding" class="text-sm text-muted font-light">Midagi pole veel kirjas. Lisa see, mida sa siin kodus perioodiliselt teed.</div>
+                            <div class="divide-y divide-[#E8E3DD]" x-show="detail.customer?.maintenance?.length">
+                                <template x-for="it in (detail.customer?.maintenance || [])" :key="it.id">
+                                    <div class="py-3 flex items-start gap-3">
+                                        <span class="mt-1.5 w-2 h-2 rounded-full shrink-0" :class="it.state === 'overdue' ? 'bg-red-400' : it.state === 'due' ? 'bg-accent' : 'bg-[#D4CFC8]'"></span>
+                                        <div class="min-w-0 flex-1">
+                                            <p class="text-sm"><span x-text="it.name"></span> <span class="text-[10px] uppercase tracking-wider ml-1 px-1.5 py-0.5" :class="it.doneBy === 'provider' ? 'bg-black text-paper' : 'bg-cream text-muted'" x-text="it.doneBy === 'provider' ? 'teen mina' : 'klient ise'"></span></p>
+                                            <p class="text-xs text-muted font-light mt-0.5">
+                                                <span x-text="maintDueLabel(it)"></span> · <span x-text="maintIntervalLabel(it.intervalMonths)"></span><span x-show="it.lastDoneAt" x-text="' · viimati ' + fmtDateShort(it.lastDoneAt) + (it.lastDoneBy === 'home' ? ' (klient)' : '')"></span>
+                                            </p>
+                                        </div>
+                                        <div class="flex items-center gap-3 shrink-0 text-[11px] uppercase tracking-[0.15em]">
+                                            <button type="button" x-show="it.doneBy === 'provider'" @click="maintAction({ action: 'done', itemId: it.id })" :disabled="detail.saving" class="text-black hover:text-accent">Tehtud täna</button>
+                                            <button type="button" @click="maintAction({ action: 'update', itemId: it.id, doneBy: it.doneBy === 'provider' ? 'home' : 'provider' })" :disabled="detail.saving" class="text-muted hover:text-black" x-text="it.doneBy === 'provider' ? 'Anna kliendile' : 'Võtan enda peale'"></button>
+                                            <button type="button" x-show="it.doneBy === 'provider'" @click="if (confirm('Eemalda kirje selle kodu hooldusrütmist?')) maintAction({ action: 'remove', itemId: it.id })" :disabled="detail.saving" class="text-muted/60 hover:text-black">×</button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <div x-show="detail.maintAdding" x-cloak class="mt-4 space-y-4">
+                                <div class="flex flex-wrap gap-2">
+                                    <template x-for="m in maintSuggestionsFor(detail.customer)" :key="m.id">
+                                        <button type="button" @click="maintAction({ action: 'add', catalogId: m.id })" :disabled="detail.saving" class="px-3 py-1.5 border text-[11px] uppercase tracking-[0.12em] transition-colors" :class="m.byProvider ? 'border-black text-black hover:bg-black hover:text-paper' : 'border-[#D4CFC8] text-muted hover:text-black'" :title="m.hint" x-text="m.name + ' · ' + maintIntervalLabel(m.intervalMonths)"></button>
+                                    </template>
+                                </div>
+                                <div class="grid grid-cols-12 gap-2 items-end">
+                                    <input type="text" x-model="detail.maintForm.name" maxlength="80" placeholder="Oma kirje, nt Vaipade pesu" class="h-input col-span-6">
+                                    <select x-model.number="detail.maintForm.intervalMonths" class="h-select col-span-3"><template x-for="m in maintenanceIntervals" :key="m"><option :value="m" x-text="maintIntervalLabel(m)"></option></template></select>
+                                    <button type="button" @click="maintAction({ action: 'add', name: detail.maintForm.name, intervalMonths: detail.maintForm.intervalMonths }); detail.maintForm.name = ''" :disabled="detail.saving || !detail.maintForm.name" class="h-btn h-btn-primary col-span-3">Lisa</button>
+                                </div>
+                                <p class="text-xs text-muted font-light">Mustaga raamitud on need, mida koduhooldajad enamasti ise teevad. Lisatud kirje algab „tehtud“ märkimisest — siis hakkab rütm jooksma.</p>
+                            </div>
+                            <p x-show="detail.error && (detail.maintAdding || detail.customer?.maintenance?.length)" x-cloak class="text-sm text-red-500 font-light mt-2" x-text="detail.error"></p>
+                        </div>
+
+                        <!-- Away periods -->
+                        <div class="border border-[#E8E3DD] p-5" x-show="detail.customer?.role === 'cleaning' && detail.customer?.status === 'paid'">
+                            <div class="flex items-center justify-between mb-3">
+                                <label class="h-label mb-0">Klient eemal</label>
+                                <button type="button" x-show="!detail.editAway" @click="detail.editAway = true; detail.awayForm = { from: '', to: '', note: '' }; detail.error = ''" class="text-[11px] uppercase tracking-[0.15em] text-accent">+ Lisa periood</button>
+                            </div>
+                            <div x-show="!detail.customer?.awayPeriods?.length && !detail.editAway" class="text-sm text-muted font-light">Eemalolekuid pole. Klient saab need ise portaalis märkida; sina saad siit lisada, kui ta ütles telefoni teel.</div>
+                            <div class="space-y-2" x-show="detail.customer?.awayPeriods?.length">
+                                <template x-for="p in (detail.customer?.awayPeriods || [])" :key="p.id">
+                                    <div class="flex items-center justify-between gap-3 bg-cream/50 px-3 py-2">
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-light"><span x-text="fmtDateShort(p.from)"></span><span x-show="p.to !== p.from"> – <span x-text="fmtDateShort(p.to)"></span></span> <span class="text-[11px] text-muted uppercase tracking-wider ml-1" x-text="p.createdBy === 'provider' ? 'sinu lisatud' : 'kliendi märgitud'"></span></p>
+                                            <p x-show="p.note" class="text-xs text-muted font-light truncate" x-text="p.note"></p>
+                                        </div>
+                                        <button type="button" @click="removeCustomerAway(p)" :disabled="detail.saving" class="text-[11px] uppercase tracking-[0.15em] text-muted hover:text-black shrink-0">Eemalda</button>
+                                    </div>
+                                </template>
+                            </div>
+                            <div x-show="detail.editAway" x-cloak class="mt-4 space-y-3">
+                                <div class="grid sm:grid-cols-2 gap-4">
+                                    <div><label class="h-label">Alates</label><input type="date" x-model="detail.awayForm.from" class="h-input"></div>
+                                    <div><label class="h-label">Kuni</label><input type="date" x-model="detail.awayForm.to" :min="detail.awayForm.from" class="h-input"></div>
+                                </div>
+                                <input type="text" x-model="detail.awayForm.note" placeholder="Märkus (valikuline)" class="h-input">
+                                <p class="text-xs text-muted font-light">Vahemikku jäävad visiidid tühistame ja graafik jätab need päevad vahele. Klient ja pere kontaktid saavad ühe teate.</p>
+                                <p x-show="detail.error" x-cloak class="text-sm text-red-500 font-light" x-text="detail.error"></p>
+                                <div class="flex gap-3">
+                                    <button type="button" @click="detail.editAway = false" class="h-btn h-btn-outline">Loobu</button>
+                                    <button type="button" @click="addCustomerAway()" :disabled="detail.saving || !detail.awayForm.from" class="h-btn h-btn-primary" x-text="detail.saving ? 'Salvestan…' : 'Salvesta'"></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contacts -->
+                        <div class="border border-[#E8E3DD] p-5">
+                            <div class="flex items-center justify-between mb-3">
+                                <label class="h-label mb-0">Teavituste saajad</label>
+                                <button type="button" @click="detail.contactsForm.push({ name: '', email: '', phone: '', notify: true }); detail.editContacts = true" class="text-[11px] uppercase tracking-[0.15em] text-accent">+ Lisa</button>
+                            </div>
+                            <p class="text-sm font-light mb-2"><span x-text="detail.customer?.email"></span> <span class="text-muted text-xs">(klient)</span></p>
+                            <template x-for="(ct, i) in detail.contactsForm" :key="i">
+                                <div class="grid grid-cols-12 gap-2 mb-2 items-end">
+                                    <input type="text" x-model="ct.name" @input="detail.editContacts = true" placeholder="Nimi" class="h-input col-span-4">
+                                    <input type="email" x-model="ct.email" @input="detail.editContacts = true" placeholder="E-post" class="h-input col-span-5">
+                                    <label class="col-span-2 flex items-center gap-1 text-[11px] uppercase tracking-wider text-muted"><input type="checkbox" x-model="ct.notify" @change="detail.editContacts = true"> Teavita</label>
+                                    <button type="button" @click="detail.contactsForm.splice(i, 1); detail.editContacts = true" class="col-span-1 text-muted hover:text-black text-lg">×</button>
+                                </div>
+                            </template>
+                            <div x-show="detail.editContacts" x-cloak class="flex gap-3 mt-3">
+                                <button type="button" @click="saveContacts()" :disabled="detail.saving" class="h-btn h-btn-primary" x-text="detail.saving ? 'Salvestan…' : 'Salvesta saajad'"></button>
+                            </div>
+                        </div>
+
+                        <!-- Upcoming visits -->
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <label class="h-label mb-0">Eelseisvad visiidid</label>
+                                <button type="button" x-show="detail.customer?.status === 'paid'" @click="openVisitModal({ orderId: detail.customer.id })" class="text-[11px] uppercase tracking-[0.15em] text-accent">+ Lisa visiit</button>
+                            </div>
+                            <div x-show="customerUpcoming(detail.customer?.id).length === 0" class="text-sm text-muted font-light">Eelseisvaid visiite pole.</div>
+                            <div class="space-y-2">
+                                <template x-for="b in customerUpcoming(detail.customer?.id)" :key="b.id">
+                                    <div x-html="visitCard(b, { compact: true })" @click="handleCardClick($event, b)"></div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div>
+                            <label class="h-label">Märkmed endale</label>
+                            <textarea x-model="detail.notes" @input="detail.notesDirty = true" rows="2" class="h-input resize-none" placeholder="Klient ei näe"></textarea>
+                            <button type="button" x-show="detail.notesDirty" @click="saveNotes()" class="h-btn h-btn-outline mt-3">Salvesta märkmed</button>
+                        </div>
+
+                        <div class="flex flex-wrap gap-4 pt-4 border-t border-[#E8E3DD]">
+                            <button type="button" @click="resendPortal()" class="h-btn h-btn-ghost">Saada portaali link uuesti</button>
+                            <button type="button" x-show="detail.customer?.source === 'manual' && detail.customer?.status === 'paid'" @click="archiveCustomer()" class="h-btn h-btn-ghost text-red-500">Lõpeta koostöö</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════════════ CONFIRM REQUEST MODAL ═══════════════ -->
+            <div x-show="confirmModal.open" x-cloak class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4 bg-black/40" @click.self="confirmModal.open = false" @keydown.escape.window="confirmModal.open = false">
+                <div class="bg-paper w-full sm:max-w-lg max-h-[92vh] overflow-y-auto border border-[#E8E3DD] p-6 md:p-8 shadow-lg">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-serif text-xl font-light">Kinnita aeg</h3>
+                        <button type="button" @click="confirmModal.open = false" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/></svg></button>
+                    </div>
+                    <p class="text-sm text-muted font-sans font-light mb-6"><span x-text="confirmModal.request?.serviceName"></span> · <span x-text="confirmModal.request?.customerName"></span></p>
+                    <form @submit.prevent="confirmRequest()" class="space-y-5 font-sans">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="h-label">Kuupäev</label><input type="date" x-model="confirmModal.date" required class="h-input"></div>
+                            <div><label class="h-label">Kell</label><select x-model="confirmModal.time" required class="h-select"><template x-for="tm in timeOptions" :key="tm"><option :value="tm" x-text="tm"></option></template></select></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="h-label">Kestus</label><select x-model.number="confirmModal.durationMin" class="h-select"><template x-for="d in durationOptions" :key="d"><option :value="d" x-text="d + ' min'"></option></template></select></div>
+                            <div x-show="confirmModal.request?.type !== 'reschedule'"><label class="h-label">Hind</label><input type="text" x-model="confirmModal.price" placeholder="nt 45 €" class="h-input"></div>
+                        </div>
+                        <div><label class="h-label">Sõnum kliendile (valikuline)</label><input type="text" x-model="confirmModal.message" class="h-input" placeholder="Nt toon lilled koristusega kaasa"></div>
+                        <div x-show="confirmModal.conflicts.length" x-cloak class="bg-amber-50 border border-amber-200 p-4 text-sm">
+                            <p class="text-amber-700 font-medium mb-2">Sul on samal ajal teine visiit:</p>
+                            <template x-for="c in confirmModal.conflicts" :key="c.id"><p class="text-amber-700 font-light" x-text="fmtTime(c.scheduledAt) + '–' + fmtTime(c.endTime) + ' · ' + c.customerName"></p></template>
+                            <label class="flex items-center gap-2 mt-3 text-amber-800"><input type="checkbox" x-model="confirmModal.force"> Kinnita siiski</label>
+                        </div>
+                        <p x-show="confirmModal.error" x-cloak class="text-sm text-red-500 font-light" x-text="confirmModal.error"></p>
+                        <p class="text-xs text-muted font-light">Klient ja pere kontaktid saavad kohe kinnituse koos kalendrikutsega.</p>
+                        <div class="flex gap-3 pt-2">
+                            <button type="button" @click="confirmModal.open = false" class="h-btn h-btn-outline">Loobu</button>
+                            <button type="submit" :disabled="confirmModal.saving" class="h-btn h-btn-primary flex-1" x-text="confirmModal.saving ? 'Kinnitan…' : 'Kinnita ja teavita'"></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <footer class="border-t border-[#E8E3DD] py-8 px-4 md:px-12 text-center">
+                <p class="text-sm text-muted font-sans font-light">SUKODA Töölaud · Küsimused: <a href="mailto:tere@sukoda.ee" class="text-black">tere@sukoda.ee</a> · <a href="/tingimused" class="hover:text-black">Tingimused</a> · <a href="/privaatsus" class="hover:text-black">Privaatsus</a></p>
+                <p class="text-xs text-muted/60 font-sans font-light mt-2">© 2026 Epic Ship OÜ · Registrikood 14713548</p>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+    function haldusApp() {
+        const T = () => window.SUKODA_TIME;
+        const pad = (n) => String(n).padStart(2, '0');
+        const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        const MONTHS = ['Jaanuar', 'Veebruar', 'Märts', 'Aprill', 'Mai', 'Juuni', 'Juuli', 'August', 'September', 'Oktoober', 'November', 'Detsember'];
+        const WEEKDAYS = ['pühapäev', 'esmaspäev', 'teisipäev', 'kolmapäev', 'neljapäev', 'reede', 'laupäev'];
+
+        // Estonian public holidays (mirror of functions/lib/haldus-core.js)
+        function easter(y) { const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mo=Math.floor((h+l-7*m+114)/31)-1,da=((h+l-7*m+114)%31)+1; return new Date(Date.UTC(y,mo,da,12)); }
+        const holidayCache = {};
+        function holidays(y) {
+            if (holidayCache[y]) return holidayCache[y];
+            const e = easter(y); const shift = (d, n) => { const x = new Date(d); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+            holidayCache[y] = { [`${y}-01-01`]: 'Uusaasta', [`${y}-02-24`]: 'Iseseisvuspäev', [`${y}-05-01`]: 'Kevadpüha', [`${y}-06-23`]: 'Võidupüha', [`${y}-06-24`]: 'Jaanipäev', [`${y}-08-20`]: 'Taasiseseisvumispäev', [`${y}-12-24`]: 'Jõululaupäev', [`${y}-12-25`]: '1. jõulupüha', [`${y}-12-26`]: '2. jõulupüha', [shift(e, -2)]: 'Suur reede', [shift(e, 0)]: 'Ülestõusmispüha', [shift(e, 49)]: 'Nelipüha' };
+            return holidayCache[y];
+        }
+
+        return {
+            token: localStorage.getItem('sukoda_haldus_token') || '',
+            authenticated: false,
+            loading: true,
+            loginEmail: '', loginSending: false, loginSent: false, loginError: '',
+            globalError: '', toast: '',
+
+            provider: null, customers: [], bookings: [], requests: [], catalogue: [], florists: [], maintenanceCatalogue: [],
+            billing: { plan: 'free', planName: 'Tasuta', homes: 0, limit: 3, plans: [], hasSubscription: false, cancelAtPeriodEnd: false, periodEnd: null, status: null }, billingBusy: false, billingError: '', invoices: [],
+            profileForm: { name: '', businessName: '', phone: '', notifyEmail: '' }, profileSaving: false, profileSaved: false, maintenanceIntervals: [1, 2, 3, 6, 12, 24],
+            signupMode: new URLSearchParams(location.search).get('alusta') != null, signupForm: { name: '', businessName: '', email: '', phone: '', services: ['cleaning'], city: '' },
+            range: { from: '', to: '' },
+            todayStr: '',
+            activeTab: 'overview',
+            tabs: [
+                { id: 'overview', label: 'Ülevaade' }, { id: 'calendar', label: 'Kalender' }, { id: 'customers', label: 'Kliendid' },
+                { id: 'requests', label: 'Soovid' }, { id: 'summary', label: 'Kokkuvõte' }, { id: 'account', label: 'Konto' },
+            ],
+            customerSearch: '',
+            calMonth: '', selectedDay: '',
+            summaryMonth: '',
+            timeOptions: Array.from({ length: 30 }, (_, i) => `${pad(6 + Math.floor(i / 2))}:${i % 2 ? '30' : '00'}`),
+            durationOptions: [30, 45, 60, 90, 120, 150, 180, 210, 240, 300, 360],
+            homeProfileFields: [
+                { key: 'access', label: 'Sissepääs' }, { key: 'pets', label: 'Lemmikloomad' }, { key: 'allergies', label: 'Allergeenid' },
+                { key: 'flowerPreference', label: 'Lilled' }, { key: 'linens', label: 'Voodipesu' }, { key: 'towels', label: 'Rätikud' }, { key: 'specialRequests', label: 'Erisoovid' },
+            ],
+
+            visitModal: { open: false, orderId: '', bookingId: null, customerName: '', currentStart: null, date: '', time: '10:00', durationMin: 180, serviceId: '', price: '', note: '', customerNote: '', notify: true, force: false, conflicts: [], error: '', saving: false, completed: false },
+            customerModal: { open: false, saving: false, error: '', existingWarning: '', upgrade: false, form: null },
+            detail: { open: false, customer: null, editSchedule: false, scheduleForm: {}, contactsForm: [], editContacts: false, notes: '', notesDirty: false, saving: false, error: '', editAway: false, awayForm: { from: '', to: '', note: '' }, editFlowers: false, flowersForm: { auto: false, floristId: '', leadDays: 2, note: '', budget: '' }, maintAdding: false, maintForm: { name: '', intervalMonths: 6 } },
+            confirmModal: { open: false, request: null, date: '', time: '10:00', durationMin: 60, price: '', message: '', force: false, conflicts: [], error: '', saving: false },
+
+            // ---------- lifecycle ----------
+            async init() {
+                this.todayStr = T().getDateString();
+                this.calMonth = this.todayStr.slice(0, 7);
+                this.summaryMonth = this.todayStr.slice(0, 7);
+                const params = new URLSearchParams(location.search);
+                const urlToken = params.get('token');
+                // Deep link straight to a tab (e-mails: "Ava kalender" → /haldus?tab=calendar)
+                if (this.tabs.some((t) => t.id === params.get('tab'))) this.activeTab = params.get('tab');
+                if (params.get('billing') === 'success') { this.showToast('Makse õnnestus — pakett on aktiivne'); history.replaceState({}, '', '/haldus?tab=account'); }
+                this.$watch('activeTab', (t) => { if (t === 'account' && this.authenticated) this.loadInvoices(); });
+                if (urlToken) {
+                    try {
+                        const res = await fetch('/api/haldus/auth/validate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: urlToken }) });
+                        if (res.ok) { const d = await res.json(); this.token = d.token; localStorage.setItem('sukoda_haldus_token', d.token); history.replaceState({}, '', '/haldus'); }
+                    } catch (e) { console.error(e); }
+                }
+                if (this.token) await this.loadData();
+                this.loading = false;
+            },
+
+            api(path, opts = {}) {
+                return fetch(path, { ...opts, headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token, ...(opts.headers || {}) } });
+            },
+
+            async loadData(from, to) {
+                this.globalError = '';
+                const f = from || T().shiftDateString(this.todayStr, -70);
+                const t = to || T().shiftDateString(this.todayStr, 100);
+                try {
+                    const res = await this.api(`/api/haldus/me?from=${f}&to=${t}`);
+                    if (res.status === 401) { this.logout(); return; }
+                    if (!res.ok) throw new Error('load failed');
+                    const d = await res.json();
+                    this.provider = d.provider; this.customers = d.customers; this.bookings = d.bookings; this.requests = d.requests; this.catalogue = d.catalogue; this.florists = d.florists || []; this.maintenanceCatalogue = d.maintenanceCatalogue || []; this.maintenanceIntervals = d.maintenanceIntervals || this.maintenanceIntervals;
+                    if (d.billing) this.billing = d.billing;
+                    this.profileForm = { name: d.provider.name || '', businessName: d.provider.businessName || '', phone: d.provider.phone || '', notifyEmail: d.provider.notifyEmail || '' };
+                    if (this.activeTab === 'account') this.loadInvoices();
+                    this.range = d.range; this.authenticated = true;
+                    if (this.detail.open && this.detail.customer) {
+                        const fresh = this.customers.find((c) => c.id === this.detail.customer.id);
+                        if (fresh) this.detail.customer = fresh;
+                    }
+                } catch (e) {
+                    console.error(e);
+                    this.globalError = 'Andmete laadimine ebaõnnestus. Proovi uuesti.';
+                }
+            },
+
+            async ensureRange(dateStr) {
+                if (dateStr >= this.range.from && dateStr <= this.range.to) return;
+                const from = dateStr < this.range.from ? T().shiftDateString(dateStr, -40) : this.range.from;
+                const to = dateStr > this.range.to ? T().shiftDateString(dateStr, 40) : this.range.to;
+                await this.loadData(from, to);
+            },
+
+            toggleSignupService(id) { const i = this.signupForm.services.indexOf(id); if (i >= 0) this.signupForm.services.splice(i, 1); else this.signupForm.services.push(id); },
+            async signup() {
+                if (!this.signupForm.name || !this.signupForm.email || this.loginSending) return;
+                this.loginSending = true; this.loginError = '';
+                try {
+                    const res = await fetch('/api/haldus/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...this.signupForm, email: this.signupForm.email.trim().toLowerCase() }) });
+                    const r = await res.json().catch(() => ({}));
+                    if (res.ok) { this.loginEmail = this.signupForm.email; this.loginSent = true; } else this.loginError = r.error || 'Midagi läks valesti. Proovi uuesti.';
+                } catch { this.loginError = 'Ühenduse viga.'; } finally { this.loginSending = false; }
+            },
+            async sendMagicLink() {
+                if (!this.loginEmail || this.loginSending) return;
+                this.loginSending = true; this.loginError = '';
+                try {
+                    const res = await fetch('/api/haldus/magic-link', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: this.loginEmail.trim().toLowerCase() }) });
+                    if (res.ok) this.loginSent = true; else this.loginError = 'Midagi läks valesti. Proovi uuesti.';
+                } catch { this.loginError = 'Ühenduse viga.'; } finally { this.loginSending = false; }
+            },
+
+            logout() {
+                localStorage.removeItem('sukoda_haldus_token');
+                this.token = ''; this.authenticated = false; this.provider = null; this.customers = []; this.bookings = []; this.requests = [];
+            },
+
+            showToast(msg) { this.toast = msg; setTimeout(() => { this.toast = ''; }, 3200); },
+
+            // ---------- derived ----------
+            get activeCustomers() { return this.customers.filter((c) => c.status === 'paid'); },
+            get filteredCustomers() {
+                const q = this.customerSearch.trim().toLowerCase();
+                return this.customers.filter((c) => !q || c.name.toLowerCase().includes(q) || (c.address || '').toLowerCase().includes(q));
+            },
+            get liveBookings() { return this.bookings.filter((b) => ['scheduled', 'confirmed'].includes(b.status)); },
+            get todayVisits() { return this.liveBookings.filter((b) => this.dateOf(b.scheduledAt) === this.todayStr).sort(this.byTime); },
+            get upcomingGrouped() {
+                const end = T().shiftDateString(this.todayStr, 14);
+                const items = this.liveBookings.filter((b) => { const d = this.dateOf(b.scheduledAt); return d > this.todayStr && d <= end; }).sort(this.byTime);
+                const groups = {};
+                for (const b of items) { const d = this.dateOf(b.scheduledAt); (groups[d] = groups[d] || []).push(b); }
+                return Object.keys(groups).sort().map((date) => ({ date, items: groups[date] }));
+            },
+            get unmarkedPast() {
+                const now = new Date().toISOString();
+                return this.liveBookings.filter((b) => b.endTime ? b.endTime < now : b.scheduledAt < now).sort(this.byTime);
+            },
+            get pendingRequests() { return this.requests.filter((r) => r.status === 'requested'); },
+            get handledRequests() { return this.requests.filter((r) => r.status !== 'requested').slice(0, 30); },
+            get stats() {
+                const weekEnd = T().shiftDateString(this.todayStr, 7);
+                return {
+                    customers: this.activeCustomers.length,
+                    weekVisits: this.liveBookings.filter((b) => { const d = this.dateOf(b.scheduledAt); return d >= this.todayStr && d < weekEnd; }).length,
+                };
+            },
+            get calMonthLabel() { const [y, m] = this.calMonth.split('-').map(Number); return `${MONTHS[m - 1]} ${y}`; },
+            get calCells() {
+                const [y, m] = this.calMonth.split('-').map(Number);
+                const first = new Date(Date.UTC(y, m - 1, 1, 12));
+                let startDow = first.getUTCDay() - 1; if (startDow < 0) startDow = 6;
+                const days = new Date(Date.UTC(y, m, 0, 12)).getUTCDate();
+                const cells = [];
+                for (let i = 0; i < startDow; i++) cells.push({ date: '', day: '', items: [], holiday: null });
+                for (let d = 1; d <= days; d++) {
+                    const date = `${y}-${pad(m)}-${pad(d)}`;
+                    cells.push({ date, day: d, items: this.dayVisits(date), holiday: this.holidayName(date) });
+                }
+                while (cells.length % 7) cells.push({ date: '', day: '', items: [], holiday: null });
+                return cells;
+            },
+            get summaryRows() {
+                const [y, m] = this.summaryMonth.split('-').map(Number);
+                const prefix = `${y}-${pad(m)}`;
+                const now = new Date().toISOString();
+                const rows = {};
+                for (const b of this.bookings) {
+                    if (this.dateOf(b.scheduledAt).slice(0, 7) !== prefix || b.status === 'cancelled') continue;
+                    const c = this.customers.find((x) => x.id === b.orderId);
+                    const row = rows[b.orderId] = rows[b.orderId] || { id: b.orderId, name: c?.name || b.customerName, address: c?.address || b.address, completed: 0, unmarked: 0, extras: 0 };
+                    if (b.kind === 'extra') { if (b.status === 'completed' || b.scheduledAt < now) row.extras += 1; continue; }
+                    if (b.status === 'completed') row.completed += 1;
+                    else if (b.scheduledAt < now) row.unmarked += 1;
+                }
+                return Object.values(rows).sort((a, b) => a.name.localeCompare(b.name, 'et'));
+            },
+            get summaryTotals() { return this.summaryRows.reduce((acc, r) => ({ completed: acc.completed + r.completed, unmarked: acc.unmarked + r.unmarked, extras: acc.extras + r.extras }), { completed: 0, unmarked: 0, extras: 0 }); },
+
+            // ---------- helpers ----------
+            byTime(a, b) { return a.scheduledAt < b.scheduledAt ? -1 : 1; },
+            dateOf(iso) { return iso ? T().getDateString(iso) : ''; },
+            firstName(n) { return String(n || '').trim().split(/\s+/)[0] || ''; },
+            fmtTime(iso) { return iso ? T().formatTime(iso, 'et-EE', { hour: '2-digit', minute: '2-digit' }) : ''; },
+            fmtDateShort(v) { if (!v) return ''; const iso = v.length === 10 ? v + 'T12:00:00' : v; return T().formatDate(iso, 'et-EE', { day: 'numeric', month: 'short' }); },
+            fmtDateLong(v) { if (!v) return ''; const [y, m, d] = (v.length === 10 ? v : this.dateOf(v)).split('-').map(Number); const dow = new Date(Date.UTC(y, m - 1, d, 12)).getUTCDay(); return `${WEEKDAYS[dow]}, ${d}. ${MONTHS[m - 1].toLowerCase()}`; },
+            monthLabel(ym) { const [y, m] = ym.split('-').map(Number); return `${MONTHS[m - 1]} ${y}`; },
+            holidayName(dateStr) { if (!dateStr || dateStr.length < 10) return null; return holidays(Number(dateStr.slice(0, 4)))[dateStr] || null; },
+            sizeLabel(s) { return { small: '1–2 tuba', medium: '3 tuba', large: '4+ tuba' }[s] || s || ''; },
+            timeWindowLabel(k) { return { morning: 'hommik (9–12)', afternoon: 'pärastlõuna (12–17)', any: 'ükskõik', 'with-visit': 'koos järgmise koristusega' }[k] || ''; },
+            scheduleLabel(s) {
+                if (!s || s.active === false) return 'Graafikut pole — visiidid lisatakse käsitsi';
+                const f = { weekly: 'Iga nädal', biweekly: 'Iga 2 nädala tagant', monthly: '1× kuus' }[s.frequency] || s.frequency;
+                const [y, m, d] = (s.anchorDate || '').split('-').map(Number);
+                const dow = y ? WEEKDAYS[new Date(Date.UTC(y, m - 1, d, 12)).getUTCDay()] : '';
+                return `${f}, ${dow} kell ${s.time} · ${s.durationMin} min`;
+            },
+            schedulePreview(s) {
+                if (!s || !s.anchorDate || !s.time) return '';
+                const [y, m, d] = s.anchorDate.split('-').map(Number);
+                const dow = WEEKDAYS[new Date(Date.UTC(y, m - 1, d, 12)).getUTCDay()];
+                const nth = Math.ceil(d / 7);
+                if (s.frequency === 'monthly') return `Iga kuu ${nth}. ${dow} kell ${s.time}. Ajad luuakse 45 päeva ette; riigipühadele langevad ajad jäetakse vahele ja saad neist teate.`;
+                return `${s.frequency === 'weekly' ? 'Igal' : 'Igal teisel'} ${dow.replace(/päev$/, 'päeval').replace(/^reede$/, 'reedel')} kell ${s.time}, alates ${d}.${m}. Ajad luuakse 45 päeva ette.`;
+            },
+            hasHomeProfile(c) { const hp = c?.homeProfile; return hp && Object.values(hp).some((v) => v); },
+            dayVisits(date) { return this.bookings.filter((b) => b.status !== 'cancelled' && this.dateOf(b.scheduledAt) === date).sort(this.byTime); },
+            nextVisitFor(orderId) { const now = new Date().toISOString(); return this.liveBookings.filter((b) => b.orderId === orderId && b.scheduledAt > now).sort(this.byTime)[0] || null; },
+            customerUpcoming(orderId) { const now = new Date().toISOString(); return this.liveBookings.filter((b) => b.orderId === orderId && b.scheduledAt > now).sort(this.byTime); },
+            chipClass(b) { if (b.status === 'completed') return 'bg-green-50 text-green-700'; if (b.kind === 'extra') return 'bg-pink-50 text-pink-600'; return 'bg-accent/15 text-black'; },
+            requestChip(s) { return { confirmed: 'bg-green-50 text-green-700', completed: 'bg-green-50 text-green-700', declined: 'bg-gray-100 text-gray-500', cancelled: 'bg-gray-100 text-gray-500' }[s] || 'bg-accent/10 text-accent'; },
+            requestStatusLabel(s) { return { requested: 'Ootel', confirmed: 'Kinnitatud', completed: 'Tehtud', declined: 'Tagasi lükatud', cancelled: 'Tühistatud' }[s] || s; },
+
+            visitCard(b, { compact = false } = {}) {
+                const now = new Date().toISOString();
+                const past = (b.endTime || b.scheduledAt) < now;
+                const live = ['scheduled', 'confirmed'].includes(b.status);
+                const status = b.status === 'completed' ? '<span class="h-chip bg-green-50 text-green-700">Tehtud</span>'
+                    : b.status === 'cancelled' ? '<span class="h-chip bg-gray-100 text-gray-500">Tühistatud</span>'
+                    : past ? '<span class="h-chip bg-amber-50 text-amber-600">Märkimata</span>' : '';
+                const kind = b.kind === 'extra' ? `<span class="h-chip bg-pink-50 text-pink-600">${esc(b.serviceName || 'Lisateenus')}</span>` : '';
+                const src = b.hasCal ? '<span class="h-chip bg-accent/10 text-accent">SUKODA</span>' : '';
+                const flowers = b.flowersOrdered && b.status !== 'cancelled' ? '<span class="h-chip bg-pink-50 text-pink-600" title="Lilled on poest tellitud — võta teel kaasa">Lilled tellitud</span>' : '';
+                const actions = live ? `
+                    <div class="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-[11px] uppercase tracking-[0.15em] font-medium">
+                        ${past ? '<button type="button" data-act="complete" class="text-green-700 hover:text-black">Tehtud</button>' : ''}
+                        <button type="button" data-act="reschedule" class="text-accent hover:text-black">Muuda aega</button>
+                        <button type="button" data-act="cancel" class="text-muted hover:text-black">Tühista</button>
+                    </div>` : '';
+                return `<div class="bg-white border border-[#E8E3DD] p-4 ${b.status === 'cancelled' ? 'opacity-50' : ''}">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="font-sans text-sm"><span class="font-medium">${esc(this.fmtTime(b.scheduledAt))}–${esc(this.fmtTime(b.endTime))}</span> <span class="text-muted font-light">· ${esc(this.fmtDateShort(b.scheduledAt))}</span></p>
+                            <p class="font-serif text-lg font-light truncate">${compact ? '' : esc(b.customerName)}</p>
+                            ${compact ? '' : `<p class="text-xs text-muted font-sans font-light truncate">${esc(b.address)}</p>`}
+                            ${b.note ? `<p class="text-xs font-sans font-light mt-1 text-black/70">✎ ${esc(b.note)}</p>` : ''}
+                            ${b.customerNote ? `<p class="text-xs font-sans font-light mt-1 text-muted">Kliendile: ${esc(b.customerNote)}</p>` : ''}
+                        </div>
+                        <div class="flex flex-col items-end gap-1 shrink-0">${kind}${src}${flowers}${status}${b.price ? `<span class="text-xs font-sans text-muted">${esc(b.price)}</span>` : ''}</div>
+                    </div>${actions}</div>`;
+            },
+            handleCardClick(e, b) {
+                const act = e.target?.dataset?.act;
+                if (!act) return;
+                e.stopPropagation();
+                if (act === 'complete') this.completeVisit(b);
+                if (act === 'reschedule') this.openVisitModal({ booking: b });
+                if (act === 'cancel') this.cancelVisit(b);
+            },
+
+            // ---------- calendar ----------
+            async calPrev() { const [y, m] = this.calMonth.split('-').map(Number); const nm = m === 1 ? 12 : m - 1; const ny = m === 1 ? y - 1 : y; this.calMonth = `${ny}-${pad(nm)}`; this.selectedDay = ''; await this.ensureRange(`${this.calMonth}-01`); },
+            async calNext() { const [y, m] = this.calMonth.split('-').map(Number); const nm = m === 12 ? 1 : m + 1; const ny = m === 12 ? y + 1 : y; this.calMonth = `${ny}-${pad(nm)}`; this.selectedDay = ''; await this.ensureRange(`${this.calMonth}-28`); },
+            selectDay(date) { this.selectedDay = this.selectedDay === date ? '' : date; },
+            async summaryShift(n) { const [y, m] = this.summaryMonth.split('-').map(Number); const d = new Date(Date.UTC(y, m - 1 + n, 1, 12)); this.summaryMonth = `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}`; await this.ensureRange(`${this.summaryMonth}-01`); await this.ensureRange(`${this.summaryMonth}-28`); },
+
+            // ---------- visits ----------
+            openVisitModal({ date, orderId, booking } = {}) {
+                const c = orderId ? this.customers.find((x) => x.id === orderId) : null;
+                const dur = booking ? Math.round((new Date(booking.endTime) - new Date(booking.scheduledAt)) / 60000) : (c?.schedule?.durationMin || { small: 120, medium: 180, large: 240 }[c?.size] || 180);
+                this.visitModal = {
+                    open: true, orderId: booking?.orderId || orderId || '', bookingId: booking?.id || null, customerName: booking?.customerName || '', currentStart: booking?.scheduledAt || null,
+                    date: booking ? this.dateOf(booking.scheduledAt) : (date || this.todayStr), time: booking ? this.fmtTime(booking.scheduledAt) : (c?.schedule?.time || '10:00'),
+                    durationMin: this.durationOptions.includes(dur) ? dur : 180, serviceId: '', price: '', note: booking?.note || '', customerNote: '', notify: true, force: false, conflicts: [], error: '', saving: false,
+                    completed: false, away: false,
+                };
+                if (!this.visitModal.time.match(/^\d\d:\d\d$/)) this.visitModal.time = '10:00';
+            },
+            async saveVisit() {
+                const v = this.visitModal; if (v.saving) return;
+                v.saving = true; v.error = '';
+                const isPast = new Date(T().tallinnDateTimeToIso(v.date, v.time)) < new Date();
+                const body = v.bookingId
+                    ? { bookingId: v.bookingId, date: v.date, time: v.time, durationMin: v.durationMin, note: v.note, force: v.force, notify: v.notify }
+                    : { orderId: v.orderId, date: v.date, time: v.time, durationMin: v.durationMin, serviceId: v.serviceId || null, price: v.price, note: v.note, customerNote: v.customerNote, force: v.force, notify: v.notify, completed: isPast };
+                try {
+                    const res = await this.api(v.bookingId ? '/api/haldus/visits/reschedule' : '/api/haldus/visits', { method: 'POST', body: JSON.stringify(body) });
+                    const d = await res.json();
+                    if (res.status === 409 && d.code === 'CONFLICT') { v.conflicts = d.conflicts || []; v.error = ''; return; }
+                    if (res.status === 409 && d.code === 'AWAY') { v.away = true; v.error = ''; return; }
+                    if (!res.ok) throw new Error(d.error || 'Salvestamine ebaõnnestus');
+                    v.open = false;
+                    this.showToast(v.bookingId ? 'Aeg muudetud, teavitus saadetud' : (isPast ? 'Tehtud visiit lisatud' : 'Visiit lisatud, kinnitus saadetud'));
+                    await this.loadData(this.range.from, this.range.to);
+                } catch (e) { v.error = e.message; } finally { v.saving = false; }
+            },
+            async completeVisit(b) {
+                try {
+                    const res = await this.api('/api/haldus/visits/complete', { method: 'POST', body: JSON.stringify({ bookingId: b.id }) });
+                    if (!res.ok) throw new Error((await res.json()).error);
+                    this.showToast('Märgitud tehtuks');
+                    await this.loadData(this.range.from, this.range.to);
+                } catch (e) { this.globalError = e.message; }
+            },
+            async cancelVisit(b) {
+                const reason = prompt(`Tühista visiit ${this.fmtDateShort(b.scheduledAt)} ${this.fmtTime(b.scheduledAt)} · ${b.customerName}?\nPõhjus (läheb kliendile):`, '');
+                if (reason === null) return;
+                try {
+                    const res = await this.api('/api/haldus/visits/cancel', { method: 'POST', body: JSON.stringify({ bookingId: b.id, reason }) });
+                    if (!res.ok) throw new Error((await res.json()).error);
+                    this.showToast('Visiit tühistatud, teavitus saadetud');
+                    await this.loadData(this.range.from, this.range.to);
+                } catch (e) { this.globalError = e.message; }
+            },
+
+            // ---------- customers ----------
+            openCustomerModal() {
+                this.customerModal = {
+                    open: true, saving: false, error: '', existingWarning: '', upgrade: false,
+                    form: { name: '', email: '', phone: '', address: '', size: 'medium', contacts: [{ name: '', email: '', phone: '', notify: true }], useSchedule: true,
+                        schedule: { frequency: 'biweekly', anchorDate: T().shiftDateString(this.todayStr, 7), time: '10:00', durationMin: 180 }, providerNotes: '', sendWelcome: true, force: false },
+                };
+            },
+            async saveCustomer() {
+                const m = this.customerModal; if (m.saving) return;
+                m.saving = true; m.error = '';
+                const f = m.form;
+                const body = { name: f.name, email: f.email, phone: f.phone, address: f.address, size: f.size, contacts: f.contacts.filter((c) => c.name || c.email), providerNotes: f.providerNotes, sendWelcome: f.sendWelcome, force: f.force, schedule: f.useSchedule ? f.schedule : null };
+                try {
+                    const res = await this.api('/api/haldus/customers', { method: 'POST', body: JSON.stringify(body) });
+                    const d = await res.json();
+                    if (res.status === 409 && d.code === 'EXISTING_ORDER') { m.existingWarning = d.error; return; }
+                    if (res.status === 402) { m.error = d.error; m.upgrade = true; return; }
+                    if (!res.ok) throw new Error(d.error || 'Salvestamine ebaõnnestus');
+                    m.open = false;
+                    const n = d.createdVisits?.length || 0;
+                    this.showToast(`Klient lisatud${n ? `, ${n} aega loodud ja saadetud` : ''}${d.skippedHolidays?.length ? ` · ${d.skippedHolidays.length} riigipüha vahele` : ''}`);
+                    await this.loadData(this.range.from, this.range.to);
+                } catch (e) { m.error = e.message; } finally { m.saving = false; }
+            },
+            openCustomerDetail(c) {
+                this.detail = { open: true, customer: c, editSchedule: false, scheduleForm: {}, contactsForm: JSON.parse(JSON.stringify(c.contacts || [])), editContacts: false, notes: c.providerNotes || '', notesDirty: false, saving: false, error: '', editAway: false, awayForm: { from: '', to: '', note: '' }, editFlowers: false, flowersForm: { auto: false, floristId: '', leadDays: 2, note: '', budget: '' }, maintAdding: false, maintForm: { name: '', intervalMonths: 6 } };
+            },
+            startEditSchedule() {
+                const s = this.detail.customer.schedule;
+                this.detail.scheduleForm = s && s.active !== false
+                    ? { active: true, frequency: s.frequency, anchorDate: s.anchorDate, time: s.time, durationMin: s.durationMin }
+                    : { active: true, frequency: 'biweekly', anchorDate: T().shiftDateString(this.todayStr, 7), time: '10:00', durationMin: 180 };
+                this.detail.editSchedule = true; this.detail.error = '';
+            },
+            /** Chip text for a customer who is away now or soon (within 14 days) */
+            awayLabel(c) {
+                const ps = c?.awayPeriods || [];
+                if (!ps.length) return '';
+                const today = new Date().toISOString().slice(0, 10);
+                const now = ps.find((p) => p.from <= today && today <= p.to);
+                if (now) return 'Eemal kuni ' + this.fmtDateShort(now.to);
+                const soon = ps.find((p) => p.from > today && (new Date(p.from) - new Date(today)) / 86400000 <= 14);
+                return soon ? 'Eemal alates ' + this.fmtDateShort(soon.from) : '';
+            },
+            async addCustomerAway() {
+                const f = this.detail.awayForm;
+                if (!f.from) return;
+                this.detail.saving = true; this.detail.error = '';
+                try {
+                    const res = await this.api('/api/haldus/customers/away', { method: 'POST', body: JSON.stringify({ orderId: this.detail.customer.id, from: f.from, to: f.to || f.from, note: f.note }) });
+                    const d = await res.json();
+                    if (!res.ok) throw new Error(d.error || 'Salvestamine ebaõnnestus');
+                    this.detail.editAway = false;
+                    this.showToast(`Eemalolek salvestatud · ${d.cancelled?.length || 0} visiiti tühistatud`);
+                    await this.loadData(this.range.from, this.range.to);
+                } catch (e) { this.detail.error = e.message; } finally { this.detail.saving = false; }
+            },
+            async removeCustomerAway(p) {
+                if (!confirm('Eemalda eemalolek? Tühistatud ajad taastatakse ja klient saab teate.')) return;
+                this.detail.saving = true; this.detail.error = '';
+                try {
+                    const res = await this.api('/api/haldus/customers/away/remove', { method: 'POST', body: JSON.stringify({ orderId: this.detail.customer.id, periodId: p.id }) });
+                    const d = await res.json();
+                    if (!res.ok) throw new Error(d.error || 'Eemaldamine ebaõnnestus');
+                    this.showToast(`Eemalolek eemaldatud · ${d.restored || 0} aega taastatud`);
+                    await this.loadData(this.range.from, this.range.to);
+                } catch (e) { this.detail.error = e.message; } finally { this.detail.saving = false; }
+            },
+            async saveSchedule() {
+                const d = this.detail; if (d.saving) return; d.saving = true; d.error = '';
+                try {
+                    const res = await this.api('/api/haldus/schedule', { method: 'POST', body: JSON.stringify({ orderId: d.customer.id, schedule: d.scheduleForm, notify: true }) });
+                    const r = await res.json();
+                    if (!res.ok) throw new Error(r.error || 'Salvestamine ebaõnnestus');
+                    d.editSchedule = false;
+                    this.showToast(`Graafik salvestatud · ${r.created?.length || 0} uut aega${r.removed ? `, ${r.removed} eemaldatud` : ''}`);
+                    await this.loadData(this.range.from, this.range.to);
+                } catch (e) { d.error = e.message; } finally { d.saving = false; }
+            },
+            flowersLabel(c) {
+                if (!c?.flowers?.auto) return 'Ei kuulu teenusesse — klient saab lilli soovida ühekordselt.';
+                const f = this.florists.find((x) => x.id === c.flowers.floristId) || this.florists.find((x) => x.id === this.provider?.defaultFloristId);
+                return `Jah · ${f ? (f.businessName || f.name) : 'lillepood'}${c.flowers.budget ? ' · ' + c.flowers.budget : ''} · tellimus ${c.flowers.leadDays || 2} päeva enne · tood kaasa`;
+            },
+            startEditFlowers() {
+                const c = this.detail.customer;
+                this.detail.flowersForm = { auto: true, floristId: c?.flowers?.floristId || this.provider?.defaultFloristId || (this.florists.length === 1 ? this.florists[0].id : ''), leadDays: c?.flowers?.leadDays || 2, note: c?.flowers?.note || '', budget: c?.flowers?.budget || '' };
+                this.detail.error = ''; this.detail.editFlowers = true;
+            },
+            // ---------- konto: pakett ja arved ----------
+            async choosePlan(p) {
+                if (this.billingBusy) return;
+                if (!p.price && !confirm('Lähed tasuta paketile perioodi lõpus. Kliendid ja andmed jäävad alles; uusi kodusid saad lisada kuni 3. Kinnitad?')) return;
+                if (p.price && this.billing.hasSubscription && !confirm(`Vahetan paketi: ${p.name}, ${p.price} €/kuus. Vahe arvestatakse jooksva perioodi eest proportsionaalselt.`)) return;
+                this.billingBusy = true; this.billingError = '';
+                try {
+                    const res = await this.api('/api/haldus/billing/checkout', { method: 'POST', body: JSON.stringify({ plan: p.id }) });
+                    const d = await res.json();
+                    if (!res.ok) throw new Error(d.error || 'Ei õnnestunud');
+                    if (d.url) { location.href = d.url; return; }
+                    this.showToast(d.switched ? `Pakett vahetatud: ${p.name}` : d.scheduled ? 'Pakett lõpeb perioodi lõpus' : 'Salvestatud');
+                    await this.loadData(this.range.from, this.range.to);
+                } catch (e) { this.billingError = e.message; } finally { this.billingBusy = false; }
+            },
+            async resumePlan() {
+                this.billingBusy = true; this.billingError = '';
+                try {
+                    const res = await this.api('/api/haldus/billing/resume', { method: 'POST', body: '{}' });
+                    const d = await res.json();
+                    if (!res.ok) throw new Error(d.error || 'Ei õnnestunud');
+                    this.showToast('Pakett jätkub');
+                    await this.loadData(this.range.from, this.range.to);
+                } catch (e) { this.billingError = e.message; } finally { this.billingBusy = false; }
+            },
+            async loadInvoices() {
+                try { const res = await this.api('/api/haldus/billing/invoices'); const d = await res.json(); if (res.ok) this.invoices = d.invoices || []; } catch (e) {}
+            },
+            async saveProfile() {
+                if (this.profileSaving) return; this.profileSaving = true; this.profileSaved = false;
+                try {
+                    const res = await this.api('/api/haldus/profile', { method: 'POST', body: JSON.stringify(this.profileForm) });
+                    if (!res.ok) throw new Error((await res.json()).error || 'Ei õnnestunud');
+                    this.profileSaved = true; setTimeout(() => (this.profileSaved = false), 3000);
+                    await this.loadData(this.range.from, this.range.to);
+                } catch (e) { this.showToast(e.message); } finally { this.profileSaving = false; }
+            },
+            // ---------- hooldusrütm ----------
+            get maintDueAll() {
+                const out = [];
+                for (const c of this.customers) for (const item of (c.maintenance || [])) if (item.doneBy === 'provider' && item.state !== 'ok' && c.status === 'paid') out.push({ customer: c, item });
+                return out.sort((a, b) => (a.item.nextDueAt < b.item.nextDueAt ? -1 : 1));
+            },
+            maintIntervalLabel(m) { return m === 1 ? 'iga kuu' : m === 12 ? 'kord aastas' : m === 24 ? 'iga 2 aasta tagant' : `iga ${m} kuu tagant`; },
+            maintDueLabel(it) {
+                const s = this.fmtDateShort(it.nextDueAt);
+                return it.state === 'overdue' ? `Aeg möödas · ${s}` : it.state === 'due' ? `Peagi · ${s}` : `Järgmine ${s}`;
+            },
+            /** Catalogue items not yet on this home's list; the ones a housekeeper usually does come first */
+            maintSuggestionsFor(c) {
+                const have = new Set((c?.maintenance || []).map((i) => i.catalogId).filter(Boolean));
+                return this.maintenanceCatalogue.filter((m) => !have.has(m.id)).sort((a, b) => (a.byProvider === b.byProvider ? 0 : a.byProvider ? -1 : 1));
+            },
+            async maintAction(body) {
+                const d = this.detail; if (d.saving) return; d.saving = true; d.error = '';
+                try {
+                    const res = await this.api('/api/haldus/customers/maintenance', { method: 'POST', body: JSON.stringify({ orderId: d.customer.id, ...body }) });
+                    const r = await res.json();
+                    if (!res.ok) throw new Error(r.error || 'Salvestamine ebaõnnestus');
+                    d.customer = { ...d.customer, maintenance: r.maintenance };
+                    const idx = this.customers.findIndex((c) => c.id === d.customer.id); if (idx >= 0) this.customers[idx] = d.customer;
+                    if (body.action === 'done') this.showToast(r.notified ? 'Märgitud tehtuks · klient sai teate' : 'Märgitud tehtuks');
+                } catch (e) { d.error = e.message; } finally { d.saving = false; }
+            },
+            async saveFlowers() {
+                const d = this.detail; if (d.saving) return; d.saving = true; d.error = '';
+                try {
+                    const res = await this.api('/api/haldus/customers/flowers', { method: 'POST', body: JSON.stringify({ orderId: d.customer.id, ...d.flowersForm }) });
+                    const r = await res.json();
+                    if (!res.ok) throw new Error(r.error || 'Salvestamine ebaõnnestus');
+                    d.editFlowers = false;
+                    this.showToast(r.flowers.auto ? `Lilled igal visiidil · ${r.floristName}` : 'Lilled välja lülitatud');
+                    await this.loadData(this.range.from, this.range.to);
+                } catch (e) { d.error = e.message; } finally { d.saving = false; }
+            },
+            async saveContacts() {
+                const d = this.detail; if (d.saving) return; d.saving = true;
+                try {
+                    const res = await this.api('/api/haldus/customers/update', { method: 'POST', body: JSON.stringify({ orderId: d.customer.id, contacts: d.contactsForm.filter((c) => c.name || c.email) }) });
+                    const r = await res.json();
+                    if (!res.ok) throw new Error(r.error);
+                    d.editContacts = false; d.contactsForm = JSON.parse(JSON.stringify(r.customer.contacts || []));
+                    this.showToast('Saajad salvestatud');
+                    await this.loadData(this.range.from, this.range.to);
+                } catch (e) { this.globalError = e.message; } finally { d.saving = false; }
+            },
+            async saveNotes() {
+                const d = this.detail;
+                try {
+                    const res = await this.api('/api/haldus/customers/update', { method: 'POST', body: JSON.stringify({ orderId: d.customer.id, providerNotes: d.notes }) });
+                    if (!res.ok) throw new Error((await res.json()).error);
+                    d.notesDirty = false; this.showToast('Märkmed salvestatud');
+                    await this.loadData(this.range.from, this.range.to);
+                } catch (e) { this.globalError = e.message; }
+            },
+            async resendPortal() {
+                try {
+                    const res = await this.api('/api/haldus/customers/resend-portal', { method: 'POST', body: JSON.stringify({ orderId: this.detail.customer.id }) });
+                    if (!res.ok) throw new Error((await res.json()).error);
+                    this.showToast('Portaali link saadetud kliendile');
+                } catch (e) { this.globalError = e.message; }
+            },
+            async archiveCustomer() {
+                if (!confirm(`Lõpeta koostöö kliendiga ${this.detail.customer.name}? Kõik eelseisvad visiidid tühistatakse. Kliendile automaatset kirja ei saadeta.`)) return;
+                try {
+                    const res = await this.api('/api/haldus/customers/archive', { method: 'POST', body: JSON.stringify({ orderId: this.detail.customer.id }) });
+                    if (!res.ok) throw new Error((await res.json()).error);
+                    this.detail.open = false; this.showToast('Klient arhiveeritud');
+                    await this.loadData(this.range.from, this.range.to);
+                } catch (e) { this.globalError = e.message; }
+            },
+
+            // ---------- requests ----------
+            openConfirmRequest(r) {
+                const svc = this.catalogue.find((s) => s.id === r.serviceId);
+                const tw = { morning: '10:00', afternoon: '13:00' }[r.timeWindow] || '10:00';
+                let date = r.preferredDate || T().shiftDateString(this.todayStr, 2);
+                if (date < this.todayStr) date = T().shiftDateString(this.todayStr, 1);
+                let dur = r.type === 'reschedule' && r.targetBookingId ? (() => { const b = this.bookings.find((x) => x.id === r.targetBookingId); return b ? Math.round((new Date(b.endTime) - new Date(b.scheduledAt)) / 60000) : 180; })() : (svc?.durationMin || 60);
+                if (!this.durationOptions.includes(dur)) dur = 60;
+                this.confirmModal = { open: true, request: r, date, time: tw, durationMin: dur, price: '', message: '', force: false, conflicts: [], error: '', saving: false };
+            },
+            async confirmRequest() {
+                const m = this.confirmModal; if (m.saving) return; m.saving = true; m.error = '';
+                try {
+                    const res = await this.api('/api/haldus/requests/confirm', { method: 'POST', body: JSON.stringify({ requestId: m.request.id, date: m.date, time: m.time, durationMin: m.durationMin, price: m.price, message: m.message, force: m.force }) });
+                    const d = await res.json();
+                    if (res.status === 409 && d.code === 'CONFLICT') { m.conflicts = d.conflicts || []; return; }
+                    if (!res.ok) throw new Error(d.error || 'Kinnitamine ebaõnnestus');
+                    m.open = false; this.showToast('Kinnitatud, klient ja kontaktid teavitatud');
+                    await this.loadData(this.range.from, this.range.to);
+                } catch (e) { m.error = e.message; } finally { m.saving = false; }
+            },
+            async declineRequest(r) {
+                const message = prompt(`Anna kliendile teada, miks soovitud aeg ei sobi (valikuline):`, '');
+                if (message === null) return;
+                try {
+                    const res = await this.api('/api/haldus/requests/decline', { method: 'POST', body: JSON.stringify({ requestId: r.id, message }) });
+                    if (!res.ok) throw new Error((await res.json()).error);
+                    this.showToast('Kliendile saadetud');
+                    await this.loadData(this.range.from, this.range.to);
+                } catch (e) { this.globalError = e.message; }
+            },
+        };
+    }
+    </script>
+</body>
+</html>

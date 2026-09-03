@@ -41,6 +41,97 @@
     ],
     "rewrites": [
       {
+        "source": "/api/haldus/**",
+        "function": {
+          "functionId": "haldusApi",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/me/extras",
+        "function": {
+          "functionId": "portalExtrasApi",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/me/contacts",
+        "function": {
+          "functionId": "portalExtrasApi",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/me/requests",
+        "function": {
+          "functionId": "portalExtrasApi",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/me/requests/**",
+        "function": {
+          "functionId": "portalExtrasApi",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/me/maintenance",
+        "function": {
+          "functionId": "portalExtrasApi",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/me/documents",
+        "function": {
+          "functionId": "portalExtrasApi",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/me/home-type",
+        "function": {
+          "functionId": "portalExtrasApi",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/me/away",
+        "function": {
+          "functionId": "portalExtrasApi",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/me/away/**",
+        "function": {
+          "functionId": "portalExtrasApi",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/admin/providers",
+        "function": {
+          "functionId": "adminProvidersApi",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/admin/providers/**",
+        "function": {
+          "functionId": "adminProvidersApi",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/admin/assign-provider",
+        "function": {
+          "functionId": "adminProvidersApi",
+          "region": "europe-west1"
+        }
+      },
+      {
         "source": "/api/create-checkout",
         "function": {
           "functionId": "createCheckoutSession",
@@ -291,6 +382,28 @@
           "functionId": "logoutAllDevices",
           "region": "europe-west1"
         }
+      }
+    ],
+    "redirects": [
+      {
+        "source": "/kingitus",
+        "destination": "/",
+        "type": 301
+      },
+      {
+        "source": "/kingitus.html",
+        "destination": "/",
+        "type": 301
+      },
+      {
+        "source": "/partnerlus",
+        "destination": "/#alusta",
+        "type": 301
+      },
+      {
+        "source": "/partnerlus.html",
+        "destination": "/#alusta",
+        "type": 301
       }
     ]
   },
