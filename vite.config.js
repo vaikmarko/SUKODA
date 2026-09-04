@@ -21,7 +21,7 @@ export default defineConfig({
         haldus: resolve(__dirname, 'haldus.html'),
         muuk: resolve(__dirname, 'muuk.html'),
         sales: resolve(__dirname, 'sales.html'),
-        arco: resolve(__dirname, 'arco.html'),
+        arendajale: resolve(__dirname, 'arendajale.html'),
       },
     },
   },

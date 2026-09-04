@@ -393,6 +393,11 @@
     ],
     "redirects": [
       {
+        "source": "/arco",
+        "destination": "/arendajale",
+        "type": 301
+      },
+      {
         "source": "/kingitus",
         "destination": "/",
         "type": 301
