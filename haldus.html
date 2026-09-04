@@ -100,6 +100,7 @@
                             <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                         </div>
                         <p class="font-serif text-xl font-light mb-2">Kontrolli oma e-posti. Link saadetud.</p>
+                        <p x-show="loginPortal" x-cloak class="text-muted font-sans font-light text-sm mb-2">See e-post kuulub kodule, mitte töölauale — link avab sinu koduportaali (sukoda.ee/minu).</p>
                         <p class="text-muted font-sans font-light text-sm">Kui kirja pole, kontrolli rämpsposti või küsi ligipääsu: <a href="mailto:tere@sukoda.ee" class="text-black">tere@sukoda.ee</a></p>
                     </div>
                     <div class="border-t border-[#E8E3DD] pt-8 mt-8">
@@ -882,7 +883,7 @@
             token: localStorage.getItem('sukoda_haldus_token') || '',
             authenticated: false,
             loading: true,
-            loginEmail: '', loginSending: false, loginSent: false, loginError: '',
+            loginEmail: '', loginSending: false, loginSent: false, loginPortal: false, loginError: '',
             globalError: '', toast: '',
 
             provider: null, customers: [], bookings: [], requests: [], catalogue: [], florists: [], maintenanceCatalogue: [],
@@ -983,7 +984,7 @@
                 this.loginSending = true; this.loginError = '';
                 try {
                     const res = await fetch('/api/haldus/magic-link', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: this.loginEmail.trim().toLowerCase() }) });
-                    if (res.ok) this.loginSent = true; else this.loginError = 'Midagi läks valesti. Proovi uuesti.';
+                    if (res.ok) { const d = await res.json().catch(() => ({})); this.loginPortal = !!d.portal; this.loginSent = true; } else this.loginError = 'Midagi läks valesti. Proovi uuesti.';
                 } catch { this.loginError = 'Ühenduse viga.'; } finally { this.loginSending = false; }
             },
 

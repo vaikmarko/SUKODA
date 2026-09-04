@@ -22,6 +22,7 @@
     loginEmail: '',
     loginSending: false,
     loginSent: false,
+    loginDesk: false,
     loginError: '',
 
     order: null,
@@ -587,6 +588,8 @@
                 body: JSON.stringify({ email: this.loginEmail.trim().toLowerCase() }),
             });
             if (res.ok) {
+                const d = await res.json().catch(() => ({}));
+                this.loginDesk = !!d.desk;
                 this.loginSent = true;
             } else {
                 this.loginError = this.lang === 'et' ? 'Midagi läks valesti. Proovi uuesti.' : 'Something went wrong. Please try again.';
@@ -983,6 +986,7 @@
                             </svg>
                         </div>
                         <p class="font-serif text-xl font-light mb-2" x-text="lang === 'et' ? 'Kontrolli oma e-posti. Link saadetud.' : 'Check your email. Link sent.'"></p>
+                        <p x-show="loginDesk" x-cloak class="text-muted font-sans font-light text-sm max-w-sm mx-auto" x-text="lang === 'et' ? 'See e-post kuulub teenusepakkuja töölauale — link avab sinu töölaua (sukoda.ee/haldus).' : 'This e-mail belongs to a provider desk — the link opens your desk (sukoda.ee/haldus).'"></p>
                     </div>
 
                     <!-- No subscription CTA -->

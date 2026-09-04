@@ -5956,6 +5956,96 @@ exports.validatePortalToken = functions
   });
 
 // --- POST /api/magic-link ---
+/**
+ * Send the household portal link to an e-mail that belongs to a home (owner, gift recipient or household member).
+ * Returns false when no home matches — the caller decides what to reveal.
+ */
+async function sendClientMagicLink(normalizedEmail) {
+    const crypto = require('crypto');
+    // Search subscriptions first, then redeemed gift orders by recipient email
+    let ordersSnapshot = await db.collection('orders')
+      .where('customer.email', '==', normalizedEmail)
+      .where('type', '==', 'subscription')
+      .where('status', 'in', ['paid', 'cancelling'])
+      .orderBy('paidAt', 'desc')
+      .limit(1)
+      .get();
+
+    if (ordersSnapshot.empty) {
+      ordersSnapshot = await db.collection('orders')
+        .where('recipient.email', '==', normalizedEmail)
+        .where('type', '==', 'gift')
+        .where('giftRedeemed', '==', true)
+        .limit(1)
+        .get();
+    }
+
+    // Household member? (spouse/partner added as a contact) → own session, same portal
+    let memberOf = null;
+    if (ordersSnapshot.empty) {
+      const memberSnap = await db.collection('orders').where('contactEmails', 'array-contains', normalizedEmail).limit(5).get();
+      memberOf = memberSnap.docs.find((d) => ['paid', 'cancelling'].includes(d.data().status)) || null;
+    }
+
+    if (ordersSnapshot.empty && !memberOf) return false;
+
+    const orderDoc = memberOf || ordersSnapshot.docs[0];
+    const order = orderDoc.data();
+    const lang = order.lang || 'et';
+
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+    const tokenExpiry = new Date();
+    tokenExpiry.setDate(tokenExpiry.getDate() + 30);
+
+    if (memberOf) {
+      const contact = (order.contacts || []).find((c) => (c.email || '').toLowerCase() === normalizedEmail);
+      await db.collection('portalSessions').doc(tokenHash).set({
+        orderId: orderDoc.id, email: normalizedEmail, name: contact?.name || '',
+        expiresAt: admin.firestore.Timestamp.fromDate(tokenExpiry), createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    } else {
+      await orderDoc.ref.update({
+        sessionTokenHash: tokenHash,
+        sessionTokenExpiresAt: admin.firestore.Timestamp.fromDate(tokenExpiry),
+      });
+    }
+
+    const portalUrl = `https://sukoda.ee/minu?token=${rawToken}`;
+    await sendEmail({
+      to: normalizedEmail,
+      subject: lang === 'et' ? 'SUKODA | Sinu portaali link' : 'SUKODA | Your portal link',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head><meta charset="utf-8"></head>
+        <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+          <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+            ${emailHeader()}
+            <div style="padding: 44px 40px; text-align: center;">
+              <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 20px 0;">
+                ${lang === 'et' ? 'Sinu portaali link' : 'Your portal link'}
+              </h2>
+              <p style="color: #8A8578; line-height: 1.7; margin: 0 0 32px 0; font-size: 15px;">
+                ${lang === 'et' ? 'Kliki allpool olevat nuppu, et siseneda oma SUKODA portaali.' : 'Click the button below to access your SUKODA portal.'}
+              </p>
+              <a href="${portalUrl}" style="display: inline-block; background: #111111; color: #FFFFFF; padding: 16px 40px; text-decoration: none; font-size: 11px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">
+                ${lang === 'et' ? 'SISENE PORTAALI' : 'ENTER PORTAL'}
+              </a>
+              <p style="color: #8A8578; font-size: 12px; margin: 24px 0 0 0;">
+                ${lang === 'et' ? 'Link kehtib 30 päeva.' : 'This link is valid for 30 days.'}
+              </p>
+            </div>
+            ${emailFooter(lang)}
+          </div>
+        </body>
+        </html>
+      `,
+    });
+
+    return true;
+}
+
 exports.sendMagicLink = functions
   .runWith({ secrets: SECRETS }).region('europe-west1')
   .https.onRequest((req, res) => {
@@ -5985,89 +6075,18 @@ exports.sendMagicLink = functions
           }
         }
 
-        // Search subscriptions first, then redeemed gift orders by recipient email
-        let ordersSnapshot = await db.collection('orders')
-          .where('customer.email', '==', normalizedEmail)
-          .where('type', '==', 'subscription')
-          .where('status', 'in', ['paid', 'cancelling'])
-          .orderBy('paidAt', 'desc')
-          .limit(1)
-          .get();
-
-        if (ordersSnapshot.empty) {
-          ordersSnapshot = await db.collection('orders')
-            .where('recipient.email', '==', normalizedEmail)
-            .where('type', '==', 'gift')
-            .where('giftRedeemed', '==', true)
-            .limit(1)
-            .get();
-        }
-
-        // Household member? (spouse/partner added as a contact) → own session, same portal
-        let memberOf = null;
-        if (ordersSnapshot.empty) {
-          const memberSnap = await db.collection('orders').where('contactEmails', 'array-contains', normalizedEmail).limit(5).get();
-          memberOf = memberSnap.docs.find((d) => ['paid', 'cancelling'].includes(d.data().status)) || null;
-        }
-
-        // Always return success (don't reveal if email exists)
-        if (ordersSnapshot.empty && !memberOf) {
+        const sentToHome = await sendClientMagicLink(normalizedEmail);
+        if (!sentToHome) {
+          // Not a home — but maybe a provider who came in through the homepage. Same link, right door.
+          const provSnap = await db.collection('providers').where('email', '==', normalizedEmail).limit(1).get();
+          if (!provSnap.empty && provSnap.docs[0].data().status !== 'disabled') {
+            await haldus.sendProviderMagicLink(provSnap.docs[0]);
+            await rateLimitRef.set({ lastSent: admin.firestore.FieldValue.serverTimestamp(), count: admin.firestore.FieldValue.increment(1) }, { merge: true });
+            return res.status(200).json({ sent: true, desk: true });
+          }
+          // Always return success (don't reveal if email exists)
           return res.status(200).json({ sent: true });
         }
-
-        const orderDoc = memberOf || ordersSnapshot.docs[0];
-        const order = orderDoc.data();
-        const lang = order.lang || 'et';
-
-        const rawToken = crypto.randomBytes(32).toString('hex');
-        const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
-        const tokenExpiry = new Date();
-        tokenExpiry.setDate(tokenExpiry.getDate() + 30);
-
-        if (memberOf) {
-          const contact = (order.contacts || []).find((c) => (c.email || '').toLowerCase() === normalizedEmail);
-          await db.collection('portalSessions').doc(tokenHash).set({
-            orderId: orderDoc.id, email: normalizedEmail, name: contact?.name || '',
-            expiresAt: admin.firestore.Timestamp.fromDate(tokenExpiry), createdAt: admin.firestore.FieldValue.serverTimestamp(),
-          });
-        } else {
-          await orderDoc.ref.update({
-            sessionTokenHash: tokenHash,
-            sessionTokenExpiresAt: admin.firestore.Timestamp.fromDate(tokenExpiry),
-          });
-        }
-
-        const portalUrl = `https://sukoda.ee/minu?token=${rawToken}`;
-        await sendEmail({
-          to: normalizedEmail,
-          subject: lang === 'et' ? 'SUKODA | Sinu portaali link' : 'SUKODA | Your portal link',
-          html: `
-            <!DOCTYPE html>
-            <html>
-            <head><meta charset="utf-8"></head>
-            <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-              <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
-                ${emailHeader()}
-                <div style="padding: 44px 40px; text-align: center;">
-                  <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 20px 0;">
-                    ${lang === 'et' ? 'Sinu portaali link' : 'Your portal link'}
-                  </h2>
-                  <p style="color: #8A8578; line-height: 1.7; margin: 0 0 32px 0; font-size: 15px;">
-                    ${lang === 'et' ? 'Kliki allpool olevat nuppu, et siseneda oma SUKODA portaali.' : 'Click the button below to access your SUKODA portal.'}
-                  </p>
-                  <a href="${portalUrl}" style="display: inline-block; background: #111111; color: #FFFFFF; padding: 16px 40px; text-decoration: none; font-size: 11px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">
-                    ${lang === 'et' ? 'SISENE PORTAALI' : 'ENTER PORTAL'}
-                  </a>
-                  <p style="color: #8A8578; font-size: 12px; margin: 24px 0 0 0;">
-                    ${lang === 'et' ? 'Link kehtib 30 päeva.' : 'This link is valid for 30 days.'}
-                  </p>
-                </div>
-                ${emailFooter(lang)}
-              </div>
-            </body>
-            </html>
-          `,
-        });
 
         await rateLimitRef.set({
           lastSent: admin.firestore.FieldValue.serverTimestamp(),
@@ -6508,6 +6527,7 @@ haldus = require('./haldus')({
   authenticateAdmin,
   authenticateClient,
   sendEmail,
+  sendClientMagicLink,
   getStripe,
   emailHeader,
   emailFooter,

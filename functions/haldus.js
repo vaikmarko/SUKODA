@@ -24,6 +24,7 @@ module.exports = function createHaldus(deps) {
     authenticateAdmin,
     authenticateClient,
     sendEmail,
+    sendClientMagicLink,
     getStripe,
     emailHeader,
     emailFooter,
@@ -1911,7 +1912,12 @@ module.exports = function createHaldus(deps) {
       if (lastSent > new Date(Date.now() - 10 * 60000)) return res.status(200).json({ sent: true });
 
       const snap = await db.collection('providers').where('email', '==', email).limit(1).get();
-      if (snap.empty || snap.docs[0].data().status === 'disabled') return res.status(200).json({ sent: true });
+      if (snap.empty || snap.docs[0].data().status === 'disabled') {
+        // Not a provider — a household member who came to the wrong door gets their portal link instead
+        const toHome = await sendClientMagicLink(email);
+        if (toHome) await rl.set({ lastSent: FieldValue.serverTimestamp(), count: FieldValue.increment(1) }, { merge: true });
+        return res.status(200).json({ sent: true, portal: toHome });
+      }
 
       await sendProviderMagicLink(snap.docs[0]);
       await rl.set({ lastSent: FieldValue.serverTimestamp(), count: FieldValue.increment(1) }, { merge: true });
@@ -3252,6 +3258,7 @@ module.exports = function createHaldus(deps) {
 
   return {
     billing,
+    sendProviderMagicLink,
     functions: {
       haldusApi: router(haldusHandlers, { rateLimitName: 'haldus', rateLimitMax: 120 }),
       portalExtrasApi: router(portalHandlers, { rateLimitName: 'portal-extras', rateLimitMax: 60 }),
