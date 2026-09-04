@@ -365,17 +365,60 @@
                     <div x-show="providers.length === 0" class="text-muted font-light py-8 text-center text-sm">Partnereid veel pole.</div>
                     <div class="space-y-3">
                         <template x-for="p in providers" :key="p.id">
-                            <div class="bg-white border border-[#E8E3DD] p-5 flex flex-col md:flex-row md:items-center gap-4" :class="p.status === 'disabled' ? 'opacity-50' : ''">
-                                <div class="flex-1 min-w-0">
-                                    <p class="font-medium"><span x-text="p.name"></span> <span x-show="p.businessName" class="text-muted font-light" x-text="'· ' + p.businessName"></span></p>
-                                    <p class="text-muted text-xs mt-1 truncate"><span x-text="p.email"></span><span x-show="p.phone" x-text="' · ' + p.phone"></span></p>
+                            <div class="bg-white border border-[#E8E3DD]" :class="p.status === 'disabled' ? 'opacity-50' : ''">
+                                <div class="p-5 flex flex-col md:flex-row md:items-center gap-4">
+                                    <div class="flex-1 min-w-0">
+                                        <p class="font-medium"><span x-text="p.name"></span> <span x-show="p.businessName" class="text-muted font-light" x-text="'· ' + p.businessName"></span></p>
+                                        <p class="text-muted text-xs mt-1 truncate"><span x-text="p.email"></span><span x-show="p.phone" x-text="' · ' + p.phone"></span></p>
+                                    </div>
+                                    <div class="flex items-center gap-4 text-xs shrink-0">
+                                        <span class="px-2 py-0.5 bg-cream text-[10px] uppercase tracking-wider" x-text="(p.services || []).map(s => ({ cleaning: 'Koristus', flowers: 'Lilled' }[s] || s)).join(', ')"></span>
+                                        <span class="text-muted"><span class="font-serif text-lg text-black" x-text="p.customerCount"></span> klienti</span>
+                                        <span class="text-muted" x-show="p.lastLoginAt" x-text="'Viimati: ' + new Date(p.lastLoginAt).toLocaleDateString('et-EE')"></span>
+                                        <button @click="toggleCards(p)" class="hover:underline" :class="cardsOpen === p.id ? 'text-black' : 'text-accent'">Kutsekaardid</button>
+                                        <button @click="inviteProvider(p)" class="text-accent hover:underline">Saada link</button>
+                                        <button @click="toggleProvider(p)" class="text-muted hover:text-black" x-text="p.status === 'disabled' ? 'Luba' : 'Keela'"></button>
+                                    </div>
                                 </div>
-                                <div class="flex items-center gap-4 text-xs shrink-0">
-                                    <span class="px-2 py-0.5 bg-cream text-[10px] uppercase tracking-wider" x-text="(p.services || []).map(s => ({ cleaning: 'Koristus', flowers: 'Lilled' }[s] || s)).join(', ')"></span>
-                                    <span class="text-muted"><span class="font-serif text-lg text-black" x-text="p.customerCount"></span> klienti</span>
-                                    <span class="text-muted" x-show="p.lastLoginAt" x-text="'Viimati: ' + new Date(p.lastLoginAt).toLocaleDateString('et-EE')"></span>
-                                    <button @click="inviteProvider(p)" class="text-accent hover:underline">Saada link</button>
-                                    <button @click="toggleProvider(p)" class="text-muted hover:text-black" x-text="p.status === 'disabled' ? 'Luba' : 'Keela'"></button>
+
+                                <!-- Kutsekaardid: printed codes handed to this provider; a code entered at /lunasta lands the home under them -->
+                                <div x-show="cardsOpen === p.id" x-cloak class="border-t border-[#E8E3DD] bg-cream/40 p-5">
+                                    <template x-if="providerCards[p.id]">
+                                        <div class="grid md:grid-cols-2 gap-6">
+                                            <div>
+                                                <p class="text-[10px] uppercase tracking-[0.2em] text-accent font-medium mb-3">Määra kaarte</p>
+                                                <p class="text-xs text-muted font-light mb-3">Kleebi trükitud koodid (üks reale või komaga) ja/või võta N vaba kaarti. Vabu kaarte kokku: <span class="text-black" x-text="providerCards[p.id].freeCount"></span> / <span x-text="providerCards[p.id].totalCount"></span>.</p>
+                                                <textarea x-model="providerCards[p.id].codes" rows="3" placeholder="SK219-XXXX-XXXX&#10;SK279-XXXX-XXXX" class="w-full border border-[#E8E3DD] bg-white px-3 py-2 text-sm font-mono font-light outline-none focus:border-accent mb-3"></textarea>
+                                                <div class="flex items-center gap-3 flex-wrap">
+                                                    <input type="number" min="0" max="100" x-model="providerCards[p.id].count" placeholder="N" class="w-20 border border-[#E8E3DD] bg-white px-3 py-2 text-sm font-light outline-none focus:border-accent">
+                                                    <span class="text-xs text-muted">vaba kaarti</span>
+                                                    <button type="button" @click="assignCards(p)" :disabled="providerCards[p.id].saving" class="px-4 py-2 bg-accent text-white text-xs uppercase tracking-wider hover:bg-accent/90 disabled:opacity-50" x-text="providerCards[p.id].saving ? 'Määran…' : 'Määra'"></button>
+                                                </div>
+                                                <p x-show="providerCards[p.id].error" x-cloak class="text-xs text-red-500 mt-3" x-text="providerCards[p.id].error"></p>
+                                                <ul x-show="providerCards[p.id].errors.length" x-cloak class="text-xs text-red-500 mt-3 space-y-1">
+                                                    <template x-for="e in providerCards[p.id].errors" :key="e.code + e.error"><li><span class="font-mono" x-text="e.code"></span> — <span x-text="e.error"></span></li></template>
+                                                </ul>
+                                                <p x-show="providerCards[p.id].lastAssigned" x-cloak class="text-xs text-green-600 mt-3" x-text="providerCards[p.id].lastAssigned"></p>
+                                            </div>
+                                            <div>
+                                                <p class="text-[10px] uppercase tracking-[0.2em] text-accent font-medium mb-3">Partneri kaardid · <span x-text="providerCards[p.id].cards.filter(c => c.status === 'free').length"></span> vaba, <span x-text="providerCards[p.id].cards.filter(c => c.status === 'used').length"></span> kasutatud</p>
+                                                <p x-show="!providerCards[p.id].cards.length" class="text-xs text-muted font-light">Sellel partneril pole veel kaarte.</p>
+                                                <div class="divide-y divide-[#E8E3DD] bg-white border border-[#E8E3DD]" x-show="providerCards[p.id].cards.length">
+                                                    <template x-for="c in providerCards[p.id].cards" :key="c.code">
+                                                        <div class="flex items-center justify-between gap-3 px-3 py-2 text-xs">
+                                                            <span class="font-mono" x-text="c.code"></span>
+                                                            <span class="flex items-center gap-3 min-w-0">
+                                                                <span x-show="c.status === 'free'" class="px-2 py-0.5 bg-cream text-[10px] uppercase tracking-wider">vaba</span>
+                                                                <span x-show="c.status === 'used'" class="text-muted truncate">kasutatud · <span class="text-black" x-text="c.usedByName || '—'"></span><span x-show="c.usedAt" x-text="' · ' + new Date(c.usedAt).toLocaleDateString('et-EE')"></span></span>
+                                                                <button x-show="c.status === 'free'" type="button" @click="unassignCard(p, c)" class="text-muted hover:text-red-500">eemalda</button>
+                                                            </span>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <p x-show="!providerCards[p.id]" class="text-xs text-muted">Laen…</p>
                                 </div>
                             </div>
                         </template>
@@ -1181,6 +1224,9 @@
             providerSaving: false,
             providerError: '',
             providerInviteUrl: '',
+            // Kutsekaardid per provider: providerId → { cards, freeCount, totalCount, codes, count, saving, error, errors, lastAssigned }
+            providerCards: {},
+            cardsOpen: null,
 
             // Gift card filters
             gcFilter: {
@@ -1350,6 +1396,60 @@
                     const res = await this.adminFetch('/api/admin/providers/update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ providerId: p.id, status: next }) });
                     if (!res.ok) throw new Error((await res.json()).error);
                     await this.loadProviders();
+                } catch (e) {
+                    alert('Viga: ' + e.message);
+                }
+            },
+
+            // ---- Kutsekaardid (invitation cards) ----
+
+            async toggleCards(p) {
+                if (this.cardsOpen === p.id) { this.cardsOpen = null; return; }
+                this.cardsOpen = p.id;
+                await this.loadCards(p);
+            },
+
+            async loadCards(p) {
+                try {
+                    const res = await this.adminFetch(`/api/admin/providers/cards?providerId=${encodeURIComponent(p.id)}`);
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Laadimine ebaõnnestus');
+                    const prev = this.providerCards[p.id] || { codes: '', count: '', saving: false, error: '', errors: [], lastAssigned: '' };
+                    this.providerCards[p.id] = { ...prev, cards: data.cards || [], freeCount: data.freeCount || 0, totalCount: data.totalCount || 0 };
+                } catch (e) {
+                    this.providerCards[p.id] = { cards: [], freeCount: 0, totalCount: 0, codes: '', count: '', saving: false, error: e.message, errors: [], lastAssigned: '' };
+                }
+            },
+
+            async assignCards(p) {
+                const s = this.providerCards[p.id];
+                if (!s || s.saving) return;
+                const codes = s.codes.split(/[\s,;]+/).map(c => c.trim()).filter(Boolean);
+                const count = parseInt(s.count, 10) || 0;
+                if (!codes.length && !count) { s.error = 'Kleebi koodid või anna vabade kaartide arv'; return; }
+                s.saving = true; s.error = ''; s.errors = []; s.lastAssigned = '';
+                try {
+                    const res = await this.adminFetch('/api/admin/providers/cards', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ providerId: p.id, codes, count }) });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Määramine ebaõnnestus');
+                    s.errors = data.errors || [];
+                    s.lastAssigned = data.assigned?.length ? `Määratud ${data.assigned.length} kaarti: ${data.assigned.join(', ')}` : '';
+                    s.codes = ''; s.count = '';
+                    await this.loadCards(p);
+                } catch (e) {
+                    s.error = e.message;
+                } finally {
+                    s.saving = false;
+                }
+            },
+
+            async unassignCard(p, c) {
+                if (!confirm(`Eemalda kaart ${c.code} partnerilt ${p.name}? Kood läheb tagasi vabade hulka.`)) return;
+                try {
+                    const res = await this.adminFetch('/api/admin/providers/cards', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ providerId: p.id, code: c.code }) });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Eemaldamine ebaõnnestus');
+                    await this.loadCards(p);
                 } catch (e) {
                     alert('Viga: ' + e.message);
                 }

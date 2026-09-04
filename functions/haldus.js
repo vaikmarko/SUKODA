@@ -1476,6 +1476,366 @@ module.exports = function createHaldus(deps) {
     },
   };
 
+  // ============================================================
+  // Creating a home under a provider — shared by the desk (POST /customers)
+  // and the invitation-card flow (/api/lunasta/redeem)
+  // ============================================================
+
+  /** Validation / business error with an HTTP status; handlers turn it into a response */
+  class HomeError extends Error {
+    constructor(status, body) {
+      super(body.error || 'Home error');
+      this.status = status;
+      this.body = body;
+    }
+  }
+
+  /**
+   * Create a provider-billed home (order) exactly like the desk does: validate, guard duplicates,
+   * write the order, send the welcome mail with a portal link, sync the schedule (if any) and tell the
+   * operator. `enforcePlanCap: false` skips the plan limit (an invitation card is the provider's own invite).
+   * Throws HomeError for expected failures.
+   */
+  async function createHome({ provider, input, createdBy, sendWelcome = true, enforcePlanCap = true, source = 'manual', extraFields = {}, operatorSubject, operatorIntro }) {
+    const b = input || {};
+    const name = str(b.name, 200);
+    const email = core.normalizeEmail(b.email);
+    const phone = str(b.phone, 40);
+    const address = str(b.address, 500);
+    const size = core.ORDER_SIZES.includes(b.size) ? b.size : 'medium';
+    const lang = b.lang === 'en' ? 'en' : 'et';
+    if (!name) throw new HomeError(400, { error: 'Nimi on kohustuslik' });
+    if (!core.isValidEmail(email)) throw new HomeError(400, { error: 'Korrektne e-post on kohustuslik' });
+    if (!address) throw new HomeError(400, { error: 'Aadress on kohustuslik' });
+
+    // Plan cap: stated up front, enforced here, nowhere else
+    if (enforcePlanCap) {
+      const plan = core.effectivePlan(provider);
+      const limit = core.planLimit(plan);
+      const homes = activeHomeCount(await loadProviderOrders(provider.id));
+      if (homes >= limit) {
+        throw new HomeError(402, { error: `Paketis „${core.PROVIDER_PLANS[plan].name}“ on kuni ${limit} kodu. Vali suurem pakett, et lisada rohkem.`, upgrade: true, plan, limit, homes });
+      }
+    }
+
+    const contactsRes = core.sanitizeContacts(b.contacts);
+    if (contactsRes.error) throw new HomeError(400, { error: contactsRes.error });
+    const contacts = contactsRes.contacts.filter((c) => c.email !== email);
+
+    let schedule = null;
+    if (b.schedule && b.schedule.frequency) {
+      const s = core.sanitizeSchedule(b.schedule);
+      if (s.error) throw new HomeError(400, { error: s.error });
+      schedule = s.schedule;
+    }
+
+    // Duplicate guard: same email already active somewhere
+    const dupSnap = await db.collection('orders')
+      .where('customer.email', '==', email)
+      .where('status', 'in', ['paid', 'cancelling'])
+      .limit(3)
+      .get();
+    const mine = dupSnap.docs.find((d) => d.data().providerId === provider.id);
+    if (mine) throw new HomeError(409, { error: 'See klient on juba sinu nimekirjas', code: 'ALREADY_MINE', orderId: mine.id });
+    if (!dupSnap.empty && !b.force) {
+      throw new HomeError(409, {
+        error: 'Sellel e-postil on juba SUKODA tellimus. Kui oled kindel, et see on uus klient, salvesta uuesti kinnitusega.',
+        code: 'EXISTING_ORDER',
+      });
+    }
+
+    const now = new Date();
+    const orderData = {
+      type: 'subscription',
+      source,
+      billing: 'provider',
+      status: 'paid',
+      subscriptionStatus: 'active',
+      package: schedule ? (core.FREQUENCY_TO_PACKAGE[schedule.frequency] || 'custom') : 'custom',
+      size,
+      lang,
+      customer: { name, email, phone, address, additionalInfo: str(b.additionalInfo, 1000) },
+      contacts, contactEmails: contactEmailsOf(contacts),
+      providerId: provider.id,
+      providerName: provider.name || '',
+      providerNotes: str(b.providerNotes, 1000),
+      schedule,
+      homeProfile: b.homeProfile && typeof b.homeProfile === 'object' ? {
+        access: str(b.homeProfile.access, 500), pets: str(b.homeProfile.pets, 300), allergies: str(b.homeProfile.allergies, 300),
+        flowerPreference: str(b.homeProfile.flowerPreference, 300), linens: str(b.homeProfile.linens, 300), towels: str(b.homeProfile.towels, 300),
+        specialRequests: str(b.homeProfile.specialRequests, 500), updatedAt: Timestamp.fromDate(now),
+      } : null,
+      totalVisits: 0,
+      stripeCustomerId: null,
+      stripeSubscriptionId: null,
+      createdBy,
+      createdAt: Timestamp.fromDate(now),
+      paidAt: Timestamp.fromDate(now), // manual orders: "started at" — required by portal magic-link ordering
+      updatedAt: Timestamp.fromDate(now),
+      ...extraFields,
+    };
+    const ref = await db.collection('orders').add(orderData);
+    const orderId = ref.id;
+
+    // Welcome + portal access for the customer
+    let welcomeSent = false;
+    let portalUrl = null;
+    if (sendWelcome) {
+      try {
+        portalUrl = await issueClientToken(ref);
+        await sendEmail({ to: email, ...welcomeEmail({ order: orderData, providerName: provider.name, portalUrl, lang }), replyTo: providerReplyTo(provider) });
+        welcomeSent = true;
+      } catch (e) {
+        console.error('Welcome email failed (non-fatal):', e);
+      }
+    }
+
+    // Generate schedule occurrences + one summary email
+    let created = [];
+    let skipped = [];
+    if (schedule) {
+      const r = await syncSchedule({ orderId, order: orderData, provider });
+      created = r.created; skipped = r.skipped;
+      if (created.length) {
+        await notifyOrder(orderData, scheduleEmail({ order: orderData, bookings: created, providerName: provider.name, lang }), { replyTo: providerReplyTo(provider) });
+      }
+    }
+
+    // Keep the operator informed
+    await sendEmail({
+      to: NOTIFICATION_EMAIL,
+      subject: operatorSubject || `SUKODA | Teenusepakkuja lisas kliendi: ${name}`,
+      html: `<p>${operatorIntro || `${escapeHtml(provider.name)} (${escapeHtml(provider.email)}) lisas haldusesse uue kliendi.`}</p><p><strong>${escapeHtml(name)}</strong> · ${escapeHtml(email)} · ${escapeHtml(address)}</p><p>Graafik: ${schedule ? `${schedule.frequency}, ${schedule.time}` : 'puudub'} · Loodud visiite: ${created.length}</p><p>Tellimus: ${orderId}</p>`,
+    });
+
+    return { ref, orderId, orderData, created, skipped, welcomeSent, portalUrl };
+  }
+
+  // ============================================================
+  // Invitation cards (kutsekaardid) — the printed physical cards, re-purposed:
+  // the operator assigns codes to a provider; a homeowner enters the code at
+  // /lunasta and lands under that provider. Card docs live in `orders`
+  // (physicalCard: true, giftCode) as written by generatePhysicalGiftCards.
+  // ============================================================
+
+  const MAX_CARDS_PER_ASSIGN = 100;
+
+  /** Upper-case, 0→O / 1→I like the old gift flow; price prefix (SK219-) keeps its digits */
+  function normalizeCardCode(raw) {
+    const code = String(raw || '').trim().toUpperCase().replace(/\s+/g, '');
+    const m = code.match(/^(SK\d+-)([\S]+)$/);
+    if (m) return m[1] + m[2].replace(/0/g, 'O').replace(/1/g, 'I');
+    return code.replace(/0/g, 'O').replace(/1/g, 'I');
+  }
+
+  function isPhysicalCard(o) {
+    return !!(o && o.type === 'gift' && (o.physicalCard === true || o.kind === 'invite'));
+  }
+
+  /** 'used' | 'assigned' | 'free' for a physical card doc */
+  function cardState(o) {
+    if (o.usedAt || o.giftRedeemed) return 'used';
+    if (o.assignedProviderId) return 'assigned';
+    return 'free';
+  }
+
+  function serializeCard(id, o) {
+    const state = cardState(o);
+    return {
+      id,
+      code: o.giftCode,
+      status: state === 'used' ? 'used' : 'free',
+      assignedProviderId: o.assignedProviderId || null,
+      assignedAt: tsToIso(o.assignedAt),
+      usedAt: tsToIso(o.usedAt),
+      usedOrderId: o.usedOrderId || null,
+      usedByName: o.usedByName || '',
+    };
+  }
+
+  async function findCardByCode(code) {
+    if (!code) return null;
+    const snap = await db.collection('orders').where('giftCode', '==', code).limit(1).get();
+    if (snap.empty) return null;
+    return { ref: snap.docs[0].ref, id: snap.docs[0].id, card: snap.docs[0].data() };
+  }
+
+  /** All printed cards; small collection (a few hundred at most), filtered in code */
+  async function loadPhysicalCards() {
+    const snap = await db.collection('orders').where('physicalCard', '==', true).get();
+    return snap.docs.map((d) => ({ id: d.id, ref: d.ref, card: d.data() }));
+  }
+
+  async function loadProviderCards(providerId) {
+    const snap = await db.collection('orders').where('assignedProviderId', '==', providerId).get();
+    return snap.docs
+      .filter((d) => isPhysicalCard(d.data()))
+      .map((d) => serializeCard(d.id, d.data()))
+      .sort((a, b) => (a.status === b.status ? (a.code < b.code ? -1 : 1) : a.status === 'free' ? -1 : 1));
+  }
+
+  /** Assign printed cards to a provider — by pasted codes and/or "N free cards". Returns { assigned, errors } */
+  async function assignCards({ provider, codes = [], count = 0 }) {
+    const assigned = [];
+    const errors = [];
+    const batch = db.batch();
+    const stamp = { assignedProviderId: provider.id, assignedProviderName: provider.name || '', assignedAt: Timestamp.fromDate(new Date()), kind: 'invite', updatedAt: FieldValue.serverTimestamp() };
+    const seen = new Set();
+
+    for (const raw of codes.slice(0, MAX_CARDS_PER_ASSIGN)) {
+      const code = normalizeCardCode(raw);
+      if (!code || seen.has(code)) continue;
+      seen.add(code);
+      const found = await findCardByCode(code);
+      if (!found || !isPhysicalCard(found.card)) { errors.push({ code, error: 'Koodi ei leitud' }); continue; }
+      const state = cardState(found.card);
+      if (state === 'used') { errors.push({ code, error: 'Kaart on juba kasutatud' }); continue; }
+      if (state === 'assigned') { errors.push({ code, error: found.card.assignedProviderId === provider.id ? 'Juba sellel partneril' : `Juba määratud: ${found.card.assignedProviderName || 'teine partner'}` }); continue; }
+      batch.update(found.ref, stamp);
+      assigned.push(code);
+    }
+
+    const n = Math.min(Math.max(parseInt(count, 10) || 0, 0), MAX_CARDS_PER_ASSIGN);
+    if (n > 0) {
+      const free = (await loadPhysicalCards()).filter((c) => cardState(c.card) === 'free' && !seen.has(c.card.giftCode)).sort((a, b) => (a.card.giftCode < b.card.giftCode ? -1 : 1));
+      if (free.length < n) errors.push({ code: '', error: `Vabu kaarte on ainult ${free.length}` });
+      for (const c of free.slice(0, n)) { batch.update(c.ref, stamp); assigned.push(c.card.giftCode); }
+    }
+
+    if (assigned.length) await batch.commit();
+    return { assigned, errors };
+  }
+
+  /** Public view of a code for /lunasta — never leaks more than the state and the inviting provider */
+  async function validateCard(code) {
+    const found = await findCardByCode(code);
+    if (!found) return { state: 'notfound' };
+    const { card } = found;
+    if (!isPhysicalCard(card)) {
+      // A real paid gift (e.g. a personal gift order) — handled personally by e-mail
+      if (card.giftRedeemed) return { state: 'used' };
+      return { state: 'legacy' };
+    }
+    const st = cardState(card);
+    if (st === 'used') return { state: 'used' };
+    if (st === 'free') return { state: 'unassigned' };
+    const provider = await loadProvider(card.assignedProviderId);
+    if (!provider || provider.status === 'disabled') return { state: 'unassigned' };
+    return {
+      state: 'invite',
+      provider: { firstName: firstName(provider.name), name: provider.name || '', businessName: provider.businessName || '' },
+      found, providerDoc: provider,
+    };
+  }
+
+  function inviteProviderEmail({ provider, order }) {
+    const name = primaryName(order) || primaryEmail(order);
+    return {
+      subject: `SUKODA | Uus kodu kutsekaardiga: ${name}`,
+      html: providerWrap('Uus kodu kutsekaardiga',
+        `Tere, ${escapeHtml(firstName(provider.name))}. Keegi sisestas sinu kutsekaardi koodi ja tema kodu on nüüd sinu töölaual. Klient sai portaali lingi. Ava töölaud ja lisa graafik — siis saab ta kalendrikutsed kohe.`,
+        `<div style="background:#FFFFFF;padding:28px;border-left:2px solid #B8976A;">
+          ${LABEL('Kodu')}
+          <p style="margin:0;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(name)}</p>
+          ${ROW('Aadress', escapeHtml(primaryAddress(order) || '-'))}
+          ${ROW('Kontakt', `${escapeHtml(primaryEmail(order))}${order.customer?.phone ? ' · ' + escapeHtml(order.customer.phone) : ''}`)}
+          ${ROW('Kutsekaart', escapeHtml(order.inviteCode || ''))}
+        </div>`,
+        { href: `${HALDUS_URL}?tab=customers`, label: 'AVA TÖÖLAUD JA LISA GRAAFIK' }),
+    };
+  }
+
+  const lunastaHandlers = {
+    'POST /api/lunasta/validate': async (req, res) => {
+      const code = normalizeCardCode(req.body?.code);
+      if (!code) return res.status(400).json({ state: 'notfound', error: 'Sisesta kood' });
+      const v = await validateCard(code);
+      res.status(200).json({ state: v.state, code, provider: v.provider || null });
+    },
+
+    'POST /api/lunasta/redeem': async (req, res) => {
+      if (!checkRateLimit(req, res, 'lunasta-redeem', 10, 600000)) return;
+      const b = req.body || {};
+      const code = normalizeCardCode(b.code);
+      if (!code) return res.status(400).json({ state: 'notfound', error: 'Sisesta kood' });
+      if (b.consent !== true) return res.status(400).json({ error: 'Nõustu tingimustega, et jätkata' });
+      const v = await validateCard(code);
+      if (v.state !== 'invite') return res.status(409).json({ state: v.state, error: 'Kaarti ei saa kasutada' });
+      const provider = v.providerDoc;
+      const cardRef = v.found.ref;
+
+      // Cheap checks before touching the card
+      if (!str(b.name, 200)) return res.status(400).json({ error: 'Nimi on kohustuslik' });
+      if (!core.isValidEmail(core.normalizeEmail(b.email))) return res.status(400).json({ error: 'Korrektne e-post on kohustuslik' });
+      if (!str(b.address, 500)) return res.status(400).json({ error: 'Aadress on kohustuslik' });
+
+      // Household: one optional second contact ("kes veel saab teavitusi")
+      const contacts = [];
+      if (b.contact2 && (b.contact2.email || b.contact2.name)) {
+        contacts.push({ name: str(b.contact2.name, 120), email: core.normalizeEmail(b.contact2.email), notify: true });
+      }
+      const contactsCheck = core.sanitizeContacts(contacts);
+      if (contactsCheck.error) return res.status(400).json({ error: 'Teise kontakti e-post ei ole korrektne' });
+
+      // Already a home with this provider → no duplicate, point to the portal instead (card stays unused)
+      const email = core.normalizeEmail(b.email);
+      const dup = await db.collection('orders').where('customer.email', '==', email).where('status', 'in', ['paid', 'cancelling']).limit(3).get();
+      if (dup.docs.some((d) => d.data().providerId === provider.id)) {
+        return res.status(409).json({ state: 'already', error: 'Sellel e-postil on juba kodu selle koduhooldaja juures. Sisene portaali oma e-postiga.', code: 'ALREADY_MINE' });
+      }
+
+      // Claim the card first so two people cannot use the same code at once
+      const claimedAt = Timestamp.fromDate(new Date());
+      try {
+        await db.runTransaction(async (tx) => {
+          const fresh = await tx.get(cardRef);
+          const c = fresh.data();
+          if (!c || c.usedAt || c.giftRedeemed || c.assignedProviderId !== provider.id) throw new HomeError(409, { state: 'used', error: 'See kaart on juba kasutatud' });
+          tx.update(cardRef, { usedAt: claimedAt, usedByEmail: core.normalizeEmail(b.email), updatedAt: FieldValue.serverTimestamp() });
+        });
+      } catch (e) {
+        if (e instanceof HomeError) return res.status(e.status).json(e.body);
+        throw e;
+      }
+
+      let home;
+      try {
+        home = await createHome({
+          provider,
+          input: { name: b.name, email: b.email, phone: b.phone, address: b.address, size: b.size, lang: b.lang, contacts, force: true },
+          createdBy: `invite:${v.found.id}`,
+          enforcePlanCap: false,
+          extraFields: { inviteCardId: v.found.id, inviteCode: code },
+          operatorSubject: `SUKODA | Kutsekaardiga liitus kodu: ${str(b.name, 200)}`,
+          operatorIntro: `${escapeHtml(provider.name)} (${escapeHtml(provider.email)}) — kutsekaart ${escapeHtml(code)} lunastati veebis.`,
+        });
+      } catch (e) {
+        // Release the card again — nothing was created
+        await cardRef.update({ usedAt: FieldValue.delete(), usedByEmail: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() }).catch(() => {});
+        if (e instanceof HomeError) {
+          if (e.status === 409) return res.status(409).json({ state: 'already', error: 'Sellel e-postil on juba kodu selle koduhooldaja juures. Sisene portaali oma e-postiga.', code: e.body.code });
+          return res.status(e.status).json(e.body);
+        }
+        throw e;
+      }
+
+      await cardRef.update({ usedOrderId: home.orderId, usedByName: home.orderData.customer.name, updatedAt: FieldValue.serverTimestamp() });
+      try {
+        await sendEmail({ to: providerReplyTo(provider) || provider.email, ...inviteProviderEmail({ provider, order: home.orderData }) });
+      } catch (e) {
+        console.error('Invite provider mail failed (non-fatal):', e);
+      }
+
+      res.status(200).json({
+        state: 'done',
+        success: true,
+        provider: v.provider,
+        welcomeSent: home.welcomeSent,
+        email: home.orderData.customer.email,
+      });
+    },
+  };
+
   const haldusHandlers = {
     /** Pick a plan: a live subscription is switched in place (prorated); otherwise Stripe Checkout */
     'POST /api/haldus/billing/checkout': async (req, res) => {
@@ -1671,7 +2031,7 @@ module.exports = function createHaldus(deps) {
         .map(({ doc, role }) => serializeCustomer(doc.id, doc.data(), role))
         .sort((a, b) => a.name.localeCompare(b.name, 'et'));
 
-      const [bookingSnap, requestSnap] = await Promise.all([
+      const [bookingSnap, requestSnap, inviteCards] = await Promise.all([
         db.collection('bookings')
           .where('providerId', '==', provider.id)
           .where('scheduledAt', '>=', Timestamp.fromDate(from))
@@ -1683,6 +2043,7 @@ module.exports = function createHaldus(deps) {
           .orderBy('createdAt', 'desc')
           .limit(100)
           .get(),
+        loadProviderCards(provider.id),
       ]);
 
       const bookings = bookingSnap.docs
@@ -1706,6 +2067,8 @@ module.exports = function createHaldus(deps) {
         maintenanceCatalogue: core.MAINTENANCE_CATALOGUE.map((m) => ({ id: m.id, name: m.name.et, hint: m.hint.et, intervalMonths: m.intervalMonths, byProvider: !!m.byProvider, homeTypes: m.homeTypes })),
         maintenanceIntervals: core.MAINTENANCE_INTERVALS,
         billing: billingInfo,
+        // Printed invitation cards the operator has handed to this provider (code + free/used)
+        inviteCards: inviteCards.map((c) => ({ code: c.code, status: c.status, usedAt: c.usedAt, usedByName: c.usedByName, assignedAt: c.assignedAt })),
         serverTime: new Date().toISOString(),
       });
     },
@@ -1768,114 +2131,15 @@ module.exports = function createHaldus(deps) {
       const provider = await authenticateProvider(req);
       if (!provider) return res.status(401).json({ error: 'Unauthorized' });
       const b = req.body || {};
-
-      const name = str(b.name, 200);
-      const email = core.normalizeEmail(b.email);
-      const phone = str(b.phone, 40);
-      const address = str(b.address, 500);
-      const size = core.ORDER_SIZES.includes(b.size) ? b.size : 'medium';
-      const lang = b.lang === 'en' ? 'en' : 'et';
-      if (!name) return res.status(400).json({ error: 'Nimi on kohustuslik' });
-      if (!core.isValidEmail(email)) return res.status(400).json({ error: 'Korrektne e-post on kohustuslik' });
-      if (!address) return res.status(400).json({ error: 'Aadress on kohustuslik' });
-
-      // Plan cap: stated up front, enforced here, nowhere else
-      const plan = core.effectivePlan(provider);
-      const limit = core.planLimit(plan);
-      const homes = activeHomeCount(await loadProviderOrders(provider.id));
-      if (homes >= limit) {
-        return res.status(402).json({ error: `Paketis „${core.PROVIDER_PLANS[plan].name}“ on kuni ${limit} kodu. Vali suurem pakett, et lisada rohkem.`, upgrade: true, plan, limit, homes });
+      let home;
+      try {
+        home = await createHome({ provider, input: b, createdBy: `provider:${provider.id}`, sendWelcome: b.sendWelcome !== false });
+      } catch (e) {
+        if (e instanceof HomeError) return res.status(e.status).json(e.body);
+        throw e;
       }
-
-      const contactsRes = core.sanitizeContacts(b.contacts);
-      if (contactsRes.error) return res.status(400).json({ error: contactsRes.error });
-      const contacts = contactsRes.contacts.filter((c) => c.email !== email);
-
-      let schedule = null;
-      if (b.schedule && b.schedule.frequency) {
-        const s = core.sanitizeSchedule(b.schedule);
-        if (s.error) return res.status(400).json({ error: s.error });
-        schedule = s.schedule;
-      }
-
-      // Duplicate guard: same email already active somewhere
-      const dupSnap = await db.collection('orders')
-        .where('customer.email', '==', email)
-        .where('status', 'in', ['paid', 'cancelling'])
-        .limit(3)
-        .get();
-      const mine = dupSnap.docs.find((d) => d.data().providerId === provider.id);
-      if (mine) return res.status(409).json({ error: 'See klient on juba sinu nimekirjas', orderId: mine.id });
-      if (!dupSnap.empty && !b.force) {
-        return res.status(409).json({
-          error: 'Sellel e-postil on juba SUKODA tellimus. Kui oled kindel, et see on uus klient, salvesta uuesti kinnitusega.',
-          code: 'EXISTING_ORDER',
-        });
-      }
-
-      const now = new Date();
-      const orderData = {
-        type: 'subscription',
-        source: 'manual',
-        billing: 'provider',
-        status: 'paid',
-        subscriptionStatus: 'active',
-        package: schedule ? (core.FREQUENCY_TO_PACKAGE[schedule.frequency] || 'custom') : 'custom',
-        size,
-        lang,
-        customer: { name, email, phone, address, additionalInfo: str(b.additionalInfo, 1000) },
-        contacts, contactEmails: contactEmailsOf(contacts),
-        providerId: provider.id,
-        providerName: provider.name || '',
-        providerNotes: str(b.providerNotes, 1000),
-        schedule,
-        homeProfile: b.homeProfile && typeof b.homeProfile === 'object' ? {
-          access: str(b.homeProfile.access, 500), pets: str(b.homeProfile.pets, 300), allergies: str(b.homeProfile.allergies, 300),
-          flowerPreference: str(b.homeProfile.flowerPreference, 300), linens: str(b.homeProfile.linens, 300), towels: str(b.homeProfile.towels, 300),
-          specialRequests: str(b.homeProfile.specialRequests, 500), updatedAt: Timestamp.fromDate(now),
-        } : null,
-        totalVisits: 0,
-        stripeCustomerId: null,
-        stripeSubscriptionId: null,
-        createdBy: `provider:${provider.id}`,
-        createdAt: Timestamp.fromDate(now),
-        paidAt: Timestamp.fromDate(now), // manual orders: "started at" — required by portal magic-link ordering
-        updatedAt: Timestamp.fromDate(now),
-      };
-      const ref = await db.collection('orders').add(orderData);
-      const orderId = ref.id;
-
-      // Welcome + portal access for the customer
-      let welcomeSent = false;
-      if (b.sendWelcome !== false) {
-        try {
-          const portalUrl = await issueClientToken(ref);
-          await sendEmail({ to: email, ...welcomeEmail({ order: orderData, providerName: provider.name, portalUrl, lang }), replyTo: providerReplyTo(provider) });
-          welcomeSent = true;
-        } catch (e) {
-          console.error('Welcome email failed (non-fatal):', e);
-        }
-      }
-
-      // Generate schedule occurrences + one summary email
-      let created = [];
-      let skipped = [];
-      if (schedule) {
-        const r = await syncSchedule({ orderId, order: orderData, provider });
-        created = r.created; skipped = r.skipped;
-        if (created.length) {
-          await notifyOrder(orderData, scheduleEmail({ order: orderData, bookings: created, providerName: provider.name, lang }), { replyTo: providerReplyTo(provider) });
-        }
-      }
-
-      // Keep the operator informed
-      await sendEmail({
-        to: NOTIFICATION_EMAIL,
-        subject: `SUKODA | Teenusepakkuja lisas kliendi: ${name}`,
-        html: `<p>${escapeHtml(provider.name)} (${escapeHtml(provider.email)}) lisas haldusesse uue kliendi.</p><p><strong>${escapeHtml(name)}</strong> · ${escapeHtml(email)} · ${escapeHtml(address)}</p><p>Graafik: ${schedule ? `${schedule.frequency}, ${schedule.time}` : 'puudub'} · Loodud visiite: ${created.length}</p><p>Tellimus: ${orderId}</p>`,
-      });
-
-      const doc = await ref.get();
+      const { orderId, created, skipped, welcomeSent } = home;
+      const doc = await home.ref.get();
       res.status(200).json({
         success: true,
         customer: serializeCustomer(orderId, doc.data(), 'cleaning'),
@@ -2842,6 +3106,43 @@ module.exports = function createHaldus(deps) {
       res.status(200).json({ success: true });
     },
 
+    // ---- Invitation cards (kutsekaardid) per provider -----------
+    'GET /api/admin/providers/cards': async (req, res) => {
+      if (!authenticateAdmin(req)) return res.status(401).json({ error: 'Unauthorized' });
+      const providerId = docId(req.query.providerId);
+      const all = await loadPhysicalCards();
+      const free = all.filter((c) => cardState(c.card) === 'free').length;
+      const cards = providerId !== 'missing-id' ? await loadProviderCards(providerId) : [];
+      res.status(200).json({ cards, freeCount: free, totalCount: all.length });
+    },
+
+    /** Assign printed cards to a provider: { providerId, codes?: string[] | string, count?: number } */
+    'POST /api/admin/providers/cards': async (req, res) => {
+      if (!authenticateAdmin(req)) return res.status(401).json({ error: 'Unauthorized' });
+      const b = req.body || {};
+      const provider = await loadProvider(docId(b.providerId));
+      if (!provider) return res.status(404).json({ error: 'Partnerit ei leitud' });
+      const codes = Array.isArray(b.codes) ? b.codes : String(b.codes || '').split(/[\s,;]+/);
+      const cleaned = codes.map((c) => String(c || '').trim()).filter(Boolean);
+      const count = parseInt(b.count, 10) || 0;
+      if (!cleaned.length && count <= 0) return res.status(400).json({ error: 'Anna koodid või vabade kaartide arv' });
+      const { assigned, errors } = await assignCards({ provider, codes: cleaned, count });
+      res.status(200).json({ success: true, assigned, errors, cards: await loadProviderCards(provider.id) });
+    },
+
+    /** Take an unused card back from a provider: { providerId, code } (body or query) */
+    'DELETE /api/admin/providers/cards': async (req, res) => {
+      if (!authenticateAdmin(req)) return res.status(401).json({ error: 'Unauthorized' });
+      const b = { ...(req.query || {}), ...(req.body || {}) };
+      const code = normalizeCardCode(b.code);
+      const found = await findCardByCode(code);
+      if (!found || !isPhysicalCard(found.card)) return res.status(404).json({ error: 'Koodi ei leitud' });
+      if (cardState(found.card) === 'used') return res.status(409).json({ error: 'Kasutatud kaarti ei saa eemaldada' });
+      if (b.providerId && found.card.assignedProviderId && found.card.assignedProviderId !== String(b.providerId)) return res.status(409).json({ error: 'Kaart on määratud teisele partnerile' });
+      await found.ref.update({ assignedProviderId: FieldValue.delete(), assignedProviderName: FieldValue.delete(), assignedAt: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() });
+      res.status(200).json({ success: true, code });
+    },
+
     'POST /api/admin/assign-provider': async (req, res) => {
       if (!authenticateAdmin(req)) return res.status(401).json({ error: 'Unauthorized' });
       const b = req.body || {};
@@ -2955,6 +3256,7 @@ module.exports = function createHaldus(deps) {
       haldusApi: router(haldusHandlers, { rateLimitName: 'haldus', rateLimitMax: 120 }),
       portalExtrasApi: router(portalHandlers, { rateLimitName: 'portal-extras', rateLimitMax: 60 }),
       adminProvidersApi: router(adminHandlers, { rateLimitName: 'admin-providers', rateLimitMax: 60 }),
+      lunastaApi: router(lunastaHandlers, { rateLimitName: 'lunasta', rateLimitMax: 30 }),
       generateScheduledVisits,
       sendFlowerOrders: sendFlowerOrdersJob,
       sendMaintenanceReminders: sendMaintenanceRemindersJob,

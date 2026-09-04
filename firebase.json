@@ -132,6 +132,13 @@
         }
       },
       {
+        "source": "/api/lunasta/**",
+        "function": {
+          "functionId": "lunastaApi",
+          "region": "europe-west1"
+        }
+      },
+      {
         "source": "/api/create-checkout",
         "function": {
           "functionId": "createCheckoutSession",

@@ -433,6 +433,27 @@
                             <p x-show="!invoices.length" class="text-sm text-muted font-sans font-light">Arveid veel pole. Esimene tuleb pärast esimest makset.</p>
                         </div>
 
+                        <!-- Invitation cards: printed codes handed to this provider by SUKODA -->
+                        <div>
+                            <div class="flex flex-wrap items-end justify-between gap-4 mb-3">
+                                <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans">Kutsekaardid</p>
+                                <p class="text-sm text-muted font-sans font-light" x-show="inviteCards.length"><span class="font-serif text-lg text-black" x-text="inviteCards.filter((c) => c.status === 'free').length"></span> vaba · <span x-text="inviteCards.filter((c) => c.status === 'used').length"></span> kasutatud</p>
+                            </div>
+                            <p class="text-sm text-muted font-sans font-light leading-relaxed mb-4 max-w-2xl">Jäta kaart kliendi kööki. Kui ta koodi sisestab aadressil <span class="text-black">sukoda.ee/lunasta</span>, tuleb ta kodu sinu töölauale ja saab kohe portaali — sina saad teate ja lisad graafiku. Kaardil ei ole rahalist väärtust; liitunud kodu loeb paketi kodude hulka nagu iga teine.</p>
+                            <div class="bg-white border border-[#E8E3DD] divide-y divide-[#E8E3DD]" x-show="inviteCards.length">
+                                <template x-for="c in inviteCards" :key="c.code">
+                                    <div class="flex items-center justify-between gap-4 px-5 py-3 text-sm font-sans">
+                                        <span class="font-mono tracking-wider" x-text="c.code"></span>
+                                        <span class="flex items-center gap-3 min-w-0">
+                                            <span x-show="c.status === 'free'" class="h-chip bg-cream text-muted">vaba</span>
+                                            <span x-show="c.status === 'used'" class="font-light text-muted truncate">kasutatud · <span class="text-black" x-text="c.usedByName || 'klient'"></span><span x-show="c.usedAt" x-text="' · ' + fmtDateShort(c.usedAt)"></span></span>
+                                        </span>
+                                    </div>
+                                </template>
+                            </div>
+                            <p x-show="!inviteCards.length" class="text-sm text-muted font-sans font-light">Sul pole veel kutsekaarte. Küsi need SUKODA-lt: <a href="mailto:partner@sukoda.ee?subject=Kutsekaardid" class="text-black border-b border-accent hover:text-accent">partner@sukoda.ee</a>.</p>
+                        </div>
+
                         <!-- Profile -->
                         <div>
                             <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans mb-3">Minu andmed</p>
@@ -865,7 +886,7 @@
             globalError: '', toast: '',
 
             provider: null, customers: [], bookings: [], requests: [], catalogue: [], florists: [], maintenanceCatalogue: [],
-            billing: { plan: 'free', planName: 'Tasuta', homes: 0, limit: 3, plans: [], hasSubscription: false, cancelAtPeriodEnd: false, periodEnd: null, status: null }, billingBusy: false, billingError: '', invoices: [],
+            billing: { plan: 'free', planName: 'Tasuta', homes: 0, limit: 3, plans: [], hasSubscription: false, cancelAtPeriodEnd: false, periodEnd: null, status: null }, billingBusy: false, billingError: '', invoices: [], inviteCards: [],
             profileForm: { name: '', businessName: '', phone: '', notifyEmail: '' }, profileSaving: false, profileSaved: false, maintenanceIntervals: [1, 2, 3, 6, 12, 24],
             signupMode: new URLSearchParams(location.search).get('alusta') != null, signupForm: { name: '', businessName: '', email: '', phone: '', services: ['cleaning'], city: '' },
             range: { from: '', to: '' },
@@ -926,6 +947,7 @@
                     const d = await res.json();
                     this.provider = d.provider; this.customers = d.customers; this.bookings = d.bookings; this.requests = d.requests; this.catalogue = d.catalogue; this.florists = d.florists || []; this.maintenanceCatalogue = d.maintenanceCatalogue || []; this.maintenanceIntervals = d.maintenanceIntervals || this.maintenanceIntervals;
                     if (d.billing) this.billing = d.billing;
+                    this.inviteCards = d.inviteCards || [];
                     this.profileForm = { name: d.provider.name || '', businessName: d.provider.businessName || '', phone: d.provider.phone || '', notifyEmail: d.provider.notifyEmail || '' };
                     if (this.activeTab === 'account') this.loadInvoices();
                     this.range = d.range; this.authenticated = true;

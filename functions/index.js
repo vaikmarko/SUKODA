@@ -4993,6 +4993,11 @@ exports.redeemGift = functions
         const doc = snapshot.docs[0];
         const order = doc.data();
 
+        // Printed cards are invitation cards now — they go through /api/lunasta, not the gift flow
+        if (order.kind === 'invite') {
+          return res.status(400).json({ error: 'Invitation card — use /lunasta', inviteCard: true });
+        }
+
         // Check if already redeemed (has a booking) — sales cards are reusable
         if (order.giftRedeemed && !order.salesCard) {
           return res.status(400).json({ error: 'Gift already redeemed', alreadyRedeemed: true });
@@ -6518,6 +6523,7 @@ haldus = require('./haldus')({
 exports.haldusApi = haldus.functions.haldusApi;
 exports.portalExtrasApi = haldus.functions.portalExtrasApi;
 exports.adminProvidersApi = haldus.functions.adminProvidersApi;
+exports.lunastaApi = haldus.functions.lunastaApi;
 exports.generateScheduledVisits = haldus.functions.generateScheduledVisits;
 exports.sendFlowerOrders = haldus.functions.sendFlowerOrders;
 exports.sendMaintenanceReminders = haldus.functions.sendMaintenanceReminders;
