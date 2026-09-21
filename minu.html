@@ -1107,7 +1107,7 @@
                         <!-- Three facts a new owner wants to see without looking for them -->
                         <div x-show="brand && extrasLoaded" x-cloak class="grid grid-cols-3 gap-6 mt-8 pt-6 border-t border-[#E8E3DD] max-w-xl">
                             <div>
-                                <p class="font-serif text-2xl font-light leading-none" x-text="brand?.warrantyUntil ? formatDateShort(brand.warrantyUntil) : '—'"></p>
+                                <p class="font-serif text-2xl font-light leading-none" x-text="brand?.warrantyUntil ? window.SUKODA_TIME.formatDate(brand.warrantyUntil + 'T12:00:00', lang === 'et' ? 'et-EE' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'"></p>
                                 <p class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mt-2" x-text="lang === 'et' ? 'Garantii kehtib' : 'Warranty until'"></p>
                             </div>
                             <button type="button" @click="activeTab = 'overview'" class="text-left">
