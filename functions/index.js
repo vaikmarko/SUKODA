@@ -5962,34 +5962,44 @@ exports.validatePortalToken = functions
  */
 async function sendClientMagicLink(normalizedEmail) {
     const crypto = require('crypto');
-    // Search subscriptions first, then redeemed gift orders by recipient email
-    let ordersSnapshot = await db.collection('orders')
+    // customer.email + status uses an existing index. Do not add type/paidAt here —
+    // that composite index was never deployed and /api/magic-link returned 500.
+    const byEmail = await db.collection('orders')
       .where('customer.email', '==', normalizedEmail)
-      .where('type', '==', 'subscription')
       .where('status', 'in', ['paid', 'cancelling'])
-      .orderBy('paidAt', 'desc')
-      .limit(1)
+      .limit(10)
       .get();
+    const paidAtMs = (d) => {
+      const v = d.data().paidAt;
+      if (!v) return 0;
+      if (typeof v.toMillis === 'function') return v.toMillis();
+      const dt = v.toDate?.();
+      return dt ? dt.getTime() : 0;
+    };
+    const subscriptionDoc = byEmail.docs
+      .filter((d) => (d.data().type || 'subscription') === 'subscription')
+      .sort((a, b) => paidAtMs(b) - paidAtMs(a))[0] || null;
 
-    if (ordersSnapshot.empty) {
-      ordersSnapshot = await db.collection('orders')
+    let orderDoc = subscriptionDoc;
+    let memberOf = null;
+
+    if (!orderDoc) {
+      const giftSnap = await db.collection('orders')
         .where('recipient.email', '==', normalizedEmail)
         .where('type', '==', 'gift')
         .where('giftRedeemed', '==', true)
         .limit(1)
         .get();
+      if (!giftSnap.empty) orderDoc = giftSnap.docs[0];
     }
 
-    // Household member? (spouse/partner added as a contact) → own session, same portal
-    let memberOf = null;
-    if (ordersSnapshot.empty) {
+    if (!orderDoc) {
       const memberSnap = await db.collection('orders').where('contactEmails', 'array-contains', normalizedEmail).limit(5).get();
       memberOf = memberSnap.docs.find((d) => ['paid', 'cancelling'].includes(d.data().status)) || null;
+      orderDoc = memberOf;
     }
 
-    if (ordersSnapshot.empty && !memberOf) return false;
-
-    const orderDoc = memberOf || ordersSnapshot.docs[0];
+    if (!orderDoc) return false;
     const order = orderDoc.data();
     const lang = order.lang || 'et';
 
@@ -6174,6 +6184,8 @@ exports.getClientProfile = functions
             pauseReason: order.pauseReason || null,
             paidAt: order.paidAt?.toDate?.()?.toISOString() || null,
             referralCode: order.referralCode || null,
+            // Developer after-sales white label (name + project); UI only
+            brand: order.brand && order.brand.name ? { name: String(order.brand.name), project: String(order.brand.project || ''), tagline: String(order.brand.tagline || '') } : null,
           },
           bookings,
         });

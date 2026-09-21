@@ -21,6 +21,8 @@ const TALLINN_TIME_ZONE = 'Europe/Tallinn';
  */
 const SERVICE_CATEGORIES = {
   cleaning: { et: 'Koristus', en: 'Cleaning', orderField: 'providerId' },
+  // Developer after-sales: the builder's warranty team handles defects, inspections and "how does this work"
+  warranty: { et: 'Garantii ja maja', en: 'Warranty & building', orderField: 'warrantyId' },
   flowers: { et: 'Lilled', en: 'Flowers', orderField: 'floristId' },
   handyman: { et: 'Remondimees', en: 'Handyman', orderField: 'handymanId' },
   garden: { et: 'Aed & õu', en: 'Garden & outdoors', orderField: 'gardenerId' },
@@ -109,6 +111,62 @@ const SERVICE_CATALOGUE = [
     },
     priceHint: { et: 'alates 35 €', en: 'from €35' },
     durationMin: 0,
+  },
+  // — Garantii ja maja (arendaja järelteenindus) —
+  {
+    id: 'warranty-claim',
+    category: 'warranty',
+    name: { et: 'Garantiipöördumine', en: 'Warranty claim' },
+    description: {
+      et: 'Praod, viimistlus, uksed ja aknad, vuugid, tehnosüsteemid — kirjelda puudust, garantiimeeskond kinnitab ülevaatuse aja.',
+      en: 'Cracks, finishes, doors and windows, seals, building systems — describe the defect, the warranty team confirms an inspection time.',
+    },
+    priceHint: { et: 'garantii korras', en: 'under warranty' },
+    durationMin: 60,
+  },
+  {
+    id: 'warranty-inspection',
+    category: 'warranty',
+    name: { et: 'Garantiiülevaatus', en: 'Warranty inspection' },
+    description: {
+      et: 'Korteri plaaniline ülevaatus 1. ja 2. aasta lõpus. Puudused fikseeritakse ühe aktiga ja parandatakse ühe käiguga.',
+      en: 'Scheduled inspection at the end of year 1 and year 2. Defects recorded in one report, fixed in one round.',
+    },
+    priceHint: { et: 'garantii korras', en: 'under warranty' },
+    durationMin: 90,
+  },
+  {
+    id: 'systems-tuning',
+    category: 'warranty',
+    name: { et: 'Ventilatsiooni ja kütte seadistus', en: 'Ventilation & heating setup' },
+    description: {
+      et: 'Ventilatsiooniseadme režiimid, põrandakütte termostaadid, soojussõlme näidud — seadistame ja näitame, kuidas kodu töötab.',
+      en: 'Ventilation unit modes, floor-heating thermostats, heat substation readings — we set it up and show you how your home works.',
+    },
+    priceHint: { et: 'garantiiajal tasuta', en: 'free during warranty' },
+    durationMin: 60,
+  },
+  {
+    id: 'home-manual',
+    category: 'warranty',
+    name: { et: 'Küsimus kodu või dokumendi kohta', en: 'Question about the home or a document' },
+    description: {
+      et: 'Kasutusjuhend, korteri plaan, seadme garantii või maja kord — vastame kirjalikult, vajadusel tuleme kohale.',
+      en: 'User manual, floor plan, appliance warranty or house rules — we reply in writing and come by if needed.',
+    },
+    priceHint: { et: 'tasuta', en: 'free' },
+    durationMin: 30,
+  },
+  {
+    id: 'meter-readings',
+    category: 'warranty',
+    name: { et: 'Näidud ja mõõturid', en: 'Meters & readings' },
+    description: {
+      et: 'Vee-, kütte- ja elektrimõõturite näidud, kaugloetava mõõturi kontroll või näidu parandus ühistule.',
+      en: 'Water, heating and electricity readings, remote-meter check or a correction sent to the association.',
+    },
+    priceHint: { et: 'tasuta', en: 'free' },
+    durationMin: 30,
   },
   // — Remondimees —
   {
@@ -550,6 +608,11 @@ function liveAwayPeriods(awayPeriods, todayStr) {
  */
 const MAINTENANCE_CATALOGUE = [
   { id: 'vent-filters', name: { et: 'Ventilatsiooni filtrid', en: 'Ventilation filters' }, hint: { et: 'Vaheta või pese — must filter tähendab kehva õhku ja suuremat elektriarvet.', en: 'Replace or wash — a dirty filter means poor air and a higher electricity bill.' }, intervalMonths: 6, serviceId: 'vent-filters', homeTypes: ['apartment', 'house'], byProvider: true },
+  // New-build home: what the developer's after-sales team wants the owner to keep an eye on
+  { id: 'warranty-inspection', name: { et: 'Garantiiülevaatus', en: 'Warranty inspection' }, hint: { et: '1. ja 2. aasta lõpus, enne garantii lõppu — puudused ühe aktiga kirja.', en: 'At the end of year 1 and year 2, before the warranty ends — defects recorded in one report.' }, intervalMonths: 12, serviceId: 'warranty-inspection', homeTypes: ['apartment', 'house'] },
+  { id: 'floor-heating', name: { et: 'Põrandakütte termostaadid', en: 'Floor-heating thermostats' }, hint: { et: 'Enne kütteperioodi režiimid ja ajakavad üle vaadata — toad ühtlaselt soojad, arve väiksem.', en: 'Before the heating season check modes and schedules — even warmth, lower bill.' }, intervalMonths: 12, serviceId: 'systems-tuning', homeTypes: ['apartment', 'house'] },
+  { id: 'sealant-check', name: { et: 'Silikoonvuukide kontroll', en: 'Silicone seal check' }, hint: { et: 'Vannituba ja köök: pragunenud vuuk laseb vee alla. Garantiiajal parandab ehitaja.', en: 'Bathroom and kitchen: a cracked seal lets water through. Fixed by the builder during warranty.' }, intervalMonths: 12, serviceId: 'warranty-claim', homeTypes: ['apartment', 'house', 'summer'] },
+  { id: 'water-meters', name: { et: 'Veemõõtjate näidud', en: 'Water meter readings' }, hint: { et: 'Näidud ühistule iga kuu lõpus, kui mõõturid ei ole kaugloetavad.', en: 'Readings to the association at month end unless the meters are read remotely.' }, intervalMonths: 1, serviceId: 'meter-readings', homeTypes: ['apartment'] },
   { id: 'washer-service', name: { et: 'Pesumasina hooldus', en: 'Washing machine service' }, hint: { et: 'Puhasta filter ja tihend, käivita tühi 90° programm.', en: 'Clean the filter and seal, run an empty 90° cycle.' }, intervalMonths: 3, serviceId: null, homeTypes: ['apartment', 'house', 'summer'], byProvider: true },
   { id: 'dishwasher-filter', name: { et: 'Nõudepesumasina filter', en: 'Dishwasher filter' }, hint: { et: 'Loputa filter ja pihustid; sool ja loputusvahend üle vaadata.', en: 'Rinse the filter and spray arms; check salt and rinse aid.' }, intervalMonths: 1, serviceId: null, homeTypes: ['apartment', 'house', 'summer'], byProvider: true },
   { id: 'hood-filter', name: { et: 'Pliidikubu filter', en: 'Range hood filter' }, hint: { et: 'Metallfilter nõudepesumasinasse, süsinikfilter vahetada.', en: 'Metal filter in the dishwasher, carbon filter replaced.' }, intervalMonths: 3, serviceId: null, homeTypes: ['apartment', 'house', 'summer'], byProvider: true },
@@ -645,9 +708,12 @@ function maintenanceNextDue(items) {
 // ============================================================
 
 const DOCUMENT_CATEGORIES = {
+  // Pre-filled by the developer at handover: the folder the owner otherwise never finds again
+  handover: { et: 'Üleandmine ja garantii', en: 'Handover and warranty' },
   ownership: { et: 'Omand ja lepingud', en: 'Ownership and contracts' },
-  insurance: { et: 'Kindlustus', en: 'Insurance' },
   appliances: { et: 'Seadmed, juhendid, garantiid', en: 'Appliances, manuals, warranties' },
+  building: { et: 'Maja ja ühistu', en: 'Building and association' },
+  insurance: { et: 'Kindlustus', en: 'Insurance' },
   works: { et: 'Tehtud tööd', en: 'Work done' },
   other: { et: 'Muu', en: 'Other' },
 };

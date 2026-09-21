@@ -1254,14 +1254,14 @@ module.exports = function createHaldus(deps) {
     return order?.floristId || provider?.defaultFloristId || null;
   }
 
+  /** Every home where this provider holds a role; role = category (cleaning first, so the housekeeper's role wins). */
   async function loadProviderOrders(providerId) {
-    const [a, b] = await Promise.all([
-      db.collection('orders').where('providerId', '==', providerId).get(),
-      db.collection('orders').where('floristId', '==', providerId).get(),
-    ]);
+    const cats = Object.entries(core.SERVICE_CATEGORIES);
+    const snaps = await Promise.all(cats.map(([, def]) => db.collection('orders').where(def.orderField, '==', providerId).get()));
     const map = new Map();
-    for (const d of a.docs) map.set(d.id, { doc: d, role: 'cleaning' });
-    for (const d of b.docs) if (!map.has(d.id)) map.set(d.id, { doc: d, role: 'flowers' });
+    cats.forEach(([cat], i) => {
+      for (const d of snaps[i].docs) if (!map.has(d.id)) map.set(d.id, { doc: d, role: cat });
+    });
     return [...map.values()];
   }
 
@@ -1272,8 +1272,9 @@ module.exports = function createHaldus(deps) {
     const doc = await ref.get();
     if (!doc.exists) return null;
     const order = doc.data();
-    if (order.providerId === provider.id) return { ref, order, role: 'cleaning' };
-    if (order.floristId === provider.id) return { ref, order, role: 'flowers' };
+    for (const [cat, def] of Object.entries(core.SERVICE_CATEGORIES)) {
+      if (order[def.orderField] === provider.id) return { ref, order, role: cat };
+    }
     return null;
   }
 
@@ -2754,8 +2755,21 @@ module.exports = function createHaldus(deps) {
       ]);
       const florist = await loadProvider(floristIdFor(order, provider));
       const routes = await routeRequest(order);
+      // Everyone who comes to this home, one entry per category with a named partner
+      const partnerDocs = {};
+      for (const [cat, pid] of Object.entries(routes)) {
+        if (!pid) continue;
+        partnerDocs[cat] = cat === 'cleaning' ? provider : cat === 'flowers' ? florist : await loadProvider(pid);
+      }
+      if (!partnerDocs.flowers && florist) partnerDocs.flowers = florist;
+      const partners = Object.entries(partnerDocs).filter(([, p]) => p).map(([cat, p]) => ({
+        category: cat, label: core.categoryLabel(cat, lang), name: p.name, businessName: p.businessName || '', phone: p.phone || '', email: p.email || '',
+      }));
       res.status(200).json({
         viewer: auth.viewer || null,
+        partners,
+        // Developer after-sales white label: who runs this home's portal (name + project), UI only
+        brand: order.brand && order.brand.name ? { name: String(order.brand.name), project: String(order.brand.project || ''), tagline: String(order.brand.tagline || '') } : null,
         // Services the household said it would want once a partner exists
         interests: [...new Set(interestSnap.docs.map((d) => d.data().serviceId))],
         contacts: Array.isArray(order.contacts) ? order.contacts : [],
@@ -2767,7 +2781,8 @@ module.exports = function createHaldus(deps) {
         // Who handles each category for this home: a named partner, or SUKODA finds one
         categories: Object.entries(core.SERVICE_CATEGORIES).map(([id, c]) => ({
           id, label: c[lang] || c.et,
-          partnerName: id === 'cleaning' ? (provider?.name || null) : id === 'flowers' ? (florist?.name || null) : null,
+          partnerName: partnerDocs[id]?.name || null,
+          partnerBusiness: partnerDocs[id]?.businessName || '',
           // Without a partner the household can only register interest — nothing is promised
           orderable: !!routes[id],
         })),
@@ -3106,7 +3121,7 @@ module.exports = function createHaldus(deps) {
       if (b.phone != null) update.phone = str(b.phone, 40);
       if (b.businessName != null) update.businessName = str(b.businessName, 160);
       if (b.status != null) update.status = b.status === 'disabled' ? 'disabled' : 'active';
-      if (Array.isArray(b.services)) update.services = b.services.filter((s) => ['cleaning', 'flowers', 'other'].includes(s));
+      if (Array.isArray(b.services)) update.services = b.services.filter((s) => Object.keys(core.SERVICE_CATEGORIES).includes(s) || s === 'other');
       if (update.status === 'disabled') { update.sessionTokenHash = FieldValue.delete(); update.sessionTokenExpiresAt = FieldValue.delete(); }
       await ref.update(update);
       res.status(200).json({ success: true });
@@ -3155,9 +3170,10 @@ module.exports = function createHaldus(deps) {
       const orderRef = db.collection('orders').doc(docId(b.orderId));
       const orderDoc = await orderRef.get();
       if (!orderDoc.exists) return res.status(404).json({ error: 'Tellimust ei leitud' });
-      const role = b.role === 'flowers' ? 'flowers' : 'cleaning';
-      const field = role === 'flowers' ? 'floristId' : 'providerId';
-      const nameField = role === 'flowers' ? 'floristName' : 'providerName';
+      // role = any service category; the order field comes from the category definition
+      const role = core.SERVICE_CATEGORIES[b.role] ? b.role : 'cleaning';
+      const field = core.SERVICE_CATEGORIES[role].orderField;
+      const nameField = role === 'flowers' ? 'floristName' : role === 'cleaning' ? 'providerName' : `${role}Name`;
 
       let provider = null;
       if (b.providerId) {

@@ -81,7 +81,7 @@
                             <div>
                                 <label class="h-label">Mida pakud</label>
                                 <div class="flex flex-wrap gap-2 mt-1">
-                                    <template x-for="o in [['cleaning','Koristus'],['flowers','Lilled'],['handyman','Remondimees'],['garden','Aed & õu']]" :key="o[0]">
+                                    <template x-for="o in [['cleaning','Koristus'],['warranty','Garantii ja maja'],['flowers','Lilled'],['handyman','Remondimees'],['garden','Aed & õu']]" :key="o[0]">
                                         <button type="button" @click="toggleSignupService(o[0])" :class="signupForm.services.includes(o[0]) ? 'bg-black text-paper border-black' : 'border-[#D4CFC8] text-muted hover:text-black'" class="px-4 py-2 border text-[11px] uppercase tracking-[0.15em] transition-colors" x-text="o[1]"></button>
                                     </template>
                                 </div>
@@ -294,6 +294,9 @@
                                         <span x-show="c.status === 'paid' && awayLabel(c)" class="h-chip bg-amber-50 text-amber-600 font-sans" x-text="awayLabel(c)"></span>
                                         <span x-show="c.source !== 'manual'" class="h-chip bg-accent/10 text-accent font-sans">SUKODA klient</span>
                                         <span x-show="c.role === 'flowers'" class="h-chip bg-pink-50 text-pink-500 font-sans">Lilled</span>
+                                        <span x-show="c.role === 'warranty'" class="h-chip bg-sky-50 text-sky-600 font-sans">Garantii</span>
+                                        <span x-show="c.role === 'handyman'" class="h-chip bg-stone-100 text-stone-600 font-sans">Remondimees</span>
+                                        <span x-show="c.role === 'garden'" class="h-chip bg-green-50 text-green-600 font-sans">Aed</span>
                                     </div>
                                 </div>
                                 <div class="flex items-center justify-between text-xs font-sans font-light text-muted mt-3">
