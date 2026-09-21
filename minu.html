@@ -123,6 +123,7 @@
     maintShowSuggestions: false,
     docAdding: false,
     docForm: { title: '', url: '', category: 'appliances', note: '' },
+    docFile: null,
     docBusy: false,
     docError: '',
 
@@ -409,6 +410,8 @@
 
     // ---- Composition helpers (layout only; no new data) ----
     get brand() { return this.order?.brand || this.extras.brand || null; },
+    /** One colour per role, used on avatars, chips and dots: housekeeper black · builder's team gold · others stone */
+    partnerDot(category) { return category === 'cleaning' ? 'bg-black' : category === 'warranty' ? 'bg-accent' : category === 'flowers' ? 'bg-pink-300' : 'bg-[#B8B2AA]'; },
     /** Everyone who comes to this home: server list when loaded, else the housekeeper/florist we already know */
     get partners() {
         if (Array.isArray(this.extras.partners) && this.extras.partners.length) return this.extras.partners;
@@ -487,8 +490,40 @@
             return true;
         } catch (e) { this.docError = 'Error'; return false; } finally { this.docBusy = false; }
     },
+    get docsFromDeveloper() { return this.documents.items.filter((d) => d.source === 'developer').length; },
+    docKind(d) {
+        if (d.file) { const t = d.file.contentType || ''; return t.includes('pdf') ? 'PDF' : t.includes('jpeg') ? 'JPG' : t.includes('png') ? 'PNG' : t.includes('webp') ? 'WEBP' : t.includes('heic') ? 'HEIC' : 'FAIL'; }
+        return d.url ? (this.lang === 'et' ? 'Link' : 'Link') : (this.lang === 'et' ? 'Märge' : 'Note');
+    },
+    docSourceLabel(d) {
+        if (d.source === 'developer') return this.brand?.name || (this.lang === 'et' ? 'Arendaja' : 'Developer');
+        if (d.source === 'provider') return d.sourceName || (this.lang === 'et' ? 'Partner' : 'Partner');
+        return d.sourceName ? d.sourceName.split(' ')[0] : (this.lang === 'et' ? 'Sina' : 'You');
+    },
+    /** Files are streamed through the API with the session token — the bucket itself is never public */
+    fileHref(d) { return '/api/me/documents/file?id=' + encodeURIComponent(d.id) + '&token=' + encodeURIComponent(this.token); },
+    onDocFile(e) {
+        const f = e.target.files && e.target.files[0];
+        this.docFile = f || null;
+        if (f && !this.docForm.title) this.docForm.title = f.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').slice(0, 120);
+        e.target.value = '';
+    },
     async addDocument() {
         if (!this.docForm.title) return;
+        if (this.docFile) {
+            const f = this.docFile;
+            if (f.size > 8 * 1024 * 1024) { this.docError = this.lang === 'et' ? 'Fail on suurem kui 8 MB' : 'File is larger than 8 MB'; return; }
+            const data = await new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result)); r.onerror = reject; r.readAsDataURL(f); });
+            this.docBusy = true; this.docError = '';
+            try {
+                const res = await fetch('/api/me/documents/upload', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token }, body: JSON.stringify({ ...this.docForm, url: '', fileName: f.name, contentType: f.type || 'application/octet-stream', data }) });
+                const out = await res.json();
+                if (!res.ok) { this.docError = out.error || 'Error'; return; }
+                this.extras = { ...this.extras, documents: out.documents };
+                this.docAdding = false; this.docFile = null; this.docForm = { title: '', url: '', category: 'appliances', note: '' };
+            } catch (e) { this.docError = 'Error'; } finally { this.docBusy = false; }
+            return;
+        }
         if (await this.documentAction({ action: 'add', ...this.docForm })) { this.docAdding = false; this.docForm = { title: '', url: '', category: 'appliances', note: '' }; }
     },
     async removeDocument(d) {
@@ -564,7 +599,7 @@
             'warranty-inspection': 'M9 12l2 2 4-4M5 4h14a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V5a1 1 0 011-1z',
             'systems-tuning': 'M12 8a4 4 0 100 8 4 4 0 000-8zm0-5v3m0 12v3m9-9h-3M6 12H3m14.5-6.5l-2 2m-9 9l-2 2m11 0l-2-2m-9-9l-2-2',
             'home-manual': 'M4 5a2 2 0 012-2h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm4 3h8M8 12h8M8 16h5',
-            'meter-readings': 'M12 20a8 8 0 100-16 8 8 0 000 16zm0-8l3-3M7 12h1m8 0h1m-5-5v1',
+            'building-question': 'M4 21V5a1 1 0 011-1h9a1 1 0 011 1v16M4 21h16M15 9h4a1 1 0 011 1v11M8 8h2m-2 4h2m-2 4h2',
         };
         return icons[id] || icons.other;
     },
@@ -1050,22 +1085,49 @@
                 </div>
             </nav>
 
-            <!-- Welcome header -->
-            <div class="px-6 md:px-12 py-8 md:py-12 grid-line-b">
-                <div class="accent-line mb-4"></div>
-                <!-- Developer white label: whose after-sales this home belongs to -->
-                <p x-show="brand" x-cloak class="text-[11px] uppercase tracking-[0.22em] font-sans text-muted mb-3">
-                    <span class="text-black font-medium" x-text="brand?.name"></span><span x-show="brand?.project" x-text="' · ' + brand?.project"></span><span class="text-muted/70" x-text="lang === 'et' ? ' · Järelteenindus' : ' · After-sales'"></span>
-                </p>
-                <div class="flex flex-wrap items-end justify-between gap-4">
-                    <div>
-                        <h1 class="font-serif text-3xl md:text-4xl font-light mb-2" x-text="(lang === 'et' ? 'Tere, ' : 'Hello, ') + ((viewer?.name || order?.customerName || '').split(' ')[0])"></h1>
-                        <p class="text-muted font-sans font-light text-base" x-text="(lang === 'et' && brand?.tagline) || (lang === 'et' ? 'Sinu kodu — ajad, teenused ja pere teavitused ühes kohas.' : 'Your home — times, services and household notifications in one place.')"></p>
+            <!-- Welcome header: the home itself, first — for developer homes with the project picture and the three facts that matter -->
+            <div class="grid-line-b">
+                <div class="grid lg:grid-cols-12 items-stretch">
+                    <div class="px-6 md:px-12 py-8 md:py-12 flex flex-col justify-center" :class="brand ? 'lg:col-span-7' : 'lg:col-span-12'">
+                        <div class="accent-line mb-4"></div>
+                        <!-- Developer white label: whose after-sales this home belongs to -->
+                        <p x-show="brand" x-cloak class="text-[11px] uppercase tracking-[0.22em] font-sans text-muted mb-3">
+                            <span class="text-black font-medium" x-text="brand?.name"></span><span x-show="brand?.project" x-text="' · ' + brand?.project"></span><span class="text-muted/70" x-text="lang === 'et' ? ' · Järelteenindus' : ' · After-sales'"></span>
+                        </p>
+                        <div class="flex flex-wrap items-end justify-between gap-4">
+                            <div>
+                                <h1 class="font-serif text-3xl md:text-4xl font-light mb-2" x-text="(lang === 'et' ? 'Tere, ' : 'Hello, ') + ((viewer?.name || order?.customerName || '').split(' ')[0])"></h1>
+                                <p class="text-muted font-sans font-light text-base max-w-xl" x-text="(lang === 'et' && brand?.tagline) || (lang === 'et' ? 'Sinu kodu — ajad, teenused ja pere teavitused ühes kohas.' : 'Your home — times, services and household notifications in one place.')"></p>
+                            </div>
+                            <p x-show="(order?.customerAddress || order?.address) && !brand" class="text-sm text-muted font-sans font-light flex items-center gap-2">
+                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                <span x-text="order?.customerAddress || order?.address"></span>
+                            </p>
+                        </div>
+                        <!-- Three facts a new owner wants to see without looking for them -->
+                        <div x-show="brand && extrasLoaded" x-cloak class="grid grid-cols-3 gap-6 mt-8 pt-6 border-t border-[#E8E3DD] max-w-xl">
+                            <div>
+                                <p class="font-serif text-2xl font-light leading-none" x-text="brand?.warrantyUntil ? formatDateShort(brand.warrantyUntil) : '—'"></p>
+                                <p class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mt-2" x-text="lang === 'et' ? 'Garantii kehtib' : 'Warranty until'"></p>
+                            </div>
+                            <button type="button" @click="activeTab = 'overview'" class="text-left">
+                                <p class="font-serif text-2xl font-light leading-none" x-text="partners.length"></p>
+                                <p class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mt-2" x-text="lang === 'et' ? 'Inimest hoolitsevad' : 'People look after it'"></p>
+                            </button>
+                            <button type="button" @click="activeTab = 'home'; $nextTick(() => document.getElementById('dokumendid')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))" class="text-left">
+                                <p class="font-serif text-2xl font-light leading-none" x-text="documents.items.length"></p>
+                                <p class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mt-2" x-text="lang === 'et' ? 'Dokumenti kaustas' : 'Documents in the folder'"></p>
+                            </button>
+                        </div>
                     </div>
-                    <p x-show="order?.customerAddress || order?.address" class="text-sm text-muted font-sans font-light flex items-center gap-2">
-                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        <span x-text="order?.customerAddress || order?.address"></span>
-                    </p>
+                    <!-- The home. Project photo for developer homes; a real unit photo replaces this per project. -->
+                    <div x-show="brand" x-cloak class="lg:col-span-5 relative min-h-[220px] lg:min-h-0 border-t lg:border-t-0 lg:border-l border-[#E8E3DD]">
+                        <img src="/assets/images/interior-luxury-1024w.webp" alt="" class="absolute inset-0 w-full h-full object-cover" loading="eager">
+                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-6 py-4 flex items-end justify-between gap-4">
+                            <p class="text-paper font-sans text-sm" x-text="order?.customerAddress || order?.address"></p>
+                            <p class="text-paper/80 text-[10px] uppercase tracking-[0.18em] font-sans" x-text="brand?.project"></p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1218,7 +1280,7 @@
                                                 <span class="w-2.5 h-2.5 rounded-full shrink-0" :class="item.state === 'overdue' ? 'bg-red-400' : item.state === 'due' ? 'bg-accent' : 'bg-[#D4CFC8]'"></span>
                                                 <div class="min-w-0 flex-1">
                                                     <p class="font-sans text-base truncate" x-text="item.name"></p>
-                                                    <p class="text-sm font-sans font-light" :class="item.state === 'overdue' ? 'text-red-500' : 'text-muted'" x-text="dueLabel(item)"></p>
+                                                    <p class="text-sm font-sans font-light" :class="item.state === 'overdue' ? 'text-red-500' : 'text-muted'"><span x-text="dueLabel(item)"></span><span x-show="item.doerName" class="text-muted" x-text="' · ' + item.doerName"></span></p>
                                                 </div>
                                                 <button type="button" x-show="item.state !== 'ok'" @click="markMaintenanceDone(item)" class="h-9 px-4 border border-[#E8E3DD] text-[11px] uppercase tracking-[0.15em] font-sans hover:border-black transition-colors shrink-0" x-text="lang === 'et' ? 'Tehtud' : 'Done'"></button>
                                             </div>
@@ -1384,6 +1446,8 @@
                                                     <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                                                         <p class="font-serif text-lg font-light" x-text="item.name"></p>
                                                         <p class="text-sm font-sans font-light" :class="item.state === 'overdue' ? 'text-red-500' : item.state === 'due' ? 'text-accent' : 'text-muted'" x-text="dueLabel(item)"></p>
+                                                        <!-- Who this lands on when it is not you: the builder's team, the handyman, the housekeeper -->
+                                                        <span x-show="item.doerName" class="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.12em] font-sans text-muted"><span class="w-2 h-2 rounded-full shrink-0" :class="partnerDot(item.doerCategory)"></span><span x-text="item.doerName"></span></span>
                                                     </div>
                                                     <p class="text-sm text-muted font-sans font-light mt-0.5">
                                                         <select :value="item.intervalMonths" @change="changeInterval(item, $event.target.value)" class="bg-transparent border-b border-dotted border-[#D4CFC8] text-muted outline-none font-light cursor-pointer">
@@ -1400,8 +1464,8 @@
                                                     <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-[11px] uppercase tracking-[0.15em] font-sans">
                                                         <button type="button" @click="markMaintenanceDone(item)" :disabled="!!maintBusy" class="text-black hover:text-accent transition-colors disabled:opacity-40" x-text="lang === 'et' ? 'Tehtud täna' : 'Done today'"></button>
                                                         <button type="button" @click="maintDoneFor = maintDoneFor === item.id ? null : item.id; maintDoneDate = maintenance.today" class="text-muted hover:text-black transition-colors" x-text="lang === 'et' ? 'Muu kuupäev' : 'Other date'"></button>
-                                                        <button type="button" x-show="item.serviceId" @click="orderMaintenance(item)" class="text-accent hover:text-black transition-colors" x-text="item.orderable ? (lang === 'et' ? 'Telli tegija' : 'Order it') : (lang === 'et' ? 'Soovin tegijat' : 'Want someone')"></button>
-                                                        <button type="button" x-show="maintenance.provider" @click="assignMaintenance(item, 'provider')" :disabled="!!maintBusy" class="text-muted hover:text-black transition-colors" x-text="(lang === 'et' ? 'Teeb ' : 'Done by ') + providerFirstName"></button>
+                                                        <button type="button" x-show="item.serviceId" @click="orderMaintenance(item)" class="text-accent hover:text-black transition-colors" x-text="item.orderable ? (lang === 'et' ? 'Telli' : 'Order') + (item.doerName ? ': ' + item.doerName.split(' ')[0] : (lang === 'et' ? ' tegija' : ' it')) : (lang === 'et' ? 'Soovin tegijat' : 'Want someone')"></button>
+                                                        <button type="button" x-show="maintenance.provider && item.doer !== 'partner'" @click="assignMaintenance(item, 'provider')" :disabled="!!maintBusy" class="text-muted hover:text-black transition-colors" x-text="(lang === 'et' ? 'Teeb ' : 'Done by ') + providerFirstName"></button>
                                                         <button type="button" @click="removeMaintenance(item)" class="text-muted/60 hover:text-black transition-colors ml-auto" x-text="lang === 'et' ? 'Eemalda' : 'Remove'"></button>
                                                     </div>
                                                 </div>
@@ -1537,54 +1601,85 @@
                             </div>
                         </div>
 
-                        <!-- ── Kodu dokumendid: what stays with the home ── -->
-                        <div id="dokumendid" class="bg-white border border-[#E8E3DD]">
-                            <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
-                                <h2 class="p-h" x-text="lang === 'et' ? 'Kodu dokumendid' : 'Home documents'"></h2>
-                                <p class="text-xs text-muted font-sans font-light" x-show="documents.items.length" x-text="documents.items.length"></p>
-                            </div>
-                            <div class="p-6">
-                            <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="lang === 'et' ? 'Lepingud, kindlustus, seadmete juhendid ja garantiid, tehtud tööd. Lisa link (nt Google Drive, Dropbox, e-kiri) või lihtsalt märge — nii on kõik kodu kohta ühes kohas ja kodu vahetades kaasa antav.' : 'Contracts, insurance, appliance manuals and warranties, work done. Add a link (Google Drive, Dropbox, an e-mail) or just a note — everything about the home in one place, ready to hand over when the home changes hands.'"></p>
+                        </aside>
 
-                            <div class="mt-6 space-y-6" x-show="documents.items.length">
+                        <!-- ── Kodu kaust: everything that belongs to the home, as real files — handed over with the keys, handed on with the home ── -->
+                        <div id="dokumendid" class="lg:col-span-12 bg-white border border-[#E8E3DD] p-have">
+                            <div class="flex flex-wrap items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
+                                <h2 class="p-h"><span class="p-num">03</span><span x-text="lang === 'et' ? 'Kodu kaust' : 'Home folder'"></span></h2>
+                                <div class="flex flex-wrap items-center gap-3 sm:gap-5">
+                                    <p class="text-xs text-muted font-sans font-light" x-show="documents.items.length" x-text="documents.items.length + (lang === 'et' ? ' dokumenti' : ' documents') + (docsFromDeveloper ? ' · ' + docsFromDeveloper + (lang === 'et' ? ' arendajalt' : ' from the developer') : '')"></p>
+                                    <button type="button" @click="docAdding = !docAdding; docFile = null" class="p-btn-2" style="height:2.25rem" x-text="lang === 'et' ? '+ Lisa fail või link' : '+ Add file or link'"></button>
+                                </div>
+                            </div>
+
+                            <div class="px-6 py-5 border-b border-[#E8E3DD] bg-cream/30 flex flex-wrap items-center justify-between gap-4">
+                                <p class="text-sm text-muted font-sans font-light leading-relaxed max-w-2xl" x-text="brand ? (lang === 'et' ? 'Kaust avati võtmete üleandmisel: akt, garantii, plaanid, juhendid ja maja kord on juba siin. Lisa oma lepingud, kindlustus ja tehtud tööd — kodu vahetades läheb kõik uuele omanikule kaasa.' : 'The folder was opened at handover: deed, warranty, plans, manuals and house rules are already here. Add your own contracts, insurance and work done — when the home changes hands, it all goes with it.') : (lang === 'et' ? 'Lepingud, kindlustus, seadmete juhendid ja garantiid, tehtud tööd — päris failid, mitte lingid kaustadesse. Kodu vahetades läheb kõik uuele omanikule kaasa.' : 'Contracts, insurance, appliance manuals and warranties, work done — real files, not links to folders. When the home changes hands, it all goes with it.')"></p>
+                                <div class="flex items-center gap-4 text-[10px] uppercase tracking-[0.14em] font-sans text-muted shrink-0">
+                                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-accent"></span><span x-text="brand?.name || (lang === 'et' ? 'Arendaja' : 'Developer')"></span></span>
+                                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-black"></span><span x-text="lang === 'et' ? 'Sina' : 'You'"></span></span>
+                                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#D4CFC8]"></span><span x-text="lang === 'et' ? 'Partner' : 'Partner'"></span></span>
+                                </div>
+                            </div>
+
+                            <!-- Add: a file (PDF or photo) or a link — one form -->
+                            <div x-show="docAdding" x-cloak class="px-6 py-6 border-b border-[#E8E3DD] bg-white">
+                                <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                                    <label class="block lg:col-span-2 border border-dashed border-[#D4CFC8] hover:border-black transition-colors p-4 cursor-pointer flex items-center gap-4" :class="docFile ? 'border-black bg-cream/40' : ''">
+                                        <svg class="w-6 h-6 text-accent shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 16V4m0 0l-4 4m4-4l4 4M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"></path></svg>
+                                        <span class="min-w-0">
+                                            <span class="font-sans text-sm block truncate" x-text="docFile ? docFile.name : (lang === 'et' ? 'Vali fail — PDF või foto' : 'Choose a file — PDF or photo')"></span>
+                                            <span class="text-xs text-muted font-sans font-light" x-text="docFile ? Math.round(docFile.size / 1024) + ' KB' : (lang === 'et' ? 'kuni 8 MB · või jäta tühjaks ja lisa link' : 'up to 8 MB · or leave empty and add a link')"></span>
+                                        </span>
+                                        <input type="file" class="hidden" accept="application/pdf,image/jpeg,image/png,image/webp,image/heic" @change="onDocFile($event)">
+                                    </label>
+                                    <label class="block"><span class="text-[10px] uppercase tracking-[0.15em] text-muted font-sans block mb-1" x-text="lang === 'et' ? 'Pealkiri' : 'Title'"></span><input type="text" x-model="docForm.title" maxlength="120" :placeholder="lang === 'et' ? 'nt Kodukindlustus 2026' : 'e.g. Home insurance 2026'" class="w-full bg-transparent border-b border-[#E8E3DD] focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-[#D4CFC8]"></label>
+                                    <label class="block"><span class="text-[10px] uppercase tracking-[0.15em] text-muted font-sans block mb-1" x-text="lang === 'et' ? 'Kategooria' : 'Category'"></span>
+                                        <select x-model="docForm.category" class="w-full bg-transparent border-b border-[#E8E3DD] py-2 font-sans font-light text-base outline-none"><template x-for="c in documents.categories" :key="c.id"><option :value="c.id" x-text="c.label"></option></template></select></label>
+                                    <label class="block lg:col-span-2" x-show="!docFile"><span class="text-[10px] uppercase tracking-[0.15em] text-muted font-sans block mb-1" x-text="lang === 'et' ? 'Link (kui faili pole)' : 'Link (if there is no file)'"></span><input type="url" x-model="docForm.url" placeholder="https://" class="w-full bg-transparent border-b border-[#E8E3DD] focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-[#D4CFC8]"></label>
+                                    <label class="block lg:col-span-2"><span class="text-[10px] uppercase tracking-[0.15em] text-muted font-sans block mb-1" x-text="lang === 'et' ? 'Märge' : 'Note'"></span><input type="text" x-model="docForm.note" maxlength="300" :placeholder="lang === 'et' ? 'nt kehtib kuni 03.2028' : 'e.g. valid until 03.2028'" class="w-full bg-transparent border-b border-[#E8E3DD] focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-[#D4CFC8]"></label>
+                                </div>
+                                <div class="flex items-center gap-4 mt-5">
+                                    <button type="button" @click="addDocument()" :disabled="!docForm.title || docBusy" class="p-btn" x-text="docBusy ? (lang === 'et' ? 'Salvestan…' : 'Saving…') : (docFile ? (lang === 'et' ? 'Laadi kausta' : 'Upload to folder') : (lang === 'et' ? 'Lisa kausta' : 'Add to folder'))"></button>
+                                    <button type="button" @click="docAdding = false; docFile = null" class="text-[11px] uppercase tracking-[0.15em] text-muted hover:text-black font-sans" x-text="lang === 'et' ? 'Loobu' : 'Cancel'"></button>
+                                    <p x-show="docError" x-cloak class="text-sm text-red-500 font-sans font-light" x-text="docError"></p>
+                                </div>
+                            </div>
+
+                            <!-- The folder: one row per category, files as cards -->
+                            <div class="divide-y divide-[#E8E3DD]" x-show="documents.items.length">
                                 <template x-for="group in documentsByCategory" :key="group.id">
-                                    <div>
-                                        <p class="text-[11px] uppercase tracking-[0.15em] text-accent font-sans mb-2" x-text="group.label"></p>
-                                        <div class="divide-y divide-[#E8E3DD] border-t border-b border-[#E8E3DD]">
-                                            <template x-for="d in group.items" :key="d.id">
-                                                <div class="py-3 flex items-start gap-4">
-                                                    <svg class="w-4 h-4 text-muted mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                                    <div class="min-w-0 flex-1">
-                                                        <template x-if="d.url"><a :href="d.url" target="_blank" rel="noopener" class="font-sans text-base hover:text-accent transition-colors break-words" x-text="d.title"></a></template>
-                                                        <template x-if="!d.url"><p class="font-sans text-base" x-text="d.title"></p></template>
-                                                        <p x-show="d.note" class="text-sm text-muted font-sans font-light mt-0.5" x-text="d.note"></p>
+                                    <div class="grid lg:grid-cols-12">
+                                        <div class="lg:col-span-3 p-6 border-b lg:border-b-0 lg:border-r border-[#E8E3DD]">
+                                            <h3 class="font-serif text-xl font-light leading-tight" x-text="group.label"></h3>
+                                            <p class="text-xs text-muted font-sans font-light mt-1" x-text="group.items.length + (lang === 'et' ? (group.items.length === 1 ? ' dokument' : ' dokumenti') : (group.items.length === 1 ? ' document' : ' documents'))"></p>
+                                        </div>
+                                        <div class="lg:col-span-9 overflow-hidden">
+                                            <div class="grid sm:grid-cols-2 xl:grid-cols-3 -mr-px -mb-px">
+                                                <template x-for="d in group.items" :key="d.id">
+                                                    <div class="group border-r border-b border-[#E8E3DD] p-5 flex flex-col hover:bg-cream/40 transition-colors">
+                                                        <div class="flex items-center justify-between gap-3">
+                                                            <span class="inline-flex items-center h-6 px-2 text-[10px] uppercase tracking-[0.14em] font-sans font-medium border" :class="d.file ? 'border-black text-black' : 'border-[#D4CFC8] text-muted'" x-text="docKind(d)"></span>
+                                                            <span class="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.12em] font-sans text-muted truncate"><span class="w-2 h-2 rounded-full shrink-0" :class="d.source === 'developer' ? 'bg-accent' : d.source === 'provider' ? 'bg-[#D4CFC8]' : 'bg-black'"></span><span class="truncate" x-text="docSourceLabel(d)"></span></span>
+                                                        </div>
+                                                        <p class="font-sans text-[15px] font-medium leading-snug mt-4" x-text="d.title"></p>
+                                                        <p x-show="d.note" class="text-sm text-muted font-sans font-light leading-relaxed mt-1.5 flex-1" x-text="d.note"></p>
+                                                        <div class="flex items-center justify-between gap-3 mt-5">
+                                                            <span class="text-xs text-muted font-sans font-light truncate" x-text="(d.addedAt ? formatDateShort(d.addedAt) : '') + (d.file?.size ? ' · ' + Math.max(1, Math.round(d.file.size / 1024)) + ' KB' : '')"></span>
+                                                            <span class="flex items-center gap-3 shrink-0">
+                                                                <button type="button" @click="removeDocument(d)" class="text-[10px] uppercase tracking-[0.14em] text-muted/50 hover:text-black font-sans opacity-0 group-hover:opacity-100 transition-opacity" x-text="lang === 'et' ? 'Eemalda' : 'Remove'"></button>
+                                                                <a x-show="d.file || d.url" :href="d.file ? fileHref(d) : d.url" target="_blank" rel="noopener" class="p-cta" x-text="lang === 'et' ? 'Ava' : 'Open'"></a>
+                                                            </span>
+                                                        </div>
                                                     </div>
-                                                    <button type="button" @click="removeDocument(d)" class="text-[11px] uppercase tracking-[0.15em] text-muted/60 hover:text-black font-sans shrink-0" x-text="lang === 'et' ? 'Eemalda' : 'Remove'"></button>
-                                                </div>
-                                            </template>
+                                                </template>
+                                            </div>
                                         </div>
                                     </div>
                                 </template>
                             </div>
-
-                            <div class="mt-6">
-                                <button type="button" x-show="!docAdding" @click="docAdding = true" class="text-[11px] uppercase tracking-[0.16em] font-sans font-medium text-accent hover:text-black transition-colors" x-text="lang === 'et' ? '+ Lisa dokument' : '+ Add document'"></button>
-                                <div x-show="docAdding" x-cloak class="border border-[#E8E3DD] p-4 grid sm:grid-cols-2 gap-4">
-                                    <label class="block"><span class="text-[11px] uppercase tracking-[0.15em] text-muted font-sans block mb-1" x-text="lang === 'et' ? 'Pealkiri' : 'Title'"></span><input type="text" x-model="docForm.title" maxlength="120" :placeholder="lang === 'et' ? 'nt Soojuspumba garantii' : 'e.g. Heat pump warranty'" class="w-full bg-transparent border-b border-[#E8E3DD] focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-[#D4CFC8]"></label>
-                                    <label class="block"><span class="text-[11px] uppercase tracking-[0.15em] text-muted font-sans block mb-1" x-text="lang === 'et' ? 'Kategooria' : 'Category'"></span>
-                                        <select x-model="docForm.category" class="w-full bg-transparent border-b border-[#E8E3DD] py-2 font-sans font-light text-base outline-none"><template x-for="c in documents.categories" :key="c.id"><option :value="c.id" x-text="c.label"></option></template></select></label>
-                                    <label class="block sm:col-span-2"><span class="text-[11px] uppercase tracking-[0.15em] text-muted font-sans block mb-1" x-text="lang === 'et' ? 'Link (valikuline)' : 'Link (optional)'"></span><input type="url" x-model="docForm.url" placeholder="https://" class="w-full bg-transparent border-b border-[#E8E3DD] focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-[#D4CFC8]"></label>
-                                    <label class="block sm:col-span-2"><span class="text-[11px] uppercase tracking-[0.15em] text-muted font-sans block mb-1" x-text="lang === 'et' ? 'Märge' : 'Note'"></span><input type="text" x-model="docForm.note" maxlength="300" :placeholder="lang === 'et' ? 'nt kehtib kuni 03.2028, paberil sahtlis' : 'e.g. valid until 03.2028, paper copy in the drawer'" class="w-full bg-transparent border-b border-[#E8E3DD] focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-[#D4CFC8]"></label>
-                                    <div class="flex items-center gap-3 sm:col-span-2">
-                                        <button type="button" @click="addDocument()" :disabled="!docForm.title || docBusy" class="bg-black text-paper px-5 py-2.5 text-[11px] uppercase tracking-[0.15em] font-sans hover:bg-accent disabled:opacity-50" x-text="lang === 'et' ? 'Lisa' : 'Add'"></button>
-                                        <button type="button" @click="docAdding = false" class="text-[11px] uppercase tracking-[0.15em] text-muted hover:text-black font-sans" x-text="lang === 'et' ? 'Loobu' : 'Cancel'"></button>
-                                    </div>
-                                </div>
-                            </div>
-                            <p x-show="docError" x-cloak class="text-sm text-red-500 font-sans font-light mt-3" x-text="docError"></p>
-                            </div>
+                            <p x-show="!documents.items.length" class="px-6 py-10 text-center text-sm text-muted font-sans font-light" x-text="lang === 'et' ? 'Kaust on veel tühi. Lisa esimene fail — leping, garantii või seadme juhend.' : 'The folder is still empty. Add the first file — a contract, a warranty or an appliance manual.'"></p>
                         </div>
-                        </aside>
                     </div>
                 </div>
 
@@ -1795,7 +1890,7 @@
                         <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
                                 <template x-for="r in openRequests" :key="r.id">
                                     <div class="bg-white border border-[#E8E3DD] p-5 flex items-start gap-4">
-                                        <span class="mt-1.5 w-2 h-2 rounded-full shrink-0" :class="r.status === 'confirmed' ? 'bg-green-500' : 'bg-amber-400'"></span>
+                                        <span class="mt-1.5 w-2 h-2 rounded-full shrink-0" :class="partnerDot(r.category)"></span>
                                         <div class="min-w-0 flex-1">
                                             <div class="flex items-baseline justify-between gap-3">
                                                 <p class="font-serif text-lg font-light truncate" x-text="r.serviceName"></p>
@@ -1932,7 +2027,7 @@
                                         <p class="text-sm text-muted font-sans font-light leading-relaxed mt-2" x-text="categoryBlurb(cat.id)"></p>
                                         <div class="mt-6 lg:mt-auto lg:pt-6">
                                             <div x-show="cat.partnerName" class="flex items-center gap-3">
-                                                <span class="w-8 h-8 rounded-full bg-black text-paper flex items-center justify-center font-serif text-sm shrink-0" x-text="(cat.partnerName || '?').charAt(0)"></span>
+                                                <span class="w-8 h-8 rounded-full text-paper flex items-center justify-center font-serif text-sm shrink-0" :class="partnerDot(cat.id)" x-text="(cat.partnerName || '?').charAt(0)"></span>
                                                 <span class="min-w-0">
                                                     <span class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans block" x-text="lang === 'et' ? 'Kinnitab' : 'Confirmed by'"></span>
                                                     <span class="font-sans text-sm block truncate" x-text="cat.partnerName"></span>

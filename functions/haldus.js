@@ -2533,7 +2533,7 @@ module.exports = function createHaldus(deps) {
    * Hooldusrütm for the portal: live items with state, plus suggestions the home has not added yet.
    * `orderable` per item tells the UI whether "telli tegija" can create a request right now.
    */
-  function serializeMaintenance(order, lang, { routes, provider } = {}) {
+  function serializeMaintenance(order, lang, { routes, provider, partners } = {}) {
     const today = todayTallinnStr();
     const homeType = core.HOME_TYPES.includes(order.homeProfile?.homeType) ? order.homeProfile.homeType : null;
     const items = (Array.isArray(order.maintenance) ? order.maintenance : []).map((it) => {
@@ -2545,6 +2545,10 @@ module.exports = function createHaldus(deps) {
         serviceId: svc ? svc.id : null, serviceName: svc ? (svc.name[lang] || svc.name.et) : null,
         orderable: !!(svc && routes && routes[svc.category]),
         hint: it.catalogId ? (core.MAINTENANCE_CATALOGUE.find((m) => m.id === it.catalogId)?.hint[lang] || '') : '',
+        // Who this lands on: the housekeeper as part of her service, the partner who'd be ordered, or the household
+        doer: it.doneBy === 'provider' && provider ? 'provider' : (svc && partners?.[svc.category]) ? 'partner' : 'home',
+        doerName: it.doneBy === 'provider' && provider ? provider.name : (svc && partners?.[svc.category]?.name) || null,
+        doerCategory: it.doneBy === 'provider' && provider ? 'cleaning' : (svc && partners?.[svc.category]) ? svc.category : null,
       };
     }).sort((a, b) => (a.nextDueAt < b.nextDueAt ? -1 : 1));
     const have = new Set(items.map((i) => i.catalogId).filter(Boolean));
@@ -2656,8 +2660,36 @@ module.exports = function createHaldus(deps) {
   function serializeDocuments(order, lang) {
     const docs = (Array.isArray(order.documents) ? order.documents : []).map((d) => ({
       id: d.id, title: d.title, url: d.url || null, category: d.category, categoryLabel: core.DOCUMENT_CATEGORIES[d.category]?.[lang] || core.DOCUMENT_CATEGORIES.other[lang], note: d.note || '', addedAt: d.addedAt || null,
+      // Who put it in the folder: the developer at handover, a partner, or the household itself
+      source: d.source || 'home', sourceName: d.sourceName || '',
+      // A real file in the home's folder — served through /api/me/documents/file (token-checked), never a public URL
+      file: d.file ? { name: d.file.name, size: d.file.size || 0, contentType: d.file.contentType || 'application/octet-stream' } : null,
     }));
     return { items: docs, categories: Object.entries(core.DOCUMENT_CATEGORIES).map(([id, c]) => ({ id, label: c[lang] || c.et })) };
+  }
+
+  // ---- Home folder files (GCS bucket, uniform access, no public URLs) ----
+  const DOCS_BUCKET = 'sukoda-77b52-home-docs';
+  const DOC_FILE_MAX_BYTES = 8 * 1024 * 1024;
+  const DOC_FILE_TYPES = { 'application/pdf': 'pdf', 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/heic': 'heic' };
+  function docsBucket() { return admin.storage().bucket(DOCS_BUCKET); }
+  function safeFileName(name) { return String(name || 'fail').replace(/[^\w.\-äöüõšžÄÖÜÕŠŽ ]+/g, '_').slice(0, 100) || 'fail'; }
+
+  /** Store an uploaded file for a home and return the document entry to push onto order.documents */
+  async function storeHomeFile({ orderId, body, source, sourceName }) {
+    const contentType = String(body.contentType || '');
+    if (!DOC_FILE_TYPES[contentType]) return { error: 'Lubatud on PDF ja pildid (JPG, PNG, WEBP, HEIC)' };
+    const base64 = String(body.data || '').replace(/^data:[^;]+;base64,/, '');
+    const buf = Buffer.from(base64, 'base64');
+    if (!buf.length) return { error: 'Fail on tühi' };
+    if (buf.length > DOC_FILE_MAX_BYTES) return { error: 'Fail on suurem kui 8 MB' };
+    const r = core.sanitizeDocument({ ...body, url: '' });
+    if (r.error) return { error: r.error };
+    const doc = r.document;
+    const name = safeFileName(body.fileName || `${doc.title}.${DOC_FILE_TYPES[contentType]}`);
+    const path = `homes/${orderId}/${doc.id}/${name}`;
+    await docsBucket().file(path).save(buf, { contentType, resumable: false, metadata: { cacheControl: 'private, max-age=0' } });
+    return { document: { ...doc, source: source || 'home', sourceName: sourceName || '', file: { path, name, size: buf.length, contentType } } };
   }
 
   /** To the household: what is coming up, one line per item, with a way to get it done from the portal */
@@ -2769,7 +2801,7 @@ module.exports = function createHaldus(deps) {
         viewer: auth.viewer || null,
         partners,
         // Developer after-sales white label: who runs this home's portal (name + project), UI only
-        brand: order.brand && order.brand.name ? { name: String(order.brand.name), project: String(order.brand.project || ''), tagline: String(order.brand.tagline || '') } : null,
+        brand: order.brand && order.brand.name ? { name: String(order.brand.name), project: String(order.brand.project || ''), tagline: String(order.brand.tagline || ''), warrantyUntil: String(order.brand.warrantyUntil || '') } : null,
         // Services the household said it would want once a partner exists
         interests: [...new Set(interestSnap.docs.map((d) => d.data().serviceId))],
         contacts: Array.isArray(order.contacts) ? order.contacts : [],
@@ -2779,7 +2811,8 @@ module.exports = function createHaldus(deps) {
         // Partner-billed customers have prices agreed directly with their housekeeper — no SUKODA price hints
         showPrices,
         // Who handles each category for this home: a named partner, or SUKODA finds one
-        categories: Object.entries(core.SERVICE_CATEGORIES).map(([id, c]) => ({
+        // Garden has no place in an apartment unless someone actually offers it
+        categories: Object.entries(core.SERVICE_CATEGORIES).filter(([id]) => !(id === 'garden' && order.homeProfile?.homeType === 'apartment' && !routes.garden)).map(([id, c]) => ({
           id, label: c[lang] || c.et,
           partnerName: partnerDocs[id]?.name || null,
           partnerBusiness: partnerDocs[id]?.businessName || '',
@@ -2800,7 +2833,7 @@ module.exports = function createHaldus(deps) {
         maxOpenRequests: MAX_OPEN_REQUESTS,
         away: liveAway(order),
         maxAwayDays: core.MAX_AWAY_DAYS,
-        maintenance: serializeMaintenance(order, lang, { routes, provider }),
+        maintenance: serializeMaintenance(order, lang, { routes, provider, partners: partnerDocs }),
         documents: serializeDocuments(order, lang),
       });
     },
@@ -2843,14 +2876,47 @@ module.exports = function createHaldus(deps) {
         if (r.error) return res.status(400).json({ error: r.error });
         docs.push(r.document);
       } else if (b.action === 'remove') {
-        const before = docs.length;
-        docs = docs.filter((d) => d.id !== String(b.documentId || ''));
-        if (docs.length === before) return res.status(404).json({ error: lang === 'et' ? 'Dokumenti ei leitud' : 'Document not found' });
+        const gone = docs.find((d) => d.id === String(b.documentId || ''));
+        if (!gone) return res.status(404).json({ error: lang === 'et' ? 'Dokumenti ei leitud' : 'Document not found' });
+        docs = docs.filter((d) => d !== gone);
+        if (gone.file?.path) await docsBucket().file(gone.file.path).delete({ ignoreNotFound: true }).catch((e) => console.warn('doc file delete', e.message));
       } else {
         return res.status(400).json({ error: 'Unknown action' });
       }
       await db.collection('orders').doc(orderId).update({ documents: docs, updatedAt: FieldValue.serverTimestamp() });
       res.status(200).json({ success: true, documents: serializeDocuments({ ...order, documents: docs }, lang) });
+    },
+
+    /** Upload a real file into the home's folder. body: { title, category, note, fileName, contentType, data(base64) } */
+    'POST /api/me/documents/upload': async (req, res) => {
+      if (!checkRateLimit(req, res, 'portal-doc-upload', 20, 60000)) return;
+      const auth = await authenticateClient(req);
+      if (!auth) return res.status(401).json({ error: 'Unauthorized' });
+      const { orderId, order } = auth;
+      const lang = langOf(order);
+      const docs = Array.isArray(order.documents) ? [...order.documents] : [];
+      if (docs.length >= core.MAX_DOCUMENTS) return res.status(400).json({ error: lang === 'et' ? `Kuni ${core.MAX_DOCUMENTS} dokumenti` : `Up to ${core.MAX_DOCUMENTS} documents` });
+      const r = await storeHomeFile({ orderId, body: req.body || {}, source: 'home', sourceName: auth.viewer?.name || primaryName(order) || '' });
+      if (r.error) return res.status(400).json({ error: r.error });
+      docs.push(r.document);
+      await db.collection('orders').doc(orderId).update({ documents: docs, updatedAt: FieldValue.serverTimestamp() });
+      res.status(200).json({ success: true, documents: serializeDocuments({ ...order, documents: docs }, lang) });
+    },
+
+    /** Open a file from the home's folder. Token may come as ?token= because the browser opens this in a new tab. */
+    'GET /api/me/documents/file': async (req, res) => {
+      if (req.query?.token && !req.headers.authorization) req.headers.authorization = `Bearer ${String(req.query.token)}`;
+      const auth = await authenticateClient(req);
+      if (!auth) return res.status(401).json({ error: 'Unauthorized' });
+      const doc = (Array.isArray(auth.order.documents) ? auth.order.documents : []).find((d) => d.id === String(req.query?.id || ''));
+      if (!doc || !doc.file?.path) return res.status(404).json({ error: 'Not found' });
+      const file = docsBucket().file(doc.file.path);
+      const [exists] = await file.exists();
+      if (!exists) return res.status(404).json({ error: 'File missing' });
+      res.setHeader('Content-Type', doc.file.contentType || 'application/octet-stream');
+      res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(doc.file.name || 'fail')}"`);
+      res.setHeader('Cache-Control', 'private, no-store');
+      await new Promise((resolve, reject) => file.createReadStream().on('error', reject).on('end', resolve).pipe(res));
     },
 
     /** Home type drives which upkeep is suggested (gutters and chimney only make sense for a house) */

@@ -90,6 +90,13 @@
         }
       },
       {
+        "source": "/api/me/documents/**",
+        "function": {
+          "functionId": "portalExtrasApi",
+          "region": "europe-west1"
+        }
+      },
+      {
         "source": "/api/me/home-type",
         "function": {
           "functionId": "portalExtrasApi",

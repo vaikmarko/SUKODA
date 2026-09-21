@@ -6185,7 +6185,7 @@ exports.getClientProfile = functions
             paidAt: order.paidAt?.toDate?.()?.toISOString() || null,
             referralCode: order.referralCode || null,
             // Developer after-sales white label (name + project); UI only
-            brand: order.brand && order.brand.name ? { name: String(order.brand.name), project: String(order.brand.project || ''), tagline: String(order.brand.tagline || '') } : null,
+            brand: order.brand && order.brand.name ? { name: String(order.brand.name), project: String(order.brand.project || ''), tagline: String(order.brand.tagline || ''), warrantyUntil: String(order.brand.warrantyUntil || '') } : null,
           },
           bookings,
         });
