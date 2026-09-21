@@ -550,6 +550,24 @@ module.exports = function createHaldus(deps) {
     return { subject: tt.subjRequestDeclined(svc), html };
   }
 
+  function requestAnsweredEmail({ order, request, providerName, message, lang }) {
+    const tt = t(lang);
+    const et = lang !== 'en';
+    const name = firstName(primaryName(order));
+    const svc = requestName(request, lang);
+    const html = wrap(
+      H2(et ? 'Vastus sinu küsimusele' : 'An answer to your question') + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(et ? `${providerName} vastas sinu pöördumisele.` : `${providerName} replied to your request.`)}`)
+      + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border-left:2px solid #B8976A;">
+          ${LABEL(tt.service)}
+          <p style="margin:0 0 16px;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
+          ${request.note ? ROW(et ? 'Sinu küsimus' : 'Your question', escapeHtml(request.note)) : ''}
+          ${ROW(et ? 'Vastus' : 'Answer', escapeHtml(message).replace(/\n/g, '<br>'))}
+        </div>` + portalBlock(lang),
+      lang,
+    );
+    return { subject: et ? `SUKODA | Vastus: ${svc}` : `SUKODA | Answer: ${svc}`, html };
+  }
+
   // ============================================================
   // Flowers: the order goes to the florist automatically before each cleaning visit.
   // Billing stays between the customer and the shop (monthly invoice or whatever they agreed).
@@ -1313,6 +1331,7 @@ module.exports = function createHaldus(deps) {
       targetBookingId: r.targetBookingId || null,
       targetScheduledAt: tsToIso(r.targetScheduledAt),
       category: r.category,
+      kind: r.type === 'reschedule' ? 'visit' : core.serviceKind(r.serviceId),
       preferredDate: r.preferredDate || null,
       timeWindow: r.timeWindow || null,
       note: r.note || '',
@@ -2500,6 +2519,25 @@ module.exports = function createHaldus(deps) {
       res.status(200).json({ success: true, booking: serializeBooking(booking.id, booking) });
     },
 
+    /** Answer in writing — questions, or anything that needs no visit. Closes the request as 'answered'. */
+    'POST /api/haldus/requests/reply': async (req, res) => {
+      const provider = await authenticateProvider(req);
+      if (!provider) return res.status(401).json({ error: 'Unauthorized' });
+      const b = req.body || {};
+      const reqRef = db.collection('serviceRequests').doc(docId(b.requestId));
+      const reqDoc = await reqRef.get();
+      if (!reqDoc.exists || reqDoc.data().providerId !== provider.id) return res.status(404).json({ error: 'Soovi ei leitud' });
+      const request = reqDoc.data();
+      if (request.status !== 'requested') return res.status(400).json({ error: 'Soov on juba käsitletud' });
+      const message = str(b.message, 1500);
+      if (message.length < 2) return res.status(400).json({ error: 'Kirjuta vastus' });
+      const acc = await accessOrder(provider, request.orderId);
+      if (!acc) return res.status(404).json({ error: 'Klienti ei leitud' });
+      await reqRef.update({ status: 'answered', providerMessage: message, answeredAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
+      await sendEmail({ to: primaryEmail(acc.order), ...requestAnsweredEmail({ order: acc.order, request, providerName: provider.name, message, lang: langOf(acc.order) }), replyTo: providerReplyTo(provider) });
+      res.status(200).json({ success: true });
+    },
+
     'POST /api/haldus/requests/decline': async (req, res) => {
       const provider = await authenticateProvider(req);
       if (!provider) return res.status(401).json({ error: 'Unauthorized' });
@@ -2820,7 +2858,7 @@ module.exports = function createHaldus(deps) {
           orderable: !!routes[id],
         })),
         catalogue: core.SERVICE_CATALOGUE.map((s) => ({
-          id: s.id, category: s.category, categoryLabel: core.categoryLabel(s.category, lang), name: s.name[lang] || s.name.et, description: s.description[lang] || s.description.et,
+          id: s.id, kind: s.kind || 'visit', category: s.category, categoryLabel: core.categoryLabel(s.category, lang), name: s.name[lang] || s.name.et, description: s.description[lang] || s.description.et,
           priceHint: showPrices ? (s.priceHint[lang] || s.priceHint.et) : null, durationMin: s.durationMin,
         })),
         flowers: flowerSettings(order, florist),
@@ -2988,7 +3026,9 @@ module.exports = function createHaldus(deps) {
       }
       const timeWindow = core.TIME_WINDOWS[b.timeWindow] ? b.timeWindow : 'any';
       const note = str(b.note, 500);
-      if (svc.id === 'other' && !note) return res.status(400).json({ error: lang === 'et' ? 'Kirjelda palun soovi' : 'Please describe your request' });
+      const kind = svc.kind || 'visit';
+      if ((svc.id === 'other' || kind !== 'visit') && note.length < 5) return res.status(400).json({ error: lang === 'et' ? (kind === 'question' ? 'Kirjuta palun oma küsimus' : 'Kirjelda palun, mis ja kus') : (kind === 'question' ? 'Please write your question' : 'Please describe what and where') });
+      if (kind === 'question') preferredDate = null;
 
       const openSnap = await db.collection('serviceRequests').where('orderId', '==', orderId).where('status', '==', 'requested').get();
       if (openSnap.size >= MAX_OPEN_REQUESTS) return res.status(429).json({ error: lang === 'et' ? 'Sul on juba mitu ootel soovi. Oota kinnitust või tühista mõni.' : 'You already have several pending requests.' });

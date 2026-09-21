@@ -115,6 +115,7 @@ const SERVICE_CATALOGUE = [
   // — Garantii ja maja (arendaja järelteenindus) —
   {
     id: 'warranty-claim',
+    kind: 'issue', // a defect: description first, an inspection time is optional
     category: 'warranty',
     name: { et: 'Garantiipöördumine', en: 'Warranty claim' },
     description: {
@@ -148,6 +149,7 @@ const SERVICE_CATALOGUE = [
   },
   {
     id: 'home-manual',
+    kind: 'question', // answered in writing — no visit, no time
     category: 'warranty',
     name: { et: 'Küsimus kodu või dokumendi kohta', en: 'Question about the home or a document' },
     description: {
@@ -159,6 +161,7 @@ const SERVICE_CATALOGUE = [
   },
   {
     id: 'building-question',
+    kind: 'question', // answered in writing — no visit, no time
     category: 'warranty',
     name: { et: 'Maja ja ühistu küsimus', en: 'Building & association question' },
     description: {
@@ -275,6 +278,12 @@ const SERVICE_BY_ID = Object.fromEntries(SERVICE_CATALOGUE.map((s) => [s.id, s])
 
 function getService(serviceId) {
   return SERVICE_BY_ID[serviceId] || null;
+}
+
+/** 'visit' (needs a time) · 'issue' (defect, time optional) · 'question' (answered in writing) */
+function serviceKind(serviceId) {
+  const s = getService(serviceId);
+  return (s && s.kind) || 'visit';
 }
 
 function serviceName(serviceId, lang) {
@@ -786,6 +795,7 @@ module.exports = {
   SERVICE_CATEGORIES,
   categoryLabel,
   getService,
+  serviceKind,
   serviceName,
   TIME_WINDOWS,
   timeWindowLabel,

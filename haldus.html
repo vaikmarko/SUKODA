@@ -319,7 +319,7 @@
                                     <div class="bg-white border border-accent/40 p-5">
                                         <div class="flex items-start justify-between gap-3 mb-3">
                                             <div>
-                                                <p class="text-[11px] uppercase tracking-[0.16em] text-accent font-sans mb-1" x-text="r.type === 'reschedule' ? 'Aja muutmise soov' : 'Lisateenus'"></p>
+                                                <p class="text-[11px] uppercase tracking-[0.16em] text-accent font-sans mb-1" x-text="r.type === 'reschedule' ? 'Aja muutmise soov' : r.kind === 'question' ? 'Küsimus' : r.kind === 'issue' ? 'Garantiipöördumine' : 'Lisateenus'"></p>
                                                 <p class="font-serif text-lg font-light" x-text="r.serviceName"></p>
                                                 <p class="text-sm font-sans font-light" x-text="r.customerName"></p>
                                                 <p class="text-xs text-muted font-sans font-light" x-text="r.address"></p>
@@ -332,8 +332,9 @@
                                             <p x-show="r.note" class="bg-cream/60 p-3 text-xs" x-text="r.note"></p>
                                         </div>
                                         <div class="flex flex-wrap gap-3">
-                                            <button type="button" @click="openConfirmRequest(r)" class="h-btn h-btn-primary font-sans">Kinnita aeg</button>
-                                            <button type="button" @click="declineRequest(r)" class="h-btn h-btn-ghost font-sans">Ei saa</button>
+                                            <button type="button" x-show="r.kind !== 'question'" @click="openConfirmRequest(r)" class="h-btn h-btn-primary font-sans">Kinnita aeg</button>
+                                            <button type="button" @click="replyRequest(r)" class="h-btn font-sans" :class="r.kind === 'question' ? 'h-btn-primary' : 'h-btn-ghost'">Vasta kirjalikult</button>
+                                            <button type="button" x-show="r.kind !== 'question'" @click="declineRequest(r)" class="h-btn h-btn-ghost font-sans">Ei saa</button>
                                         </div>
                                     </div>
                                 </template>
@@ -1089,8 +1090,8 @@
             nextVisitFor(orderId) { const now = new Date().toISOString(); return this.liveBookings.filter((b) => b.orderId === orderId && b.scheduledAt > now).sort(this.byTime)[0] || null; },
             customerUpcoming(orderId) { const now = new Date().toISOString(); return this.liveBookings.filter((b) => b.orderId === orderId && b.scheduledAt > now).sort(this.byTime); },
             chipClass(b) { if (b.status === 'completed') return 'bg-green-50 text-green-700'; if (b.kind === 'extra') return 'bg-pink-50 text-pink-600'; return 'bg-accent/15 text-black'; },
-            requestChip(s) { return { confirmed: 'bg-green-50 text-green-700', completed: 'bg-green-50 text-green-700', declined: 'bg-gray-100 text-gray-500', cancelled: 'bg-gray-100 text-gray-500' }[s] || 'bg-accent/10 text-accent'; },
-            requestStatusLabel(s) { return { requested: 'Ootel', confirmed: 'Kinnitatud', completed: 'Tehtud', declined: 'Tagasi lükatud', cancelled: 'Tühistatud' }[s] || s; },
+            requestChip(s) { return { confirmed: 'bg-green-50 text-green-700', completed: 'bg-green-50 text-green-700', answered: 'bg-green-50 text-green-700', declined: 'bg-gray-100 text-gray-500', cancelled: 'bg-gray-100 text-gray-500' }[s] || 'bg-accent/10 text-accent'; },
+            requestStatusLabel(s) { return { requested: 'Ootel', confirmed: 'Kinnitatud', completed: 'Tehtud', answered: 'Vastatud', declined: 'Tagasi lükatud', cancelled: 'Tühistatud' }[s] || s; },
 
             visitCard(b, { compact = false } = {}) {
                 const now = new Date().toISOString();
@@ -1406,6 +1407,16 @@
                     m.open = false; this.showToast('Kinnitatud, klient ja kontaktid teavitatud');
                     await this.loadData(this.range.from, this.range.to);
                 } catch (e) { m.error = e.message; } finally { m.saving = false; }
+            },
+            async replyRequest(r) {
+                const message = prompt(`Vastus kliendile (${r.customerName}). Läheb e-postiga, soov sulgub kui vastatud:`, '');
+                if (message === null || !message.trim()) return;
+                try {
+                    const res = await this.api('/api/haldus/requests/reply', { method: 'POST', body: JSON.stringify({ requestId: r.id, message }) });
+                    if (!res.ok) throw new Error((await res.json()).error);
+                    this.showToast('Vastus saadetud');
+                    await this.loadData(this.range.from, this.range.to);
+                } catch (e) { this.globalError = e.message; }
             },
             async declineRequest(r) {
                 const message = prompt(`Anna kliendile teada, miks soovitud aeg ei sobi (valikuline):`, '');

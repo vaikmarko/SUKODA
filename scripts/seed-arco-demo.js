@@ -318,7 +318,15 @@ async function main() {
     note: 'Elutoa suure akna tihend vilistab tugeva tuulega ja alumises servas tekib hommikuti kondensaat.',
     status: 'requested', createdAt: openCreated, updatedAt: openCreated,
   });
-  console.log('Requests: 1 done · 1 confirmed (visit 25.09 14:00) · 1 open');
+  // A question answered in writing — the third shape of a request (no visit, no time)
+  await setDoc('serviceRequests', rid('req-answered'), {
+    ...base, serviceId: 'building-question', preferredDate: null, timeWindow: 'any',
+    note: 'Vajan teist parklapulti P-23 jaoks. Kelle käest saab ja mis see maksab?',
+    status: 'answered',
+    providerMessage: 'Tere, Anna! Teise puldi saab halduri käest — Kodulahe Haldus OÜ, Mart Mets, +372 5555 1234. Hind 45 €, pult programmeeritakse kohapeal. Andsin haldurile teada.',
+    createdAt: tallinn('2026-09-15', '19:05'), answeredAt: tallinn('2026-09-16', '09:20'), updatedAt: tallinn('2026-09-16', '09:20'),
+  });
+  console.log('Requests: 1 done · 1 answered · 1 confirmed (visit 25.09 14:00) · 1 open');
 
   console.log('\nDone.');
   console.log(`Client portal:  https://sukoda.ee/minu  → ${CUSTOMER_EMAIL}`);
