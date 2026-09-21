@@ -275,6 +275,13 @@ async function main() {
   }, ['customer.address', 'homeProfile', 'brand', 'warrantyId', 'warrantyName', 'handymanId', 'handymanName', 'documents', 'maintenance', 'maintenanceNextDue', 'updatedAt']);
   console.log(`Order updated: address, brand, warranty + handyman partners, ${documents.length} documents (${documents.filter((d) => d.file).length} files), ${maintenance.length} upkeep items`);
 
+  // Past visits that were never ticked off read as done — this home's history is tidy
+  const lt = (field, value) => ({ fieldFilter: { field: { fieldPath: field }, op: 'LESS_THAN', value: toValue(value) } });
+  const past = await runQuery('bookings', [eq('orderId', order.id), lt('scheduledAt', now)], 50);
+  let doneCount = 0;
+  for (const b of past) if (b.status === 'scheduled' || b.status === 'confirmed') { await patchDoc('bookings', b.id, { status: 'completed', completedAt: b.scheduledAt, address: ADDRESS }, ['status', 'completedAt', 'address']); doneCount += 1; }
+  console.log(`Past visits marked done: ${doneCount}`);
+
   // Upcoming visits carry the address too
   const upcoming = await runQuery('bookings', [eq('orderId', order.id), gte('scheduledAt', now)], 50);
   for (const b of upcoming) await patchDoc('bookings', b.id, { address: ADDRESS }, ['address']);

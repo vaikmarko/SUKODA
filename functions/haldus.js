@@ -2567,6 +2567,12 @@ module.exports = function createHaldus(deps) {
     return out;
   }
 
+  /** “Something else” goes to whoever runs this home: the developer's after-sales team when there is one, otherwise the housekeeper */
+  function effectiveCategory(svc, routes) {
+    if (svc.id === 'other' && routes?.warranty) return 'warranty';
+    return svc.category;
+  }
+
   /**
    * Hooldusrütm for the portal: live items with state, plus suggestions the home has not added yet.
    * `orderable` per item tells the UI whether "telli tegija" can create a request right now.
@@ -2858,7 +2864,7 @@ module.exports = function createHaldus(deps) {
           orderable: !!routes[id],
         })),
         catalogue: core.SERVICE_CATALOGUE.map((s) => ({
-          id: s.id, kind: s.kind || 'visit', category: s.category, categoryLabel: core.categoryLabel(s.category, lang), name: s.name[lang] || s.name.et, description: s.description[lang] || s.description.et,
+          id: s.id, kind: s.kind || 'visit', category: effectiveCategory(s, routes), categoryLabel: core.categoryLabel(effectiveCategory(s, routes), lang), name: s.name[lang] || s.name.et, description: s.description[lang] || s.description.et,
           priceHint: showPrices ? (s.priceHint[lang] || s.priceHint.et) : null, durationMin: s.durationMin,
         })),
         flowers: flowerSettings(order, florist),
@@ -3034,12 +3040,13 @@ module.exports = function createHaldus(deps) {
       if (openSnap.size >= MAX_OPEN_REQUESTS) return res.status(429).json({ error: lang === 'et' ? 'Sul on juba mitu ootel soovi. Oota kinnitust või tühista mõni.' : 'You already have several pending requests.' });
 
       const routes = await routeRequest(order);
-      const providerId = routes[svc.category] || null;
+      const category = effectiveCategory(svc, routes);
+      const providerId = routes[category] || null;
       if (!providerId) {
         // No partner for this category yet: record interest so SUKODA learns demand; the customer is told nothing is booked
         const existing = await db.collection('serviceInterests').where('orderId', '==', orderId).where('serviceId', '==', svc.id).limit(1).get();
         if (existing.empty) {
-          await db.collection('serviceInterests').add({ orderId, serviceId: svc.id, category: svc.category, note, customerName: primaryName(order) || '', customerEmail: primaryEmail(order), address: primaryAddress(order), city: order.customer?.city || '', lang, createdAt: FieldValue.serverTimestamp() });
+          await db.collection('serviceInterests').add({ orderId, serviceId: svc.id, category, note, customerName: primaryName(order) || '', customerEmail: primaryEmail(order), address: primaryAddress(order), city: order.customer?.city || '', lang, createdAt: FieldValue.serverTimestamp() });
           const who = escapeHtml(primaryName(order) || primaryEmail(order));
           await sendEmail({
             to: NOTIFICATION_EMAIL,
@@ -3060,7 +3067,7 @@ module.exports = function createHaldus(deps) {
         customerPhone: order.customer?.phone || '',
         address: primaryAddress(order),
         serviceId: svc.id,
-        category: svc.category,
+        category,
         preferredDate,
         timeWindow,
         note,
