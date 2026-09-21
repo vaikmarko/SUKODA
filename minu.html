@@ -1481,7 +1481,7 @@
                                         <template x-for="f in profileFilled" :key="f.key">
                                             <div :class="f.long ? 'sm:col-span-2' : ''">
                                                 <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="f.label"></dt>
-                                                <dd class="font-sans text-base leading-relaxed whitespace-pre-line" x-text="homeProfile[f.key]"></dd>
+                                                <dd class="font-sans text-sm leading-relaxed whitespace-pre-line" x-text="homeProfile[f.key]"></dd>
                                             </div>
                                         </template>
                                     </dl>
@@ -2069,19 +2069,19 @@
                                     <dl class="grid grid-cols-2 gap-x-6 gap-y-4 mt-5 pt-5 border-t border-[#E8E3DD]">
                                         <div>
                                             <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Rütm' : 'Rhythm'"></dt>
-                                            <dd class="font-sans text-base" x-text="getPackageName(order?.package)"></dd>
+                                            <dd class="font-sans text-sm" x-text="getPackageName(order?.package)"></dd>
                                         </div>
                                         <div>
                                             <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Kodu' : 'Home'"></dt>
-                                            <dd class="font-sans text-base" x-text="getSizeName(order?.size) || '—'"></dd>
+                                            <dd class="font-sans text-sm" x-text="getSizeName(order?.size) || '—'"></dd>
                                         </div>
                                         <div>
                                             <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Teeb' : 'Done by'"></dt>
-                                            <dd class="font-sans text-base truncate" x-text="order?.provider?.name || 'SUKODA'"></dd>
+                                            <dd class="font-sans text-sm truncate" x-text="order?.provider?.name || 'SUKODA'"></dd>
                                         </div>
                                         <div>
                                             <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Järgmine' : 'Next'"></dt>
-                                            <dd class="font-sans text-base" x-text="nextCleaning ? formatDateShort(nextCleaning.scheduledAt) + ' · ' + formatTime(nextCleaning.scheduledAt) : '—'"></dd>
+                                            <dd class="font-sans text-sm" x-text="nextCleaning ? formatDateShort(nextCleaning.scheduledAt) + ' · ' + formatTime(nextCleaning.scheduledAt) : '—'"></dd>
                                         </div>
                                     </dl>
                                     <div class="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
@@ -2102,15 +2102,15 @@
                                     <dl class="grid grid-cols-2 gap-x-6 gap-y-4 mt-5 pt-5 border-t border-[#E8E3DD]">
                                         <div>
                                             <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Toob' : 'Brought by'"></dt>
-                                            <dd class="font-sans text-base truncate" x-text="order?.provider?.name || ''"></dd>
+                                            <dd class="font-sans text-sm truncate" x-text="order?.provider?.name || ''"></dd>
                                         </div>
                                         <div>
                                             <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Lillepood' : 'Florist'"></dt>
-                                            <dd class="font-sans text-base truncate" x-text="extras.flowers?.floristBusiness || extras.flowers?.floristName || '—'"></dd>
+                                            <dd class="font-sans text-sm truncate" x-text="extras.flowers?.floristBusiness || extras.flowers?.floristName || '—'"></dd>
                                         </div>
                                         <div class="col-span-2">
                                             <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Eelistus' : 'Preference'"></dt>
-                                            <dd class="font-sans text-base" x-text="extras.flowers?.preference || (lang === 'et' ? 'Pole veel kirjas' : 'Not set yet')"></dd>
+                                            <dd class="font-sans text-sm" x-text="extras.flowers?.preference || (lang === 'et' ? 'Pole veel kirjas' : 'Not set yet')"></dd>
                                         </div>
                                     </dl>
                                     <button type="button" @click="activeTab = 'home'" class="mt-6 text-[11px] uppercase tracking-[0.16em] font-sans text-accent hover:text-black transition-colors" x-text="lang === 'et' ? 'Muuda eelistust →' : 'Change preference →'"></button>
