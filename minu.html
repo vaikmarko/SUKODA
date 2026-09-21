@@ -410,6 +410,8 @@
 
     // ---- Composition helpers (layout only; no new data) ----
     get brand() { return this.order?.brand || this.extras.brand || null; },
+    /** The housekeeper's next regular visit (extras like a warranty call are separate visits) */
+    get nextCleaning() { return this.upcomingBookings.find((b) => b.kind !== 'extra') || null; },
     /** One colour per role, used on avatars, chips and dots: housekeeper black · builder's team gold · others stone */
     partnerDot(category) { return category === 'cleaning' ? 'bg-black' : category === 'warranty' ? 'bg-accent' : category === 'flowers' ? 'bg-pink-300' : 'bg-[#B8B2AA]'; },
     /** Everyone who comes to this home: server list when loaded, else the housekeeper/florist we already know */
@@ -447,7 +449,7 @@
     openWithVisit(service) {
         this.openRequest(service);
         this.requestWindow = 'with-visit';
-        const b = this.upcomingBookings[0];
+        const b = this.nextCleaning;
         if (b) {
             const d = window.SUKODA_TIME.getDateString(new Date(b.scheduledAt));
             if (d >= this.minRequestDate) this.requestDate = d;
@@ -1885,7 +1887,7 @@
                     <div x-show="openRequests.length" x-cloak class="mb-8 md:mb-10">
                         <div class="flex items-center justify-between gap-4 mb-3">
                             <h2 class="p-h"><span x-text="lang === 'et' ? 'Sinu soovid' : 'Your requests'"></span> <span class="text-accent ml-1" x-text="openRequests.length"></span></h2>
-                            <p x-show="extras.provider" class="text-xs text-muted font-sans font-light" x-text="(lang === 'et' ? 'Kinnitab ' : 'Confirmed by ') + (extras.provider?.name || '')"></p>
+
                         </div>
                         <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
                                 <template x-for="r in openRequests" :key="r.id">
@@ -1896,6 +1898,7 @@
                                                 <p class="font-serif text-lg font-light truncate" x-text="r.serviceName"></p>
                                                 <span class="text-[10px] uppercase tracking-[0.16em] font-sans shrink-0" :class="r.status === 'confirmed' ? 'text-green-600' : 'text-amber-600'" x-text="requestStatusLabel(r.status)"></span>
                                             </div>
+                                            <p x-show="r.providerName" class="text-[10px] uppercase tracking-[0.14em] font-sans text-muted mt-0.5" x-text="(lang === 'et' ? 'Kinnitab ' : 'Confirmed by ') + r.providerName"></p>
                                             <p x-show="r.note" class="text-sm font-sans mt-0.5 truncate" x-text="r.note"></p>
                                             <p class="text-sm text-muted font-sans font-light mt-0.5" x-show="r.status === 'requested'">
                                                 <span x-text="r.preferredDate ? formatDateShort(r.preferredDate) : (lang === 'et' ? 'Esimesel võimalusel' : 'As soon as possible')"></span><span x-show="r.timeWindowLabel" x-text="' · ' + r.timeWindowLabel"></span>
@@ -1930,23 +1933,23 @@
                                             </div>
                                             <span class="text-[10px] uppercase tracking-[0.16em] font-sans text-muted" x-text="lang === 'et' ? 'Püsiteenus' : 'Recurring'"></span>
                                         </div>
-                                        <p class="font-sans text-lg md:text-xl mt-5" x-text="lang === 'et' ? 'Regulaarne koristus' : 'Regular cleaning'"></p>
+                                        <p class="font-serif text-2xl font-light mt-5" x-text="lang === 'et' ? 'Regulaarne koristus' : 'Regular cleaning'"></p>
                                         <dl class="grid grid-cols-2 gap-x-6 gap-y-4 mt-5 pt-5 border-t border-[#E8E3DD]">
                                             <div>
                                                 <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Rütm' : 'Rhythm'"></dt>
-                                                <dd class="font-sans text-base font-medium" x-text="getPackageName(order?.package)"></dd>
+                                                <dd class="font-sans text-base" x-text="getPackageName(order?.package)"></dd>
                                             </div>
                                             <div>
                                                 <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Kodu' : 'Home'"></dt>
-                                                <dd class="font-sans text-base font-medium" x-text="getSizeName(order?.size) || '—'"></dd>
+                                                <dd class="font-sans text-base" x-text="getSizeName(order?.size) || '—'"></dd>
                                             </div>
                                             <div>
                                                 <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Teeb' : 'Done by'"></dt>
-                                                <dd class="font-sans text-base font-medium truncate" x-text="order?.provider?.name || 'SUKODA'"></dd>
+                                                <dd class="font-sans text-base truncate" x-text="order?.provider?.name || 'SUKODA'"></dd>
                                             </div>
                                             <div>
                                                 <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Järgmine' : 'Next'"></dt>
-                                                <dd class="font-sans text-base font-medium" x-text="upcomingBookings[0] ? formatDateShort(upcomingBookings[0].scheduledAt) + ' · ' + formatTime(upcomingBookings[0].scheduledAt) : '—'"></dd>
+                                                <dd class="font-sans text-base" x-text="nextCleaning ? formatDateShort(nextCleaning.scheduledAt) + ' · ' + formatTime(nextCleaning.scheduledAt) : '—'"></dd>
                                             </div>
                                         </dl>
                                         <div class="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
@@ -1963,15 +1966,15 @@
                                             </div>
                                             <span class="text-[10px] uppercase tracking-[0.16em] font-sans text-muted" x-text="lang === 'et' ? 'Igal visiidil' : 'Every visit'"></span>
                                         </div>
-                                        <p class="font-sans text-lg md:text-xl mt-5" x-text="lang === 'et' ? 'Värsked lilled' : 'Fresh flowers'"></p>
+                                        <p class="font-serif text-2xl font-light mt-5" x-text="lang === 'et' ? 'Värsked lilled' : 'Fresh flowers'"></p>
                                         <dl class="grid grid-cols-2 gap-x-6 gap-y-4 mt-5 pt-5 border-t border-[#E8E3DD]">
                                             <div>
                                                 <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Toob' : 'Brought by'"></dt>
-                                                <dd class="font-sans text-base font-medium truncate" x-text="order?.provider?.name || ''"></dd>
+                                                <dd class="font-sans text-base truncate" x-text="order?.provider?.name || ''"></dd>
                                             </div>
                                             <div>
                                                 <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Lillepood' : 'Florist'"></dt>
-                                                <dd class="font-sans text-base font-medium truncate" x-text="extras.flowers?.floristBusiness || extras.flowers?.floristName || '—'"></dd>
+                                                <dd class="font-sans text-base truncate" x-text="extras.flowers?.floristBusiness || extras.flowers?.floristName || '—'"></dd>
                                             </div>
                                             <div class="col-span-2">
                                                 <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Eelistus' : 'Preference'"></dt>
@@ -1986,10 +1989,10 @@
 
                         <!-- Aside: the next visit is where small extras belong -->
                         <aside class="lg:col-span-4 space-y-6 lg:space-y-8 min-w-0">
-                            <div x-show="upcomingBookings[0] && visitAddons.length" class="bg-white border border-[#E8E3DD]">
+                            <div x-show="nextCleaning && visitAddons.length" class="bg-white border border-[#E8E3DD]">
                                 <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
                                     <h2 class="p-h" x-text="lang === 'et' ? 'Järgmise visiidiga' : 'With the next visit'"></h2>
-                                    <p class="text-[11px] uppercase tracking-[0.12em] font-sans text-black" x-text="upcomingBookings[0] ? formatDateShort(upcomingBookings[0].scheduledAt) : ''"></p>
+                                    <p class="text-[11px] uppercase tracking-[0.12em] font-sans text-black" x-text="nextCleaning ? formatDateShort(nextCleaning.scheduledAt) : ''"></p>
                                 </div>
                                 <div class="px-6 pt-5 pb-2">
                                     <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="(lang === 'et' ? 'Väiksed asjad, mis ei vaja eraldi aega — ' : 'Small things that need no separate appointment — ') + (order?.provider?.name ? (order.provider.name.split(' ')[0] + (lang === 'et' ? ' teeb need sama visiidi käigus.' : ' does them during the same visit.')) : (lang === 'et' ? 'tehakse sama visiidi käigus.' : 'done during the same visit.'))"></p>
