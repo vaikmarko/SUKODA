@@ -49,6 +49,64 @@ body {
   color: var(--color-accent);
 }
 
+/* ============================================================
+   Client portal hierarchy (minu.html)
+   Three voices: section title (serif, black) · field label (10px caps, muted) · action (button)
+   ============================================================ */
+.p-h {
+  font-family: var(--font-serif);
+  font-size: 1.3rem;
+  line-height: 1.15;
+  font-weight: 400;
+  color: var(--color-black);
+  letter-spacing: 0;
+  text-transform: none;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  min-width: 0;
+}
+.p-h .p-num {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+/* Primary action: one per card */
+.p-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 2.75rem; padding: 0 1.25rem;
+  background: var(--color-black); color: var(--color-paper);
+  border: 1px solid var(--color-black);
+  font-family: var(--font-sans); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 500;
+  transition: background-color .3s, border-color .3s, color .3s;
+  white-space: nowrap;
+}
+.p-btn:hover { background: var(--color-accent); border-color: var(--color-accent); color: #fff; }
+/* Secondary action: outlined */
+.p-btn-2 {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 2.75rem; padding: 0 1.25rem;
+  background: transparent; color: var(--color-black);
+  border: 1px solid var(--color-black);
+  font-family: var(--font-sans); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 500;
+  transition: background-color .3s, color .3s;
+  white-space: nowrap;
+}
+.p-btn-2:hover { background: var(--color-black); color: var(--color-paper); }
+/* Small call-to-action inside a clickable catalogue card */
+.p-cta {
+  display: inline-flex; align-items: center;
+  height: 2rem; padding: 0 0.75rem;
+  border: 1px solid var(--color-black); color: var(--color-black);
+  font-family: var(--font-sans); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 500;
+  transition: background-color .3s, color .3s;
+}
+.group:hover .p-cta { background: var(--color-black); color: var(--color-paper); }
+/* Card that holds something the home already has (vs. something it can order) */
+.p-have { border-left: 2px solid var(--color-accent); }
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }

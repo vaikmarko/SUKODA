@@ -103,7 +103,7 @@
     awayDone: '',
 
     // Extras (lisateenused)
-    extras: { catalogue: [], timeWindows: [], requests: [], provider: null, florist: null, maxOpenRequests: 5, away: [] },
+    extras: { catalogue: [], timeWindows: [], requests: [], provider: null, florist: null, partners: [], brand: null, maxOpenRequests: 5, away: [] },
     extrasLoaded: false,
     requestService: null,
     requestDate: '',
@@ -149,10 +149,17 @@
                     const data = await res.json();
                     this.token = data.token;
                     localStorage.setItem('sukoda_portal_token', data.token);
-                    window.history.replaceState({}, '', '/minu');
+                    const tab = urlParams.get('tab');
+                    window.history.replaceState({}, '', tab ? `/minu?tab=${encodeURIComponent(tab)}` : '/minu');
+                } else {
+                    // A link in the URL is an explicit login attempt — don't keep a previous household's session.
+                    localStorage.removeItem('sukoda_portal_token');
+                    this.token = '';
                 }
             } catch (e) {
                 console.error('Token validation failed:', e);
+                localStorage.removeItem('sukoda_portal_token');
+                this.token = '';
             }
         }
 
@@ -401,12 +408,29 @@
     },
 
     // ---- Composition helpers (layout only; no new data) ----
+    get brand() { return this.order?.brand || this.extras.brand || null; },
+    /** Everyone who comes to this home: server list when loaded, else the housekeeper/florist we already know */
+    get partners() {
+        if (Array.isArray(this.extras.partners) && this.extras.partners.length) return this.extras.partners;
+        const out = [];
+        if (this.order?.provider) out.push({ category: 'cleaning', label: this.lang === 'et' ? 'Koristus' : 'Cleaning', ...this.order.provider });
+        if (this.extras.florist) out.push({ category: 'flowers', label: this.lang === 'et' ? 'Lilled' : 'Flowers', ...this.extras.florist });
+        return out;
+    },
+    /** Ask the housekeeper to change or stop the standing rhythm — a request, not a self-service switch */
+    requestRhythmChange() {
+        const svc = (this.extras.catalogue || []).find((s) => s.id === 'other');
+        if (!svc) return;
+        this.openRequest(svc);
+        this.requestNote = this.lang === 'et' ? 'Soovin muuta püsiteenuse rütmi: ' : 'I would like to change the recurring rhythm: ';
+    },
     catalogueFor(catId) { return (this.extras.catalogue || []).filter((s) => s.category === catId); },
     get visibleCategories() { return (this.extras.categories || []).filter((c) => this.catalogueFor(c.id).length); },
     categoryBlurb(catId) {
         const et = this.lang === 'et';
         return {
             cleaning: et ? 'Kõik, mida kodu vahel lisaks vajab — samalt inimeselt, kes su kodu juba tunneb.' : 'What your home occasionally needs extra — from the person who already knows it.',
+            warranty: et ? 'Uue kodu garantii, tehnosüsteemid ja maja asjad — ehitaja meeskond, kes selle maja tunneb.' : 'Your new home\'s warranty, building systems and house matters — the builder\'s team that knows this building.',
             flowers: et ? 'Hooajaline kimp koju või koos koristusvisiidiga.' : 'A seasonal bouquet, to your door or with a cleaning visit.',
             handyman: et ? 'Pilt seina, filtrid, tilkuv kraan — täpselt ja jälgi jätmata.' : 'A picture on the wall, filters, a dripping tap — precise and clean.',
             garden: et ? 'Muru, hekk, terrass ja hooajatööd õues.' : 'Lawn, hedge, terrace and seasonal work outdoors.',
@@ -535,6 +559,12 @@
             'outdoor-wash': 'M4 20h16M4 16h16M4 12h16M12 4v4m-3-2l3 2 3-2',
             'seasonal-garden': 'M12 3c-2 4-6 5-6 10a6 6 0 0012 0c0-5-4-6-6-10zm0 6v12',
             other: 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z',
+            // Garantii ja maja
+            'warranty-claim': 'M12 3l8 4v5c0 5-3.5 8.5-8 9-4.5-.5-8-4-8-9V7l8-4zm0 5v4m0 3h.01',
+            'warranty-inspection': 'M9 12l2 2 4-4M5 4h14a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V5a1 1 0 011-1z',
+            'systems-tuning': 'M12 8a4 4 0 100 8 4 4 0 000-8zm0-5v3m0 12v3m9-9h-3M6 12H3m14.5-6.5l-2 2m-9 9l-2 2m11 0l-2-2m-9-9l-2-2',
+            'home-manual': 'M4 5a2 2 0 012-2h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm4 3h8M8 12h8M8 16h5',
+            'meter-readings': 'M12 20a8 8 0 100-16 8 8 0 000 16zm0-8l3-3M7 12h1m8 0h1m-5-5v1',
         };
         return icons[id] || icons.other;
     },
@@ -1023,10 +1053,14 @@
             <!-- Welcome header -->
             <div class="px-6 md:px-12 py-8 md:py-12 grid-line-b">
                 <div class="accent-line mb-4"></div>
+                <!-- Developer white label: whose after-sales this home belongs to -->
+                <p x-show="brand" x-cloak class="text-[11px] uppercase tracking-[0.22em] font-sans text-muted mb-3">
+                    <span class="text-black font-medium" x-text="brand?.name"></span><span x-show="brand?.project" x-text="' · ' + brand?.project"></span><span class="text-muted/70" x-text="lang === 'et' ? ' · Järelteenindus' : ' · After-sales'"></span>
+                </p>
                 <div class="flex flex-wrap items-end justify-between gap-4">
                     <div>
                         <h1 class="font-serif text-3xl md:text-4xl font-light mb-2" x-text="(lang === 'et' ? 'Tere, ' : 'Hello, ') + ((viewer?.name || order?.customerName || '').split(' ')[0])"></h1>
-                        <p class="text-muted font-sans font-light text-base" x-text="lang === 'et' ? 'Sinu kodu — ajad, teenused ja pere teavitused ühes kohas.' : 'Your home — times, services and household notifications in one place.'"></p>
+                        <p class="text-muted font-sans font-light text-base" x-text="(lang === 'et' && brand?.tagline) || (lang === 'et' ? 'Sinu kodu — ajad, teenused ja pere teavitused ühes kohas.' : 'Your home — times, services and household notifications in one place.')"></p>
                     </div>
                     <p x-show="order?.customerAddress || order?.address" class="text-sm text-muted font-sans font-light flex items-center gap-2">
                         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
@@ -1037,7 +1071,7 @@
 
             <!-- Tab navigation: the home portal — cleaning is one service among several -->
             <div class="px-6 md:px-12 grid-line-b overflow-x-auto">
-                <div class="flex gap-8 md:gap-12 text-xs md:text-[13px] uppercase tracking-[0.16em] font-sans font-medium whitespace-nowrap">
+                <div class="flex gap-8 md:gap-12 text-[13px] md:text-sm uppercase tracking-[0.14em] font-sans font-medium whitespace-nowrap">
                     <button @click="activeTab = 'overview'" :class="activeTab === 'overview' ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black border-b-2 border-transparent'" class="py-4 transition-colors" x-text="lang === 'et' ? 'Ülevaade' : 'Overview'"></button>
                     <button @click="activeTab = 'extras'" :class="activeTab === 'extras' ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black border-b-2 border-transparent'" class="py-4 transition-colors relative">
                         <span x-text="lang === 'et' ? 'Teenused' : 'Services'"></span>
@@ -1067,9 +1101,9 @@
                         </div>
 
                         <!-- Next visit (hero) -->
-                        <div x-show="upcomingBookings.length > 0" class="bg-white border border-[#E8E3DD]">
+                        <div x-show="upcomingBookings.length > 0" class="bg-white border border-[#E8E3DD] p-have">
                             <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
-                                <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans"><span class="text-accent mr-3">01</span><span x-text="lang === 'et' ? 'Järgmine visiit' : 'Next visit'"></span></p>
+                                <h2 class="p-h"><span class="p-num">01</span><span x-text="lang === 'et' ? 'Järgmine visiit' : 'Next visit'"></span></h2>
                                 <button type="button" @click="activeTab = 'visits'" class="text-[11px] uppercase tracking-[0.16em] font-sans text-accent hover:text-black transition-colors" x-text="lang === 'et' ? 'Kalender →' : 'Calendar →'"></button>
                             </div>
                             <div class="p-6 md:p-8 flex flex-wrap items-center justify-between gap-5">
@@ -1084,10 +1118,10 @@
                                     </div>
                                 </div>
                                 <span x-show="pendingRescheduleIds.includes(upcomingBookings[0]?.id)" class="inline-flex px-3 py-1.5 text-[10px] uppercase tracking-[0.15em] font-sans text-amber-600 bg-amber-50 rounded-full shrink-0" x-text="lang === 'et' ? 'Uus aeg ootel' : 'New time pending'"></span>
-                                <button type="button" x-show="!pendingRescheduleIds.includes(upcomingBookings[0]?.id)" @click="changeTime(upcomingBookings[0])" class="h-11 px-5 border border-black text-[11px] uppercase tracking-[0.16em] font-sans hover:bg-black hover:text-paper transition-colors shrink-0" x-text="lang === 'et' ? 'Muuda aega' : 'Reschedule'"></button>
+                                <button type="button" x-show="!pendingRescheduleIds.includes(upcomingBookings[0]?.id)" @click="changeTime(upcomingBookings[0])" class="p-btn shrink-0" x-text="lang === 'et' ? 'Muuda aega' : 'Reschedule'"></button>
                             </div>
                             <!-- Small extras belong to the visit, not to a separate list -->
-                            <div x-show="visitAddons.length" x-cloak class="px-6 md:px-8 py-4 border-t border-[#E8E3DD] bg-cream/30 flex flex-wrap items-center gap-2">
+                            <div x-show="visitAddons.length && upcomingBookings[0]?.kind !== 'extra'" x-cloak class="px-6 md:px-8 py-4 border-t border-[#E8E3DD] bg-cream/30 flex flex-wrap items-center gap-2">
                                 <span class="text-[11px] uppercase tracking-[0.16em] text-muted font-sans mr-2" x-text="lang === 'et' ? 'Lisa sellele visiidile' : 'Add to this visit'"></span>
                                 <template x-for="s in visitAddons" :key="'ov-addon-' + s.id">
                                     <button type="button" @click="openWithVisit(s)" class="px-3 py-1.5 bg-white border border-[#E8E3DD] hover:border-black text-xs font-sans transition-colors" x-text="s.name"></button>
@@ -1116,9 +1150,9 @@
                         </div>
 
                         <!-- Your services: cleaning is one cell among several -->
-                        <div class="bg-white border border-[#E8E3DD]">
+                        <div class="bg-white border border-[#E8E3DD] p-have">
                             <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
-                                <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans"><span class="text-accent mr-3">02</span><span x-text="lang === 'et' ? 'Sinu teenused' : 'Your services'"></span></p>
+                                <h2 class="p-h"><span class="p-num">02</span><span x-text="lang === 'et' ? 'Sinu teenused' : 'Your services'"></span></h2>
                                 <span class="inline-flex items-center px-3 py-1 text-[11px] uppercase tracking-[0.12em] font-sans font-medium rounded-full" :class="getStatusColor(order?.status)" x-text="getStatusLabel(order?.status)"></span>
                             </div>
                             <div class="overflow-hidden">
@@ -1151,6 +1185,7 @@
                                                 <span class="inline-flex px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] rounded-full shrink-0" :class="requestStatusColor(r.status)" x-text="requestStatusLabel(r.status)"></span>
                                             </div>
                                             <p class="font-serif text-xl font-light mt-4" x-text="r.serviceName"></p>
+                                            <p x-show="r.note" class="text-sm font-sans mt-1 truncate" x-text="r.note"></p>
                                             <p class="text-sm text-muted font-sans font-light mt-1 flex-1" x-text="r.scheduledAt ? formatDateShort(r.scheduledAt) + ' · ' + formatTime(r.scheduledAt) : (r.preferredDate ? formatDateShort(r.preferredDate) : (lang === 'et' ? 'Esimesel võimalusel' : 'As soon as possible'))"></p>
                                             <button type="button" @click="activeTab = 'extras'" class="mt-4 self-start text-[11px] uppercase tracking-[0.16em] font-sans text-accent hover:text-black transition-colors" x-text="lang === 'et' ? 'Vaata →' : 'View →'"></button>
                                         </div>
@@ -1162,7 +1197,7 @@
                                             <span class="text-[10px] uppercase tracking-[0.16em] font-sans text-muted" x-text="lang === 'et' ? 'Lisaks' : 'Extra'"></span>
                                         </div>
                                         <p class="font-serif text-xl font-light mt-4" x-text="lang === 'et' ? 'Telli teenus' : 'Order a service'"></p>
-                                        <p class="text-sm text-muted font-sans font-light mt-1 flex-1" x-text="lang === 'et' ? 'Aknad, süvapuhastus, lilled, remondimees, aed — inimeselt, kes su kodu tunneb.' : 'Windows, deep clean, flowers, handyman, garden — from someone who knows your home.'"></p>
+                                        <p class="text-sm text-muted font-sans font-light mt-1 flex-1" x-text="lang === 'et' ? 'Garantii, aknad, süvapuhastus, lilled, remondimees, aed — inimestelt, kes su kodu tunnevad.' : 'Warranty, windows, deep clean, flowers, handyman, garden — from people who know your home.'"></p>
                                         <span class="mt-4 text-[11px] uppercase tracking-[0.16em] font-sans text-accent group-hover:text-black transition-colors" x-text="lang === 'et' ? 'Kataloog →' : 'Catalogue →'"></span>
                                     </button>
                                 </div>
@@ -1172,7 +1207,7 @@
                         <!-- Kodu hooldusrütm: what is due, straight from the overview -->
                         <div class="bg-white border border-[#E8E3DD]" x-show="extrasLoaded" x-cloak>
                             <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
-                                <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans"><span class="text-accent mr-3">03</span><span x-text="lang === 'et' ? 'Kodu hooldus' : 'Home upkeep'"></span></p>
+                                <h2 class="p-h"><span class="p-num">03</span><span x-text="lang === 'et' ? 'Kodu hooldus' : 'Home upkeep'"></span></h2>
                                 <span x-show="maintenanceDue" class="inline-flex px-2.5 py-1 text-[11px] uppercase tracking-[0.12em] rounded-full bg-accent/10 text-accent" x-text="maintenanceDue + (lang === 'et' ? ' ootel' : ' due')"></span>
                             </div>
                             <div class="p-6 md:p-8">
@@ -1203,34 +1238,31 @@
 
                         <aside class="lg:col-span-4 space-y-6 lg:space-y-8 min-w-0">
                         <!-- Home partners -->
-                        <div x-show="order?.provider || extras.florist" x-cloak class="bg-white border border-[#E8E3DD]">
+                        <div x-show="partners.length" x-cloak class="bg-white border border-[#E8E3DD]">
                             <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
-                                <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans" x-text="lang === 'et' ? 'Kes su kodus käivad' : 'Who comes to your home'"></p>
+                                <h2 class="p-h" x-text="lang === 'et' ? 'Kes su kodus käivad' : 'Who comes to your home'"></h2>
+                                <span class="text-[11px] font-sans text-muted" x-text="partners.length"></span>
                             </div>
+                            <!-- One entry per role: the housekeeper, the builder's warranty team, the florist … each with a way to reach them -->
                             <div class="divide-y divide-[#E8E3DD]">
-                                <div x-show="order?.provider" class="p-6">
-                                    <div class="flex items-center gap-4">
-                                        <div class="w-12 h-12 rounded-full bg-black text-paper flex items-center justify-center font-serif text-xl shrink-0" x-text="(order?.provider?.name || '?').charAt(0)"></div>
-                                        <div class="min-w-0 flex-1">
-                                            <p class="font-serif text-lg font-light" x-text="order?.provider?.name"></p>
-                                            <p class="text-sm text-muted font-sans font-light"><span x-text="lang === 'et' ? 'Koristus' : 'Cleaning'"></span><span x-show="order?.provider?.businessName" x-text="' · ' + order?.provider?.businessName"></span></p>
+                                <template x-for="p in partners" :key="'partner-' + p.category">
+                                    <div class="p-6">
+                                        <div class="flex items-center gap-4">
+                                            <div class="w-12 h-12 rounded-full flex items-center justify-center font-serif text-xl shrink-0" :class="p.category === 'cleaning' ? 'bg-black text-paper' : p.category === 'warranty' ? 'bg-accent text-paper' : 'bg-cream border border-[#E8E3DD]'" x-text="(p.name || '?').charAt(0)"></div>
+                                            <div class="min-w-0 flex-1">
+                                                <p class="font-serif text-lg font-light truncate" x-text="p.name"></p>
+                                                <p class="text-sm text-muted font-sans font-light truncate"><span x-text="p.label"></span><span x-show="p.businessName" x-text="' · ' + p.businessName"></span></p>
+                                            </div>
+                                        </div>
+                                        <div x-show="p.phone || p.email" class="flex flex-wrap gap-2 mt-5">
+                                            <a x-show="p.phone" :href="'tel:' + p.phone" class="flex-1 min-w-0 h-10 px-3 border border-[#E8E3DD] text-[11px] uppercase tracking-[0.12em] font-sans flex items-center justify-center gap-2 hover:border-black transition-colors">
+                                                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                                                <span class="truncate" x-text="p.phone"></span>
+                                            </a>
+                                            <a x-show="p.email" :href="'mailto:' + p.email" class="h-10 px-4 border border-[#E8E3DD] text-[11px] uppercase tracking-[0.12em] font-sans flex items-center justify-center hover:border-black transition-colors shrink-0" :class="p.phone ? '' : 'flex-1'" x-text="lang === 'et' ? 'Kirjuta' : 'Email'"></a>
                                         </div>
                                     </div>
-                                    <div x-show="order?.provider?.phone || order?.provider?.email" class="flex flex-wrap gap-2 mt-5">
-                                        <a x-show="order?.provider?.phone" :href="'tel:' + order?.provider?.phone" class="flex-1 min-w-0 h-10 px-3 border border-[#E8E3DD] text-[11px] uppercase tracking-[0.12em] font-sans flex items-center justify-center gap-2 hover:border-black transition-colors">
-                                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-                                            <span class="truncate" x-text="order?.provider?.phone"></span>
-                                        </a>
-                                        <a x-show="order?.provider?.email" :href="'mailto:' + order?.provider?.email" class="h-10 px-4 border border-[#E8E3DD] text-[11px] uppercase tracking-[0.12em] font-sans flex items-center justify-center hover:border-black transition-colors shrink-0" :class="order?.provider?.phone ? '' : 'flex-1'" x-text="lang === 'et' ? 'Kirjuta' : 'Email'"></a>
-                                    </div>
-                                </div>
-                                <div x-show="extras.florist" x-cloak class="p-6 flex items-center gap-4">
-                                    <div class="w-12 h-12 rounded-full bg-cream border border-[#E8E3DD] flex items-center justify-center font-serif text-xl shrink-0" x-text="(extras.florist?.name || '?').charAt(0)"></div>
-                                    <div class="min-w-0 flex-1">
-                                        <p class="font-serif text-lg font-light" x-text="extras.florist?.name"></p>
-                                        <p class="text-sm text-muted font-sans font-light"><span x-text="lang === 'et' ? 'Lilled' : 'Flowers'"></span><span x-show="extras.florist?.businessName" x-text="' · ' + extras.florist?.businessName"></span></p>
-                                    </div>
-                                </div>
+                                </template>
                             </div>
                             <p class="px-6 py-4 border-t border-[#E8E3DD] bg-cream/30 text-xs text-muted font-sans font-light leading-relaxed" x-text="lang === 'et' ? 'Kõik ajad, muudatused ja meeldetuletused jõuavad sinuni ja sinu pere kontaktidele automaatselt — koos kalendrikutsega.' : 'All times, changes and reminders reach you and your household contacts automatically — with a calendar invite.'"></p>
                         </div>
@@ -1238,7 +1270,7 @@
                         <!-- Household at a glance -->
                         <div class="border border-[#E8E3DD]" x-show="extrasLoaded" x-cloak>
                             <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
-                                <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans" x-text="lang === 'et' ? 'Minu kodu' : 'My home'"></p>
+                                <h2 class="p-h" x-text="lang === 'et' ? 'Minu kodu' : 'My home'"></h2>
                                 <button type="button" @click="activeTab = 'home'" class="text-[11px] uppercase tracking-[0.16em] font-sans text-accent hover:text-black transition-colors" x-text="lang === 'et' ? 'Ava →' : 'Open →'"></button>
                             </div>
                             <div class="grid grid-cols-3 divide-x divide-[#E8E3DD]">
@@ -1277,7 +1309,7 @@
                         <!-- ── Kodu: what the people who come here should know. Reads as a card; edits in place ── -->
                         <div class="bg-white border border-[#E8E3DD]">
                             <div class="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-[#E8E3DD]">
-                                <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans"><span class="text-accent mr-3">01</span><span x-text="lang === 'et' ? 'Minu kodu' : 'My home'"></span></p>
+                                <h2 class="p-h"><span class="p-num">01</span><span x-text="lang === 'et' ? 'Minu kodu' : 'My home'"></span></h2>
                                 <!-- Home type: a fact about the home, and it narrows the upkeep suggestions -->
                                 <div class="flex items-center gap-1 text-[11px] uppercase tracking-[0.14em] font-sans shrink-0">
                                     <template x-for="t in ['apartment', 'house', 'summer']" :key="t">
@@ -1331,7 +1363,7 @@
                         <!-- ── Hooldusrütm: what the home needs on a rhythm — split by who does it ── -->
                         <div id="hooldus" class="bg-white border border-[#E8E3DD]">
                             <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
-                                <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans"><span class="text-accent mr-3">02</span><span x-text="lang === 'et' ? 'Kodu hooldusrütm' : 'Home upkeep rhythm'"></span></p>
+                                <h2 class="p-h"><span class="p-num">02</span><span x-text="lang === 'et' ? 'Kodu hooldusrütm' : 'Home upkeep rhythm'"></span></h2>
                                 <span x-show="maintenanceDue" class="inline-flex px-2.5 py-1 text-[11px] uppercase tracking-[0.12em] rounded-full bg-accent/10 text-accent" x-text="maintenanceDue + (lang === 'et' ? ' ootel' : ' due')"></span>
                             </div>
                             <div class="p-6 md:p-8">
@@ -1407,7 +1439,7 @@
                             <!-- Suggestions -->
                             <div class="mt-8" x-show="maintenance.suggestions.length">
                                 <div class="flex items-center justify-between mb-3">
-                                    <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans" x-text="lang === 'et' ? 'Lisa oma kodule' : 'Add to your home'"></p>
+                                    <h2 class="p-h" x-text="lang === 'et' ? 'Lisa oma kodule' : 'Add to your home'"></h2>
                                     <button type="button" @click="maintShowSuggestions = !maintShowSuggestions" x-show="maintenance.items.length" class="text-[11px] uppercase tracking-[0.15em] text-accent hover:text-black font-sans" x-text="maintShowSuggestions ? (lang === 'et' ? 'Peida' : 'Hide') : (lang === 'et' ? 'Näita soovitusi' : 'Show suggestions')"></button>
                                 </div>
                                 <div class="grid sm:grid-cols-2 gap-2" x-show="maintShowSuggestions || !maintenance.items.length">
@@ -1449,7 +1481,7 @@
                         <!-- ── Household contacts ── -->
                         <div class="bg-white border border-[#E8E3DD]">
                             <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
-                                <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans" x-text="lang === 'et' ? 'Kes saab teavitusi' : 'Who receives notifications'"></p>
+                                <h2 class="p-h" x-text="lang === 'et' ? 'Kes saab teavitusi' : 'Who receives notifications'"></h2>
                                 <p class="text-xs text-muted font-sans font-light" x-text="(1 + contacts.length) + ' / ' + (1 + (extras.maxContacts || 6))"></p>
                             </div>
                             <div class="p-6">
@@ -1465,6 +1497,14 @@
                                 </div>
                                 <template x-for="(c, i) in contacts" :key="i">
                                     <div class="border border-[#E8E3DD] bg-white p-4">
+                                        <div class="flex items-center gap-4 mb-4">
+                                            <div class="w-10 h-10 rounded-full bg-cream text-black flex items-center justify-center text-sm shrink-0" x-text="(c.name || '?').charAt(0)"></div>
+                                            <div class="min-w-0 flex-1">
+                                                <p class="truncate font-sans" x-text="c.name || (lang === 'et' ? 'Uus inimene' : 'New person')"></p>
+                                                <p class="text-sm text-muted font-light truncate" x-text="lang === 'et' ? 'Saab samad ajad ja kalendrikutsed' : 'Gets the same times and calendar invites'"></p>
+                                            </div>
+                                            <span class="text-[11px] uppercase tracking-[0.15em] text-muted shrink-0" x-text="lang === 'et' ? 'Pere' : 'Household'"></span>
+                                        </div>
                                         <div class="grid sm:grid-cols-2 gap-4">
                                             <label class="block">
                                                 <span class="text-[11px] uppercase tracking-[0.15em] text-muted font-sans block mb-1" x-text="lang === 'et' ? 'Nimi' : 'Name'"></span>
@@ -1479,8 +1519,7 @@
                                                 <input type="email" x-model="c.email" placeholder="nimi@näide.ee" class="w-full bg-transparent border-b border-[#E8E3DD] focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-[#D4CFC8]">
                                             </label>
                                         </div>
-                                        <div class="flex items-center justify-between gap-4 mt-3">
-                                            <p class="text-xs text-muted font-sans font-light" x-text="lang === 'et' ? 'E-postile lähevad ajad ja kalendrikutsed; telefoni näeb koduhooldaja.' : 'Times and calendar invites go to the email; the phone is visible to your housekeeper.'"></p>
+                                        <div class="flex items-center justify-end gap-4 mt-3">
                                             <button type="button" @click="removeContact(i)" class="text-[11px] uppercase tracking-[0.15em] text-muted hover:text-black font-sans shrink-0" x-text="lang === 'et' ? 'Eemalda' : 'Remove'"></button>
                                         </div>
                                     </div>
@@ -1501,7 +1540,7 @@
                         <!-- ── Kodu dokumendid: what stays with the home ── -->
                         <div id="dokumendid" class="bg-white border border-[#E8E3DD]">
                             <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
-                                <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans" x-text="lang === 'et' ? 'Kodu dokumendid' : 'Home documents'"></p>
+                                <h2 class="p-h" x-text="lang === 'et' ? 'Kodu dokumendid' : 'Home documents'"></h2>
                                 <p class="text-xs text-muted font-sans font-light" x-show="documents.items.length" x-text="documents.items.length"></p>
                             </div>
                             <div class="p-6">
@@ -1560,7 +1599,7 @@
                             <!-- Upcoming: a timeline grouped by month -->
                             <div class="bg-white border border-[#E8E3DD]">
                                 <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
-                                    <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans"><span class="text-accent mr-3">01</span><span x-text="lang === 'et' ? 'Eelseisvad' : 'Upcoming'"></span></p>
+                                    <h2 class="p-h"><span class="p-num">01</span><span x-text="lang === 'et' ? 'Eelseisvad' : 'Upcoming'"></span></h2>
                                     <p class="text-xs text-muted font-sans font-light" x-show="upcomingBookings.length" x-text="upcomingBookings.length + (lang === 'et' ? (upcomingBookings.length === 1 ? ' visiit' : ' visiiti') : (upcomingBookings.length === 1 ? ' visit' : ' visits'))"></p>
                                 </div>
 
@@ -1599,7 +1638,7 @@
                             <!-- Past -->
                             <div x-show="pastBookings.length > 0" class="border border-[#E8E3DD]">
                                 <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
-                                    <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans"><span class="text-accent mr-3">02</span><span x-text="lang === 'et' ? 'Möödunud' : 'Past'"></span></p>
+                                    <h2 class="p-h"><span class="p-num">02</span><span x-text="lang === 'et' ? 'Möödunud' : 'Past'"></span></h2>
                                     <p class="text-xs text-muted font-sans font-light" x-text="pastBookings.length"></p>
                                 </div>
                                 <div class="divide-y divide-[#E8E3DD]">
@@ -1622,7 +1661,7 @@
                             <!-- The standing rhythm behind the list -->
                             <div class="border border-[#E8E3DD]">
                                 <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
-                                    <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans" x-text="lang === 'et' ? 'Püsigraafik' : 'Standing schedule'"></p>
+                                    <h2 class="p-h" x-text="lang === 'et' ? 'Püsigraafik' : 'Standing schedule'"></h2>
                                     <span class="inline-flex items-center px-3 py-1 text-[11px] uppercase tracking-[0.12em] font-sans font-medium rounded-full" :class="getStatusColor(order?.status)" x-text="getStatusLabel(order?.status)"></span>
                                 </div>
                                 <div class="p-6">
@@ -1635,7 +1674,7 @@
                             <!-- Away periods: "we're not home" — cancels visits in range, schedule skips it, housekeeper is told -->
                             <div x-show="order?.status === 'paid'" class="bg-white border border-[#E8E3DD]">
                                 <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
-                                    <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans" x-text="lang === 'et' ? 'Oleme eemal' : 'We are away'"></p>
+                                    <h2 class="p-h" x-text="lang === 'et' ? 'Oleme eemal' : 'We are away'"></h2>
                                     <span x-show="awayNow" x-cloak class="inline-flex px-2.5 py-1 text-[10px] uppercase tracking-[0.15em] font-sans text-amber-700 bg-amber-50 rounded-full" x-text="lang === 'et' ? 'Praegu eemal' : 'Away now'"></span>
                                 </div>
                                 <div class="p-6">
@@ -1686,7 +1725,7 @@
                                 <!-- Active state: show pause option -->
                                 <div x-show="!order?.pausedAt" class="border border-[#E8E3DD]">
                                     <div class="flex items-center gap-3 px-6 py-4 border-b border-[#E8E3DD]">
-                                        <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans" x-text="lang === 'et' ? 'Peata tellimus' : 'Pause subscription'"></p>
+                                        <h2 class="p-h" x-text="lang === 'et' ? 'Peata tellimus' : 'Pause subscription'"></h2>
                                     </div>
                                     <div class="p-6">
                                         <p class="text-sm text-muted font-sans font-light mb-4" x-text="lang === 'et' ? 'Saad tellimuse igal ajal peatada ja hiljem jätkata.' : 'You can pause your subscription at any time and resume later.'"></p>
@@ -1750,7 +1789,7 @@
                     <!-- Requests in progress: a compact status strip, not a list -->
                     <div x-show="openRequests.length" x-cloak class="mb-8 md:mb-10">
                         <div class="flex items-center justify-between gap-4 mb-3">
-                            <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans"><span x-text="lang === 'et' ? 'Sinu soovid' : 'Your requests'"></span> <span class="text-accent ml-1" x-text="openRequests.length"></span></p>
+                            <h2 class="p-h"><span x-text="lang === 'et' ? 'Sinu soovid' : 'Your requests'"></span> <span class="text-accent ml-1" x-text="openRequests.length"></span></h2>
                             <p x-show="extras.provider" class="text-xs text-muted font-sans font-light" x-text="(lang === 'et' ? 'Kinnitab ' : 'Confirmed by ') + (extras.provider?.name || '')"></p>
                         </div>
                         <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -1762,6 +1801,7 @@
                                                 <p class="font-serif text-lg font-light truncate" x-text="r.serviceName"></p>
                                                 <span class="text-[10px] uppercase tracking-[0.16em] font-sans shrink-0" :class="r.status === 'confirmed' ? 'text-green-600' : 'text-amber-600'" x-text="requestStatusLabel(r.status)"></span>
                                             </div>
+                                            <p x-show="r.note" class="text-sm font-sans mt-0.5 truncate" x-text="r.note"></p>
                                             <p class="text-sm text-muted font-sans font-light mt-0.5" x-show="r.status === 'requested'">
                                                 <span x-text="r.preferredDate ? formatDateShort(r.preferredDate) : (lang === 'et' ? 'Esimesel võimalusel' : 'As soon as possible')"></span><span x-show="r.timeWindowLabel" x-text="' · ' + r.timeWindowLabel"></span>
                                             </p>
@@ -1780,9 +1820,9 @@
                     <div class="grid lg:grid-cols-12 gap-6 lg:gap-8 items-start">
 
                         <!-- ( 01 ) Sinu teenuses -->
-                        <div class="lg:col-span-8 bg-white border border-[#E8E3DD]">
+                        <div class="lg:col-span-8 bg-white border border-[#E8E3DD] p-have">
                             <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
-                                <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans"><span class="text-accent mr-3">01</span><span x-text="lang === 'et' ? 'Sinu teenuses' : 'In your service'"></span></p>
+                                <h2 class="p-h"><span class="p-num">01</span><span x-text="lang === 'et' ? 'Sinu teenuses' : 'In your service'"></span></h2>
                                 <span class="inline-flex items-center px-3 py-1 text-[11px] uppercase tracking-[0.12em] font-sans font-medium rounded-full" :class="getStatusColor(order?.status)" x-text="getStatusLabel(order?.status)"></span>
                             </div>
                             <div class="overflow-hidden">
@@ -1795,26 +1835,30 @@
                                             </div>
                                             <span class="text-[10px] uppercase tracking-[0.16em] font-sans text-muted" x-text="lang === 'et' ? 'Püsiteenus' : 'Recurring'"></span>
                                         </div>
-                                        <p class="font-serif text-2xl font-light mt-5" x-text="lang === 'et' ? 'Regulaarne koristus' : 'Regular cleaning'"></p>
+                                        <p class="font-sans text-lg md:text-xl mt-5" x-text="lang === 'et' ? 'Regulaarne koristus' : 'Regular cleaning'"></p>
                                         <dl class="grid grid-cols-2 gap-x-6 gap-y-4 mt-5 pt-5 border-t border-[#E8E3DD]">
                                             <div>
                                                 <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Rütm' : 'Rhythm'"></dt>
-                                                <dd class="font-sans text-base" x-text="getPackageName(order?.package)"></dd>
+                                                <dd class="font-sans text-base font-medium" x-text="getPackageName(order?.package)"></dd>
                                             </div>
                                             <div>
                                                 <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Kodu' : 'Home'"></dt>
-                                                <dd class="font-sans text-base" x-text="getSizeName(order?.size) || '—'"></dd>
+                                                <dd class="font-sans text-base font-medium" x-text="getSizeName(order?.size) || '—'"></dd>
                                             </div>
                                             <div>
                                                 <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Teeb' : 'Done by'"></dt>
-                                                <dd class="font-sans text-base truncate" x-text="order?.provider?.name || 'SUKODA'"></dd>
+                                                <dd class="font-sans text-base font-medium truncate" x-text="order?.provider?.name || 'SUKODA'"></dd>
                                             </div>
                                             <div>
                                                 <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Järgmine' : 'Next'"></dt>
-                                                <dd class="font-sans text-base" x-text="upcomingBookings[0] ? formatDateShort(upcomingBookings[0].scheduledAt) + ' · ' + formatTime(upcomingBookings[0].scheduledAt) : '—'"></dd>
+                                                <dd class="font-sans text-base font-medium" x-text="upcomingBookings[0] ? formatDateShort(upcomingBookings[0].scheduledAt) + ' · ' + formatTime(upcomingBookings[0].scheduledAt) : '—'"></dd>
                                             </div>
                                         </dl>
-                                        <button type="button" @click="activeTab = 'visits'" class="mt-6 text-[11px] uppercase tracking-[0.16em] font-sans text-accent hover:text-black transition-colors" x-text="lang === 'et' ? 'Kõik ajad →' : 'All times →'"></button>
+                                        <div class="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
+                                            <button type="button" @click="activeTab = 'visits'" class="text-[11px] uppercase tracking-[0.16em] font-sans text-accent hover:text-black transition-colors" x-text="lang === 'et' ? 'Kõik ajad →' : 'All times →'"></button>
+                                            <!-- The rhythm is an agreement with the housekeeper: the home asks, she confirms -->
+                                            <button type="button" x-show="order?.source === 'manual' || extras.showPrices === false" @click="requestRhythmChange()" class="text-[11px] uppercase tracking-[0.16em] font-sans text-muted hover:text-black transition-colors" x-text="lang === 'et' ? 'Soovin muudatust' : 'Request a change'"></button>
+                                        </div>
                                     </div>
                                     <!-- Flowers are part of the partner's service standard; the client only sees that it is included -->
                                     <div x-show="extras.flowers?.auto" x-cloak class="border-r border-b border-[#E8E3DD] p-6 md:p-8">
@@ -1824,15 +1868,15 @@
                                             </div>
                                             <span class="text-[10px] uppercase tracking-[0.16em] font-sans text-muted" x-text="lang === 'et' ? 'Igal visiidil' : 'Every visit'"></span>
                                         </div>
-                                        <p class="font-serif text-2xl font-light mt-5" x-text="lang === 'et' ? 'Värsked lilled' : 'Fresh flowers'"></p>
+                                        <p class="font-sans text-lg md:text-xl mt-5" x-text="lang === 'et' ? 'Värsked lilled' : 'Fresh flowers'"></p>
                                         <dl class="grid grid-cols-2 gap-x-6 gap-y-4 mt-5 pt-5 border-t border-[#E8E3DD]">
                                             <div>
                                                 <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Toob' : 'Brought by'"></dt>
-                                                <dd class="font-sans text-base truncate" x-text="order?.provider?.name || ''"></dd>
+                                                <dd class="font-sans text-base font-medium truncate" x-text="order?.provider?.name || ''"></dd>
                                             </div>
                                             <div>
                                                 <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Lillepood' : 'Florist'"></dt>
-                                                <dd class="font-sans text-base truncate" x-text="extras.flowers?.floristBusiness || extras.flowers?.floristName || '—'"></dd>
+                                                <dd class="font-sans text-base font-medium truncate" x-text="extras.flowers?.floristBusiness || extras.flowers?.floristName || '—'"></dd>
                                             </div>
                                             <div class="col-span-2">
                                                 <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Eelistus' : 'Preference'"></dt>
@@ -1849,7 +1893,7 @@
                         <aside class="lg:col-span-4 space-y-6 lg:space-y-8 min-w-0">
                             <div x-show="upcomingBookings[0] && visitAddons.length" class="bg-white border border-[#E8E3DD]">
                                 <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
-                                    <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans" x-text="lang === 'et' ? 'Järgmise visiidiga' : 'With the next visit'"></p>
+                                    <h2 class="p-h" x-text="lang === 'et' ? 'Järgmise visiidiga' : 'With the next visit'"></h2>
                                     <p class="text-[11px] uppercase tracking-[0.12em] font-sans text-black" x-text="upcomingBookings[0] ? formatDateShort(upcomingBookings[0].scheduledAt) : ''"></p>
                                 </div>
                                 <div class="px-6 pt-5 pb-2">
@@ -1869,31 +1913,22 @@
                                 </div>
                             </div>
 
-                            <!-- How a request moves -->
-                            <div class="border border-[#E8E3DD] bg-cream/40 p-6">
-                                <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans mb-5" x-text="lang === 'et' ? 'Kuidas soov liigub' : 'How a request moves'"></p>
-                                <ol class="space-y-4 text-sm font-sans font-light leading-relaxed">
-                                    <li class="flex gap-4"><span class="text-accent shrink-0 text-[11px] tracking-[0.16em] pt-0.5">01</span><span x-text="lang === 'et' ? 'Vali teenus ja ütle, millal sobib. Kuupäev võib jääda ka lahtiseks.' : 'Pick a service and say when it suits. The date can stay open.'"></span></li>
-                                    <li class="flex gap-4"><span class="text-accent shrink-0 text-[11px] tracking-[0.16em] pt-0.5">02</span><span x-text="extras.provider ? ((extras.provider?.name || '').split(' ')[0] + (lang === 'et' ? ' näeb soovi oma töölaual ja kinnitab aja — tavaliselt sama päeva jooksul.' : ' sees it on their desk and confirms a time — usually the same day.')) : (lang === 'et' ? 'Tegija näeb soovi oma töölaual ja kinnitab aja — tavaliselt sama päeva jooksul.' : 'The provider sees it on their desk and confirms a time — usually the same day.')"></span></li>
-                                    <li class="flex gap-4"><span class="text-accent shrink-0 text-[11px] tracking-[0.16em] pt-0.5">03</span><span x-text="lang === 'et' ? 'Kinnitatud aeg jõuab kalendrikutsena sinuni ja pere kontaktidele.' : 'The confirmed time reaches you and your household as a calendar invite.'"></span></li>
-                                </ol>
-                            </div>
                         </aside>
                     </div>
 
                     <!-- ( 02 ) Catalogue: one row per category — who does it on the left, the services on the right -->
                     <div class="mt-10 md:mt-14">
                         <div class="flex flex-wrap items-end justify-between gap-4 mb-4">
-                            <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans"><span class="text-accent mr-3">02</span><span x-text="lang === 'et' ? 'Telli lisaks' : 'Order extra'"></span></p>
-                            <p class="text-xs text-muted font-sans font-light" x-text="extras.showPrices === false ? (lang === 'et' ? 'Hinnad lepid kokku otse tegijaga.' : 'Prices are agreed directly with the provider.') : (lang === 'et' ? 'Lõplik hind kinnitatakse vastuses.' : 'The final price is confirmed in the reply.')"></p>
+                            <h2 class="p-h"><span class="p-num">02</span><span x-text="lang === 'et' ? 'Telli lisaks' : 'Order extra'"></span></h2>
+                            <p class="text-xs text-muted font-sans font-light" x-text="(lang === 'et' ? 'Vali → tegija kinnitab aja → kalendrikutse sulle ja perele. ' : 'Pick → the provider confirms a time → calendar invite to you and your household. ') + (extras.showPrices === false ? (lang === 'et' ? 'Hinnad lepid kokku otse tegijaga.' : 'Prices are agreed directly with the provider.') : (lang === 'et' ? 'Lõplik hind kinnitatakse vastuses.' : 'The final price is confirmed in the reply.'))"></p>
                         </div>
-                        <div class="border border-[#E8E3DD] bg-white divide-y divide-[#E8E3DD]">
+                        <div class="border border-[#E8E3DD] bg-cream/30 divide-y divide-[#E8E3DD]">
                             <template x-for="(cat, ci) in visibleCategories" :key="cat.id">
                                 <div class="grid lg:grid-cols-12" :class="cat.orderable ? '' : 'bg-paper'">
                                     <!-- Category head -->
                                     <div class="lg:col-span-3 p-6 md:p-8 border-b lg:border-b-0 lg:border-r border-[#E8E3DD] flex flex-col">
-                                        <p class="text-[11px] uppercase tracking-[0.2em] font-sans" :class="cat.orderable ? 'text-accent' : 'text-muted'" x-text="'0' + (ci + 1)"></p>
-                                        <h3 class="font-serif text-2xl font-light mt-4" :class="cat.orderable ? '' : 'text-muted'" x-text="cat.label"></h3>
+                                        <p class="text-[11px] uppercase tracking-[0.2em] font-sans text-muted" x-text="'0' + (ci + 1)"></p>
+                                        <h3 class="font-serif text-2xl font-light mt-3 leading-tight" :class="cat.orderable ? 'text-black' : 'text-muted'" x-text="cat.label"></h3>
                                         <p class="text-sm text-muted font-sans font-light leading-relaxed mt-2" x-text="categoryBlurb(cat.id)"></p>
                                         <div class="mt-6 lg:mt-auto lg:pt-6">
                                             <div x-show="cat.partnerName" class="flex items-center gap-3">
@@ -1923,14 +1958,14 @@
                                                 <!-- „Muu soov" is the catch-all: one wide row instead of an orphan card -->
                                                 <button type="button" @click="openRequest(s)" class="group text-left border-r border-b border-[#E8E3DD] p-5 md:p-6 flex flex-col transition-colors duration-300" :class="(cat.orderable ? 'bg-white hover:bg-cream/40' : 'bg-paper hover:bg-white') + (s.id === 'other' ? ' sm:col-span-2 xl:col-span-3 sm:flex-row sm:items-center sm:gap-6' : '')">
                                                     <div class="flex items-start justify-between gap-3 sm:shrink-0">
-                                                        <svg class="w-5 h-5 shrink-0" :class="cat.orderable ? 'text-accent' : 'text-[#B8B2AA]'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.3" :d="serviceIcon(s.id)"></path></svg>
+                                                        <svg class="w-5 h-5 shrink-0 text-[#B8B2AA]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.3" :d="serviceIcon(s.id)"></path></svg>
                                                         <p x-show="s.priceHint && cat.orderable && s.id !== 'other'" class="text-xs font-sans text-muted shrink-0" x-text="s.priceHint"></p>
                                                     </div>
                                                     <div class="flex-1 min-w-0" :class="s.id === 'other' ? 'mt-4 sm:mt-0' : 'mt-5'">
-                                                        <p class="font-serif text-lg md:text-xl font-light leading-snug" :class="cat.orderable ? '' : 'text-muted'" x-text="s.name"></p>
+                                                        <p class="font-sans text-[15px] font-medium leading-snug" :class="cat.orderable ? '' : 'text-muted'" x-text="s.name"></p>
                                                         <p class="text-sm text-muted font-sans font-light leading-relaxed mt-1.5" x-text="s.description"></p>
                                                     </div>
-                                                    <p class="text-[11px] uppercase tracking-[0.16em] font-sans transition-colors shrink-0" :class="(cat.orderable ? 'text-accent group-hover:text-black' : (extras.interests || []).includes(s.id) ? 'text-muted' : 'text-muted/70 group-hover:text-black') + (s.id === 'other' ? ' mt-4 sm:mt-0' : ' mt-5')" x-text="cat.orderable ? (lang === 'et' ? 'Telli →' : 'Order →') : (extras.interests || []).includes(s.id) ? (lang === 'et' ? 'Soov kirjas' : 'Noted') : (lang === 'et' ? 'Anna huvist teada →' : 'Register interest →')"></p>
+                                                    <p class="shrink-0 self-start" :class="(cat.orderable ? 'p-cta' : 'text-[11px] uppercase tracking-[0.16em] font-sans transition-colors ' + ((extras.interests || []).includes(s.id) ? 'text-muted' : 'text-muted/70 group-hover:text-black')) + (s.id === 'other' ? ' mt-4 sm:mt-0' : ' mt-5')" x-text="cat.orderable ? (lang === 'et' ? 'Telli' : 'Order') : (extras.interests || []).includes(s.id) ? (lang === 'et' ? 'Soov kirjas' : 'Noted') : (lang === 'et' ? 'Anna huvist teada →' : 'Register interest →')"></p>
                                                 </button>
                                             </template>
                                         </div>
