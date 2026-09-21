@@ -124,7 +124,8 @@ module.exports = function createHaldus(deps) {
   /** How we address a partner: the contact person's first name, else the (business) name in full — never "Tere, Kodulahe" */
   function greetName(provider) {
     if (!provider) return '';
-    return provider.contactName ? firstName(provider.contactName) : String(provider.name || '').trim();
+    const contact = String(provider.contactName || '').trim();
+    return contact || String(provider.name || '').trim();
   }
 
   // Route table helper: `${METHOD} ${path-after-/api}`
@@ -221,7 +222,7 @@ module.exports = function createHaldus(deps) {
       issueSentTitle: 'Pöördumine saadetud',
       requestReceivedIntro: (p) => (p ? `Edastasime sinu soovi partnerile ${p}. Tavaliselt kinnitab ta aja sama päeva jooksul.` : 'Edastasime sinu soovi. Kinnitame aja tavaliselt sama päeva jooksul.'),
       questionSentIntro: (p) => (p ? `Sinu küsimus on nüüd meeskonnal ${p}. Vastus tuleb kirjalikult, tavaliselt sama tööpäeva jooksul.` : 'Sinu küsimus on vastu võetud. Vastus tuleb kirjalikult, tavaliselt sama tööpäeva jooksul.'),
-      issueSentIntro: (p) => (p ? `Edastasime sinu pöördumise partnerile ${p}. Garantiimeeskond vaatab kirjelduse üle ja kinnitab ülevaatuse aja tavaliselt 2 tööpäeva jooksul — või vastab kirjalikult.` : 'Sinu pöördumine on vastu võetud. Vaatame kirjelduse üle ja kinnitame ülevaatuse aja tavaliselt 2 tööpäeva jooksul — või vastame kirjalikult.'),
+      issueSentIntro: (p) => `Edastasime sinu pöördumise partnerile ${p || 'Partner'}. Garantiimeeskond kinnitab ülevaatuse aja tavaliselt 2 tööpäeva jooksul.`,
       preferredDate: 'Soovitud päev',
       preferredTime: 'Soovitud aeg',
       asap: 'Esimesel võimalusel',
@@ -233,7 +234,7 @@ module.exports = function createHaldus(deps) {
       subjIssueReviewed: (s) => `SUKODA | Pöördumine vaadatud üle: ${s}`,
       issueReviewedTitle: 'Pöördumine vaadatud üle',
       issueReviewedIntro: (p) => (p ? `${p} vaatas sinu pöördumise üle. Kirjeldatud puudus ei kuulu kahjuks garantii alla — selgitus on allpool.` : 'Vaatasime sinu pöördumise üle. Kirjeldatud puudus ei kuulu kahjuks garantii alla — selgitus on allpool.'),
-      issueReviewedNote: 'Kui soovid, tellime töö tasulisena — kirjuta portaalis selle pöördumise juurde ja lepime aja kokku.',
+      issueReviewedNote: 'Kui soovid, tellime töö tasulisena.',
       message: 'Sõnum',
       explanation: 'Selgitus',
 
@@ -376,10 +377,11 @@ module.exports = function createHaldus(deps) {
     return `${b.name} ${langOf(order) === 'en' ? 'after-sales' : 'järelteenindus'} <tere@sukoda.ee>`;
   }
   function brandHeader(brand) {
+    const line = brand.project ? `${brand.name} · ${brand.project}` : brand.name;
     return `
     <div style="padding:44px 40px 36px;text-align:center;border-bottom:1px solid #E8E3DD;">
-      <h1 style="color:#2C2824;font-size:24px;margin:0 0 8px 0;font-family:Georgia,'Times New Roman',serif;font-weight:300;letter-spacing:3px;">${escapeHtml(brand.name)}</h1>
-      ${brand.project ? `<p style="margin:0 0 12px 0;color:#8A8578;font-size:12px;letter-spacing:2px;text-transform:uppercase;">${escapeHtml(brand.project)}</p>` : ''}
+      <h1 style="color:#2C2824;font-size:24px;margin:0 0 8px 0;font-family:Georgia,'Times New Roman',serif;font-weight:300;letter-spacing:1px;">${escapeHtml(line)}</h1>
+      <p style="margin:0 0 12px 0;color:#8A8578;font-size:12px;letter-spacing:1px;">portaali pakub SUKODA</p>
       <div style="width:40px;height:1px;background:#B8976A;margin:0 auto;"></div>
     </div>`;
   }
@@ -486,7 +488,7 @@ module.exports = function createHaldus(deps) {
     const name = firstName(primaryName(order));
     const category = visitCategory(booking, provider);
     const svc = booking.serviceId ? core.serviceName(booking.serviceId, lang) : '';
-    const title = svc ? tt.calTitleService(svc, brand?.name) : tt.calTitle;
+    const title = svc || tt.calTitle;
     const calDesc = svc || tt.calTitle;
     const extraRows = [
       svc ? ROW(tt.service, escapeHtml(svc)) : '',
@@ -692,8 +694,8 @@ module.exports = function createHaldus(deps) {
     const name = firstName(primaryName(order));
     const svc = requestName(request, lang);
     const kind = requestKind(request);
-    const who = providerName || request.providerName || (et ? 'Meeskond' : 'The team');
-    const title = kind === 'question' ? (et ? 'Vastus sinu küsimusele' : 'An answer to your question') : kind === 'issue' ? (et ? 'Vastus sinu pöördumisele' : 'A reply to your report') : (et ? 'Vastus sinu soovile' : 'A reply to your request');
+    const who = providerName || request.providerName || 'Partner';
+    const title = kind === 'question' ? (et ? 'Vastus sinu küsimusele' : 'An answer to your question') : (et ? 'Vastus sinu pöördumisele' : 'A reply to your report');
     const yours = kind === 'question' ? (et ? 'Sinu küsimus' : 'Your question') : kind === 'issue' ? (et ? 'Sinu pöördumine' : 'Your report') : (et ? 'Sinu soov' : 'Your request');
     const asked = lastClientText(request);
     const html = wrap(
@@ -704,7 +706,7 @@ module.exports = function createHaldus(deps) {
           ${asked ? ROW(yours, escapeHtml(asked).replace(/\n/g, '<br>')) : ''}
           ${ROW(et ? 'Vastus' : 'Answer', escapeHtml(message).replace(/\n/g, '<br>'))}
         </div>`
-      + P(et ? 'Kui tahad täpsustada, kirjuta portaalis selle pöördumise juurde — nii jääb vestlus kodu juurde.' : 'If you want to follow up, write on this request in the portal — that way the conversation stays with the home.', 'font-size:13px;color:#6B6560;')
+      + P(et ? 'Ära vasta sellele kirjale. Kirjuta portaalis.' : 'Do not reply to this e-mail. Write in the portal.', 'font-size:13px;color:#6B6560;')
       + portalBlock(lang, requestUrl(requestId)),
       lang, brandOf(order),
     );
@@ -718,7 +720,7 @@ module.exports = function createHaldus(deps) {
     const svc = requestName(request, lang);
     const title = lastClientText(request);
     const html = wrap(
-      H2(tt.completedTitle) + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(tt.completedIntro(providerName, svc))}`)
+      H2(`${tt.completedTitle}: ${escapeHtml(svc)}`) + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(tt.completedIntro(providerName, svc))}`)
       + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border-left:2px solid #B8976A;">
           ${LABEL(tt.service)}
           <p style="margin:0;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
@@ -728,8 +730,7 @@ module.exports = function createHaldus(deps) {
       + P(tt.completedNote) + portalBlock(lang, requestUrl(requestId)),
       lang, brandOf(order),
     );
-    const short = title ? ` — ${title.length > 60 ? title.slice(0, 57) + '…' : title}` : '';
-    return { subject: brandSubject(order, tt.subjCompleted(`${svc}${short}`)), html };
+    return { subject: brandSubject(order, tt.subjCompleted(svc)), html };
   }
 
   // ============================================================
@@ -772,7 +773,8 @@ module.exports = function createHaldus(deps) {
   /** What goes on the tag so three bouquets on the same counter don't all read "Cristelle" */
   function flowerLabel(order, provider) {
     const who = primaryName(order) || primaryEmail(order);
-    return provider ? `${who} · ${firstName(provider.name)}` : who;
+    const tag = provider ? (provider.contactName || provider.name || '') : '';
+    return tag ? `${who} · ${tag}` : who;
   }
 
   /**
@@ -1029,12 +1031,14 @@ module.exports = function createHaldus(deps) {
     const e = core.normalizeEmail(provider?.notifyEmail || provider?.email);
     return core.isValidEmail(e) ? e : undefined;
   }
+  /** Request and visit mail is read in the portal; replies must not land in a partner inbox */
+  const PORTAL_REPLY_TO = 'ei-vasta@sukoda.ee';
 
   async function sendVisitNotification(kind, { order, booking, provider, oldStart, reason }) {
     const lang = langOf(order);
     const p = provider || (booking.providerId ? await loadProvider(booking.providerId) : null);
     const mail = visitEmail({ kind, order, booking, provider: p, providerName: p?.name || '', lang, oldStart, reason });
-    return notifyOrder(order, mail, { replyTo: providerReplyTo(p) });
+    return notifyOrder(order, mail, { replyTo: PORTAL_REPLY_TO });
   }
 
   // ============================================================
@@ -1431,7 +1435,7 @@ module.exports = function createHaldus(deps) {
     return {
       id,
       role, // 'cleaning' | 'flowers' | 'warranty' | 'handyman' | ...
-      canEditHome: cleaning, // customer details, contacts, home profile and archiving belong to the housekeeper's role
+      canEditHome: cleaning || (!!providerId && o.providerId === providerId),
       name: primaryName(o) || (o.customer?.name || ''),
       email: primaryEmail(o),
       phone: o.type === 'gift' ? (o.recipient?.phone || o.customer?.phone || '') : (o.customer?.phone || ''),
@@ -1591,7 +1595,7 @@ module.exports = function createHaldus(deps) {
           <p style="margin:0 0 16px;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
           <p style="margin:0;font-size:14px;line-height:1.6;color:#2C2824;">${escapeHtml(text).replace(/\n/g, '<br>')}</p>
         </div>`
-      + P(et ? 'Vasta portaalis — nii jääb kogu vestlus kodu juurde kirja.' : 'Reply in the portal — that way the whole conversation stays with the home.', 'font-size:13px;color:#6B6560;')
+      + P(et ? 'Ära vasta sellele kirjale. Kirjuta portaalis.' : 'Do not reply to this e-mail. Write in the portal.', 'font-size:13px;color:#6B6560;')
       + portalBlock(lang, requestUrl(requestId)),
       lang,
       brandOf(order),
@@ -1874,7 +1878,7 @@ module.exports = function createHaldus(deps) {
       const r = await syncSchedule({ orderId, order: orderData, provider });
       created = r.created; skipped = r.skipped;
       if (created.length) {
-        await notifyOrder(orderData, scheduleEmail({ order: orderData, bookings: created, providerName: provider.name, lang }), { replyTo: providerReplyTo(provider) });
+        await notifyOrder(orderData, scheduleEmail({ order: orderData, bookings: created, providerName: provider.name, lang }), { replyTo: PORTAL_REPLY_TO });
       }
     }
 
@@ -2000,7 +2004,7 @@ module.exports = function createHaldus(deps) {
     if (!provider || provider.status === 'disabled') return { state: 'unassigned' };
     return {
       state: 'invite',
-      provider: { firstName: firstName(provider.name), name: provider.name || '', businessName: provider.businessName || '' },
+      provider: { firstName: provider.contactName || provider.name || '', name: provider.name || '', businessName: provider.businessName || '' },
       found, providerDoc: provider,
     };
   }
@@ -2119,8 +2123,9 @@ module.exports = function createHaldus(deps) {
       const provider = await authenticateProvider(req);
       if (!provider) return res.status(401).json({ error: 'Unauthorized' });
       const planId = String(req.body?.plan || '');
-      const plan = core.PROVIDER_PLANS[planId];
+      const plan = core.SELF_SERVE_PLANS.includes(planId) ? core.PROVIDER_PLANS[planId] : null;
       if (!plan) return res.status(400).json({ error: 'Vali pakett' });
+      if (core.effectivePlan(provider) === 'enterprise') return res.status(400).json({ error: 'Partnerlepinguga töölaual arveldus käib lepingu järgi — pakette ei ole vaja valida.' });
       const stripe = getStripe();
       const live = provider.planSubscriptionId && core.PLAN_ACTIVE_STATUSES.includes(provider.planStatus);
       if (plan.id === 'free') {
@@ -2442,7 +2447,7 @@ module.exports = function createHaldus(deps) {
       const { ref, order } = acc;
 
       // Only the housekeeper's role edits the home itself; other partners keep their own notes and nothing else
-      const canEditHome = acc.role === 'cleaning';
+      const canEditHome = acc.role === 'cleaning' || order.providerId === provider.id;
       if (!canEditHome) {
         if (b.providerNotes == null) return res.status(403).json({ error: 'Kodu andmeid haldab koduhooldaja. Saad muuta ainult oma märkmeid.' });
         await ref.update({ [`providerNotesBy.${provider.id}`]: str(b.providerNotes, 1000), updatedAt: FieldValue.serverTimestamp() });
@@ -2550,7 +2555,7 @@ module.exports = function createHaldus(deps) {
       const acc = await accessOrder(provider, req.body?.orderId);
       if (!acc) return res.status(404).json({ error: 'Klienti ei leitud' });
       const { ref, order } = acc;
-      if (acc.role !== 'cleaning') return res.status(403).json({ error: 'Kodu saab arhiveerida ainult koduhooldaja või SUKODA.' });
+      if (acc.role !== 'cleaning' && order.providerId !== provider.id) return res.status(403).json({ error: 'Kodu saab arhiveerida ainult koduhooldaja või SUKODA.' });
       if (order.source !== 'manual') {
         return res.status(400).json({ error: 'SUKODA kaudu tellinud klienti saab lõpetada ainult SUKODA. Kirjuta tere@sukoda.ee.' });
       }
@@ -2623,7 +2628,7 @@ module.exports = function createHaldus(deps) {
       if (b.notify !== false && (created.length || removed)) {
         const all = await upcomingBookingsForOrder(ref.id);
         if (all.length) {
-          await notifyOrder(fresh, scheduleEmail({ order: fresh, bookings: all, providerName: provider.name, lang: langOf(order) }), { replyTo: providerReplyTo(provider) });
+          await notifyOrder(fresh, scheduleEmail({ order: fresh, bookings: all, providerName: provider.name, lang: langOf(order) }), { replyTo: PORTAL_REPLY_TO });
         }
       }
       if (skipped.length) {
@@ -2744,9 +2749,9 @@ module.exports = function createHaldus(deps) {
         await reqRef.set({ status: 'completed', completedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
         const clientNote = str(b.clientNote, 500);
         try {
-          await appendRequestMessage(reqRef, { by: 'provider', name: provider.name, text: clientNote ? `Tehtud. ${clientNote}` : 'Tehtud.' });
+          await appendRequestMessage(reqRef, { by: 'provider', name: provider.name, text: 'Tehtud.' });
           if (reqDoc.exists && b.notify !== false) {
-            await sendCustomerMail(order, requestCompletedEmail({ order, request: reqDoc.data(), requestId: reqRef.id, providerName: provider.name, note: clientNote, lang: langOf(order) }), { replyTo: providerReplyTo(provider) });
+            await sendCustomerMail(order, requestCompletedEmail({ order, request: reqDoc.data(), requestId: reqRef.id, providerName: provider.name, note: clientNote, lang: langOf(order) }), { replyTo: PORTAL_REPLY_TO });
           }
         } catch (e) { console.error('request completed notice failed', e); }
       }
@@ -2791,7 +2796,7 @@ module.exports = function createHaldus(deps) {
           status: 'completed', bookingId: target.ref.id, scheduledAt: Timestamp.fromDate(start),
           providerMessage: str(b.message, 300), confirmedAt: FieldValue.serverTimestamp(), completedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp(),
         });
-        try { await appendRequestMessage(reqRef, { by: 'provider', name: provider.name, text: str(b.message, 300) || `Uus aeg kinnitatud: ${formatDate(start, 'et')}, ${formatTime(start)}` }); } catch (e) { console.error('confirm thread note failed', e); }
+        try { await appendRequestMessage(reqRef, { by: 'provider', name: provider.name, text: str(b.message, 300) || `Aeg kinnitatud: ${formatDate(start, 'et')}, ${formatTime(start)}` }); } catch (e) { console.error('confirm thread note failed', e); }
         return res.status(200).json({ success: true, booking: serializeBooking(target.ref.id, result.updated) });
       }
 
@@ -2833,7 +2838,7 @@ module.exports = function createHaldus(deps) {
       await appendRequestMessage(reqRef, { by: 'provider', name: provider.name, text });
       // A written reply on an open request answers it; a follow-up on a handled one keeps its state
       if (reqDoc.data().status === 'requested') await reqRef.update({ status: 'answered', providerMessage: text.slice(0, 300), answeredAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
-      await sendCustomerMail(acc.order, requestMessageEmail({ toSide: 'client', order: acc.order, request: reqDoc.data(), requestId: reqRef.id, fromName: provider.name, text, lang: langOf(acc.order) }), { replyTo: providerReplyTo(provider) });
+      await sendCustomerMail(acc.order, requestMessageEmail({ toSide: 'client', order: acc.order, request: reqDoc.data(), requestId: reqRef.id, fromName: provider.name, text, lang: langOf(acc.order) }), { replyTo: PORTAL_REPLY_TO });
       const fresh = await reqRef.get();
       res.status(200).json({ success: true, request: serializeRequest(reqRef.id, fresh.data()) });
     },
@@ -2854,7 +2859,7 @@ module.exports = function createHaldus(deps) {
       if (!acc) return res.status(404).json({ error: 'Klienti ei leitud' });
       await reqRef.update({ status: 'answered', providerMessage: message.slice(0, 300), answeredAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
       await appendRequestMessage(reqRef, { by: 'provider', name: provider.name, text: message });
-      await sendCustomerMail(acc.order, requestAnsweredEmail({ order: acc.order, request, requestId: reqRef.id, providerName: provider.name, message, lang: langOf(acc.order) }), { replyTo: providerReplyTo(provider) });
+      await sendCustomerMail(acc.order, requestAnsweredEmail({ order: acc.order, request, requestId: reqRef.id, providerName: provider.name, message, lang: langOf(acc.order) }), { replyTo: PORTAL_REPLY_TO });
       res.status(200).json({ success: true });
     },
 
@@ -2872,10 +2877,10 @@ module.exports = function createHaldus(deps) {
       const message = str(b.message, 600);
       const kind = requestKind(request);
       // An issue that is not covered is "reviewed", a visit slot that does not fit needs a new time
-      const fallback = kind === 'issue' ? 'Vaatasime kirjelduse üle — see ei kuulu garantii alla. Kui soovid, tellime töö tasulisena.' : 'Soovitud aeg ei sobi — paku palun uut aega.';
+      const fallback = kind === 'issue' ? 'Kui soovid, tellime töö tasulisena.' : 'Soovitud aeg ei sobi — paku palun uut aega.';
       await reqRef.update({ status: 'declined', outcome: kind === 'issue' ? 'not_covered' : 'new_time', providerMessage: message.slice(0, 300), declinedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
       try { await appendRequestMessage(reqRef, { by: 'provider', name: provider.name, text: message || fallback }); } catch (e) { console.error('decline thread note failed', e); }
-      await sendCustomerMail(acc.order, requestDeclinedEmail({ order: acc.order, request, requestId: reqRef.id, providerName: provider.name, message, lang: langOf(acc.order) }), { replyTo: providerReplyTo(provider) });
+      await sendCustomerMail(acc.order, requestDeclinedEmail({ order: acc.order, request, requestId: reqRef.id, providerName: provider.name, message, lang: langOf(acc.order) }), { replyTo: PORTAL_REPLY_TO });
       res.status(200).json({ success: true });
     },
   };
@@ -2905,8 +2910,11 @@ module.exports = function createHaldus(deps) {
   /** Do the home's terms cover this specific service (or the category as a whole when no service is given)? */
   function termsCover(tm, svc) {
     if (!tm || !tm.included) return false;
-    if (!svc || !tm.services) return true;
-    return tm.services.includes(svc.id);
+    if (svc && (svc.id === 'deep-clean' || svc.id === 'windows')) return false;
+    if (!svc) return true;
+    if (tm.services) return tm.services.includes(svc.id);
+    if (svc.category === 'cleaning') return false;
+    return true;
   }
   /** One line the household reads under a service: “Hinnas sees kuni 14. märts 2027 · 2 h kuus” / “alates 45 €/h · arve Kodulahe Haldus OÜ” */
   function priceLabelFor({ order, category, svc, lang, showPrices }) {
@@ -2939,7 +2947,10 @@ module.exports = function createHaldus(deps) {
 
   /** “Something else” goes to whoever runs this home: the developer's after-sales team when there is one, otherwise the housekeeper */
   function effectiveCategory(svc, routes) {
-    if (svc.id === 'other' && routes?.warranty) return 'warranty';
+    if (svc.id === 'other') {
+      if (routes?.building) return 'building';
+      if (routes?.warranty) return 'warranty';
+    }
     return svc.category;
   }
 
@@ -3209,7 +3220,7 @@ module.exports = function createHaldus(deps) {
       }
       if (!partnerDocs.flowers && florist) partnerDocs.flowers = florist;
       const partners = Object.entries(partnerDocs).filter(([, p]) => p).map(([cat, p]) => ({
-        category: cat, label: core.categoryLabel(cat, lang), name: p.name, businessName: p.businessName || '', phone: p.phone || '', email: p.email || '',
+        category: cat, label: core.categoryLabel(cat, lang), name: p.name, contactName: p.contactName || '', businessName: p.businessName || '', phone: p.phone || '', email: p.email || '',
       }));
       res.status(200).json({
         viewer: auth.viewer || null,
@@ -3468,7 +3479,7 @@ module.exports = function createHaldus(deps) {
       const request = { ...data, createdAt: new Date() };
 
       // Instant confirmation to the customer (primary only — contacts get the confirmed time later). Replies go to the partner; the thread lives in the portal.
-      await sendCustomerMail(order, requestReceivedEmail({ order, request, requestId: ref.id, providerName: provider?.name || '', lang }), { replyTo: providerReplyTo(provider) });
+      await sendCustomerMail(order, requestReceivedEmail({ order, request, requestId: ref.id, providerName: provider?.name || '', lang }), { replyTo: PORTAL_REPLY_TO });
       // Provider (or operator when unrouted) + operator copy
       const providerMail = providerNewRequestEmail({ order, request });
       const providerTo = providerReplyTo(provider);
@@ -3537,7 +3548,7 @@ module.exports = function createHaldus(deps) {
       const ref = await db.collection('serviceRequests').add(data);
       const request = { ...data, createdAt: new Date() };
 
-      await sendCustomerMail(order, requestReceivedEmail({ order, request, requestId: ref.id, providerName: provider?.name || '', lang }), { replyTo: providerReplyTo(provider) });
+      await sendCustomerMail(order, requestReceivedEmail({ order, request, requestId: ref.id, providerName: provider?.name || '', lang }), { replyTo: PORTAL_REPLY_TO });
       const providerMail = providerNewRequestEmail({ order, request });
       const providerTo = providerReplyTo(provider) || NOTIFICATION_EMAIL;
       await sendEmail({ to: providerTo, ...providerMail });
@@ -3757,7 +3768,7 @@ module.exports = function createHaldus(deps) {
         const portalUrl = await issueClientToken(orderRef);
         await sendCustomerMail(order, welcomeEmail({ order, providerName: provider.name, portalUrl, lang, role }), { replyTo: providerReplyTo(provider) });
         if (upcoming.length) {
-          await notifyOrder(order, scheduleEmail({ order, bookings: upcoming.map((u) => ({ ...u, providerName: provider.name })), providerName: provider.name, lang }), { replyTo: providerReplyTo(provider) });
+          await notifyOrder(order, scheduleEmail({ order, bookings: upcoming.map((u) => ({ ...u, providerName: provider.name })), providerName: provider.name, lang }), { replyTo: PORTAL_REPLY_TO });
         }
         notified = true;
       }
@@ -3786,7 +3797,7 @@ module.exports = function createHaldus(deps) {
           const provider = providerCache[order.providerId] || null;
           const { created, skipped } = await syncSchedule({ orderId: doc.id, order, provider });
           if (created.length) {
-            await notifyOrder(order, scheduleEmail({ order, bookings: created, providerName: provider?.name || '', lang: langOf(order) }), { replyTo: providerReplyTo(provider) });
+            await notifyOrder(order, scheduleEmail({ order, bookings: created, providerName: provider?.name || '', lang: langOf(order) }), { replyTo: PORTAL_REPLY_TO });
             console.log(`generateScheduledVisits: ${doc.id} +${created.length}`);
           }
           if (skipped.length && provider) {

@@ -81,7 +81,7 @@
                             <div>
                                 <label class="h-label">Mida pakud</label>
                                 <div class="flex flex-wrap gap-2 mt-1">
-                                    <template x-for="o in [['cleaning','Koristus'],['warranty','Garantii ja maja'],['flowers','Lilled'],['handyman','Remondimees'],['garden','Aed & õu']]" :key="o[0]">
+                                    <template x-for="o in [['cleaning','Koristus'],['warranty','Garantii ja maja'],['flowers','Lilled'],['handyman','Remondimees'],['building','Maja ja haldur'],['garden','Aed & õu']]" :key="o[0]">
                                         <button type="button" @click="toggleSignupService(o[0])" :class="signupForm.services.includes(o[0]) ? 'bg-black text-paper border-black' : 'border-[#D4CFC8] text-muted hover:text-black'" class="px-4 py-2 border text-[11px] uppercase tracking-[0.15em] transition-colors" x-text="o[1]"></button>
                                     </template>
                                 </div>
@@ -121,7 +121,7 @@
                         <span class="text-[11px] uppercase tracking-[0.18em] text-accent font-sans font-medium hidden sm:inline">Töölaud</span>
                     </div>
                     <div class="flex items-center gap-4 md:gap-6">
-                        <button type="button" @click="activeTab = 'account'" class="text-xs font-sans font-light text-muted hidden md:inline hover:text-black" x-text="billing.planName + ' · ' + billing.homes + (billing.limit ? '/' + billing.limit : '') + ' kodu'"></button>
+                        <button type="button" @click="activeTab = 'account'" class="text-xs font-sans font-light text-muted hidden md:inline hover:text-black" x-text="isEnterprise ? ((provider?.name || '') + ' · ' + billing.homes + ' kodu') : (billing.planName + ' · ' + billing.homes + (billing.limit ? '/' + billing.limit : '') + ' kodu')"></button>
                         <button type="button" @click="loadData()" class="text-xs uppercase tracking-[0.16em] font-sans font-medium text-muted hover:text-black transition-colors">Uuenda</button>
                         <button type="button" @click="logout()" class="text-xs uppercase tracking-[0.16em] font-sans font-medium text-muted hover:text-black transition-colors">Logi välja</button>
                     </div>
@@ -297,6 +297,7 @@
                                         <span x-show="c.role === 'warranty'" class="h-chip bg-sky-50 text-sky-600 font-sans">Garantii</span>
                                         <span x-show="c.role === 'handyman'" class="h-chip bg-stone-100 text-stone-600 font-sans">Remondimees</span>
                                         <span x-show="c.role === 'garden'" class="h-chip bg-green-50 text-green-600 font-sans">Aed</span>
+                                        <span x-show="c.role === 'building'" class="h-chip bg-stone-100 text-stone-600 font-sans">Haldur</span>
                                     </div>
                                 </div>
                                 <div class="flex items-center justify-between text-xs font-sans font-light text-muted mt-3">
@@ -587,7 +588,7 @@
                                 <button type="button" @click="customerModal.form.contacts.push({ _k: rowKey(), name: '', email: '', phone: '', notify: true })" class="text-[11px] uppercase tracking-[0.15em] text-accent">+ Lisa</button>
                             </div>
                             <p class="text-xs text-muted font-light mb-3">Nt abikaasa või elukaaslane — kõik ajad ja muudatused jõuavad ka temani koos kalendrikutsega.</p>
-                            <template x-for="(ct, i) in customerModal.form.contacts" :key="ct._k || i">
+                            <template x-for="(ct, i) in customerModal.form.contacts" :key="ct._k">
                                 <div class="grid grid-cols-12 gap-2 mb-2 items-end">
                                     <input type="text" x-model="ct.name" placeholder="Nimi" class="h-input col-span-5">
                                     <input type="email" x-model="ct.email" placeholder="E-post" class="h-input col-span-6">
@@ -810,7 +811,7 @@
                                 <button type="button" @click="detail.contactsForm.push({ _k: rowKey(), name: '', email: '', phone: '', notify: true }); detail.editContacts = true" class="text-[11px] uppercase tracking-[0.15em] text-accent">+ Lisa</button>
                             </div>
                             <p class="text-sm font-light mb-2"><span x-text="detail.customer?.email"></span> <span class="text-muted text-xs">(klient)</span></p>
-                            <template x-for="(ct, i) in detail.contactsForm" :key="ct._k || i">
+                            <template x-for="(ct, i) in detail.contactsForm" :key="ct._k">
                                 <div class="grid grid-cols-12 gap-2 mb-2 items-end">
                                     <input type="text" x-model="ct.name" @input="detail.editContacts = true" placeholder="Nimi" class="h-input col-span-4">
                                     <input type="email" x-model="ct.email" @input="detail.editContacts = true" placeholder="E-post" class="h-input col-span-5">
@@ -869,7 +870,7 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div><label class="h-label">Kestus</label><select x-model.number="confirmModal.durationMin" class="h-select"><template x-for="d in durationOptions" :key="d"><option :value="d" x-text="d + ' min'"></option></template></select></div>
                             <div x-show="confirmModal.request?.type !== 'reschedule' && !termsIncluded(confirmModal.request)"><label class="h-label">Hind</label><input type="text" x-model="confirmModal.price" placeholder="nt 45 €" class="h-input"></div>
-                            <div x-show="confirmModal.request?.type !== 'reschedule' && termsIncluded(confirmModal.request)"><label class="h-label">Hind</label><p class="text-sm font-light pt-2" x-text="confirmModal.request?.kind === 'issue' || confirmModal.request?.category === 'warranty' ? 'Garantii korras' : 'Hinnas sees'"></p></div>
+                            <div x-show="confirmModal.request?.type !== 'reschedule' && termsIncluded(confirmModal.request)"><label class="h-label">Hind</label><p class="text-sm font-light pt-2" x-text="confirmModal.request?.kind === 'issue' || confirmModal.request?.category === 'warranty' ? 'Garantii korras' : 'hinnas sees'"></p></div>
                         </div>
                         <div><label class="h-label">Sõnum kliendile (valikuline)</label><input type="text" x-model="confirmModal.message" class="h-input" :placeholder="isCleaningProvider ? 'Nt toon lilled koristusega kaasa' : 'Nt tuleme kahekesi, võtab umbes tunni'"></div>
                         <div x-show="confirmModal.conflicts.length" x-cloak class="bg-amber-50 border border-amber-200 p-4 text-sm">
@@ -1149,10 +1150,9 @@
                 return { requested: 'Ootab vastust', confirmed: 'Kinnitatud', completed: 'Tehtud', answered: 'Vastatud', cancelled: 'Tühistatud' }[s] || s;
             },
             requestKindLabel(r) {
-                if (r.type === 'reschedule') return 'Aja muutmise soov';
-                if (r.kind === 'question') return 'Küsimus';
                 if (r.kind === 'issue') return 'Pöördumine';
-                return { cleaning: 'Lisateenus', warranty: 'Garantiivisiit', handyman: 'Remonditöö', flowers: 'Lilled', garden: 'Aiatöö' }[r.category] || 'Visiidi soov';
+                if (r.kind === 'question') return 'Küsimus';
+                return 'Visiidi soov';
             },
             /** Thread for a request; legacy records without `messages` fall back to note + providerMessage */
             threadMessages(r) {
@@ -1197,7 +1197,7 @@
                 return parts.join(' · ');
             },
             plural(n, one, many) { return `${n} ${Number(n) === 1 ? one : many}`; },
-            greetName() { const p = this.provider; if (!p) return ''; return p.contactName ? this.firstName(p.contactName) : (p.name || ''); },
+            greetName() { const p = this.provider; if (!p) return ''; return p.contactName || p.name || ''; },
             fmtStamp(iso) { if (!iso) return ''; const y = this.dateOf(iso).slice(0, 4); return T().formatDate(iso, 'et-EE', { day: 'numeric', month: 'short', ...(y !== this.todayStr.slice(0, 4) ? { year: 'numeric' } : {}) }) + ' ' + this.fmtTime(iso); },
             fmtDateFull(v) { if (!v) return ''; const iso = v.length === 10 ? v + 'T12:00:00' : v; return T().formatDate(iso, 'et-EE', { day: 'numeric', month: 'long', year: 'numeric' }); },
             get isEnterprise() { return this.billing?.enterprise === true || this.billing?.plan === 'enterprise'; },
@@ -1289,7 +1289,7 @@
                 this.openMsgModal({
                     title: 'Tühista visiit',
                     subtitle: `${this.fmtDateShort(b.scheduledAt)} ${this.fmtTime(b.scheduledAt)} · ${b.customerName}`,
-                    hint: 'Põhjus läheb kliendile portaali ja e-postiga. Kui visiit tuli pöördumisest, jääb pöördumine avatuks ja saad pakkuda uue aja.',
+                    hint: 'Vastus kliendile jõuab portaali ja e-postiga. Klient saab alati juurde kirjutada.',
                     placeholder: 'Nt haigestumine — pakume uue aja homme',
                     button: 'Tühista visiit', danger: true, required: false,
                     submit: async (reason) => {
@@ -1529,7 +1529,8 @@
                 if (date < this.todayStr) date = T().shiftDateString(this.todayStr, 1);
                 let dur = r.type === 'reschedule' && r.targetBookingId ? (() => { const b = this.bookings.find((x) => x.id === r.targetBookingId); return b ? Math.round((new Date(b.endTime) - new Date(b.scheduledAt)) / 60000) : 180; })() : (svc?.durationMin || 60);
                 if (!this.durationOptions.includes(dur)) dur = 60;
-                this.confirmModal = { open: true, request: r, date, time: tw, durationMin: dur, price: '', message: '', force: false, conflicts: [], error: '', saving: false };
+                const includedPrice = this.termsIncluded(r) && r.kind !== 'issue' && r.category !== 'warranty' ? 'hinnas sees' : '';
+                this.confirmModal = { open: true, request: r, date, time: tw, durationMin: dur, price: includedPrice, message: '', force: false, conflicts: [], error: '', saving: false };
             },
             async confirmRequest() {
                 const m = this.confirmModal; if (m.saving) return; m.saving = true; m.error = '';
@@ -1547,7 +1548,7 @@
                 this.openMsgModal({
                     title: 'Vasta kirjalikult',
                     subtitle: `${r.serviceName} · ${r.customerName}`,
-                    hint: 'Vastus kliendile — jõuab portaali ja e-postiga. Pöördumine märgitakse vastatuks; klient saab alati juurde kirjutada.',
+                    hint: 'Vastus kliendile jõuab portaali ja e-postiga. Klient saab alati juurde kirjutada.',
                     placeholder: 'Kirjuta vastus…', button: 'Saada vastus',
                     submit: async (message) => {
                         const res = await this.api('/api/haldus/requests/reply', { method: 'POST', body: JSON.stringify({ requestId: r.id, message }) });
@@ -1577,9 +1578,7 @@
                 this.openMsgModal({
                     title: issue ? 'Ei kuulu garantiisse' : 'Vajame uut aega',
                     subtitle: `${r.serviceName} · ${r.customerName}`,
-                    hint: issue
-                        ? 'Selgita kliendile lühidalt, miks see garantii alla ei kuulu. Klient saab kirja „Pöördumine vaadatud üle“ koos sinu selgitusega ja võimalusega tellida töö tasulisena.'
-                        : 'Anna kliendile teada, miks soovitud aeg ei sobi. Klient saab kirja „Vajame uut aega“ ja pakub portaalis uue aja.',
+                    hint: 'Vastus kliendile jõuab portaali ja e-postiga. Klient saab alati juurde kirjutada.',
                     placeholder: issue ? 'Nt kraanide lupjumine on kasutusest tulenev kulumine…' : 'Nt sel nädalal oleme täis — järgmisel nädalal sobib iga hommik', button: 'Saada kliendile', required: issue,
                     submit: async (message) => {
                         const res = await this.api('/api/haldus/requests/decline', { method: 'POST', body: JSON.stringify({ requestId: r.id, message }) });

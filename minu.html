@@ -386,9 +386,10 @@
         if (!r) return [];
         const msgs = Array.isArray(r.messages) ? r.messages.filter((m) => m && m.text) : [];
         if (msgs.length) return msgs;
-        if (r.note) return [{ id: 'note', by: 'client', name: r.customerName || '', text: r.note, at: r.createdAt }];
-        if (r.providerMessage) return [{ id: 'pm', by: 'provider', name: r.providerName || '', text: r.providerMessage, at: r.answeredAt || r.confirmedAt || r.completedAt }];
-        return [];
+        const out = [];
+        if (r.note) out.push({ id: 'note', by: 'client', name: r.customerName || '', text: r.note, at: r.createdAt });
+        if (r.providerMessage) out.push({ id: 'pm', by: 'provider', name: r.providerName || '', text: r.providerMessage, at: r.answeredAt || r.confirmedAt || r.completedAt || r.declinedAt });
+        return out;
     },
     canReplyTo(r) {
         return r && !['cancelled'].includes(r.status);
@@ -431,7 +432,7 @@
     },
     askPartner(p) {
         // "Write here" on a partner card: a written question to the builder's team, a message to the housekeeper
-        const prefer = { warranty: ['building-question', 'home-manual'], handyman: ['small-repairs'], cleaning: ['cleaning-note'], flowers: ['flowers'] }[p.category] || ['other'];
+        const prefer = { warranty: ['home-manual'], building: ['building-question'], handyman: ['small-repairs'], cleaning: ['cleaning-note'], flowers: ['flowers'] }[p.category] || ['other'];
         const cat = this.extras.catalogue || [];
         const svc = prefer.map((id) => cat.find((s) => s.id === id)).find(Boolean) || cat.find((s) => s.category === p.category);
         if (svc) this.openRequest(svc);
@@ -575,6 +576,9 @@
             'building-question': et ? 'Nt: vajan teist parklapulti. Kelle käest saab?' : 'E.g.: I need a second parking fob. Who do I ask?',
             flowers: et ? 'Nt: valged pojengid, mitte roosid. Vaas on köögis.' : 'E.g.: white peonies, no roses. The vase is in the kitchen.',
             'extra-works': et ? 'Nt: soovin rõdu klaasida. Kas saate hinnapakkumise teha?' : 'E.g.: I would like the balcony glazed. Could you send a quote?',
+            'appliance-care': et ? 'Nt pesumasina filter ja pliidikubu. Kohvimasin on kapis vasakul.' : 'E.g. the washing-machine filter and the hood. The coffee machine is in the cupboard on the left.',
+            'away-care': et ? 'Nt 3. kuni 12. oktoober. Taimed elutoas ja rõdul, post lauale.' : 'E.g. 3 to 12 October. Plants in the living room and on the balcony, post on the table.',
+            'small-repairs': et ? 'Nt esiku lambipirn ja vannitoa äravool voolab aeglaselt.' : 'E.g. the hall bulb and the bathroom drain runs slowly.',
             'cleaning-note': et ? 'Nt: alates oktoobrist sobiks koristus reedeti. Ja palun sel korral eritähelepanu köögile.' : 'E.g.: from October, Fridays would suit better. And extra attention to the kitchen this time, please.',
             other: et ? 'Kirjelda, mida vajad — mida rohkem täpsust, seda kiirem vastus.' : 'Describe what you need — the more detail, the quicker the reply.',
         };
@@ -588,13 +592,13 @@
     get needGroups() {
         const et = this.lang === 'et';
         const defs = [
-            { id: 'issue', title: et ? 'Midagi on katki või vajab kontrolli' : 'Something is broken or needs a check', blurb: et ? 'Uue kodu garantii ja tehnosüsteemid — ehitaja meeskond tuleb ja vaatab üle. Kui pole kindel, kas see on garantii — saada garantiipöördumine, meeskond ütleb.' : 'The warranty and building systems of your new home — the builder team comes to check. Not sure if it is warranty? Send a claim and the team will say.', ids: ['warranty-claim', 'warranty-inspection', 'systems-tuning'] },
-            { id: 'question', title: et ? 'Küsimus kodu või maja kohta' : 'A question about the home or building', blurb: et ? 'Kasutusjuhend, dokument, parkimine, ühistu, lisatööd. Vastame kirjalikult — kedagi ei pea kohale kutsuma.' : 'Manual, document, parking, association, extra works. Answered in writing — no visit needed.', ids: ['home-manual', 'building-question', 'extra-works'] },
-            { id: 'upkeep', title: et ? 'Kodu korrashoid' : 'Keeping the home in order', blurb: et ? 'Lisaks regulaarsele koristusele — samalt inimeselt, kes su kodu juba tunneb.' : 'Beyond the regular clean — from the person who already knows your home.', ids: ['deep-clean', 'windows', 'fridge-oven', 'ironing', 'linens', 'plants'] },
-            { id: 'install', title: et ? 'Paigaldus ja väiksed tööd' : 'Installation and small jobs', blurb: et ? 'Pilt seina, riiul, kardinapuu, uus mööbel, tilkuv kraan, filtrid — täpselt ja jälgi jätmata.' : 'A picture, a shelf, a curtain rail, new furniture, a dripping tap, filters — precise and clean.', ids: ['hang-mount', 'assembly', 'small-repairs', 'vent-filters'] },
-            { id: 'flowers', title: et ? 'Lilled koju' : 'Flowers for the home', blurb: et ? 'Külalisteks või niisama — kimp koju või koristusvisiidiga.' : 'For guests or just because — to your door or with a cleaning visit.', ids: ['flowers'] },
+            { id: 'issue', title: et ? 'Midagi on katki või ei tööta nii, nagu peaks.' : 'Something is broken or does not work as it should.', blurb: et ? 'Uue kodu garantii: praod, vuugid, uksed ja aknad, küte ja ventilatsioon. Kirjelda ja saada. Garantiimeeskond vaatab üle ja kinnitab aja. Kui pole kindel, kas see on garantii, saada ikka.' : 'The warranty of a new home: cracks, joints, doors and windows, heating and ventilation. Describe it and send. The warranty team looks it over and confirms a time. If you are not sure it is warranty, send it anyway.', ids: ['warranty-claim', 'systems-tuning', 'warranty-inspection'] },
+            { id: 'question', title: et ? 'Küsimus kodu, maja või dokumendi kohta.' : 'A question about the home, the building or a document.', blurb: et ? 'Kuidas mu kodu töötab, küsib ehitaja meeskond. Parkimine, panipaik ja ühistu on halduri teema. Mõlemad vastavad kirjalikult ja vastus jääb kodu juurde kirja.' : 'How the home works is a question for the builder team. Parking, storage and the association are the manager. Both reply in writing and the answer stays on record with the home.', ids: ['home-manual', 'building-question'] },
+            { id: 'install', title: et ? 'Paigaldus, pisitööd ja muudatused.' : 'Installation, small jobs and changes.', blurb: et ? 'Maja tehnik teab, kus seintes jooksevad torud ja juhtmed. Pilt, riiul ja teler lähevad õigesse kohta. Filtrid ja pisiremont sama käiguga. Suuremad muudatused, näiteks rõdu klaasimine, küsi hinnapakkumisena ehitajalt.' : 'The building technician knows where pipes and wires run. A picture, a shelf and a television go in the right place. Filters and small repairs on the same visit. Larger changes, such as balcony glazing, ask the builder for a quote.', ids: ['hang-mount', 'assembly', 'small-repairs', 'vent-filters', 'extra-works'] },
+            { id: 'with-visit', title: et ? 'Koos järgmise koristusega.' : 'With the next clean.', blurb: et ? 'Asjad, mida koduhooldaja teeb sama visiidi käigus: kodumasinate filtrid, külmkapp ja ahi, voodipesu, triikimine, ja kimp lauale, kui külalised tulevad.' : 'Things the housekeeper does during the same visit: appliance filters, fridge and oven, linen, ironing, and a bouquet on the table when guests are coming.', ids: ['appliance-care', 'fridge-oven', 'linens', 'ironing', 'flowers'] },
+            { id: 'season', title: et ? 'Hooaeg ja reisid.' : 'Season and travel.', blurb: et ? 'Kaks korda aastas põhjalikumalt: aknad ja rõdu, süvapuhastus. Ja kui oled ära, hoitakse kodu kastetud, tuulutatud ja kontrollitud.' : 'Twice a year, more thoroughly: windows and balcony, a deep clean. And while you are away the home is watered, aired and checked.', ids: ['deep-clean', 'windows', 'away-care'] },
             { id: 'garden', title: et ? 'Aed ja õu' : 'Garden and outdoors', blurb: et ? 'Muru, hekk, terrass ja hooajatööd.' : 'Lawn, hedge, terrace and seasonal work.', ids: ['lawn', 'hedge', 'outdoor-wash', 'seasonal-garden'] },
-            { id: 'other', title: et ? 'Midagi muud' : 'Something else', blurb: et ? 'Kui sobivat ei leidnud — kirjelda ja me suuname õigele inimesele.' : 'If nothing fits — describe it and we route it to the right person.', ids: ['other'] },
+            { id: 'other', title: et ? 'Midagi muud.' : 'Something else.', blurb: et ? 'Kui sobivat kaarti ei ole, kirjelda. Suuname õigele inimesele ja vastame siia.' : 'If no card fits, describe it. We route it to the right person and reply here.', ids: ['other'] },
         ];
         const cat = this.extras.catalogue || [];
         const cats = this.extras.categories || [];
@@ -650,6 +654,20 @@
         const a = this.order?.brand, b = this.extras.brand;
         return a || b ? { ...(a || {}), ...(b || {}) } : null;
     },
+    warrantyUntilLabel() {
+        const cat = (this.extras.categories || []).find((c) => c.id === 'warranty');
+        const d = cat?.terms?.until || this.brand?.warrantyUntil;
+        if (!d) return '';
+        return window.SUKODA_TIME.formatDate(String(d).slice(0, 10) + 'T12:00:00', this.lang === 'et' ? 'et-EE' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    },
+    get handymanStanding() {
+        const cat = (this.extras.categories || []).find((c) => c.id === 'handyman');
+        return !!(cat?.terms?.included || cat?.terms?.quota);
+    },
+    openWarrantyClaim() {
+        const s = (this.extras.catalogue || []).find((x) => x.id === 'warranty-claim');
+        if (s) this.openRequest(s);
+    },
     /** The housekeeper's next regular visit (extras like a warranty call are separate visits) */
     get nextCleaning() { return this.upcomingBookings.find((b) => b.kind !== 'extra') || null; },
     /** One colour per role, used on avatars, chips and dots: housekeeper black · builder's team gold · handyman slate · florist rose · others stone */
@@ -684,7 +702,7 @@
     },
     // Extras that belong to the next cleaning visit rather than to a separate appointment
     get visitAddons() {
-        const ids = ['linens', 'ironing', 'fridge-oven', 'flowers'];
+        const ids = ['appliance-care', 'linens', 'ironing', 'fridge-oven', 'flowers'];
         return (this.extras.catalogue || []).filter((s) => ids.includes(s.id) && this.isOrderable(s) && !(s.id === 'flowers' && this.extras.flowers?.auto));
     },
     openWithVisit(service) {
@@ -837,7 +855,8 @@
             'fridge-oven': 'M6 3h12a1 1 0 011 1v16a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1zm-1 7h14M9 6v2M9 13v3',
             ironing: 'M4 17h16M6 17a5 5 0 015-5h7V9a2 2 0 00-2-2h-6M6 17c0-3 2-5 5-5',
             linens: 'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1v-2zM4 21h16',
-            plants: 'M12 22V12m0 0c-3 0-6-2-6-6 4 0 6 2 6 6zm0 0c3 0 6-2 6-6-4 0-6 2-6 6z',
+            'away-care': 'M12 22V12m0 0c-3 0-6-2-6-6 4 0 6 2 6 6zm0 0c3 0 6-2 6-6-4 0-6 2-6 6z',
+            'appliance-care': 'M6 3h12a1 1 0 011 1v16a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1zm-1 7h14M9 6v2M9 13v3',
             flowers: 'M12 22s-4-2-4-6c0-2 1-3 2-4-1-1-2-2-2-4 0-4 4-6 4-6s4 2 4 6c0 2-1 3-2 4 1 1 2 2 2 4 0 4-4 6-4 6z',
             'hang-mount': 'M4 6h16v10H4zM12 6V3m-2 0h4M8 21l4-5 4 5',
             'vent-filters': 'M4 4h16v16H4zM4 9h16M4 14h16M9 4v16',
@@ -2126,6 +2145,10 @@
                 <!-- ─────────────────────────────────── -->
                 <div x-show="activeTab === 'extras'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
 
+                    <p x-show="brand?.emergencyPhone" x-cloak class="text-base text-muted font-sans font-light leading-relaxed mb-8">
+                        <span x-text="lang === 'et' ? ('Leke, elektririke, uks ei avane. Helista kohe halduri avariinumbrile ' + brand.emergencyPhone + '. Portaal ei ole avariikanal.') : ('A leak, an electrical fault, the door will not open. Call the manager emergency number ' + brand.emergencyPhone + ' now. The portal is not an emergency channel.')"></span>
+                    </p>
+
                     <!-- Head: what this page is for, in one breath -->
                     <div class="grid lg:grid-cols-12 gap-6 lg:gap-12 items-end mb-8 md:mb-10">
                         <div class="lg:col-span-7">
@@ -2133,7 +2156,7 @@
                             <span class="text-[11px] uppercase tracking-[0.2em] text-muted font-sans block mb-3" x-text="lang === 'et' ? 'Teenused' : 'Services'"></span>
                             <h2 class="font-serif text-3xl md:text-4xl font-light" x-text="lang === 'et' ? 'Mida su kodu vajab?' : 'What does your home need?'"></h2>
                         </div>
-                        <p class="lg:col-span-5 text-base text-muted font-sans font-light leading-relaxed" x-text="lang === 'et' ? 'Vali allpool. Õige inimene saab teate, kinnitab aja või vastab kirjalikult — ja kõik jääb siia kodu juurde kirja.' : 'Pick below. The right person is notified, confirms a time or answers in writing — and it all stays on record with the home.'"></p>
+                        <p class="lg:col-span-5 text-base text-muted font-sans font-light leading-relaxed" x-text="lang === 'et' ? 'Vali allpool. Õige inimene saab teate, kinnitab aja või vastab kirjalikult, ja kõik jääb siia kodu juurde kirja. Garantii ja küsimused on tasuta. Töö hinna kinnitab tegija enne tööd.' : 'Pick below. The right person is notified, confirms a time or answers in writing, and it all stays on record with the home. Warranty and questions are free. The person doing the work confirms the price before the work.'"></p>
                     </div>
 
                     <!-- Open requests: status first, so nobody wonders -->
@@ -2165,6 +2188,77 @@
                                     </span>
                                 </button>
                             </template>
+                        </div>
+                    </div>
+
+                    <!-- Standing services, above the catalogue, in one place -->
+                    <div class="mb-12 md:mb-16">
+                        <div class="flex flex-wrap items-end justify-between gap-4 mb-4">
+                            <h2 class="p-h"><span x-text="lang === 'et' ? 'Sinu kodus juba käib' : 'Already part of your home'"></span></h2>
+                            <span class="inline-flex items-center px-3 py-1 text-[11px] uppercase tracking-[0.12em] font-sans font-medium rounded-full" :class="getStatusColor(order?.status)" x-text="getStatusLabel(order?.status)"></span>
+                        </div>
+                        <p class="text-base text-muted font-sans font-light leading-relaxed mb-4" x-text="lang === 'et' ? 'See on osa su kodust: koristus kaks korda kuus, lilled igal visiidil, tehniku tunnid halduslepingus ja ehitaja garantii. Kõik allpool tuleb sellele lisaks, ja igal kaardil on kirjas, kes teeb ja mis maksab.' : 'This is part of your home: cleaning twice a month, flowers on every visit, technician hours in the management contract and the builder warranty. Everything below is on top of that, and every card says who does it and what it costs.'"></p>
+                        <div class="bg-white border border-[#E8E3DD] p-have overflow-hidden">
+                            <div class="grid -mr-px -mb-px md:grid-cols-2">
+                                <div class="border-r border-b border-[#E8E3DD] p-6 md:p-8">
+                                    <div class="flex items-start justify-between gap-4">
+                                        <div class="w-11 h-11 rounded-full bg-cream flex items-center justify-center shrink-0">
+                                            <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                                        </div>
+                                        <span class="text-[10px] uppercase tracking-[0.16em] font-sans text-muted" x-text="lang === 'et' ? 'Püsiteenus' : 'Recurring'"></span>
+                                    </div>
+                                    <p class="font-serif text-2xl font-light mt-5" x-text="lang === 'et' ? 'Regulaarne koristus' : 'Regular cleaning'"></p>
+                                    <dl class="grid grid-cols-2 gap-x-6 gap-y-4 mt-5 pt-5 border-t border-[#E8E3DD]">
+                                        <div>
+                                            <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Rütm' : 'Rhythm'"></dt>
+                                            <dd class="font-sans text-sm" x-text="getPackageName(order?.package)"></dd>
+                                        </div>
+                                        <div>
+                                            <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Järgmine' : 'Next'"></dt>
+                                            <dd class="font-sans text-sm" x-text="nextCleaning ? formatDateShort(nextCleaning.scheduledAt) + ' · ' + formatTime(nextCleaning.scheduledAt) : '—'"></dd>
+                                        </div>
+                                    </dl>
+                                    <button type="button" @click="activeTab = 'visits'" class="mt-6 text-[11px] uppercase tracking-[0.16em] font-sans text-accent hover:text-black transition-colors" x-text="lang === 'et' ? 'Kõik ajad →' : 'All times →'"></button>
+                                </div>
+                                <div x-show="extras.flowers?.auto" x-cloak class="border-r border-b border-[#E8E3DD] p-6 md:p-8">
+                                    <div class="flex items-start justify-between gap-4">
+                                        <div class="w-11 h-11 rounded-full bg-cream flex items-center justify-center shrink-0">
+                                            <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" :d="serviceIcon('flowers')"></path></svg>
+                                        </div>
+                                        <span class="text-[10px] uppercase tracking-[0.16em] font-sans text-muted" x-text="lang === 'et' ? 'Igal visiidil' : 'Every visit'"></span>
+                                    </div>
+                                    <p class="font-serif text-2xl font-light mt-5" x-text="lang === 'et' ? 'Värsked lilled igal visiidil' : 'Fresh flowers on every visit'"></p>
+                                    <dl class="grid grid-cols-2 gap-x-6 gap-y-4 mt-5 pt-5 border-t border-[#E8E3DD]">
+                                        <div>
+                                            <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Toob' : 'Brought by'"></dt>
+                                            <dd class="font-sans text-sm truncate" x-text="order?.provider?.name || ''"></dd>
+                                        </div>
+                                        <div>
+                                            <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Lillepood' : 'Florist'"></dt>
+                                            <dd class="font-sans text-sm truncate" x-text="extras.flowers?.floristBusiness || extras.flowers?.floristName || '—'"></dd>
+                                        </div>
+                                    </dl>
+                                </div>
+                                <div x-show="handymanStanding" x-cloak class="border-r border-b border-[#E8E3DD] p-6 md:p-8">
+                                    <div class="flex items-start justify-between gap-4">
+                                        <div class="w-11 h-11 rounded-full bg-cream flex items-center justify-center shrink-0">
+                                            <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" :d="serviceIcon('small-repairs')"></path></svg>
+                                        </div>
+                                        <span class="text-[10px] uppercase tracking-[0.16em] font-sans text-muted" x-text="lang === 'et' ? 'Püsiteenus' : 'Recurring'"></span>
+                                    </div>
+                                    <p class="font-serif text-2xl font-light mt-5" x-text="lang === 'et' ? 'Tehnik 2 h kuus' : 'Technician 2 h a month'"></p>
+                                </div>
+                                <button type="button" x-show="warrantyUntilLabel()" x-cloak @click="openWarrantyClaim()" class="border-r border-b border-[#E8E3DD] p-6 md:p-8 text-left hover:bg-cream/40 transition-colors">
+                                    <div class="flex items-start justify-between gap-4">
+                                        <div class="w-11 h-11 rounded-full bg-cream flex items-center justify-center shrink-0">
+                                            <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" :d="serviceIcon('warranty-claim')"></path></svg>
+                                        </div>
+                                        <span class="text-[10px] uppercase tracking-[0.16em] font-sans text-muted" x-text="lang === 'et' ? 'Püsiteenus' : 'Recurring'"></span>
+                                    </div>
+                                    <p class="font-serif text-2xl font-light mt-5" x-text="(lang === 'et' ? 'Garantii kuni ' : 'Warranty until ') + warrantyUntilLabel()"></p>
+                                    <span class="mt-6 inline-block text-[11px] uppercase tracking-[0.16em] font-sans text-accent" x-text="lang === 'et' ? 'Teata →' : 'Report →'"></span>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -2216,75 +2310,6 @@
                         </template>
                     </div>
 
-                    <!-- 02 · Standing services: what is already part of the home's month -->
-                    <div class="mt-12 md:mt-16">
-                        <div class="flex flex-wrap items-end justify-between gap-4 mb-4">
-                            <h2 class="p-h"><span class="p-num">02</span><span x-text="lang === 'et' ? 'Sinu püsiteenused' : 'Your standing services'"></span></h2>
-                            <span class="inline-flex items-center px-3 py-1 text-[11px] uppercase tracking-[0.12em] font-sans font-medium rounded-full" :class="getStatusColor(order?.status)" x-text="getStatusLabel(order?.status)"></span>
-                        </div>
-                        <div class="bg-white border border-[#E8E3DD] p-have overflow-hidden">
-                            <div class="grid -mr-px -mb-px" :class="extras.flowers?.auto ? 'md:grid-cols-2' : ''">
-                                <!-- Recurring cleaning -->
-                                <div class="border-r border-b border-[#E8E3DD] p-6 md:p-8">
-                                    <div class="flex items-start justify-between gap-4">
-                                        <div class="w-11 h-11 rounded-full bg-cream flex items-center justify-center shrink-0">
-                                            <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                                        </div>
-                                        <span class="text-[10px] uppercase tracking-[0.16em] font-sans text-muted" x-text="lang === 'et' ? 'Püsiteenus' : 'Recurring'"></span>
-                                    </div>
-                                    <p class="font-serif text-2xl font-light mt-5" x-text="lang === 'et' ? 'Regulaarne koristus' : 'Regular cleaning'"></p>
-                                    <dl class="grid grid-cols-2 gap-x-6 gap-y-4 mt-5 pt-5 border-t border-[#E8E3DD]">
-                                        <div>
-                                            <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Rütm' : 'Rhythm'"></dt>
-                                            <dd class="font-sans text-sm" x-text="getPackageName(order?.package)"></dd>
-                                        </div>
-                                        <div>
-                                            <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Kodu' : 'Home'"></dt>
-                                            <dd class="font-sans text-sm" x-text="getSizeName(order?.size) || '—'"></dd>
-                                        </div>
-                                        <div>
-                                            <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Teeb' : 'Done by'"></dt>
-                                            <dd class="font-sans text-sm truncate" x-text="order?.provider?.name || 'SUKODA'"></dd>
-                                        </div>
-                                        <div>
-                                            <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Järgmine' : 'Next'"></dt>
-                                            <dd class="font-sans text-sm" x-text="nextCleaning ? formatDateShort(nextCleaning.scheduledAt) + ' · ' + formatTime(nextCleaning.scheduledAt) : '—'"></dd>
-                                        </div>
-                                    </dl>
-                                    <div class="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
-                                        <button type="button" @click="activeTab = 'visits'" class="text-[11px] uppercase tracking-[0.16em] font-sans text-accent hover:text-black transition-colors" x-text="lang === 'et' ? 'Kõik ajad →' : 'All times →'"></button>
-                                        <!-- The rhythm is an agreement with the housekeeper: the home asks, she confirms -->
-                                        <button type="button" x-show="order?.source === 'manual' || extras.showPrices === false" @click="requestRhythmChange()" class="text-[11px] uppercase tracking-[0.16em] font-sans text-muted hover:text-black transition-colors" x-text="lang === 'et' ? 'Soovin muudatust' : 'Request a change'"></button>
-                                    </div>
-                                </div>
-                                <!-- Flowers are part of the partner's service standard -->
-                                <div x-show="extras.flowers?.auto" x-cloak class="border-r border-b border-[#E8E3DD] p-6 md:p-8">
-                                    <div class="flex items-start justify-between gap-4">
-                                        <div class="w-11 h-11 rounded-full bg-cream flex items-center justify-center shrink-0">
-                                            <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" :d="serviceIcon('flowers')"></path></svg>
-                                        </div>
-                                        <span class="text-[10px] uppercase tracking-[0.16em] font-sans text-muted" x-text="lang === 'et' ? 'Igal visiidil' : 'Every visit'"></span>
-                                    </div>
-                                    <p class="font-serif text-2xl font-light mt-5" x-text="lang === 'et' ? 'Värsked lilled' : 'Fresh flowers'"></p>
-                                    <dl class="grid grid-cols-2 gap-x-6 gap-y-4 mt-5 pt-5 border-t border-[#E8E3DD]">
-                                        <div>
-                                            <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Toob' : 'Brought by'"></dt>
-                                            <dd class="font-sans text-sm truncate" x-text="order?.provider?.name || ''"></dd>
-                                        </div>
-                                        <div>
-                                            <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Lillepood' : 'Florist'"></dt>
-                                            <dd class="font-sans text-sm truncate" x-text="extras.flowers?.floristBusiness || extras.flowers?.floristName || '—'"></dd>
-                                        </div>
-                                        <div class="col-span-2">
-                                            <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Eelistus' : 'Preference'"></dt>
-                                            <dd class="font-sans text-sm" x-text="extras.flowers?.preference || (lang === 'et' ? 'Pole veel kirjas' : 'Not set yet')"></dd>
-                                        </div>
-                                    </dl>
-                                    <button type="button" @click="activeTab = 'home'" class="mt-6 text-[11px] uppercase tracking-[0.16em] font-sans text-accent hover:text-black transition-colors" x-text="lang === 'et' ? 'Muuda eelistust →' : 'Change preference →'"></button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
                     <!-- 03 · History: what has been done stays with the home -->
                     <div id="ajalugu" x-show="pastRequests.length" x-cloak class="mt-12 md:mt-16">

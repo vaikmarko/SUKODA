@@ -196,18 +196,19 @@ async function buildDocuments(existing, orderId) {
 }
 
 function buildMaintenance(existing) {
-  const keep = (existing || []).filter((it) => !String(it.id || '').startsWith('arco-') && !['vent-filters', 'warranty-inspection', 'floor-heating', 'sealant-check', 'water-meters', 'smoke-detector', 'dishwasher-filter', 'hood-filter'].includes(it.catalogId));
+  const keep = (existing || []).filter((it) => !String(it.id || '').startsWith('arco-') && !['vent-filters', 'warranty-inspection', 'floor-heating', 'sealant-check', 'water-meters', 'smoke-detector', 'dishwasher-filter', 'hood-filter', 'washer-service'].includes(it.catalogId));
   const item = (id, catalogId, intervalMonths, lastDoneAt, nextDueAt, doneBy, serviceId, note = '') => ({ id: rid(id), catalogId, name: null, intervalMonths, lastDoneAt, nextDueAt, serviceId, note, doneBy, remindedFor: null, lastDoneBy: lastDoneAt ? doneBy : undefined });
   return [
     ...keep,
     // What the developer's after-sales team asks the owner to keep an eye on — and can be ordered from them
-    item('m-vent', 'vent-filters', 6, '2026-09-08', '2027-03-08', 'home', 'systems-tuning', 'Vahetas garantiimeeskond seadistuse käigus; varufiltrid panipaigas'),
+    item('m-vent', 'vent-filters', 6, '2026-09-08', '2027-03-08', 'home', 'vent-filters', 'Vahetas garantiimeeskond seadistuse käigus; varufiltrid panipaigas'),
     item('m-inspection', 'warranty-inspection', 12, null, '2027-03-01', 'home', 'warranty-inspection', '1. aasta ülevaatus enne 14.03.2027'),
-    item('m-floor', 'floor-heating', 12, '2026-09-08', '2027-09-08', 'home', 'systems-tuning'),
+    item('m-floor', 'floor-heating', 12, '2026-09-08', '2027-09-08', 'home', 'vent-filters'),
     item('m-sealant', 'sealant-check', 12, '2026-04-02', '2027-04-02', 'home', 'warranty-claim'),
-    // The household's own small things
-    item('m-smoke', 'smoke-detector', 12, '2026-03-14', '2027-03-14', 'home', null),
-    item('m-dish', 'dishwasher-filter', 1, '2026-09-05', '2026-10-05', 'home', null),
+    item('m-smoke', 'smoke-detector', 12, '2026-03-14', '2027-03-14', 'home', 'small-repairs'),
+    item('m-dish', 'dishwasher-filter', 1, '2026-09-05', '2026-10-05', 'provider', 'appliance-care'),
+    item('m-washer', 'washer-service', 3, '2026-06-14', '2026-09-14', 'provider', 'appliance-care'),
+    item('m-hood', 'hood-filter', 3, '2026-06-14', '2026-09-14', 'provider', 'appliance-care'),
   ];
 }
 
@@ -242,7 +243,7 @@ async function main() {
   console.log(`Provider: ${PROVIDER_ID} (${existingProvider ? 'updated' : 'created'})`);
   const existingHandyman = await getDoc('providers', HANDYMAN_ID);
   await patchDoc('providers', HANDYMAN_ID, {
-    ...HANDYMAN, notifyEmail: HANDYMAN.email, services: ['handyman'], status: 'active', lang: 'et', plan: 'enterprise', createdBy: 'admin',
+    ...HANDYMAN, notifyEmail: HANDYMAN.email, services: ['handyman', 'building'], status: 'active', lang: 'et', plan: 'enterprise', createdBy: 'admin',
     createdAt: existingHandyman?.createdAt || now, updatedAt: now,
   });
   console.log(`Provider: ${HANDYMAN_ID} (${existingHandyman ? 'updated' : 'created'})`);
@@ -274,6 +275,8 @@ async function main() {
     warrantyName: PROVIDER.name,
     handymanId: HANDYMAN_ID,
     handymanName: HANDYMAN.name,
+    managerId: HANDYMAN_ID,
+    managerName: 'Kodulahe Haldus OÜ',
     documents,
     maintenance,
     maintenanceNextDue,
@@ -285,7 +288,7 @@ async function main() {
       cleaning: { included: true, services: ['regular'], quota: 'regulaarne koristus lepingus', after: '', billedBy: 'SUKODA' },
     },
     updatedAt: now,
-  }, ['customer.address', 'homeProfile', 'brand', 'warrantyId', 'warrantyName', 'handymanId', 'handymanName', 'documents', 'maintenance', 'maintenanceNextDue', 'terms', 'updatedAt']);
+  }, ['customer.address', 'homeProfile', 'brand', 'warrantyId', 'warrantyName', 'handymanId', 'handymanName', 'managerId', 'managerName', 'documents', 'maintenance', 'maintenanceNextDue', 'terms', 'updatedAt']);
   console.log(`Order updated: address, brand, warranty + handyman partners, ${documents.length} documents (${documents.filter((d) => d.file).length} files), ${maintenance.length} upkeep items`);
 
   // Past visits that were never ticked off read as done — this home's history is tidy
@@ -356,13 +359,13 @@ async function main() {
   });
   // A question answered in writing — the third shape of a request (no visit, no time)
   await setDoc('serviceRequests', rid('req-answered'), {
-    ...base, serviceId: 'building-question', preferredDate: null, timeWindow: 'any',
+    ...base, providerId: HANDYMAN_ID, providerName: HANDYMAN.name, category: 'building', serviceId: 'building-question', preferredDate: null, timeWindow: 'any',
     note: 'Vajan teist parklapulti P-23 jaoks. Kelle käest saab ja mis see maksab?',
     status: 'answered',
     providerMessage: 'Tere, Anna! Teise puldi saab halduri käest — Kodulahe Haldus OÜ, Mart Mets, +372 5555 1234. Hind 45 €, pult programmeeritakse kohapeal. Andsin haldurile teada.',
     messages: [
       { id: 'm1', by: 'client', name: customerName, text: 'Vajan teist parklapulti P-23 jaoks. Kelle käest saab ja mis see maksab?', at: tallinn('2026-09-15', '19:05') },
-      { id: 'm2', by: 'provider', name: PROVIDER.name, text: 'Tere, Anna! Teise puldi saab halduri käest — Kodulahe Haldus OÜ, Mart Mets, +372 5555 1234. Hind 45 €, pult programmeeritakse kohapeal. Andsin haldurile teada.', at: tallinn('2026-09-16', '09:20') },
+      { id: 'm2', by: 'provider', name: HANDYMAN.contactName, text: 'Tere, Anna! Teise puldi saab halduri käest — Kodulahe Haldus OÜ, Mart Mets, +372 5555 1234. Hind 45 €, pult programmeeritakse kohapeal. Andsin haldurile teada.', at: tallinn('2026-09-16', '09:20') },
     ],
     createdAt: tallinn('2026-09-15', '19:05'), answeredAt: tallinn('2026-09-16', '09:20'), updatedAt: tallinn('2026-09-16', '09:20'),
   });

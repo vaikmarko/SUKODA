@@ -2373,7 +2373,7 @@ exports.sendVisitReminders = functions
           }
           const lang = order?.lang || 'et';
 
-          const isPartnerVisit = Boolean(booking.providerId) || order?.source === 'manual' || booking.kind === 'extra';
+          const isPartnerVisit = Boolean(booking.providerId) || order?.source === 'manual' || booking.kind === 'extra' || Boolean(booking.serviceId);
           if (isPartnerVisit && order) {
             // Partner-managed visit: plain reminder (no flowers/surprise promise), sent to every household contact
             await haldus.sendVisitNotification('reminder', { order, booking });
