@@ -1387,10 +1387,11 @@
 
                                 <!-- Read mode -->
                                 <div x-show="!profileEditing" class="mt-7">
-                                    <dl class="grid sm:grid-cols-2 gap-px bg-[#E8E3DD] border border-[#E8E3DD]">
+                                    <!-- Same voice as the service cards: label above, value below, two columns, one rule on top -->
+                                    <dl class="grid sm:grid-cols-2 gap-x-8 gap-y-5 pt-5 border-t border-[#E8E3DD]">
                                         <template x-for="f in profileFilled" :key="f.key">
-                                            <div class="bg-white p-4" :class="f.long ? 'sm:col-span-2' : ''">
-                                                <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1.5" x-text="f.label"></dt>
+                                            <div :class="f.long ? 'sm:col-span-2' : ''">
+                                                <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="f.label"></dt>
                                                 <dd class="font-sans text-base leading-relaxed whitespace-pre-line" x-text="homeProfile[f.key]"></dd>
                                             </div>
                                         </template>
