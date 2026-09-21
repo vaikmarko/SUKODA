@@ -104,7 +104,7 @@
                         <p class="text-muted font-sans font-light text-sm">Kui kirja pole, kontrolli rämpsposti või küsi ligipääsu: <a href="mailto:tere@sukoda.ee" class="text-black">tere@sukoda.ee</a></p>
                     </div>
                     <div class="border-t border-[#E8E3DD] pt-8 mt-8">
-                        <p class="text-muted font-sans font-light text-sm leading-relaxed">SUKODA Töölaud on koduhooldaja, floristi, remondimehe ja aedniku tööriist: kliendid, ajad, kutsed ja teavitused ühes kohas. Klient saab oma koduportaali.</p>
+                        <p class="text-muted font-sans font-light text-sm leading-relaxed">SUKODA Töölaud on koduhooldaja, järelteeninduse meeskonna, floristi, remondimehe ja aedniku tööriist: kodud, pöördumised, ajad ja teavitused ühes kohas. Klient saab oma koduportaali.</p>
                         <button type="button" x-show="!loginSent" @click="signupMode = !signupMode; loginError = ''" class="mt-4 text-[11px] uppercase tracking-[0.18em] text-accent hover:text-black font-sans" x-text="signupMode ? 'Mul on juba ligipääs — logi sisse' : 'Uus partner? Ava oma töölaud'"></button>
                     </div>
                 </div>
@@ -130,10 +130,10 @@
 
             <div class="px-4 md:px-12 py-6 md:py-10 grid-line-b">
                 <div class="accent-line mb-4"></div>
-                <h1 class="font-serif text-3xl md:text-4xl font-light mb-1" x-text="'Tere, ' + firstName(provider?.name)"></h1>
+                <h1 class="font-serif text-3xl md:text-4xl font-light mb-1" x-text="'Tere, ' + greetName()"></h1>
                 <p class="text-muted font-sans font-light text-base">
-                    <span x-text="stats.customers"></span> klienti · <span x-text="stats.weekVisits"></span> visiiti sel nädalal
-                    <span x-show="pendingRequests.length" class="text-accent"> · <span x-text="pendingRequests.length"></span> ootel soovi</span>
+                    <span x-text="plural(stats.customers, 'klient', 'klienti')"></span> · <span x-text="plural(stats.weekVisits, 'visiit', 'visiiti')"></span> sel nädalal
+                    <span x-show="pendingRequests.length" class="text-accent"> · <span x-text="plural(pendingRequests.length, 'pöördumine ootab vastust', 'pöördumist ootab vastust')"></span></span>
                 </p>
             </div>
 
@@ -160,8 +160,8 @@
 
                         <div x-show="pendingRequests.length" class="bg-accent/10 border border-accent/40 p-5 flex items-start justify-between gap-4">
                             <div>
-                                <p class="text-[11px] uppercase tracking-[0.18em] text-accent font-sans mb-1">Ootel soovid</p>
-                                <p class="font-serif text-lg font-light"><span x-text="pendingRequests.length"></span> klienti ootab sinu kinnitust</p>
+                                <p class="text-[11px] uppercase tracking-[0.18em] text-accent font-sans mb-1">Ootab vastust</p>
+                                <p class="font-serif text-lg font-light" x-text="plural(pendingRequests.length, 'pöördumine ootab vastust', 'pöördumist ootab vastust')"></p>
                             </div>
                             <button type="button" @click="activeTab = 'requests'" class="h-btn h-btn-primary font-sans">Vaata</button>
                         </div>
@@ -312,14 +312,14 @@
                 <div x-show="activeTab === 'requests'">
                     <div class="max-w-3xl space-y-10">
                         <div>
-                            <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans mb-4">Ootel</p>
-                            <div x-show="pendingRequests.length === 0" class="bg-cream/40 border border-[#E8E3DD] p-8 text-center text-sm text-muted font-sans font-light">Ootel soove pole. Kui klient tellib portaalist lisateenuse või soovib aega muuta, ilmub see siia ja sinu e-postile.</div>
+                            <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans mb-4">Ootab vastust</p>
+                            <div x-show="pendingRequests.length === 0" class="bg-cream/40 border border-[#E8E3DD] p-8 text-center text-sm text-muted font-sans font-light">Praegu ei oota miski vastust. Kui klient saadab portaalist pöördumise, küsimuse või soovi, ilmub see siia ja sinu e-postile.</div>
                             <div class="space-y-3">
                                 <template x-for="r in pendingRequests" :key="r.id">
                                     <div class="bg-white border border-accent/40 p-5">
                                         <div class="flex items-start justify-between gap-3 mb-3">
                                             <div>
-                                                <p class="text-[11px] uppercase tracking-[0.16em] text-accent font-sans mb-1" x-text="r.type === 'reschedule' ? 'Aja muutmise soov' : r.kind === 'question' ? 'Küsimus' : r.kind === 'issue' ? 'Garantiipöördumine' : 'Lisateenus'"></p>
+                                                <p class="text-[11px] uppercase tracking-[0.16em] text-accent font-sans mb-1" x-text="requestKindLabel(r)"></p>
                                                 <p class="font-serif text-lg font-light" x-text="r.serviceName"></p>
                                                 <p class="text-sm font-sans font-light" x-text="r.customerName"></p>
                                                 <p class="text-xs text-muted font-sans font-light" x-text="r.address"></p>
@@ -328,13 +328,20 @@
                                         </div>
                                         <div class="text-sm font-sans font-light space-y-1 mb-4">
                                             <p x-show="r.targetScheduledAt"><span class="text-muted">Praegune aeg:</span> <span x-text="fmtDateShort(r.targetScheduledAt) + ' ' + fmtTime(r.targetScheduledAt)"></span></p>
-                                            <p><span class="text-muted">Soovitud:</span> <span x-text="r.preferredDate ? fmtDateLong(r.preferredDate) : 'esimesel võimalusel'"></span><span x-show="r.timeWindow" x-text="' · ' + timeWindowLabel(r.timeWindow)"></span></p>
-                                            <p x-show="r.note" class="bg-cream/60 p-3 text-xs" x-text="r.note"></p>
+                                            <p x-show="r.kind !== 'question'"><span class="text-muted">Soovitud:</span> <span x-text="r.preferredDate ? fmtDateLong(r.preferredDate) : 'esimesel võimalusel'"></span><span x-show="r.timeWindow" x-text="' · ' + timeWindowLabel(r.timeWindow)"></span></p>
+                                            <p x-show="r.urgent" class="text-accent">Kiire — segab igapäevaelu</p>
+                                            <p x-show="termsLine(r)" class="text-xs"><span class="text-muted">Kliendile:</span> <span x-text="termsLine(r)"></span></p>
+                                            <p x-show="r.access" class="text-xs"><span class="text-muted">Sissepääs:</span> <span x-text="r.access"></span></p>
+                                            <div x-show="threadMessages(r).length" class="bg-cream/60 p-3 space-y-2">
+                                                <template x-for="m in threadMessages(r)" :key="m.id">
+                                                    <p class="text-xs leading-relaxed"><span class="text-muted" x-text="(m.by === 'client' ? (m.name || r.customerName) : (m.name || 'Sina')) + ': '"></span><span x-text="m.text"></span><span x-show="m.at" class="text-muted/70 ml-2 whitespace-nowrap" x-text="fmtStamp(m.at)"></span></p>
+                                                </template>
+                                            </div>
                                         </div>
                                         <div class="flex flex-wrap gap-3">
                                             <button type="button" x-show="r.kind !== 'question'" @click="openConfirmRequest(r)" class="h-btn h-btn-primary font-sans">Kinnita aeg</button>
                                             <button type="button" @click="replyRequest(r)" class="h-btn font-sans" :class="r.kind === 'question' ? 'h-btn-primary' : 'h-btn-ghost'">Vasta kirjalikult</button>
-                                            <button type="button" x-show="r.kind !== 'question'" @click="declineRequest(r)" class="h-btn h-btn-ghost font-sans">Ei saa</button>
+                                            <button type="button" x-show="r.kind !== 'question'" @click="declineRequest(r)" class="h-btn h-btn-ghost font-sans" x-text="r.kind === 'issue' ? 'Ei kuulu garantiisse' : 'Vajame uut aega'"></button>
                                         </div>
                                     </div>
                                 </template>
@@ -344,12 +351,24 @@
                             <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans mb-4">Käsitletud</p>
                             <div class="space-y-2">
                                 <template x-for="r in handledRequests" :key="r.id">
-                                    <div class="border border-[#E8E3DD] p-4 flex items-center justify-between gap-3 text-sm font-sans opacity-80">
-                                        <div class="min-w-0">
-                                            <p class="font-light truncate"><span x-text="r.serviceName"></span> · <span x-text="r.customerName"></span></p>
-                                            <p class="text-xs text-muted font-light" x-text="r.scheduledAt ? fmtDateShort(r.scheduledAt) + ' ' + fmtTime(r.scheduledAt) : fmtDateShort(r.createdAt)"></p>
+                                    <div class="border border-[#E8E3DD]">
+                                        <button type="button" @click="handledOpen = handledOpen === r.id ? null : r.id" class="w-full text-left p-4 flex items-center justify-between gap-3 text-sm font-sans hover:bg-cream/40 transition-colors">
+                                            <div class="min-w-0">
+                                                <p class="font-light truncate"><span x-text="r.serviceName"></span> · <span x-text="r.customerName"></span> <span x-show="hasNewClientMessage(r)" class="h-chip bg-accent text-white ml-1 align-middle">uus sõnum</span></p>
+                                                <p class="text-xs text-muted font-light truncate" x-text="lastThreadText(r)"></p>
+                                                <p class="text-xs text-muted font-light" x-text="r.scheduledAt ? fmtDateShort(r.scheduledAt) + ' ' + fmtTime(r.scheduledAt) : fmtDateShort(r.answeredAt || r.completedAt || r.declinedAt || r.cancelledAt || r.createdAt)"></p>
+                                            </div>
+                                            <span class="h-chip shrink-0" :class="requestChip(r.status)" x-text="requestStatusLabel(r.status, r)"></span>
+                                        </button>
+                                        <div x-show="handledOpen === r.id" x-cloak class="px-4 pb-4 space-y-2 border-t border-[#E8E3DD] pt-3">
+                                            <p x-show="r.access" class="text-xs font-sans"><span class="text-muted">Sissepääs:</span> <span x-text="r.access"></span></p>
+                                            <template x-for="m in threadMessages(r)" :key="m.id">
+                                                <p class="text-xs font-sans leading-relaxed bg-cream/60 p-3"><span class="text-muted" x-text="(m.by === 'client' ? (m.name || r.customerName) : (m.name || 'Sina')) + ': '"></span><span x-text="m.text"></span><span x-show="m.at" class="text-muted/70 ml-2 whitespace-nowrap" x-text="fmtStamp(m.at)"></span></p>
+                                            </template>
+                                            <div x-show="['confirmed', 'completed', 'answered', 'declined'].includes(r.status)" class="pt-2">
+                                                <button type="button" @click="messageRequest(r)" class="h-btn h-btn-ghost font-sans">Kirjuta kliendile</button>
+                                            </div>
                                         </div>
-                                        <span class="h-chip shrink-0" :class="requestChip(r.status)" x-text="requestStatusLabel(r.status)"></span>
                                     </div>
                                 </template>
                             </div>
@@ -393,8 +412,15 @@
                 <div x-show="activeTab === 'account'" x-cloak>
                     <div class="max-w-3xl space-y-10">
 
+                        <!-- Contracted partner (set up by SUKODA): no plans, no cards — just the arrangement in one line -->
+                        <div x-show="isEnterprise" x-cloak>
+                            <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans mb-1">Koostöö</p>
+                            <p class="font-serif text-2xl font-light"><span x-text="provider?.businessName || provider?.name"></span> <span class="text-muted text-lg" x-text="'· ' + plural(billing.homes, 'kodu', 'kodu')"></span></p>
+                            <p class="text-sm text-muted font-sans font-light leading-relaxed mt-3 max-w-2xl">Töölaud on osa partnerlepingust — kodude arvule piiri ei ole ja arveldus käib lepingu järgi. Küsimustes kirjuta <a href="mailto:partner@sukoda.ee" class="text-black border-b border-accent hover:text-accent">partner@sukoda.ee</a>.</p>
+                        </div>
+
                         <!-- Plan: what it costs, stated plainly, and what you are on -->
-                        <div>
+                        <div x-show="!isEnterprise">
                             <div class="flex flex-wrap items-end justify-between gap-4 mb-5">
                                 <div>
                                     <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans mb-1">Pakett</p>
@@ -425,7 +451,7 @@
                         </div>
 
                         <!-- Invoices -->
-                        <div x-show="billing.hasSubscription || invoices.length">
+                        <div x-show="!isEnterprise && (billing.hasSubscription || invoices.length)">
                             <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans mb-3">Arved</p>
                             <div class="bg-white border border-[#E8E3DD] divide-y divide-[#E8E3DD]" x-show="invoices.length">
                                 <template x-for="inv in invoices" :key="inv.id">
@@ -439,7 +465,7 @@
                         </div>
 
                         <!-- Invitation cards: printed codes handed to this provider by SUKODA -->
-                        <div>
+                        <div x-show="!isEnterprise">
                             <div class="flex flex-wrap items-end justify-between gap-4 mb-3">
                                 <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans">Kutsekaardid</p>
                                 <p class="text-sm text-muted font-sans font-light" x-show="inviteCards.length"><span class="font-serif text-lg text-black" x-text="inviteCards.filter((c) => c.status === 'free').length"></span> vaba · <span x-text="inviteCards.filter((c) => c.status === 'used').length"></span> kasutatud</p>
@@ -506,8 +532,9 @@
                                 <select x-model.number="visitModal.durationMin" class="h-select"><template x-for="d in durationOptions" :key="d"><option :value="d" x-text="d + ' min'"></option></template></select>
                             </div>
                             <div x-show="!visitModal.bookingId"><label class="h-label">Tüüp</label>
-                                <select x-model="visitModal.serviceId" class="h-select">
-                                    <option value="">Tavakoristus</option>
+                                <select x-model="visitModal.serviceId" class="h-select" :required="!isCleaningProvider">
+                                    <option x-show="isCleaningProvider" value="">Tavakoristus</option>
+                                    <option x-show="!isCleaningProvider" value="" disabled>— vali visiidi tüüp —</option>
                                     <template x-for="s in catalogue" :key="s.id"><option :value="s.id" x-text="s.name"></option></template>
                                 </select>
                             </div>
@@ -557,10 +584,10 @@
                         <div>
                             <div class="flex items-center justify-between mb-2">
                                 <label class="h-label mb-0">Kes veel saab teavitusi</label>
-                                <button type="button" @click="customerModal.form.contacts.push({ name: '', email: '', phone: '', notify: true })" class="text-[11px] uppercase tracking-[0.15em] text-accent">+ Lisa</button>
+                                <button type="button" @click="customerModal.form.contacts.push({ _k: rowKey(), name: '', email: '', phone: '', notify: true })" class="text-[11px] uppercase tracking-[0.15em] text-accent">+ Lisa</button>
                             </div>
                             <p class="text-xs text-muted font-light mb-3">Nt abikaasa või elukaaslane — kõik ajad ja muudatused jõuavad ka temani koos kalendrikutsega.</p>
-                            <template x-for="(ct, i) in customerModal.form.contacts" :key="i">
+                            <template x-for="(ct, i) in customerModal.form.contacts" :key="ct._k || i">
                                 <div class="grid grid-cols-12 gap-2 mb-2 items-end">
                                     <input type="text" x-model="ct.name" placeholder="Nimi" class="h-input col-span-5">
                                     <input type="email" x-model="ct.email" placeholder="E-post" class="h-input col-span-6">
@@ -609,7 +636,7 @@
                 <div class="bg-paper w-full sm:max-w-2xl max-h-[92vh] overflow-y-auto border border-[#E8E3DD] shadow-lg" x-show="detail.customer">
                     <div class="p-6 md:p-8 grid-line-b flex justify-between items-start">
                         <div>
-                            <p class="text-[11px] uppercase tracking-[0.16em] text-accent font-sans mb-1" x-text="detail.customer?.source === 'manual' ? 'Sinu klient' : 'SUKODA klient'"></p>
+                            <p class="text-[11px] uppercase tracking-[0.16em] text-accent font-sans mb-1" x-text="detail.customer?.brand ? [detail.customer.brand.project, detail.customer.brand.name].filter(Boolean).join(' · ') : (detail.customer?.source === 'manual' ? 'Sinu klient' : 'SUKODA klient')"></p>
                             <h3 class="font-serif text-2xl font-light" x-text="detail.customer?.name"></h3>
                             <p class="text-sm text-muted font-sans font-light" x-text="detail.customer?.address"></p>
                         </div>
@@ -629,7 +656,7 @@
                         <div x-show="hasHomeProfile(detail.customer)">
                             <label class="h-label">Koduprofiil (kliendi täidetud)</label>
                             <div class="bg-cream/50 p-4 text-sm font-light space-y-1.5">
-                                <template x-for="f in homeProfileFields" :key="f.key">
+                                <template x-for="f in visibleHomeProfileFields" :key="f.key">
                                     <p x-show="detail.customer?.homeProfile?.[f.key]"><span class="text-muted" x-text="f.label + ': '"></span><span x-text="detail.customer?.homeProfile?.[f.key]"></span></p>
                                 </template>
                             </div>
@@ -776,14 +803,14 @@
                             </div>
                         </div>
 
-                        <!-- Contacts -->
-                        <div class="border border-[#E8E3DD] p-5">
+                        <!-- Contacts (the housekeeper's role manages the household's contacts) -->
+                        <div class="border border-[#E8E3DD] p-5" x-show="detail.customer?.canEditHome">
                             <div class="flex items-center justify-between mb-3">
                                 <label class="h-label mb-0">Teavituste saajad</label>
-                                <button type="button" @click="detail.contactsForm.push({ name: '', email: '', phone: '', notify: true }); detail.editContacts = true" class="text-[11px] uppercase tracking-[0.15em] text-accent">+ Lisa</button>
+                                <button type="button" @click="detail.contactsForm.push({ _k: rowKey(), name: '', email: '', phone: '', notify: true }); detail.editContacts = true" class="text-[11px] uppercase tracking-[0.15em] text-accent">+ Lisa</button>
                             </div>
                             <p class="text-sm font-light mb-2"><span x-text="detail.customer?.email"></span> <span class="text-muted text-xs">(klient)</span></p>
-                            <template x-for="(ct, i) in detail.contactsForm" :key="i">
+                            <template x-for="(ct, i) in detail.contactsForm" :key="ct._k || i">
                                 <div class="grid grid-cols-12 gap-2 mb-2 items-end">
                                     <input type="text" x-model="ct.name" @input="detail.editContacts = true" placeholder="Nimi" class="h-input col-span-4">
                                     <input type="email" x-model="ct.email" @input="detail.editContacts = true" placeholder="E-post" class="h-input col-span-5">
@@ -817,9 +844,9 @@
                             <button type="button" x-show="detail.notesDirty" @click="saveNotes()" class="h-btn h-btn-outline mt-3">Salvesta märkmed</button>
                         </div>
 
-                        <div class="flex flex-wrap gap-4 pt-4 border-t border-[#E8E3DD]">
+                        <div class="flex flex-wrap gap-4 pt-4 border-t border-[#E8E3DD]" x-show="detail.customer?.canEditHome && detail.customer?.source === 'manual'">
                             <button type="button" @click="resendPortal()" class="h-btn h-btn-ghost">Saada portaali link uuesti</button>
-                            <button type="button" x-show="detail.customer?.source === 'manual' && detail.customer?.status === 'paid'" @click="archiveCustomer()" class="h-btn h-btn-ghost text-red-500">Lõpeta koostöö</button>
+                            <button type="button" x-show="detail.customer?.status === 'paid'" @click="archiveCustomer()" class="h-btn h-btn-ghost text-red-500">Lõpeta koostöö</button>
                         </div>
                     </div>
                 </div>
@@ -832,7 +859,8 @@
                         <h3 class="font-serif text-xl font-light">Kinnita aeg</h3>
                         <button type="button" @click="confirmModal.open = false" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/></svg></button>
                     </div>
-                    <p class="text-sm text-muted font-sans font-light mb-6"><span x-text="confirmModal.request?.serviceName"></span> · <span x-text="confirmModal.request?.customerName"></span></p>
+                    <p class="text-sm text-muted font-sans font-light mb-2"><span x-text="confirmModal.request?.serviceName"></span> · <span x-text="confirmModal.request?.customerName"></span></p>
+                    <p x-show="termsLine(confirmModal.request)" class="text-xs font-sans font-light mb-6 bg-cream/60 px-3 py-2"><span class="text-muted">Kliendile:</span> <span x-text="termsLine(confirmModal.request)"></span></p>
                     <form @submit.prevent="confirmRequest()" class="space-y-5 font-sans">
                         <div class="grid grid-cols-2 gap-4">
                             <div><label class="h-label">Kuupäev</label><input type="date" x-model="confirmModal.date" required class="h-input"></div>
@@ -840,9 +868,10 @@
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div><label class="h-label">Kestus</label><select x-model.number="confirmModal.durationMin" class="h-select"><template x-for="d in durationOptions" :key="d"><option :value="d" x-text="d + ' min'"></option></template></select></div>
-                            <div x-show="confirmModal.request?.type !== 'reschedule'"><label class="h-label">Hind</label><input type="text" x-model="confirmModal.price" placeholder="nt 45 €" class="h-input"></div>
+                            <div x-show="confirmModal.request?.type !== 'reschedule' && !termsIncluded(confirmModal.request)"><label class="h-label">Hind</label><input type="text" x-model="confirmModal.price" placeholder="nt 45 €" class="h-input"></div>
+                            <div x-show="confirmModal.request?.type !== 'reschedule' && termsIncluded(confirmModal.request)"><label class="h-label">Hind</label><p class="text-sm font-light pt-2" x-text="confirmModal.request?.kind === 'issue' || confirmModal.request?.category === 'warranty' ? 'Garantii korras' : 'Hinnas sees'"></p></div>
                         </div>
-                        <div><label class="h-label">Sõnum kliendile (valikuline)</label><input type="text" x-model="confirmModal.message" class="h-input" placeholder="Nt toon lilled koristusega kaasa"></div>
+                        <div><label class="h-label">Sõnum kliendile (valikuline)</label><input type="text" x-model="confirmModal.message" class="h-input" :placeholder="isCleaningProvider ? 'Nt toon lilled koristusega kaasa' : 'Nt tuleme kahekesi, võtab umbes tunni'"></div>
                         <div x-show="confirmModal.conflicts.length" x-cloak class="bg-amber-50 border border-amber-200 p-4 text-sm">
                             <p class="text-amber-700 font-medium mb-2">Sul on samal ajal teine visiit:</p>
                             <template x-for="c in confirmModal.conflicts" :key="c.id"><p class="text-amber-700 font-light" x-text="fmtTime(c.scheduledAt) + '–' + fmtTime(c.endTime) + ' · ' + c.customerName"></p></template>
@@ -853,6 +882,26 @@
                         <div class="flex gap-3 pt-2">
                             <button type="button" @click="confirmModal.open = false" class="h-btn h-btn-outline">Loobu</button>
                             <button type="submit" :disabled="confirmModal.saving" class="h-btn h-btn-primary flex-1" x-text="confirmModal.saving ? 'Kinnitan…' : 'Kinnita ja teavita'"></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ═══════════════ MESSAGE MODAL: reply / decline / cancel — one textarea instead of browser prompts ═══════════════ -->
+            <div x-show="msgModal.open" x-cloak class="fixed inset-0 z-[110] flex items-end sm:items-center justify-center sm:p-4 bg-black/40" @click.self="msgModal.open = false" @keydown.escape.window="msgModal.open = false">
+                <div class="bg-paper w-full sm:max-w-lg max-h-[92vh] overflow-y-auto border border-[#E8E3DD] p-6 md:p-8 shadow-lg">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-serif text-xl font-light" x-text="msgModal.title"></h3>
+                        <button type="button" @click="msgModal.open = false" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/></svg></button>
+                    </div>
+                    <p x-show="msgModal.subtitle" class="text-sm text-muted font-sans font-light mb-2" x-text="msgModal.subtitle"></p>
+                    <p class="text-xs text-muted font-sans font-light mb-5" x-text="msgModal.hint"></p>
+                    <form @submit.prevent="msgModal.submit()" class="space-y-4 font-sans">
+                        <textarea x-model="msgModal.text" rows="4" class="h-input resize-none" :placeholder="msgModal.placeholder" x-ref="msgText"></textarea>
+                        <p x-show="msgModal.error" x-cloak class="text-sm text-red-500 font-light" x-text="msgModal.error"></p>
+                        <div class="flex gap-3 pt-1">
+                            <button type="button" @click="msgModal.open = false" class="h-btn h-btn-outline">Loobu</button>
+                            <button type="submit" :disabled="msgModal.saving || (msgModal.required && msgModal.text.trim().length < 2)" class="h-btn flex-1" :class="msgModal.danger ? 'h-btn-outline text-red-500' : 'h-btn-primary'" x-text="msgModal.saving ? 'Saadan…' : msgModal.button"></button>
                         </div>
                     </form>
                 </div>
@@ -912,9 +961,12 @@
             ],
 
             visitModal: { open: false, orderId: '', bookingId: null, customerName: '', currentStart: null, date: '', time: '10:00', durationMin: 180, serviceId: '', price: '', note: '', customerNote: '', notify: true, force: false, conflicts: [], error: '', saving: false, completed: false },
-            customerModal: { open: false, saving: false, error: '', existingWarning: '', upgrade: false, form: null },
+            // `form` starts with the real shape so Alpine never evaluates customerModal.form.* against null on load
+            customerModal: { open: false, saving: false, error: '', existingWarning: '', upgrade: false, form: { name: '', email: '', phone: '', address: '', size: 'medium', contacts: [], useSchedule: true, schedule: { frequency: 'biweekly', anchorDate: '', time: '10:00', durationMin: 180 }, providerNotes: '', sendWelcome: true, force: false } },
+            msgModal: { open: false, title: '', subtitle: '', hint: '', placeholder: '', button: 'Saada', danger: false, required: true, text: '', error: '', saving: false, submit() {} },
             detail: { open: false, customer: null, editSchedule: false, scheduleForm: {}, contactsForm: [], editContacts: false, notes: '', notesDirty: false, saving: false, error: '', editAway: false, awayForm: { from: '', to: '', note: '' }, editFlowers: false, flowersForm: { auto: false, floristId: '', leadDays: 2, note: '', budget: '' }, maintAdding: false, maintForm: { name: '', intervalMonths: 6 } },
             confirmModal: { open: false, request: null, date: '', time: '10:00', durationMin: 60, price: '', message: '', force: false, conflicts: [], error: '', saving: false },
+            handledOpen: null,
 
             // ---------- lifecycle ----------
             async init() {
@@ -1064,12 +1116,12 @@
             dateOf(iso) { return iso ? T().getDateString(iso) : ''; },
             firstName(n) { return String(n || '').trim().split(/\s+/)[0] || ''; },
             fmtTime(iso) { return iso ? T().formatTime(iso, 'et-EE', { hour: '2-digit', minute: '2-digit' }) : ''; },
-            fmtDateShort(v) { if (!v) return ''; const iso = v.length === 10 ? v + 'T12:00:00' : v; return T().formatDate(iso, 'et-EE', { day: 'numeric', month: 'short' }); },
+            fmtDateShort(v) { if (!v) return ''; const iso = v.length === 10 ? v + 'T12:00:00' : v; const y = this.dateOf(iso).slice(0, 4); return T().formatDate(iso, 'et-EE', { day: 'numeric', month: 'short', ...(this.todayStr && y !== this.todayStr.slice(0, 4) ? { year: 'numeric' } : {}) }); },
             fmtDateLong(v) { if (!v) return ''; const [y, m, d] = (v.length === 10 ? v : this.dateOf(v)).split('-').map(Number); const dow = new Date(Date.UTC(y, m - 1, d, 12)).getUTCDay(); return `${WEEKDAYS[dow]}, ${d}. ${MONTHS[m - 1].toLowerCase()}`; },
             monthLabel(ym) { const [y, m] = ym.split('-').map(Number); return `${MONTHS[m - 1]} ${y}`; },
             holidayName(dateStr) { if (!dateStr || dateStr.length < 10) return null; return holidays(Number(dateStr.slice(0, 4)))[dateStr] || null; },
             sizeLabel(s) { return { small: '1–2 tuba', medium: '3 tuba', large: '4+ tuba' }[s] || s || ''; },
-            timeWindowLabel(k) { return { morning: 'hommik (9–12)', afternoon: 'pärastlõuna (12–17)', any: 'ükskõik', 'with-visit': 'koos järgmise koristusega' }[k] || ''; },
+            timeWindowLabel(k) { return { morning: 'hommik (9–12)', afternoon: 'pärastlõuna (12–17)', any: 'ükskõik', 'with-visit': 'koos järgmise visiidiga' }[k] || ''; },
             scheduleLabel(s) {
                 if (!s || s.active === false) return 'Graafikut pole — visiidid lisatakse käsitsi';
                 const f = { weekly: 'Iga nädal', biweekly: 'Iga 2 nädala tagant', monthly: '1× kuus' }[s.frequency] || s.frequency;
@@ -1091,7 +1143,66 @@
             customerUpcoming(orderId) { const now = new Date().toISOString(); return this.liveBookings.filter((b) => b.orderId === orderId && b.scheduledAt > now).sort(this.byTime); },
             chipClass(b) { if (b.status === 'completed') return 'bg-green-50 text-green-700'; if (b.kind === 'extra') return 'bg-pink-50 text-pink-600'; return 'bg-accent/15 text-black'; },
             requestChip(s) { return { confirmed: 'bg-green-50 text-green-700', completed: 'bg-green-50 text-green-700', answered: 'bg-green-50 text-green-700', declined: 'bg-gray-100 text-gray-500', cancelled: 'bg-gray-100 text-gray-500' }[s] || 'bg-accent/10 text-accent'; },
-            requestStatusLabel(s) { return { requested: 'Ootel', confirmed: 'Kinnitatud', completed: 'Tehtud', answered: 'Vastatud', declined: 'Tagasi lükatud', cancelled: 'Tühistatud' }[s] || s; },
+            // Same words as the portal and the e-mails: Ootab vastust · Kinnitatud · Vastatud · Tehtud · Vajab uut aega / Vaadatud üle · Tühistatud
+            requestStatusLabel(s, r) {
+                if (s === 'declined') return (r && (r.outcome === 'not_covered' || (!r.outcome && r.kind === 'issue'))) ? 'Vaadatud üle' : 'Vajab uut aega';
+                return { requested: 'Ootab vastust', confirmed: 'Kinnitatud', completed: 'Tehtud', answered: 'Vastatud', cancelled: 'Tühistatud' }[s] || s;
+            },
+            requestKindLabel(r) {
+                if (r.type === 'reschedule') return 'Aja muutmise soov';
+                if (r.kind === 'question') return 'Küsimus';
+                if (r.kind === 'issue') return 'Pöördumine';
+                return { cleaning: 'Lisateenus', warranty: 'Garantiivisiit', handyman: 'Remonditöö', flowers: 'Lilled', garden: 'Aiatöö' }[r.category] || 'Visiidi soov';
+            },
+            /** Thread for a request; legacy records without `messages` fall back to note + providerMessage */
+            threadMessages(r) {
+                if (!r) return [];
+                if (Array.isArray(r.messages) && r.messages.length) return r.messages;
+                const out = [];
+                if (r.note) out.push({ id: 'n', by: 'client', name: r.customerName, text: r.note, at: r.createdAt });
+                if (r.providerMessage) out.push({ id: 'p', by: 'provider', name: '', text: r.providerMessage, at: r.answeredAt || r.confirmedAt || r.declinedAt || null });
+                return out;
+            },
+            lastThreadText(r) { const m = this.threadMessages(r); return m.length ? m[m.length - 1].text : ''; },
+            /** The household wrote after the partner last acted — worth a badge on a handled request */
+            hasNewClientMessage(r) {
+                const msgs = Array.isArray(r?.messages) ? r.messages : [];
+                const last = msgs[msgs.length - 1];
+                if (!last || last.by !== 'client' || !last.at) return false;
+                const acted = [r.answeredAt, r.confirmedAt, r.completedAt, r.declinedAt].filter(Boolean).sort().pop();
+                const lastProvider = msgs.filter((m) => m.by === 'provider' && m.at).map((m) => m.at).sort().pop();
+                const ref = [acted, lastProvider].filter(Boolean).sort().pop();
+                return !ref || last.at > ref;
+            },
+            /** Terms the home has for this request's category, in one line the partner can say out loud to the client */
+            termsFor(r) {
+                if (!r) return null;
+                const c = this.customers.find((x) => x.id === r.orderId);
+                const cat = r.category || (this.catalogue.find((s) => s.id === r.serviceId)?.category) || this.provider?.services?.[0] || 'cleaning';
+                const t = c?.terms?.[cat];
+                if (!t || typeof t !== 'object') return null;
+                const svcOk = !Array.isArray(t.services) || !t.services.length || !r.serviceId || t.services.includes(r.serviceId);
+                const live = !t.until || t.until >= this.todayStr;
+                return { ...t, cat, included: t.included === true && svcOk && live, expired: t.included === true && svcOk && !live };
+            },
+            termsIncluded(r) { return !!this.termsFor(r)?.included; },
+            termsLine(r) {
+                const t = this.termsFor(r); if (!t) return '';
+                const parts = [];
+                if (t.included) parts.push((t.cat === 'warranty' ? 'garantii korras' : 'hinnas sees') + (t.until ? ' kuni ' + this.fmtDateFull(t.until) : ''));
+                else if (t.expired) parts.push((t.cat === 'warranty' ? 'garantii lõppes ' : 'sisaldus kuni ') + this.fmtDateFull(t.until));
+                if (t.quota) parts.push(t.quota);
+                if (t.after) parts.push((t.included ? 'üle selle ' : '') + t.after);
+                if (t.billedBy) parts.push('arve ' + t.billedBy);
+                return parts.join(' · ');
+            },
+            plural(n, one, many) { return `${n} ${Number(n) === 1 ? one : many}`; },
+            greetName() { const p = this.provider; if (!p) return ''; return p.contactName ? this.firstName(p.contactName) : (p.name || ''); },
+            fmtStamp(iso) { if (!iso) return ''; const y = this.dateOf(iso).slice(0, 4); return T().formatDate(iso, 'et-EE', { day: 'numeric', month: 'short', ...(y !== this.todayStr.slice(0, 4) ? { year: 'numeric' } : {}) }) + ' ' + this.fmtTime(iso); },
+            fmtDateFull(v) { if (!v) return ''; const iso = v.length === 10 ? v + 'T12:00:00' : v; return T().formatDate(iso, 'et-EE', { day: 'numeric', month: 'long', year: 'numeric' }); },
+            get isEnterprise() { return this.billing?.enterprise === true || this.billing?.plan === 'enterprise'; },
+            get isCleaningProvider() { return (this.provider?.services || ['cleaning']).includes('cleaning'); },
+            get visibleHomeProfileFields() { const role = this.detail.customer?.role || 'cleaning'; return role === 'cleaning' ? this.homeProfileFields : this.homeProfileFields.filter((f) => ['access', 'pets', 'allergies', 'specialRequests'].includes(f.key)); },
 
             visitCard(b, { compact = false } = {}) {
                 const now = new Date().toISOString();
@@ -1139,11 +1250,11 @@
             // ---------- visits ----------
             openVisitModal({ date, orderId, booking } = {}) {
                 const c = orderId ? this.customers.find((x) => x.id === orderId) : null;
-                const dur = booking ? Math.round((new Date(booking.endTime) - new Date(booking.scheduledAt)) / 60000) : (c?.schedule?.durationMin || { small: 120, medium: 180, large: 240 }[c?.size] || 180);
+                const dur = booking ? Math.round((new Date(booking.endTime) - new Date(booking.scheduledAt)) / 60000) : (this.isCleaningProvider ? (c?.schedule?.durationMin || { small: 120, medium: 180, large: 240 }[c?.size] || 180) : 60);
                 this.visitModal = {
                     open: true, orderId: booking?.orderId || orderId || '', bookingId: booking?.id || null, customerName: booking?.customerName || '', currentStart: booking?.scheduledAt || null,
                     date: booking ? this.dateOf(booking.scheduledAt) : (date || this.todayStr), time: booking ? this.fmtTime(booking.scheduledAt) : (c?.schedule?.time || '10:00'),
-                    durationMin: this.durationOptions.includes(dur) ? dur : 180, serviceId: '', price: '', note: booking?.note || '', customerNote: '', notify: true, force: false, conflicts: [], error: '', saving: false,
+                    durationMin: this.durationOptions.includes(dur) ? dur : (this.isCleaningProvider ? 180 : 60), serviceId: this.isCleaningProvider ? '' : (this.catalogue[0]?.id || ''), price: '', note: booking?.note || '', customerNote: '', notify: true, force: false, conflicts: [], error: '', saving: false,
                     completed: false, away: false,
                 };
                 if (!this.visitModal.time.match(/^\d\d:\d\d$/)) this.visitModal.time = '10:00';
@@ -1174,30 +1285,52 @@
                     await this.loadData(this.range.from, this.range.to);
                 } catch (e) { this.globalError = e.message; }
             },
-            async cancelVisit(b) {
-                const reason = prompt(`Tühista visiit ${this.fmtDateShort(b.scheduledAt)} ${this.fmtTime(b.scheduledAt)} · ${b.customerName}?\nPõhjus (läheb kliendile):`, '');
-                if (reason === null) return;
-                try {
-                    const res = await this.api('/api/haldus/visits/cancel', { method: 'POST', body: JSON.stringify({ bookingId: b.id, reason }) });
-                    if (!res.ok) throw new Error((await res.json()).error);
-                    this.showToast('Visiit tühistatud, teavitus saadetud');
-                    await this.loadData(this.range.from, this.range.to);
-                } catch (e) { this.globalError = e.message; }
+            cancelVisit(b) {
+                this.openMsgModal({
+                    title: 'Tühista visiit',
+                    subtitle: `${this.fmtDateShort(b.scheduledAt)} ${this.fmtTime(b.scheduledAt)} · ${b.customerName}`,
+                    hint: 'Põhjus läheb kliendile portaali ja e-postiga. Kui visiit tuli pöördumisest, jääb pöördumine avatuks ja saad pakkuda uue aja.',
+                    placeholder: 'Nt haigestumine — pakume uue aja homme',
+                    button: 'Tühista visiit', danger: true, required: false,
+                    submit: async (reason) => {
+                        const res = await this.api('/api/haldus/visits/cancel', { method: 'POST', body: JSON.stringify({ bookingId: b.id, reason }) });
+                        if (!res.ok) throw new Error((await res.json()).error);
+                        this.showToast('Visiit tühistatud, teavitus saadetud');
+                        await this.loadData(this.range.from, this.range.to);
+                    },
+                });
+            },
+
+            // One textarea dialog for anything that used to be a browser prompt()
+            openMsgModal({ title, subtitle = '', hint = '', placeholder = '', button = 'Saada', danger = false, required = true, submit }) {
+                this.msgModal = {
+                    open: true, title, subtitle, hint, placeholder, button, danger, required, text: '', error: '', saving: false,
+                    submit: async () => {
+                        const m = this.msgModal; if (m.saving) return;
+                        if (m.required && m.text.trim().length < 2) return;
+                        m.saving = true; m.error = '';
+                        try { await submit(m.text.trim()); m.open = false; } catch (e) { m.error = e.message || 'Midagi läks valesti'; } finally { m.saving = false; }
+                    },
+                };
+                this.$nextTick(() => this.$refs.msgText?.focus());
             },
 
             // ---------- customers ----------
             openCustomerModal() {
-                this.customerModal = {
-                    open: true, saving: false, error: '', existingWarning: '', upgrade: false,
-                    form: { name: '', email: '', phone: '', address: '', size: 'medium', contacts: [{ name: '', email: '', phone: '', notify: true }], useSchedule: true,
-                        schedule: { frequency: 'biweekly', anchorDate: T().shiftDateString(this.todayStr, 7), time: '10:00', durationMin: 180 }, providerNotes: '', sendWelcome: true, force: false },
+                this.customerModal = { open: true, saving: false, error: '', existingWarning: '', upgrade: false, form: this.blankCustomerForm() };
+            },
+            blankCustomerForm() {
+                return {
+                    name: '', email: '', phone: '', address: '', size: 'medium', contacts: [{ _k: this.rowKey(), name: '', email: '', phone: '', notify: true }], useSchedule: true,
+                    schedule: { frequency: 'biweekly', anchorDate: this.todayStr ? T().shiftDateString(this.todayStr, 7) : '', time: '10:00', durationMin: 180 }, providerNotes: '', sendWelcome: true, force: false,
                 };
             },
+            rowKey() { return Math.random().toString(36).slice(2, 10); },
             async saveCustomer() {
                 const m = this.customerModal; if (m.saving) return;
                 m.saving = true; m.error = '';
                 const f = m.form;
-                const body = { name: f.name, email: f.email, phone: f.phone, address: f.address, size: f.size, contacts: f.contacts.filter((c) => c.name || c.email), providerNotes: f.providerNotes, sendWelcome: f.sendWelcome, force: f.force, schedule: f.useSchedule ? f.schedule : null };
+                const body = { name: f.name, email: f.email, phone: f.phone, address: f.address, size: f.size, contacts: f.contacts.filter((c) => c.name || c.email).map(({ _k, ...c }) => c), providerNotes: f.providerNotes, sendWelcome: f.sendWelcome, force: f.force, schedule: f.useSchedule ? f.schedule : null };
                 try {
                     const res = await this.api('/api/haldus/customers', { method: 'POST', body: JSON.stringify(body) });
                     const d = await res.json();
@@ -1211,7 +1344,7 @@
                 } catch (e) { m.error = e.message; } finally { m.saving = false; }
             },
             openCustomerDetail(c) {
-                this.detail = { open: true, customer: c, editSchedule: false, scheduleForm: {}, contactsForm: JSON.parse(JSON.stringify(c.contacts || [])), editContacts: false, notes: c.providerNotes || '', notesDirty: false, saving: false, error: '', editAway: false, awayForm: { from: '', to: '', note: '' }, editFlowers: false, flowersForm: { auto: false, floristId: '', leadDays: 2, note: '', budget: '' }, maintAdding: false, maintForm: { name: '', intervalMonths: 6 } };
+                this.detail = { open: true, customer: c, editSchedule: false, scheduleForm: {}, contactsForm: JSON.parse(JSON.stringify(c.contacts || [])).map((ct) => ({ _k: this.rowKey(), ...ct })), editContacts: false, notes: c.providerNotes || '', notesDirty: false, saving: false, error: '', editAway: false, awayForm: { from: '', to: '', note: '' }, editFlowers: false, flowersForm: { auto: false, floristId: '', leadDays: 2, note: '', budget: '' }, maintAdding: false, maintForm: { name: '', intervalMonths: 6 } };
             },
             startEditSchedule() {
                 const s = this.detail.customer.schedule;
@@ -1301,6 +1434,7 @@
                 } catch (e) { this.billingError = e.message; } finally { this.billingBusy = false; }
             },
             async loadInvoices() {
+                if (this.isEnterprise) return;
                 try { const res = await this.api('/api/haldus/billing/invoices'); const d = await res.json(); if (res.ok) this.invoices = d.invoices || []; } catch (e) {}
             },
             async saveProfile() {
@@ -1353,10 +1487,10 @@
             async saveContacts() {
                 const d = this.detail; if (d.saving) return; d.saving = true;
                 try {
-                    const res = await this.api('/api/haldus/customers/update', { method: 'POST', body: JSON.stringify({ orderId: d.customer.id, contacts: d.contactsForm.filter((c) => c.name || c.email) }) });
+                    const res = await this.api('/api/haldus/customers/update', { method: 'POST', body: JSON.stringify({ orderId: d.customer.id, contacts: d.contactsForm.filter((c) => c.name || c.email).map(({ _k, ...c }) => c) }) });
                     const r = await res.json();
                     if (!res.ok) throw new Error(r.error);
-                    d.editContacts = false; d.contactsForm = JSON.parse(JSON.stringify(r.customer.contacts || []));
+                    d.editContacts = false; d.contactsForm = JSON.parse(JSON.stringify(r.customer.contacts || [])).map((ct) => ({ _k: this.rowKey(), ...ct }));
                     this.showToast('Saajad salvestatud');
                     await this.loadData(this.range.from, this.range.to);
                 } catch (e) { this.globalError = e.message; } finally { d.saving = false; }
@@ -1400,7 +1534,8 @@
             async confirmRequest() {
                 const m = this.confirmModal; if (m.saving) return; m.saving = true; m.error = '';
                 try {
-                    const res = await this.api('/api/haldus/requests/confirm', { method: 'POST', body: JSON.stringify({ requestId: m.request.id, date: m.date, time: m.time, durationMin: m.durationMin, price: m.price, message: m.message, force: m.force }) });
+                    // Included by the home's terms → the client already sees "hinnas sees"; never send an invented price
+                    const res = await this.api('/api/haldus/requests/confirm', { method: 'POST', body: JSON.stringify({ requestId: m.request.id, date: m.date, time: m.time, durationMin: m.durationMin, price: this.termsIncluded(m.request) ? '' : m.price, message: m.message, force: m.force }) });
                     const d = await res.json();
                     if (res.status === 409 && d.code === 'CONFLICT') { m.conflicts = d.conflicts || []; return; }
                     if (!res.ok) throw new Error(d.error || 'Kinnitamine ebaõnnestus');
@@ -1408,25 +1543,51 @@
                     await this.loadData(this.range.from, this.range.to);
                 } catch (e) { m.error = e.message; } finally { m.saving = false; }
             },
-            async replyRequest(r) {
-                const message = prompt(`Vastus kliendile (${r.customerName}). Läheb e-postiga, soov sulgub kui vastatud:`, '');
-                if (message === null || !message.trim()) return;
-                try {
-                    const res = await this.api('/api/haldus/requests/reply', { method: 'POST', body: JSON.stringify({ requestId: r.id, message }) });
-                    if (!res.ok) throw new Error((await res.json()).error);
-                    this.showToast('Vastus saadetud');
-                    await this.loadData(this.range.from, this.range.to);
-                } catch (e) { this.globalError = e.message; }
+            replyRequest(r) {
+                this.openMsgModal({
+                    title: 'Vasta kirjalikult',
+                    subtitle: `${r.serviceName} · ${r.customerName}`,
+                    hint: 'Vastus kliendile — jõuab portaali ja e-postiga. Pöördumine märgitakse vastatuks; klient saab alati juurde kirjutada.',
+                    placeholder: 'Kirjuta vastus…', button: 'Saada vastus',
+                    submit: async (message) => {
+                        const res = await this.api('/api/haldus/requests/reply', { method: 'POST', body: JSON.stringify({ requestId: r.id, message }) });
+                        if (!res.ok) throw new Error((await res.json()).error);
+                        this.showToast('Vastus saadetud');
+                        await this.loadData(this.range.from, this.range.to);
+                    },
+                });
             },
-            async declineRequest(r) {
-                const message = prompt(`Anna kliendile teada, miks soovitud aeg ei sobi (valikuline):`, '');
-                if (message === null) return;
-                try {
-                    const res = await this.api('/api/haldus/requests/decline', { method: 'POST', body: JSON.stringify({ requestId: r.id, message }) });
-                    if (!res.ok) throw new Error((await res.json()).error);
-                    this.showToast('Kliendile saadetud');
-                    await this.loadData(this.range.from, this.range.to);
-                } catch (e) { this.globalError = e.message; }
+            /** Follow-up on an already handled request — the thread stays open both ways */
+            messageRequest(r) {
+                this.openMsgModal({
+                    title: 'Kirjuta kliendile',
+                    subtitle: `${r.serviceName} · ${r.customerName}`,
+                    hint: 'Sõnum jõuab kliendile portaali ja e-postiga ning jääb pöördumise juurde kirja. Olek ei muutu.',
+                    placeholder: 'Kirjuta sõnum…', button: 'Saada',
+                    submit: async (text) => {
+                        const res = await this.api('/api/haldus/requests/message', { method: 'POST', body: JSON.stringify({ requestId: r.id, text }) });
+                        if (!res.ok) throw new Error((await res.json()).error);
+                        this.showToast('Sõnum saadetud');
+                        await this.loadData(this.range.from, this.range.to);
+                    },
+                });
+            },
+            declineRequest(r) {
+                const issue = r.kind === 'issue';
+                this.openMsgModal({
+                    title: issue ? 'Ei kuulu garantiisse' : 'Vajame uut aega',
+                    subtitle: `${r.serviceName} · ${r.customerName}`,
+                    hint: issue
+                        ? 'Selgita kliendile lühidalt, miks see garantii alla ei kuulu. Klient saab kirja „Pöördumine vaadatud üle“ koos sinu selgitusega ja võimalusega tellida töö tasulisena.'
+                        : 'Anna kliendile teada, miks soovitud aeg ei sobi. Klient saab kirja „Vajame uut aega“ ja pakub portaalis uue aja.',
+                    placeholder: issue ? 'Nt kraanide lupjumine on kasutusest tulenev kulumine…' : 'Nt sel nädalal oleme täis — järgmisel nädalal sobib iga hommik', button: 'Saada kliendile', required: issue,
+                    submit: async (message) => {
+                        const res = await this.api('/api/haldus/requests/decline', { method: 'POST', body: JSON.stringify({ requestId: r.id, message }) });
+                        if (!res.ok) throw new Error((await res.json()).error);
+                        this.showToast('Kliendile saadetud');
+                        await this.loadData(this.range.from, this.range.to);
+                    },
+                });
             },
         };
     }

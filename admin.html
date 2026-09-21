@@ -1090,21 +1090,49 @@
 
                     <!-- Partner assignment -->
                     <div class="px-6 py-5 grid-line-b">
-                        <p class="text-[10px] uppercase tracking-[0.2em] text-accent font-medium mb-3">Partner</p>
+                        <p class="text-[10px] uppercase tracking-[0.2em] text-accent font-medium mb-3">Partnerid</p>
                         <div class="grid sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-[10px] uppercase tracking-[0.15em] text-muted block mb-1">Koristuspartner</label>
-                                <select @change="assignProvider(selectedOrder, $event.target.value, 'cleaning')" class="w-full border border-[#E8E3DD] bg-white px-3 py-2 text-sm font-light outline-none focus:border-accent">
-                                    <option value="" :selected="!selectedOrder.providerId">— SUKODA (Cal.eu) —</option>
-                                    <template x-for="p in providers.filter(p => (p.services || []).includes('cleaning'))" :key="p.id"><option :value="p.id" :selected="p.id === selectedOrder.providerId" x-text="p.name"></option></template>
-                                </select>
+                            <template x-for="cat in partnerCategories" :key="cat.id">
+                                <div>
+                                    <label class="text-[10px] uppercase tracking-[0.15em] text-muted block mb-1" x-text="cat.label"></label>
+                                    <select @change="assignProvider(selectedOrder, $event.target.value, cat.id)" class="w-full border border-[#E8E3DD] bg-white px-3 py-2 text-sm font-light outline-none focus:border-accent">
+                                        <option value="" :selected="!selectedOrder[cat.field]" x-text="cat.empty"></option>
+                                        <template x-for="p in providers.filter(p => (p.services || []).includes(cat.id))" :key="p.id"><option :value="p.id" :selected="p.id === selectedOrder[cat.field]" x-text="p.name"></option></template>
+                                    </select>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Terms per category: what the home's deal includes — the partner and the household both read these -->
+                        <div class="mt-5">
+                            <div class="flex items-center justify-between mb-2">
+                                <p class="text-[10px] uppercase tracking-[0.15em] text-muted">Tingimused kliendile (kategooria kaupa)</p>
+                                <button type="button" x-show="!termsEdit" @click="startTermsEdit()" class="text-[10px] uppercase tracking-[0.15em] text-accent hover:text-black">Muuda</button>
                             </div>
-                            <div>
-                                <label class="text-[10px] uppercase tracking-[0.15em] text-muted block mb-1">Lillepood</label>
-                                <select @change="assignProvider(selectedOrder, $event.target.value, 'flowers')" class="w-full border border-[#E8E3DD] bg-white px-3 py-2 text-sm font-light outline-none focus:border-accent">
-                                    <option value="" :selected="!selectedOrder.floristId">— SUKODA —</option>
-                                    <template x-for="p in providers.filter(p => (p.services || []).includes('flowers'))" :key="p.id"><option :value="p.id" :selected="p.id === selectedOrder.floristId" x-text="p.name"></option></template>
-                                </select>
+                            <div x-show="!termsEdit" class="text-xs font-light space-y-1">
+                                <template x-for="cat in partnerCategories" :key="'t-' + cat.id">
+                                    <p x-show="selectedOrder.terms?.[cat.id]"><span class="text-muted" x-text="cat.label + ': '"></span><span x-text="termsSummary(selectedOrder.terms?.[cat.id])"></span></p>
+                                </template>
+                                <p x-show="!Object.keys(selectedOrder.terms || {}).length" class="text-muted">Tingimusi pole määratud — klient näeb kataloogi tavahindu.</p>
+                            </div>
+                            <div x-show="termsEdit" x-cloak class="space-y-3">
+                                <template x-for="cat in partnerCategories" :key="'te-' + cat.id">
+                                    <div class="border border-[#E8E3DD] p-3 bg-white">
+                                        <label class="flex items-center gap-2 text-xs mb-2"><input type="checkbox" x-model="termsForm[cat.id].included"> <span class="uppercase tracking-[0.12em] text-[10px]" x-text="cat.label"></span> <span class="text-muted">— hinnas sees / garantii korras</span></label>
+                                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+                                            <div><label class="text-[10px] text-muted block">Kuni</label><input type="date" x-model="termsForm[cat.id].until" class="w-full border border-[#E8E3DD] px-2 py-1.5 font-light outline-none focus:border-accent"></div>
+                                            <div><label class="text-[10px] text-muted block">Kvoot</label><input type="text" x-model="termsForm[cat.id].quota" placeholder="nt 2 h kuus" class="w-full border border-[#E8E3DD] px-2 py-1.5 font-light outline-none focus:border-accent"></div>
+                                            <div><label class="text-[10px] text-muted block">Pärast</label><input type="text" x-model="termsForm[cat.id].after" placeholder="nt alates 45 €/h" class="w-full border border-[#E8E3DD] px-2 py-1.5 font-light outline-none focus:border-accent"></div>
+                                            <div><label class="text-[10px] text-muted block">Arve</label><input type="text" x-model="termsForm[cat.id].billedBy" placeholder="nt Kodulahe Haldus OÜ" class="w-full border border-[#E8E3DD] px-2 py-1.5 font-light outline-none focus:border-accent"></div>
+                                            <div><label class="text-[10px] text-muted block">Teenused (id, koma)</label><input type="text" x-model="termsForm[cat.id].services" placeholder="tühi = kõik" class="w-full border border-[#E8E3DD] px-2 py-1.5 font-light outline-none focus:border-accent"></div>
+                                        </div>
+                                    </div>
+                                </template>
+                                <p x-show="termsError" x-cloak class="text-xs text-red-500" x-text="termsError"></p>
+                                <div class="flex gap-2">
+                                    <button type="button" @click="termsEdit = false" class="px-3 py-2 border border-[#E8E3DD] text-[10px] uppercase tracking-wider hover:border-black">Loobu</button>
+                                    <button type="button" @click="saveTerms()" :disabled="termsSaving" class="px-3 py-2 bg-black text-white text-[10px] uppercase tracking-wider hover:bg-accent" x-text="termsSaving ? 'Salvestan…' : 'Salvesta tingimused'"></button>
+                                </div>
                             </div>
                         </div>
                         <p class="text-[10px] text-muted mt-3">Määratud partner näeb klienti oma halduses (sukoda.ee/haldus), saab aegu hallata ja saab kliendi lisateenuste soovid. <span x-show="selectedOrder.source === 'manual'" class="text-accent">See klient on partneri enda lisatud (arveldab partner).</span></p>
@@ -1227,6 +1255,15 @@
             // Kutsekaardid per provider: providerId → { cards, freeCount, totalCount, codes, count, saving, error, errors, lastAssigned }
             providerCards: {},
             cardsOpen: null,
+            // Mirrors SERVICE_CATEGORIES in functions/lib/haldus-core.js (order field + name field per role)
+            partnerCategories: [
+                { id: 'cleaning', label: 'Koristuspartner', field: 'providerId', nameField: 'providerName', empty: '— SUKODA (Cal.eu) —' },
+                { id: 'warranty', label: 'Garantii ja maja', field: 'warrantyId', nameField: 'warrantyName', empty: '— pole —' },
+                { id: 'flowers', label: 'Lillepood', field: 'floristId', nameField: 'floristName', empty: '— SUKODA —' },
+                { id: 'handyman', label: 'Remondimees', field: 'handymanId', nameField: 'handymanName', empty: '— pole —' },
+                { id: 'garden', label: 'Aed & õu', field: 'gardenerId', nameField: 'gardenerName', empty: '— pole —' },
+            ],
+            termsEdit: false, termsForm: {}, termsSaving: false, termsError: '',
 
             // Gift card filters
             gcFilter: {
@@ -1466,12 +1503,47 @@
                     const data = await res.json();
                     if (!res.ok) throw new Error(data.error);
                     const p = this.providers.find(x => x.id === providerId) || null;
-                    if (role === 'flowers') { order.floristId = providerId || null; order.floristName = p?.name || null; }
-                    else { order.providerId = providerId || null; order.providerName = p?.name || null; }
+                    const cat = this.partnerCategories.find(c => c.id === role) || this.partnerCategories[0];
+                    order[cat.field] = providerId || null; order[cat.nameField] = p?.name || null;
                     await this.loadProviders();
                 } catch (e) {
                     alert('Viga: ' + e.message);
                 }
+            },
+
+            // ---- Home terms (what the deal includes per category) ----
+            startTermsEdit() {
+                const t = this.selectedOrder?.terms || {};
+                const form = {};
+                for (const c of this.partnerCategories) {
+                    const x = t[c.id] || {};
+                    form[c.id] = { included: x.included === true, until: x.until || '', quota: x.quota || '', after: x.after || '', billedBy: x.billedBy || '', services: Array.isArray(x.services) ? x.services.join(', ') : '' };
+                }
+                this.termsForm = form; this.termsError = ''; this.termsEdit = true;
+            },
+            termsSummary(t) {
+                if (!t) return '';
+                const parts = [];
+                if (t.included) parts.push('sees' + (t.until ? ' kuni ' + t.until : ''));
+                if (Array.isArray(t.services) && t.services.length) parts.push('teenused: ' + t.services.join(', '));
+                if (t.quota) parts.push(t.quota);
+                if (t.after) parts.push('pärast: ' + t.after);
+                if (t.billedBy) parts.push('arve: ' + t.billedBy);
+                return parts.join(' · ') || '—';
+            },
+            async saveTerms() {
+                if (this.termsSaving) return; this.termsSaving = true; this.termsError = '';
+                try {
+                    const terms = {};
+                    for (const [cat, f] of Object.entries(this.termsForm)) {
+                        terms[cat] = { ...f, until: f.until || null, services: String(f.services || '').split(',').map(s => s.trim()).filter(Boolean) };
+                    }
+                    const res = await this.adminFetch('/api/admin/home-terms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderId: this.selectedOrder.id, terms }) });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Salvestamine ebaõnnestus');
+                    this.selectedOrder.terms = data.terms || {};
+                    this.termsEdit = false;
+                } catch (e) { this.termsError = e.message; } finally { this.termsSaving = false; }
             },
 
             // ---- Booking Detail Modal ----

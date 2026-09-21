@@ -20,12 +20,12 @@ const TALLINN_TIME_ZONE = 'Europe/Tallinn';
  * Anything without a matching partner is routed to the SUKODA operator, who finds one.
  */
 const SERVICE_CATEGORIES = {
-  cleaning: { et: 'Koristus', en: 'Cleaning', orderField: 'providerId' },
+  cleaning: { et: 'Koristus', en: 'Cleaning', orderField: 'providerId', nameField: 'providerName' },
   // Developer after-sales: the builder's warranty team handles defects, inspections and "how does this work"
-  warranty: { et: 'Garantii ja maja', en: 'Warranty & building', orderField: 'warrantyId' },
-  flowers: { et: 'Lilled', en: 'Flowers', orderField: 'floristId' },
-  handyman: { et: 'Remondimees', en: 'Handyman', orderField: 'handymanId' },
-  garden: { et: 'Aed & õu', en: 'Garden & outdoors', orderField: 'gardenerId' },
+  warranty: { et: 'Garantii ja maja', en: 'Warranty & building', orderField: 'warrantyId', nameField: 'warrantyName' },
+  flowers: { et: 'Lilled', en: 'Flowers', orderField: 'floristId', nameField: 'floristName' },
+  handyman: { et: 'Remondimees', en: 'Handyman', orderField: 'handymanId', nameField: 'handymanName' },
+  garden: { et: 'Aed & õu', en: 'Garden & outdoors', orderField: 'gardenerId', nameField: 'gardenerName' },
 };
 
 function categoryLabel(category, lang) {
@@ -122,7 +122,7 @@ const SERVICE_CATALOGUE = [
       et: 'Praod, viimistlus, uksed ja aknad, vuugid, tehnosüsteemid — kirjelda puudust, garantiimeeskond kinnitab ülevaatuse aja.',
       en: 'Cracks, finishes, doors and windows, seals, building systems — describe the defect, the warranty team confirms an inspection time.',
     },
-    priceHint: { et: 'garantii korras', en: 'under warranty' },
+    priceHint: { et: 'Garantii korras', en: 'Under warranty' },
     durationMin: 60,
   },
   {
@@ -133,7 +133,7 @@ const SERVICE_CATALOGUE = [
       et: 'Korteri plaaniline ülevaatus 1. ja 2. aasta lõpus. Puudused fikseeritakse ühe aktiga ja parandatakse ühe käiguga.',
       en: 'Scheduled inspection at the end of year 1 and year 2. Defects recorded in one report, fixed in one round.',
     },
-    priceHint: { et: 'garantii korras', en: 'under warranty' },
+    priceHint: { et: 'Garantii korras', en: 'Under warranty' },
     durationMin: 90,
   },
   {
@@ -144,7 +144,7 @@ const SERVICE_CATALOGUE = [
       et: 'Ventilatsiooniseadme režiimid, põrandakütte termostaadid, soojussõlme näidud — seadistame ja näitame, kuidas kodu töötab.',
       en: 'Ventilation unit modes, floor-heating thermostats, heat substation readings — we set it up and show you how your home works.',
     },
-    priceHint: { et: 'garantiiajal tasuta', en: 'free during warranty' },
+    priceHint: { et: 'Garantii korras', en: 'Under warranty' },
     durationMin: 60,
   },
   {
@@ -153,10 +153,10 @@ const SERVICE_CATALOGUE = [
     category: 'warranty',
     name: { et: 'Küsimus kodu või dokumendi kohta', en: 'Question about the home or a document' },
     description: {
-      et: 'Kasutusjuhend, korteri plaan, seadme garantii või maja kord — vastame kirjalikult, vajadusel tuleme kohale.',
-      en: 'User manual, floor plan, appliance warranty or house rules — we reply in writing and come by if needed.',
+      et: 'Kasutusjuhend, korteri plaan, seadme garantii või maja kord — vastame kirjalikult.',
+      en: 'User manual, floor plan, appliance warranty or house rules — we reply in writing.',
     },
-    priceHint: { et: 'tasuta', en: 'free' },
+    priceHint: { et: 'Tasuta', en: 'Free' },
     durationMin: 30,
   },
   {
@@ -165,10 +165,23 @@ const SERVICE_CATALOGUE = [
     category: 'warranty',
     name: { et: 'Maja ja ühistu küsimus', en: 'Building & association question' },
     description: {
-      et: 'Parkimine, panipaik, prügimaja, uksepult, kodukord või halduri teema — suuname õigele inimesele ja vastame kirjalikult.',
-      en: 'Parking, storage, waste room, door fob, house rules or a manager matter — routed to the right person, answered in writing.',
+      et: 'Parkimine, panipaik, prügimaja, võtmed ja puldid, kodukord või halduri teema — suuname õigele inimesele ja vastame kirjalikult.',
+      en: 'Parking, storage, waste room, keys and fobs, house rules or a manager matter — routed to the right person, answered in writing.',
     },
-    priceHint: { et: 'tasuta', en: 'free' },
+    priceHint: { et: 'Tasuta', en: 'Free' },
+    durationMin: 30,
+  },
+  {
+    id: 'extra-works',
+    kind: 'question', // a quote first — the builder's team replies in writing, the work is agreed from there
+    pricing: 'quote', // not free: the price label shows the hint, not “Tasuta”
+    category: 'warranty',
+    name: { et: 'Lisatööd ehitajalt', en: 'Extra works from the builder' },
+    description: {
+      et: 'Rõdu klaasimine, kliimaseade, lisapistikud või muu, mida tahad lasta teha samal meeskonnal, kes maja ehitas — küsi hinnapakkumist.',
+      en: 'Balcony glazing, air conditioning, extra sockets or anything else you want done by the team that built the house — ask for a quote.',
+    },
+    priceHint: { et: 'Hinnapakkumine', en: 'Quote' },
     durationMin: 30,
   },
   // — Remondimees —
@@ -262,6 +275,18 @@ const SERVICE_CATALOGUE = [
     durationMin: 180,
   },
   {
+    id: 'cleaning-note',
+    kind: 'question', // a written message to the housekeeper — no visit, no time; the reply comes in writing
+    category: 'cleaning',
+    name: { et: 'Sõnum koduhooldajale', en: 'Message to the housekeeper' },
+    description: {
+      et: 'Rütmi muutus, eritähelepanu, küsimus — kirjuta, koduhooldaja vastab siia.',
+      en: 'A change of rhythm, extra attention, a question — write it and the housekeeper replies here.',
+    },
+    priceHint: { et: '', en: '' },
+    durationMin: 0,
+  },
+  {
     id: 'other',
     category: 'cleaning',
     name: { et: 'Muu soov', en: 'Something else' },
@@ -296,7 +321,7 @@ function serviceName(serviceId, lang) {
 const TIME_WINDOWS = {
   morning: { et: 'Hommik (9–12)', en: 'Morning (9–12)', from: '09:00', to: '12:00' },
   afternoon: { et: 'Pärastlõuna (12–17)', en: 'Afternoon (12–17)', from: '12:00', to: '17:00' },
-  any: { et: 'Ükskõik', en: 'Any time', from: '09:00', to: '17:00' },
+  any: { et: 'Sobib iga aeg', en: 'Any time', from: '09:00', to: '17:00' },
   'with-visit': { et: 'Koos järgmise koristusega', en: 'With the next cleaning visit', from: null, to: null },
 };
 
@@ -626,7 +651,7 @@ const MAINTENANCE_CATALOGUE = [
   { id: 'hood-filter', name: { et: 'Pliidikubu filter', en: 'Range hood filter' }, hint: { et: 'Metallfilter nõudepesumasinasse, süsinikfilter vahetada.', en: 'Metal filter in the dishwasher, carbon filter replaced.' }, intervalMonths: 3, serviceId: null, homeTypes: ['apartment', 'house', 'summer'], byProvider: true },
   { id: 'smoke-detector', name: { et: 'Suitsuanduri kontroll', en: 'Smoke detector check' }, hint: { et: 'Testnupp ja patarei. Andur ise vahetada iga 10 aasta tagant.', en: 'Test button and battery. Replace the detector itself every 10 years.' }, intervalMonths: 12, serviceId: null, homeTypes: ['apartment', 'house', 'summer'] },
   { id: 'heat-pump', name: { et: 'Soojuspumba filtrid', en: 'Heat pump filters' }, hint: { et: 'Siseosa filtrid pesta; välisosa lehtedest puhtaks.', en: 'Wash indoor unit filters; clear the outdoor unit of leaves.' }, intervalMonths: 3, serviceId: 'small-repairs', homeTypes: ['house', 'summer'] },
-  { id: 'boiler', name: { et: 'Boileri ja veesüsteemi kontroll', en: 'Water heater and plumbing check' }, hint: { et: 'Kaitseklapp, anood, lekked ja segistid.', en: 'Safety valve, anode, leaks and taps.' }, intervalMonths: 24, serviceId: 'small-repairs', homeTypes: ['apartment', 'house', 'summer'] },
+  { id: 'boiler', name: { et: 'Boileri ja veesüsteemi kontroll', en: 'Water heater and plumbing check' }, hint: { et: 'Kaitseklapp, anood, lekked ja segistid.', en: 'Safety valve, anode, leaks and taps.' }, intervalMonths: 24, serviceId: 'small-repairs', homeTypes: ['house', 'summer'] },
   { id: 'deep-clean', name: { et: 'Süvapuhastus', en: 'Deep clean' }, hint: { et: 'Mööbli alt, vaibad, radiaatorid, lambid — see, mida tavakoristus ei kata.', en: 'Under furniture, rugs, radiators, lamps — what a regular clean does not cover.' }, intervalMonths: 6, serviceId: 'deep-clean', homeTypes: ['apartment', 'house', 'summer'], byProvider: true },
   { id: 'windows', name: { et: 'Akende pesu', en: 'Window cleaning' }, hint: { et: 'Kevadel ja sügisel, seest ja väljast.', en: 'Spring and autumn, inside and out.' }, intervalMonths: 6, serviceId: 'windows', homeTypes: ['apartment', 'house', 'summer'], byProvider: true },
   { id: 'gutters', name: { et: 'Vihmaveerennid', en: 'Gutters' }, hint: { et: 'Lehed välja enne külmi, äravool kontrollida.', en: 'Leaves out before the frost, check the downpipes.' }, intervalMonths: 12, serviceId: 'seasonal-garden', homeTypes: ['house', 'summer'] },
@@ -749,11 +774,17 @@ const PROVIDER_PLANS = {
   free: { id: 'free', name: 'Tasuta', price: 0, homes: 3, lookupKey: null, blurb: { et: 'Kuni 3 kodu. Kõik funktsioonid, ilma ajapiiranguta.', en: 'Up to 3 homes. Every feature, no time limit.' } },
   pro: { id: 'pro', name: 'Standard', price: 19, homes: 20, lookupKey: 'sukoda_provider_pro_monthly', blurb: { et: 'Kuni 20 kodu. Iga kuu tühistatav.', en: 'Up to 20 homes. Cancel any month.' } },
   studio: { id: 'studio', name: 'Stuudio', price: 39, homes: null, lookupKey: 'sukoda_provider_studio_monthly', blurb: { et: 'Piiramatult kodusid. Iga kuu tühistatav.', en: 'Unlimited homes. Cancel any month.' } },
+  // Contracted partners (a developer's after-sales team, a building manager): set up by SUKODA, no cap, no card, no self-serve billing
+  enterprise: { id: 'enterprise', name: 'Partner', price: 0, homes: null, lookupKey: null, blurb: { et: 'Kokkuleppel SUKODA-ga. Piiramatult kodusid.', en: 'By agreement with SUKODA. Unlimited homes.' } },
 };
 const PLAN_ACTIVE_STATUSES = ['active', 'trialing', 'past_due'];
 
+/** Plans a provider can pick on the desk (enterprise is assigned by the operator) */
+const SELF_SERVE_PLANS = ['free', 'pro', 'studio'];
+
 /** The plan that counts right now: a paid plan only while Stripe says the subscription is alive */
 function effectivePlan(provider) {
+  if (provider?.plan === 'enterprise' || provider?.createdBy === 'admin') return 'enterprise';
   const p = provider?.plan && PROVIDER_PLANS[provider.plan] ? provider.plan : 'free';
   if (p === 'free') return 'free';
   return PLAN_ACTIVE_STATUSES.includes(provider.planStatus) ? p : 'free';
@@ -769,6 +800,7 @@ function planByLookupKey(key) {
 module.exports = {
   PROVIDER_PLANS,
   PLAN_ACTIVE_STATUSES,
+  SELF_SERVE_PLANS,
   effectivePlan,
   planLimit,
   planByLookupKey,

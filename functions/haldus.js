@@ -121,6 +121,12 @@ module.exports = function createHaldus(deps) {
     return String(name || '').trim().split(/\s+/)[0] || '';
   }
 
+  /** How we address a partner: the contact person's first name, else the (business) name in full — never "Tere, Kodulahe" */
+  function greetName(provider) {
+    if (!provider) return '';
+    return provider.contactName ? firstName(provider.contactName) : String(provider.name || '').trim();
+  }
+
   // Route table helper: `${METHOD} ${path-after-/api}`
   function router(handlers, { rateLimitName, rateLimitMax = 60 } = {}) {
     return functions
@@ -153,6 +159,8 @@ module.exports = function createHaldus(deps) {
     et: {
       hello: (n) => (n ? `Tere, ${n}.` : 'Tere.'),
       yourCleaner: (p) => (p ? `Sinu koduhooldaja: ${p}` : ''),
+      yourContact: (p) => (p ? `Sinu kontakt: ${p}` : ''),
+      time: 'Aeg',
       at: 'kell',
       address: 'Aadress',
       duration: 'Kestus',
@@ -163,10 +171,10 @@ module.exports = function createHaldus(deps) {
       addToCalendar: 'Lisa kalendrisse',
       google: 'Google Calendar',
       apple: 'Apple / Outlook',
-      portalNote: 'Kõik ajad, kontaktid ja soovid leiad oma SUKODA portaalist.',
-      portalBtn: 'MINU SUKODA',
+      portalNote: 'Kõik ajad, pöördumised ja dokumendid leiad oma koduportaalist. Kui aeg ei sobi või tahad midagi lisada, tee seda seal — nii jääb kõik kodu juurde.',
+      portalBtn: 'AVA PORTAAL',
       calTitle: 'SUKODA koristus',
-      calTitleService: (s) => `SUKODA · ${s}`,
+      calTitleService: (s, brand) => `${brand || 'SUKODA'} · ${s}`,
 
       subjConfirmed: 'SUKODA | Sinu aeg on kinnitatud',
       confirmedTitle: 'Sinu aeg on kinnitatud',
@@ -186,38 +194,59 @@ module.exports = function createHaldus(deps) {
 
       subjReminder: 'SUKODA | Homme on koristus',
       reminderTitle: 'Homme on koristus',
+      subjReminderWarranty: 'SUKODA | Homme on garantiivisiit',
+      reminderTitleWarranty: 'Homme on garantiivisiit',
+      subjReminderOther: (p) => (p ? `SUKODA | Homme tuleb ${p}` : 'SUKODA | Homme on visiit'),
+      reminderTitleOther: (p) => (p ? `Homme tuleb ${p}` : 'Homme on visiit'),
       reminderIntro: (p) => (p ? `Meeldetuletus: ${p} tuleb homme.` : 'Meeldetuletus sinu homsest visiidist.'),
-      reminderAccess: 'Palun jäta koju ligipääs. Kui aeg ei sobi, kirjuta otse koduhooldajale (vasta sellele kirjale) või muuda aega portaalis.',
+      reminderAccess: 'Palun jäta koju ligipääs. Kui aeg ei sobi, muuda seda portaalis või kirjuta pöördumise juurde.',
 
       subjSchedule: 'SUKODA | Sinu järgmised koristusajad',
       scheduleTitle: 'Sinu järgmised koristusajad',
       scheduleIntro: (p) => (p ? `${p} pani paika järgmised ajad. Need on kõigil pere kontaktidel ühe klikiga kalendrisse lisatavad.` : 'Järgmised ajad on paigas.'),
-      scheduleNote: 'Kui mõni aeg ei sobi, kirjuta otse koduhooldajale (vasta sellele kirjale) või muuda aega portaalis.',
+      scheduleNote: 'Kui mõni aeg ei sobi, muuda seda portaalis või kirjuta seal oma koduhooldajale.',
 
       subjWelcome: 'SUKODA | Sinu kodu portaal on avatud',
       welcomeTitle: 'Tere tulemast SUKODA-sse',
       welcomeIntro: (p) => (p ? `${p} lisas sind oma klientide hulka SUKODA-s. Siit näed kõiki koristusaegu, saad lisada pereliikmed teavituste saajateks ja tellida lisateenuseid.` : 'Sinu kodu portaal on valmis.'),
+      welcomeIntroPartner: (p) => (p ? `${p} lisas sinu kodu oma töölauale. Portaalis näed pöördumisi, aegu ja dokumente.` : 'Sinu kodu portaal on valmis.'),
       welcomeBtn: 'AVA MINU SUKODA',
       welcomeContacts: 'Soovitus: lisa portaalis „Minu kodu“ all pereliikme e-post — siis jõuavad kõik ajad ka temani.',
 
       subjRequestReceived: (s) => `SUKODA | Soov vastu võetud: ${s}`,
+      subjQuestionSent: (s) => `SUKODA | Küsimus saadetud: ${s}`,
+      subjIssueSent: (s) => `SUKODA | Pöördumine saadetud: ${s}`,
       requestReceivedTitle: 'Soov vastu võetud',
-      requestReceivedIntro: (p) => (p ? `Edastasime sinu soovi ${p}-le. Tavaliselt kinnitab ta aja sama päeva jooksul.` : 'Edastasime sinu soovi. Kinnitame aja tavaliselt sama päeva jooksul.'),
+      questionSentTitle: 'Küsimus saadetud',
+      issueSentTitle: 'Pöördumine saadetud',
+      requestReceivedIntro: (p) => (p ? `Edastasime sinu soovi partnerile ${p}. Tavaliselt kinnitab ta aja sama päeva jooksul.` : 'Edastasime sinu soovi. Kinnitame aja tavaliselt sama päeva jooksul.'),
+      questionSentIntro: (p) => (p ? `Sinu küsimus on nüüd meeskonnal ${p}. Vastus tuleb kirjalikult, tavaliselt sama tööpäeva jooksul.` : 'Sinu küsimus on vastu võetud. Vastus tuleb kirjalikult, tavaliselt sama tööpäeva jooksul.'),
+      issueSentIntro: (p) => (p ? `Edastasime sinu pöördumise partnerile ${p}. Garantiimeeskond vaatab kirjelduse üle ja kinnitab ülevaatuse aja tavaliselt 2 tööpäeva jooksul — või vastab kirjalikult.` : 'Sinu pöördumine on vastu võetud. Vaatame kirjelduse üle ja kinnitame ülevaatuse aja tavaliselt 2 tööpäeva jooksul — või vastame kirjalikult.'),
       preferredDate: 'Soovitud päev',
       preferredTime: 'Soovitud aeg',
       asap: 'Esimesel võimalusel',
-      requestReceivedNote: 'Saad soovi staatust jälgida portaalis. Kinnituse saadame kõigile sinu kodu kontaktidele koos kalendrikutsega.',
+      requestReceivedNote: 'E-kiri on teavitus. Kui tahad midagi lisada või täpsustada, kirjuta portaalis pöördumise juurde — nii jääb kogu vestlus kodu juurde.',
 
       subjRequestDeclined: (s) => `SUKODA | Soov „${s}“ vajab uut aega`,
       requestDeclinedTitle: 'Vajame uut aega',
-      requestDeclinedIntro: (p) => (p ? `${p} ei saa kahjuks soovitud ajal. Vasta sellele kirjale või tee portaalis uus soov.` : 'Soovitud aeg kahjuks ei sobi. Tee portaalis uus soov.'),
+      requestDeclinedIntro: (p) => (p ? `${p} ei saa kahjuks soovitud ajal. Ava pöördumine portaalis ja paku uut aega — nii jääb vestlus kodu juurde.` : 'Soovitud aeg kahjuks ei sobi. Ava pöördumine portaalis ja paku uut aega.'),
+      subjIssueReviewed: (s) => `SUKODA | Pöördumine vaadatud üle: ${s}`,
+      issueReviewedTitle: 'Pöördumine vaadatud üle',
+      issueReviewedIntro: (p) => (p ? `${p} vaatas sinu pöördumise üle. Kirjeldatud puudus ei kuulu kahjuks garantii alla — selgitus on allpool.` : 'Vaatasime sinu pöördumise üle. Kirjeldatud puudus ei kuulu kahjuks garantii alla — selgitus on allpool.'),
+      issueReviewedNote: 'Kui soovid, tellime töö tasulisena — kirjuta portaalis selle pöördumise juurde ja lepime aja kokku.',
       message: 'Sõnum',
+      explanation: 'Selgitus',
+
+      subjCompleted: (s) => `SUKODA | Tehtud: ${s}`,
+      completedTitle: 'Tehtud',
+      completedIntro: (p, s) => (p ? `${p} märkis töö „${s}“ tehtuks.` : `Töö „${s}“ on tehtud.`),
+      completedNote: 'Kui midagi jääb, kirjuta pöördumise juurde.',
 
       subjRequestCancelled: 'SUKODA | Soov tühistatud',
 
       subjAway: 'SUKODA | Eemalolek on kirjas',
       awayTitle: 'Eemalolek on kirjas',
-      awayIntro: (p, by) => (by === 'provider' && p ? `${p} märkis, et olete eemal. Sel ajal visiite ei toimu.` : (p ? `Andsime ${p}-le teada, et olete eemal. Sel ajal visiite ei toimu.` : 'Sel ajal visiite ei toimu.')),
+      awayIntro: (p, by) => (by === 'provider' && p ? `${p} märkis, et olete eemal. Sel ajal visiite ei toimu.` : (p ? `Andsime partnerile ${p} teada, et olete eemal. Sel ajal visiite ei toimu.` : 'Sel ajal visiite ei toimu.')),
       awayPeriod: 'Eemal',
       awayCancelled: 'Tühistatud visiidid',
       awayNone: 'Sellesse vahemikku ei jäänud ühtegi visiiti.',
@@ -229,6 +258,8 @@ module.exports = function createHaldus(deps) {
     en: {
       hello: (n) => (n ? `Hello, ${n}.` : 'Hello.'),
       yourCleaner: (p) => (p ? `Your housekeeper: ${p}` : ''),
+      yourContact: (p) => (p ? `Your contact: ${p}` : ''),
+      time: 'Time',
       at: 'at',
       address: 'Address',
       duration: 'Duration',
@@ -239,10 +270,10 @@ module.exports = function createHaldus(deps) {
       addToCalendar: 'Add to calendar',
       google: 'Google Calendar',
       apple: 'Apple / Outlook',
-      portalNote: 'All times, contacts and requests live in your SUKODA portal.',
-      portalBtn: 'MY SUKODA',
+      portalNote: 'All times, requests and documents live in your home portal. If a time does not suit or you want to add something, do it there — that way everything stays with the home.',
+      portalBtn: 'OPEN PORTAL',
       calTitle: 'SUKODA cleaning',
-      calTitleService: (s) => `SUKODA · ${s}`,
+      calTitleService: (s, brand) => `${brand || 'SUKODA'} · ${s}`,
 
       subjConfirmed: 'SUKODA | Your time is confirmed',
       confirmedTitle: 'Your time is confirmed',
@@ -262,38 +293,60 @@ module.exports = function createHaldus(deps) {
 
       subjReminder: 'SUKODA | Cleaning tomorrow',
       reminderTitle: 'Cleaning tomorrow',
+      subjReminderWarranty: 'SUKODA | Warranty visit tomorrow',
+      reminderTitleWarranty: 'Warranty visit tomorrow',
+      subjReminderOther: (p) => (p ? `SUKODA | ${p} comes tomorrow` : 'SUKODA | Visit tomorrow'),
+      reminderTitleOther: (p) => (p ? `${p} comes tomorrow` : 'Visit tomorrow'),
       reminderIntro: (p) => (p ? `Reminder: ${p} is coming tomorrow.` : 'A reminder of tomorrow\'s visit.'),
-      reminderAccess: 'Please make sure we can access your home. If the time does not suit, reply to this email or reschedule in your portal.',
+      reminderAccess: 'Please make sure we can access your home. If the time does not suit, change it in your portal or write on the request.',
 
       subjSchedule: 'SUKODA | Your upcoming cleaning times',
       scheduleTitle: 'Your upcoming cleaning times',
       scheduleIntro: (p) => (p ? `${p} scheduled the following visits. Every household contact can add them to a calendar with one click.` : 'The following visits are scheduled.'),
-      scheduleNote: 'If a time does not suit, reply to this email or reschedule in your portal.',
+      scheduleNote: 'If a time does not suit, change it in your portal or write to your housekeeper there.',
 
       subjWelcome: 'SUKODA | Your home portal is ready',
       welcomeTitle: 'Welcome to SUKODA',
       welcomeIntro: (p) => (p ? `${p} added you as a client in SUKODA. Here you can see all cleaning times, add family members as notification recipients and order extra services.` : 'Your home portal is ready.'),
+      welcomeIntroPartner: (p) => (p ? `${p} added your home to their desk. In the portal you see requests, times and documents.` : 'Your home portal is ready.'),
       welcomeBtn: 'OPEN MY SUKODA',
       welcomeContacts: 'Tip: add a family member\'s email under "My home" so every visit reaches them too.',
 
       subjRequestReceived: (s) => `SUKODA | Request received: ${s}`,
+      subjQuestionSent: (s) => `SUKODA | Question sent: ${s}`,
+      subjIssueSent: (s) => `SUKODA | Report sent: ${s}`,
       requestReceivedTitle: 'Request received',
+      questionSentTitle: 'Question sent',
+      issueSentTitle: 'Report sent',
       requestReceivedIntro: (p) => (p ? `We passed your request to ${p}. A time is usually confirmed the same day.` : 'We received your request and will usually confirm a time the same day.'),
+      questionSentIntro: (p) => (p ? `Your question is now with ${p}. The answer comes in writing, usually the same working day.` : 'Your question has been received. The answer comes in writing, usually the same working day.'),
+      issueSentIntro: (p) => (p ? `We passed your report to ${p}. The warranty team reviews the description and usually confirms an inspection time within 2 working days — or replies in writing.` : 'Your report has been received. We review the description and usually confirm an inspection time within 2 working days — or reply in writing.'),
       preferredDate: 'Preferred day',
       preferredTime: 'Preferred time',
       asap: 'As soon as possible',
-      requestReceivedNote: 'Track the status in your portal. We will send the confirmation with a calendar invite to all your household contacts.',
+      requestReceivedNote: 'This e-mail is a notification. To add or clarify anything, write on the request in the portal — that way the whole conversation stays with the home.',
 
       subjRequestDeclined: (s) => `SUKODA | "${s}" needs a new time`,
       requestDeclinedTitle: 'We need a new time',
-      requestDeclinedIntro: (p) => (p ? `Unfortunately ${p} cannot make the requested time. Reply to this email or make a new request in your portal.` : 'Unfortunately the requested time does not work. Please make a new request in your portal.'),
+      requestDeclinedIntro: (p) => (p ? `Unfortunately ${p} cannot make the requested time. Open the request in your portal and propose a new time — that way the conversation stays with the home.` : 'Unfortunately the requested time does not work. Open the request in your portal and propose a new time.'),
+      subjIssueReviewed: (s) => `SUKODA | Report reviewed: ${s}`,
+      issueReviewedTitle: 'Report reviewed',
+      issueReviewedIntro: (p) => (p ? `${p} reviewed your report. Unfortunately the described defect is not covered by the warranty — the explanation is below.` : 'We reviewed your report. Unfortunately the described defect is not covered by the warranty — the explanation is below.'),
+      issueReviewedNote: 'If you wish, we can do the work as a paid job — write on this request in the portal and we agree on a time.',
       message: 'Message',
+      explanation: 'Explanation',
+
+      subjCompleted: (s) => `SUKODA | Done: ${s}`,
+      completedTitle: 'Done',
+      completedIntro: (p, s) => (p ? `${p} marked "${s}" as done.` : `"${s}" is done.`),
+      completedNote: 'If anything remains, write on the request.',
 
       subjRequestCancelled: 'SUKODA | Request cancelled',
 
       subjAway: 'SUKODA | Away period saved',
       awayTitle: 'Away period saved',
       awayIntro: (p, by) => (by === 'provider' && p ? `${p} noted that you are away. No visits will take place during this time.` : (p ? `We let ${p} know you are away. No visits will take place during this time.` : 'No visits will take place during this time.')),
+      // (EN keeps the same keys as ET; brand-specific wording is handled in wrap())
       awayPeriod: 'Away',
       awayCancelled: 'Cancelled visits',
       awayNone: 'No visits fell into this period.',
@@ -306,13 +359,49 @@ module.exports = function createHaldus(deps) {
 
   const t = (lang) => T[lang] || T.et;
 
-  function wrap(inner, lang) {
-    return `<!DOCTYPE html><html><head><meta charset="utf-8"></head>
-<body style="margin:0;padding:40px 20px;background:#FAF8F5;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+  // ---- White label: a developer's after-sales portal carries the developer's name; SUKODA stays in the small print ----
+  function brandOf(order) {
+    const b = order?.brand;
+    return b && b.name ? { name: String(b.name), project: String(b.project || '') } : null;
+  }
+  /** "SUKODA | …" → "Arco Vara | …" when the home has a brand */
+  function brandSubject(order, subject) {
+    const b = brandOf(order);
+    return b ? String(subject || '').replace(/^SUKODA \| /, `${b.name} | `) : subject;
+  }
+  /** Sender display name; the address stays on our verified domain */
+  function brandFrom(order) {
+    const b = brandOf(order);
+    if (!b) return undefined;
+    return `${b.name} ${langOf(order) === 'en' ? 'after-sales' : 'järelteenindus'} <tere@sukoda.ee>`;
+  }
+  function brandHeader(brand) {
+    return `
+    <div style="padding:44px 40px 36px;text-align:center;border-bottom:1px solid #E8E3DD;">
+      <h1 style="color:#2C2824;font-size:24px;margin:0 0 8px 0;font-family:Georgia,'Times New Roman',serif;font-weight:300;letter-spacing:3px;">${escapeHtml(brand.name)}</h1>
+      ${brand.project ? `<p style="margin:0 0 12px 0;color:#8A8578;font-size:12px;letter-spacing:2px;text-transform:uppercase;">${escapeHtml(brand.project)}</p>` : ''}
+      <div style="width:40px;height:1px;background:#B8976A;margin:0 auto;"></div>
+    </div>`;
+  }
+  function brandFooter(brand, lang) {
+    const et = lang !== 'en';
+    return `
+    <div style="padding:32px 40px 28px;text-align:center;border-top:1px solid #E8E3DD;">
+      <p style="color:#2C2824;font-size:16px;margin:0 0 6px 0;font-family:Georgia,'Times New Roman',serif;font-weight:300;letter-spacing:2px;">${escapeHtml(brand.name)}</p>
+      <div style="width:24px;height:1px;background:#B8976A;margin:0 auto 16px;"></div>
+      <p style="color:#B8976A;font-size:10px;margin:0;letter-spacing:2px;">${et ? 'PORTAALI PAKUB' : 'PORTAL BY'} <a href="https://sukoda.ee" style="color:#B8976A;text-decoration:none;">SUKODA</a></p>
+    </div>`;
+  }
+
+  /** `brand` = brandOf(order) or omitted */
+  function wrap(inner, lang, brand) {
+    const b = brand && brand.name ? brand : null;
+    return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+<body style="margin:0;padding:24px 12px;background:#FAF8F5;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
   <div style="max-width:600px;margin:0 auto;background:#F5F0EB;">
-    ${emailHeader()}
-    <div style="padding:44px 40px;">${inner}</div>
-    ${emailFooter(lang)}
+    ${b ? brandHeader(b) : emailHeader()}
+    <div style="padding:36px 24px;">${inner}</div>
+    ${b ? brandFooter(b, lang) : emailFooter(lang)}
   </div>
 </body></html>`;
   }
@@ -363,33 +452,56 @@ module.exports = function createHaldus(deps) {
         <a href="${url}" style="display:inline-block;background:#111111;color:#FFFFFF;padding:14px 32px;text-decoration:none;font-size:11px;text-transform:uppercase;letter-spacing:3px;font-weight:500;">${tt.portalBtn}</a>
       </div>`;
   }
+  /** Portal link that opens one request's thread after login */
+  function requestUrl(requestId) {
+    return requestId ? `${PORTAL_URL}?request=${encodeURIComponent(requestId)}` : PORTAL_URL;
+  }
 
-  function providerLine(providerName, lang) {
+  /** The partner's trades; a provider record without `services` is a housekeeper */
+  function providerServices(provider) {
+    return Array.isArray(provider?.services) && provider.services.length ? provider.services : ['cleaning'];
+  }
+
+  /** Which service category a visit belongs to: the catalogue entry, else the partner's own trade */
+  function visitCategory(booking, provider) {
+    const svc = booking?.serviceId ? core.getService(booking.serviceId) : null;
+    const ps = Array.isArray(provider?.services) ? provider.services : [];
+    if (svc && svc.id !== 'other' && svc.category !== 'cleaning') return svc.category;
+    if (ps.length && !ps.includes('cleaning')) return ps[0];
+    return svc ? svc.category : 'cleaning';
+  }
+
+  function providerLine(providerName, lang, category = 'cleaning') {
     const tt = t(lang);
-    return providerName ? P(`<span style="color:#B8976A;">${escapeHtml(tt.yourCleaner(providerName))}</span>`, 'margin:0 0 24px 0;font-size:12px;letter-spacing:1px;') : '';
+    const text = category === 'cleaning' ? tt.yourCleaner(providerName) : tt.yourContact(providerName);
+    return providerName ? P(`<span style="color:#B8976A;">${escapeHtml(text)}</span>`, 'margin:0 0 24px 0;font-size:12px;letter-spacing:1px;') : '';
   }
 
   /** One template for confirmed / rescheduled / cancelled / reminder */
-  function visitEmail({ kind, order, booking, providerName, lang, oldStart, reason }) {
+  function visitEmail({ kind, order, booking, provider, providerName, lang, oldStart, reason }) {
     const tt = t(lang);
+    const brand = brandOf(order);
     const start = toDate(booking.scheduledAt);
     const end = toDate(booking.endTime) || new Date(start.getTime() + 2 * 3600000);
     const name = firstName(primaryName(order));
+    const category = visitCategory(booking, provider);
     const svc = booking.serviceId ? core.serviceName(booking.serviceId, lang) : '';
-    const title = svc ? tt.calTitleService(svc) : tt.calTitle;
+    const title = svc ? tt.calTitleService(svc, brand?.name) : tt.calTitle;
+    const calDesc = svc || tt.calTitle;
     const extraRows = [
       svc ? ROW(tt.service, escapeHtml(svc)) : '',
       booking.price ? ROW(tt.price, escapeHtml(booking.price)) : '',
       booking.customerNote ? ROW(tt.note, escapeHtml(booking.customerNote)) : '',
     ].join('');
+    const portalUrl = requestUrl(booking.requestId);
 
     let heading; let intro; let subject; let body = '';
     if (kind === 'confirmed') {
       subject = tt.subjConfirmed;
       heading = tt.confirmedTitle;
       intro = svc ? tt.confirmedServiceIntro(providerName, svc) : tt.confirmedIntro(providerName);
-      body = timeBox({ label: booking.kind === 'extra' ? tt.service : tt.newTime, start, end, address: booking.address, lang, extraRows })
-        + calendarLinks({ title, start, end, address: booking.address, description: svc || tt.calTitle, lang });
+      body = timeBox({ label: tt.time, start, end, address: booking.address, lang, extraRows })
+        + calendarLinks({ title, start, end, address: booking.address, description: calDesc, lang });
     } else if (kind === 'rescheduled') {
       subject = tt.subjRescheduled;
       heading = tt.rescheduledTitle;
@@ -397,26 +509,27 @@ module.exports = function createHaldus(deps) {
       const old = toDate(oldStart);
       body = (old ? `<p style="margin:0 0 6px 0;color:#8A8578;font-size:13px;">${tt.oldTime}: <s>${escapeHtml(formatDate(old, lang))}, ${escapeHtml(formatTime(old))}</s></p>` : '')
         + timeBox({ label: tt.newTime, start, end, address: booking.address, lang, extraRows })
-        + calendarLinks({ title, start, end, address: booking.address, description: svc || tt.calTitle, lang });
+        + calendarLinks({ title, start, end, address: booking.address, description: calDesc, lang });
     } else if (kind === 'cancelled') {
       subject = tt.subjCancelled;
       heading = tt.cancelledTitle;
       intro = tt.cancelledIntro(providerName);
       body = timeBox({ label: tt.oldTime, start, end, address: booking.address, lang, extraRows: reason ? ROW(tt.reason, escapeHtml(reason)) : '' });
-    } else { // reminder
-      subject = tt.subjReminder;
-      heading = tt.reminderTitle;
+    } else { // reminder — subject and title follow the kind of visit, not the cleaning default
+      if (category === 'cleaning') { subject = tt.subjReminder; heading = tt.reminderTitle; }
+      else if (category === 'warranty') { subject = tt.subjReminderWarranty; heading = tt.reminderTitleWarranty; }
+      else { subject = tt.subjReminderOther(providerName); heading = tt.reminderTitleOther(providerName); }
       intro = tt.reminderIntro(providerName);
-      body = timeBox({ label: tt.newTime, start, end, address: booking.address, lang, extraRows })
+      body = timeBox({ label: tt.time, start, end, address: booking.address, lang, extraRows })
         + P(tt.reminderAccess)
-        + calendarLinks({ title, start, end, address: booking.address, description: svc || tt.calTitle, lang });
+        + calendarLinks({ title, start, end, address: booking.address, description: calDesc, lang });
     }
 
     const html = wrap(
-      H2(heading) + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(intro)}`) + providerLine(providerName, lang) + body + portalBlock(lang),
-      lang,
+      H2(heading) + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(intro)}`) + providerLine(providerName, lang, category) + body + portalBlock(lang, portalUrl),
+      lang, brand,
     );
-    return { subject, html };
+    return { subject: brandSubject(order, subject), html };
   }
 
   function scheduleEmail({ order, bookings, providerName, lang }) {
@@ -438,21 +551,23 @@ module.exports = function createHaldus(deps) {
       H2(tt.scheduleTitle) + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(tt.scheduleIntro(providerName))}`) + providerLine(providerName, lang)
       + `<div style="background:#FFFFFF;padding:8px 28px;margin-bottom:28px;border-left:2px solid #B8976A;"><table style="width:100%;border-collapse:collapse;">${rows}</table></div>`
       + P(tt.scheduleNote) + portalBlock(lang),
-      lang,
+      lang, brandOf(order),
     );
-    return { subject: tt.subjSchedule, html };
+    return { subject: brandSubject(order, tt.subjSchedule), html };
   }
 
-  function welcomeEmail({ order, providerName, portalUrl, lang }) {
+  /** `role` = the inviting partner's category; anything but cleaning gets the neutral intro */
+  function welcomeEmail({ order, providerName, portalUrl, lang, role = 'cleaning' }) {
     const tt = t(lang);
     const name = firstName(primaryName(order));
+    const intro = role === 'cleaning' ? tt.welcomeIntro(providerName) : tt.welcomeIntroPartner(providerName);
     const html = wrap(
-      H2(tt.welcomeTitle) + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(tt.welcomeIntro(providerName))}`)
+      H2(tt.welcomeTitle) + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(intro)}`)
       + `<div style="text-align:center;margin:32px 0;"><a href="${portalUrl}" style="display:inline-block;background:#111111;color:#FFFFFF;padding:16px 40px;text-decoration:none;font-size:11px;text-transform:uppercase;letter-spacing:3px;font-weight:500;">${tt.welcomeBtn}</a></div>`
       + P(tt.welcomeContacts, 'font-size:13px;'),
-      lang,
+      lang, brandOf(order),
     );
-    return { subject: tt.subjWelcome, html };
+    return { subject: brandSubject(order, tt.subjWelcome), html };
   }
 
   const dateOnly = (s) => new Date(`${s}T12:00:00Z`);
@@ -487,9 +602,9 @@ module.exports = function createHaldus(deps) {
           <div style="margin-top:16px;padding-top:12px;border-top:1px solid #E8E3DD;">${LABEL(tt.awayCancelled)}${rows || `<p style="margin:0;color:#8A8578;font-size:14px;">${tt.awayNone}</p>`}</div>
         </div>`
       + P(tt.awayResume) + portalBlock(lang),
-      lang,
+      lang, brandOf(order),
     );
-    return { subject: tt.subjAway, html };
+    return { subject: brandSubject(order, tt.subjAway), html };
   }
 
   /** Provider: customer marked themselves away */
@@ -502,70 +617,119 @@ module.exports = function createHaldus(deps) {
     if (removed) {
       return {
         subject: `SUKODA | ${who} on siiski kodus`,
-        html: providerWrap('Eemalolek tühistatud', `Tere, ${escapeHtml(firstName(provider.name))}. ${escapeHtml(who)} eemaldas eemaloleku ${escapeHtml(periodLabel(period, 'et'))}. Varem tühistatud ajad on taastatud ja graafik jätkub. Vaata oma kalendrit halduses.`, ''),
+        html: providerWrap('Eemalolek tühistatud', `Tere, ${escapeHtml(greetName(provider))}. ${escapeHtml(who)} eemaldas eemaloleku ${escapeHtml(periodLabel(period, 'et'))}. Varem tühistatud ajad on taastatud ja graafik jätkub. Vaata oma kalendrit halduses.`, ''),
       };
     }
     return {
       subject: `SUKODA | ${who} on eemal ${periodShort(period)}`,
-      html: providerWrap('Klient on eemal', `Tere, ${escapeHtml(firstName(provider.name))}. ${escapeHtml(who)} (${escapeHtml(primaryAddress(order) || '')}) andis teada, et on eemal <strong style="color:#2C2824;font-weight:400;">${escapeHtml(periodLabel(period, 'et'))}</strong>.${period.note ? ` Märkus: „${escapeHtml(period.note)}“.` : ''} Sel ajal visiite ei toimu — allolevad ajad on tühistatud ja graafik jätab selle vahemiku vahele.`,
+      html: providerWrap('Klient on eemal', `Tere, ${escapeHtml(greetName(provider))}. ${escapeHtml(who)} (${escapeHtml(primaryAddress(order) || '')}) andis teada, et on eemal <strong style="color:#2C2824;font-weight:400;">${escapeHtml(periodLabel(period, 'et'))}</strong>.${period.note ? ` Märkus: „${escapeHtml(period.note)}“.` : ''} Sel ajal visiite ei toimu — allolevad ajad on tühistatud ja graafik jätab selle vahemiku vahele.`,
         rows ? `<ul style="list-style:none;padding:0;margin:0;background:#FFFFFF;padding:12px 28px;border-left:2px solid #B8976A;">${rows}</ul>` : `<p style="color:#8A8578;font-size:14px;">Sellesse vahemikku ei jäänud ühtegi visiiti.</p>`),
     };
   }
 
-  function requestReceivedEmail({ order, request, providerName, lang }) {
-    const tt = t(lang);
-    const name = firstName(primaryName(order));
-    const svc = requestName(request, lang);
-    const when = request.preferredDate ? formatDate(core.parseDateStr(request.preferredDate), lang) : tt.asap;
-    const target = toDate(request.targetScheduledAt);
-    const html = wrap(
-      H2(tt.requestReceivedTitle) + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(tt.requestReceivedIntro(providerName))}`)
-      + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border-left:2px solid #B8976A;">
-          ${LABEL(tt.service)}
-          <p style="margin:0;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
-          ${target ? ROW(tt.oldTime, `${escapeHtml(formatDate(target, lang))}, ${escapeHtml(formatTime(target))}`) : ''}
-          ${ROW(tt.preferredDate, escapeHtml(when))}
-          ${request.timeWindow ? ROW(tt.preferredTime, escapeHtml(core.timeWindowLabel(request.timeWindow, lang))) : ''}
-          ${request.note ? ROW(tt.note, escapeHtml(request.note)) : ''}
-        </div>`
-      + P(tt.requestReceivedNote) + portalBlock(lang),
-      lang,
-    );
-    return { subject: tt.subjRequestReceived(svc), html };
+  /** 'visit' | 'issue' | 'question' for a stored request */
+  function requestKind(request) {
+    return request?.type === 'reschedule' ? 'visit' : core.serviceKind(request?.serviceId);
+  }
+  /** The household's latest line in the thread (falls back to the original note) */
+  function lastClientText(request) {
+    const msgs = Array.isArray(request?.messages) ? request.messages.filter((m) => m && m.by === 'client' && m.text) : [];
+    return msgs.length ? msgs[msgs.length - 1].text : (request?.note || '');
   }
 
-  function requestDeclinedEmail({ order, request, providerName, message, lang }) {
-    const tt = t(lang);
-    const name = firstName(primaryName(order));
-    const svc = requestName(request, lang);
-    const html = wrap(
-      H2(tt.requestDeclinedTitle) + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(tt.requestDeclinedIntro(providerName))}`)
-      + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border-left:2px solid #B8976A;">
-          ${LABEL(tt.service)}
-          <p style="margin:0;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
-          ${message ? ROW(tt.message, escapeHtml(message)) : ''}
-        </div>` + portalBlock(lang),
-      lang,
-    );
-    return { subject: tt.subjRequestDeclined(svc), html };
-  }
-
-  function requestAnsweredEmail({ order, request, providerName, message, lang }) {
+  function requestReceivedEmail({ order, request, requestId, providerName, lang }) {
     const tt = t(lang);
     const et = lang !== 'en';
     const name = firstName(primaryName(order));
     const svc = requestName(request, lang);
+    const kind = requestKind(request);
+    const title = kind === 'question' ? tt.questionSentTitle : kind === 'issue' ? tt.issueSentTitle : tt.requestReceivedTitle;
+    const intro = kind === 'question' ? tt.questionSentIntro(providerName) : kind === 'issue' ? tt.issueSentIntro(providerName) : tt.requestReceivedIntro(providerName);
+    const subject = kind === 'question' ? tt.subjQuestionSent(svc) : kind === 'issue' ? tt.subjIssueSent(svc) : tt.subjRequestReceived(svc);
+    const when = request.preferredDate ? formatDate(core.parseDateStr(request.preferredDate), lang) : tt.asap;
+    const target = toDate(request.targetScheduledAt);
+    // The access note (door code, key holder) stays in the portal — never echoed into plain e-mail
     const html = wrap(
-      H2(et ? 'Vastus sinu küsimusele' : 'An answer to your question') + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(et ? `${providerName} vastas sinu pöördumisele.` : `${providerName} replied to your request.`)}`)
+      H2(title) + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(intro)}`)
+      + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border-left:2px solid #B8976A;">
+          ${LABEL(kind === 'question' ? (et ? 'Küsimus' : 'Question') : kind === 'issue' ? (et ? 'Pöördumine' : 'Report') : tt.service)}
+          <p style="margin:0;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
+          ${target ? ROW(tt.oldTime, `${escapeHtml(formatDate(target, lang))}, ${escapeHtml(formatTime(target))}`) : ''}
+          ${kind !== 'question' ? ROW(tt.preferredDate, escapeHtml(when)) : ''}
+          ${kind !== 'question' && request.timeWindow ? ROW(tt.preferredTime, escapeHtml(core.timeWindowLabel(request.timeWindow, lang))) : ''}
+          ${request.note ? ROW(kind === 'question' ? (et ? 'Sinu küsimus' : 'Your question') : kind === 'issue' ? (et ? 'Kirjeldus' : 'Description') : tt.note, escapeHtml(request.note)) : ''}
+        </div>`
+      + P(tt.requestReceivedNote) + portalBlock(lang, requestUrl(requestId)),
+      lang, brandOf(order),
+    );
+    return { subject: brandSubject(order, subject), html };
+  }
+
+  /** Visit kinds: the requested time does not work — propose another. Issue kind: reviewed, not under warranty. */
+  function requestDeclinedEmail({ order, request, requestId, providerName, message, lang }) {
+    const tt = t(lang);
+    const name = firstName(primaryName(order));
+    const svc = requestName(request, lang);
+    const issue = requestKind(request) === 'issue';
+    const html = wrap(
+      H2(issue ? tt.issueReviewedTitle : tt.requestDeclinedTitle)
+      + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(issue ? tt.issueReviewedIntro(providerName) : tt.requestDeclinedIntro(providerName))}`)
+      + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border-left:2px solid #B8976A;">
+          ${LABEL(tt.service)}
+          <p style="margin:0;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
+          ${message ? ROW(issue ? tt.explanation : tt.message, escapeHtml(message).replace(/\n/g, '<br>')) : ''}
+        </div>`
+      + (issue ? P(tt.issueReviewedNote) : '')
+      + portalBlock(lang, requestUrl(requestId)),
+      lang, brandOf(order),
+    );
+    return { subject: brandSubject(order, issue ? tt.subjIssueReviewed(svc) : tt.subjRequestDeclined(svc)), html };
+  }
+
+  function requestAnsweredEmail({ order, request, requestId, providerName, message, lang }) {
+    const tt = t(lang);
+    const et = lang !== 'en';
+    const name = firstName(primaryName(order));
+    const svc = requestName(request, lang);
+    const kind = requestKind(request);
+    const who = providerName || request.providerName || (et ? 'Meeskond' : 'The team');
+    const title = kind === 'question' ? (et ? 'Vastus sinu küsimusele' : 'An answer to your question') : kind === 'issue' ? (et ? 'Vastus sinu pöördumisele' : 'A reply to your report') : (et ? 'Vastus sinu soovile' : 'A reply to your request');
+    const yours = kind === 'question' ? (et ? 'Sinu küsimus' : 'Your question') : kind === 'issue' ? (et ? 'Sinu pöördumine' : 'Your report') : (et ? 'Sinu soov' : 'Your request');
+    const asked = lastClientText(request);
+    const html = wrap(
+      H2(title) + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(et ? `${who} vastas.` : `${who} replied.`)}`)
       + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border-left:2px solid #B8976A;">
           ${LABEL(tt.service)}
           <p style="margin:0 0 16px;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
-          ${request.note ? ROW(et ? 'Sinu küsimus' : 'Your question', escapeHtml(request.note)) : ''}
+          ${asked ? ROW(yours, escapeHtml(asked).replace(/\n/g, '<br>')) : ''}
           ${ROW(et ? 'Vastus' : 'Answer', escapeHtml(message).replace(/\n/g, '<br>'))}
-        </div>` + portalBlock(lang),
-      lang,
+        </div>`
+      + P(et ? 'Kui tahad täpsustada, kirjuta portaalis selle pöördumise juurde — nii jääb vestlus kodu juurde.' : 'If you want to follow up, write on this request in the portal — that way the conversation stays with the home.', 'font-size:13px;color:#6B6560;')
+      + portalBlock(lang, requestUrl(requestId)),
+      lang, brandOf(order),
     );
-    return { subject: et ? `SUKODA | Vastus: ${svc}` : `SUKODA | Answer: ${svc}`, html };
+    return { subject: brandSubject(order, et ? `SUKODA | Vastus: ${svc}` : `SUKODA | Answer: ${svc}`), html };
+  }
+
+  /** The partner marked the visit behind a request as done */
+  function requestCompletedEmail({ order, request, requestId, providerName, note, lang }) {
+    const tt = t(lang);
+    const name = firstName(primaryName(order));
+    const svc = requestName(request, lang);
+    const title = lastClientText(request);
+    const html = wrap(
+      H2(tt.completedTitle) + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(tt.completedIntro(providerName, svc))}`)
+      + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border-left:2px solid #B8976A;">
+          ${LABEL(tt.service)}
+          <p style="margin:0;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
+          ${title ? ROW(lang === 'en' ? 'Your request' : 'Sinu pöördumine', escapeHtml(title)) : ''}
+          ${note ? ROW(tt.note, escapeHtml(note).replace(/\n/g, '<br>')) : ''}
+        </div>`
+      + P(tt.completedNote) + portalBlock(lang, requestUrl(requestId)),
+      lang, brandOf(order),
+    );
+    const short = title ? ` — ${title.length > 60 ? title.slice(0, 57) + '…' : title}` : '';
+    return { subject: brandSubject(order, tt.subjCompleted(`${svc}${short}`)), html };
   }
 
   // ============================================================
@@ -686,7 +850,7 @@ module.exports = function createHaldus(deps) {
       subject: et ? `SUKODA | Lilled tellitud — ${periodShort({ from: tallinnDateStr(start), to: tallinnDateStr(start) })}` : `SUKODA | Flowers ordered — ${periodShort({ from: tallinnDateStr(start), to: tallinnDateStr(start) })}`,
       html: wrap(
         H2(et ? 'Lilled on tellitud' : 'Flowers are ordered')
-        + P(et ? `Saatsime ${escapeHtml(shop)}-le tellimuse visiidiks <span style="text-transform:capitalize;">${escapeHtml(when)}</span>.${settings.preference ? ' Eelistus: ' + escapeHtml(settings.preference) + '.' : ''} ${escapeHtml(FLOWER_PICKUP[settings.pickup]?.et || '')}.`
+        + P(et ? `Saatsime poele ${escapeHtml(shop)} tellimuse visiidiks <span style="text-transform:capitalize;">${escapeHtml(when)}</span>.${settings.preference ? ' Eelistus: ' + escapeHtml(settings.preference) + '.' : ''} ${escapeHtml(FLOWER_PICKUP[settings.pickup]?.et || '')}.`
           : `We sent ${escapeHtml(shop)} the order for the visit on <span style="text-transform:capitalize;">${escapeHtml(when)}</span>.${settings.preference ? ' Preference: ' + escapeHtml(settings.preference) + '.' : ''} ${escapeHtml(FLOWER_PICKUP[settings.pickup]?.en || '')}.`)
         + P(et ? 'Lillede eelistust saad muuta portaalis Minu kodu → Lillede eelistus.' : 'Change your flower preference in the portal under My home → Flower preference.', 'font-size:12px;')
         + portalBlock(lang),
@@ -795,22 +959,34 @@ module.exports = function createHaldus(deps) {
     const when = request.preferredDate ? formatDate(core.parseDateStr(request.preferredDate), 'et') : 'Esimesel võimalusel';
     const target = toDate(request.targetScheduledAt);
     const isReschedule = request.type === 'reschedule';
+    const kind = isReschedule ? 'visit' : core.serviceKind(request.serviceId);
+    const who = escapeHtml(primaryName(order) || 'Klient');
+    const title = isReschedule ? 'Klient soovib aega muuta' : kind === 'question' ? 'Uus küsimus' : kind === 'issue' ? 'Uus pöördumine' : 'Uus soov kliendilt';
+    const intro = isReschedule
+      ? `${who} soovib olemasoleva visiidi aega muuta. Kinnita uus aeg töölaual — kõik pere kontaktid saavad kohe uue kalendrikutse.`
+      : kind === 'question'
+        ? `${who} küsib. Vasta töölaual — vastus jõuab kliendile portaali ja e-postiga.`
+        : kind === 'issue'
+          ? `${who} kirjeldas puudust. Paku töölaual ülevaatuse aeg või vasta kirjalikult — klient näeb seda portaalis.`
+          : `${who} soovib teenust. Kinnita aeg või vasta töölaual — klient näeb seda portaalis.`;
+    // Subject: what and who, without repeating the kind when the service name already says it ("Pöördumine: Garantiipöördumine")
+    const subjectLead = isReschedule ? 'Aja muutmise soov' : kind === 'question' ? 'Küsimus' : kind === 'issue' ? (/pöördumin/i.test(svc) ? svc : `Pöördumine: ${svc}`) : `Uus soov: ${svc}`;
     return {
-      subject: `SUKODA | ${isReschedule ? 'Aja muutmise soov' : 'Uus soov: ' + svc} — ${primaryName(order) || primaryEmail(order)}`,
-      html: providerWrap(isReschedule ? 'Klient soovib aega muuta' : 'Uus soov kliendilt',
-        isReschedule
-          ? `${escapeHtml(primaryName(order) || 'Klient')} soovib olemasoleva visiidi aega muuta. Kinnita uus aeg halduses — kõik pere kontaktid saavad kohe uue kalendrikutse.`
-          : `${escapeHtml(primaryName(order) || 'Klient')} soovib lisateenust. Kinnita aeg halduses — klient saab kohe kinnituse ja kalendrikutse.`,
+      subject: `SUKODA | ${subjectLead} — ${primaryName(order) || primaryEmail(order)}`,
+      html: providerWrap(title, intro,
         `<div style="background:#FFFFFF;padding:28px;border-left:2px solid #B8976A;">
-          ${LABEL(isReschedule ? 'Visiit' : 'Teenus')}
+          ${LABEL(isReschedule ? 'Visiit' : kind === 'question' ? 'Teema' : 'Teenus')}
           <p style="margin:0;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
           ${target ? ROW('Praegune aeg', `${escapeHtml(formatDate(target, 'et'))}, ${escapeHtml(formatTime(target))}`) : ''}
-          ${ROW('Soovitud päev', escapeHtml(when))}
-          ${request.timeWindow ? ROW('Soovitud aeg', escapeHtml(core.timeWindowLabel(request.timeWindow, 'et'))) : ''}
-          ${request.note ? ROW('Märkus', escapeHtml(request.note)) : ''}
+          ${kind !== 'question' ? ROW('Soovitud päev', escapeHtml(when)) : ''}
+          ${kind !== 'question' && request.timeWindow ? ROW('Soovitud aeg', escapeHtml(core.timeWindowLabel(request.timeWindow, 'et'))) : ''}
+          ${request.urgent ? ROW('Kiirus', 'Kiire — segab igapäevaelu') : ''}
+          ${request.access ? ROW('Sissepääs sellel korral', escapeHtml(request.access)) : ''}
+          ${request.note ? ROW(kind === 'question' ? 'Küsimus' : kind === 'issue' ? 'Kirjeldus' : 'Märkus', escapeHtml(request.note)) : ''}
           ${ROW('Aadress', escapeHtml(primaryAddress(order) || '-'))}
           ${ROW('Kontakt', `${escapeHtml(primaryEmail(order))}${order.customer?.phone ? ' · ' + escapeHtml(order.customer.phone) : ''}`)}
-        </div>`),
+        </div>`,
+        { href: `${HALDUS_URL}?tab=requests`, label: 'AVA TÖÖLAUD' }),
     };
   }
 
@@ -818,7 +994,7 @@ module.exports = function createHaldus(deps) {
     const rows = skipped.map((s) => `<li style="padding:8px 0;border-bottom:1px solid #E8E3DD;color:#8A8578;font-size:14px;"><strong style="color:#2C2824;font-weight:400;">${escapeHtml(s.customerName)}</strong> — ${escapeHtml(s.date)} (${escapeHtml(s.holiday)})</li>`).join('');
     return {
       subject: 'SUKODA | Riigipühale langevad koristusajad',
-      html: providerWrap('Vajab sinu otsust', `Tere, ${escapeHtml(firstName(provider.name))}. Järgmised graafiku ajad langevad riigipühale, seega me ei lisanud neid automaatselt. Lisa käsitsi, kui soovid neil päevadel siiski tulla, või lepi kliendiga uus aeg.`,
+      html: providerWrap('Vajab sinu otsust', `Tere, ${escapeHtml(greetName(provider))}. Järgmised graafiku ajad langevad riigipühale, seega me ei lisanud neid automaatselt. Lisa käsitsi, kui soovid neil päevadel siiski tulla, või lepi kliendiga uus aeg.`,
         `<ul style="list-style:none;padding:0;margin:0;background:#FFFFFF;padding:12px 28px;border-left:2px solid #B8976A;">${rows}</ul>`),
     };
   }
@@ -830,9 +1006,17 @@ module.exports = function createHaldus(deps) {
   async function notifyOrder(order, { subject, html }, { replyTo } = {}) {
     const recipients = core.resolveRecipients(order);
     for (const r of recipients) {
-      await sendEmail({ to: r.email, subject, html, replyTo });
+      await sendEmail({ to: r.email, subject: brandSubject(order, subject), html, replyTo, from: brandFrom(order) });
     }
     return recipients.length;
+  }
+
+  /** One customer-facing mail to the primary address, carrying the home's brand (sender name + subject prefix) */
+  async function sendCustomerMail(order, { subject, html }, { replyTo, to } = {}) {
+    const email = to || primaryEmail(order);
+    if (!core.isValidEmail(email)) return false;
+    await sendEmail({ to: email, subject: brandSubject(order, subject), html, replyTo, from: brandFrom(order) });
+    return true;
   }
 
   async function loadProvider(providerId) {
@@ -849,7 +1033,7 @@ module.exports = function createHaldus(deps) {
   async function sendVisitNotification(kind, { order, booking, provider, oldStart, reason }) {
     const lang = langOf(order);
     const p = provider || (booking.providerId ? await loadProvider(booking.providerId) : null);
-    const mail = visitEmail({ kind, order, booking, providerName: p?.name || '', lang, oldStart, reason });
+    const mail = visitEmail({ kind, order, booking, provider: p, providerName: p?.name || '', lang, oldStart, reason });
     return notifyOrder(order, mail, { replyTo: providerReplyTo(p) });
   }
 
@@ -1076,7 +1260,12 @@ module.exports = function createHaldus(deps) {
     const period = { ...s.period, createdBy: by, createdAt: Timestamp.fromDate(new Date()) };
 
     const upcoming = await upcomingBookingsForOrder(orderRef.id);
-    const inRange = upcoming.filter((b) => { const d = tallinnDateStr(toDate(b.scheduledAt)); return period.from <= d && d <= period.to; });
+    const inPeriod = upcoming.filter((b) => { const d = tallinnDateStr(toDate(b.scheduledAt)); return period.from <= d && d <= period.to; });
+    // Only the housekeeper's regular visits are cancelled. A separately agreed partner visit (a warranty call, the
+    // handyman) stays: the household moves it itself, and its provider is not the one we notify here.
+    const isOwnRegular = (b) => (b.kind || (b.serviceId ? 'extra' : 'regular')) !== 'extra' && (!b.providerId || !order.providerId || b.providerId === order.providerId);
+    const inRange = inPeriod.filter(isOwnRegular);
+    const kept = inPeriod.filter((b) => !isOwnRegular(b));
     for (const b of inRange) {
       if (b.calBookingUid) {
         try { await calService.cancelBooking(b.calBookingUid, 'Customer away'); } catch (e) { console.error('Cal.com cancel failed:', e); }
@@ -1099,7 +1288,7 @@ module.exports = function createHaldus(deps) {
     if (by === 'customer' && provider) {
       await sendEmail({ to: providerReplyTo(provider) || provider.email, ...awayProviderEmail({ provider, order, period, cancelled: inRange }) });
     }
-    return { period: serializeAwayPeriod(period), cancelled: inRange.map((b) => serializeBooking(b.id, b)) };
+    return { period: serializeAwayPeriod(period), cancelled: inRange.map((b) => serializeBooking(b.id, b)), kept: kept.map((b) => serializeBooking(b.id, b)) };
   }
 
   /**
@@ -1206,6 +1395,7 @@ module.exports = function createHaldus(deps) {
     return {
       id: p.id,
       name: p.name || '',
+      contactName: p.contactName || '',
       businessName: p.businessName || '',
       email: p.email || '',
       phone: p.phone || '',
@@ -1228,10 +1418,20 @@ module.exports = function createHaldus(deps) {
     return { ...s, updatedAt: tsToIso(s.updatedAt) };
   }
 
-  function serializeCustomer(id, o, role) {
+  /** The partner's private notes on a home: per-provider map, falling back to the legacy shared field for the housekeeper */
+  function providerNotesFor(o, providerId, role) {
+    const by = o.providerNotesBy && typeof o.providerNotesBy === 'object' ? o.providerNotesBy : {};
+    if (providerId && typeof by[providerId] === 'string') return by[providerId];
+    return role === 'cleaning' ? (o.providerNotes || '') : '';
+  }
+
+  function serializeCustomer(id, o, role, providerId = null) {
+    const cleaning = role === 'cleaning';
+    const hp = o.homeProfile || null;
     return {
       id,
-      role, // 'cleaning' | 'flowers'
+      role, // 'cleaning' | 'flowers' | 'warranty' | 'handyman' | ...
+      canEditHome: cleaning, // customer details, contacts, home profile and archiving belong to the housekeeper's role
       name: primaryName(o) || (o.customer?.name || ''),
       email: primaryEmail(o),
       phone: o.type === 'gift' ? (o.recipient?.phone || o.customer?.phone || '') : (o.customer?.phone || ''),
@@ -1247,15 +1447,21 @@ module.exports = function createHaldus(deps) {
       contacts: Array.isArray(o.contacts) ? o.contacts : [],
       schedule: serializeSchedule(o.schedule),
       awayPeriods: liveAway(o),
-      homeProfile: o.homeProfile ? {
-        access: o.homeProfile.access || '', pets: o.homeProfile.pets || '', allergies: o.homeProfile.allergies || '',
-        flowerPreference: o.homeProfile.flowerPreference || '', linens: o.homeProfile.linens || '', towels: o.homeProfile.towels || '',
-        specialRequests: o.homeProfile.specialRequests || '',
+      // Other roles only see what they need to get in and work safely; household preferences stay with the housekeeper
+      homeProfile: hp ? {
+        access: hp.access || '', pets: hp.pets || '', allergies: hp.allergies || '',
+        ...(cleaning ? { flowerPreference: hp.flowerPreference || '', linens: hp.linens || '', towels: hp.towels || '' } : {}),
+        specialRequests: hp.specialRequests || '',
       } : null,
-      providerNotes: o.providerNotes || '',
-      maintenance: serializeMaintenanceForProvider(o),
+      providerNotes: providerNotesFor(o, providerId, role),
+      // What this home's deal includes per category — the provider should never be surprised by “but it's included”
+      terms: o.terms ? (cleaning ? o.terms : (o.terms[role] ? { [role]: o.terms[role] } : null)) : null,
+      brand: o.brand?.name ? { name: o.brand.name, project: o.brand.project || '' } : null,
+      maintenance: cleaning ? serializeMaintenanceForProvider(o) : null,
       // Part of the partner's service standard: flowers ordered automatically before each visit
-      flowers: { auto: o.flowers?.auto === true, leadDays: FLOWER_LEAD_DAYS.includes(o.flowers?.leadDays) ? o.flowers.leadDays : 2, floristId: o.floristId || null, budget: o.flowers?.budget || '', note: o.flowers?.note || '' },
+      flowers: cleaning || role === 'flowers'
+        ? { auto: o.flowers?.auto === true, leadDays: FLOWER_LEAD_DAYS.includes(o.flowers?.leadDays) ? o.flowers.leadDays : 2, floristId: o.floristId || null, budget: o.flowers?.budget || '', note: o.flowers?.note || '' }
+        : null,
       lang: langOf(o),
       createdAt: tsToIso(o.createdAt),
       totalVisits: o.totalVisits || 0,
@@ -1302,9 +1508,10 @@ module.exports = function createHaldus(deps) {
     const doc = await ref.get();
     if (!doc.exists) return null;
     const booking = doc.data();
-    if (booking.providerId && booking.providerId !== provider.id) return null;
     const acc = await accessOrder(provider, booking.orderId);
     if (!acc) return null;
+    // Strictly the booking's own partner; legacy bookings without providerId belong to the housekeeper only
+    if (booking.providerId ? booking.providerId !== provider.id : acc.role !== 'cleaning') return null;
     // NB: spread first — `ref` must be the booking ref, not the order ref from accessOrder
     return { ...acc, orderRef: acc.ref, ref, booking };
   }
@@ -1336,13 +1543,60 @@ module.exports = function createHaldus(deps) {
       timeWindow: r.timeWindow || null,
       note: r.note || '',
       status: r.status,
+      // For declined requests: 'not_covered' (issue reviewed, not under warranty) or 'new_time' (slot did not fit)
+      outcome: r.outcome || null,
       price: r.price || null,
       providerMessage: r.providerMessage || '',
       bookingId: r.bookingId || null,
       scheduledAt: tsToIso(r.scheduledAt),
       createdAt: tsToIso(r.createdAt),
       confirmedAt: tsToIso(r.confirmedAt),
+      answeredAt: tsToIso(r.answeredAt),
+      completedAt: tsToIso(r.completedAt),
+      declinedAt: tsToIso(r.declinedAt),
+      cancelledAt: tsToIso(r.cancelledAt),
+      providerName: r.providerName || null,
+      access: r.access || '',
+      urgent: r.urgent === true,
+      // The conversation stays with the request — e-mail only notifies
+      messages: (Array.isArray(r.messages) ? r.messages : []).map((m) => ({ id: m.id, by: m.by, name: m.name || '', text: m.text || '', at: tsToIso(m.at) || m.at || null })),
     };
+  }
+
+  /** Append one message to a request's thread; returns the stored message */
+  async function appendRequestMessage(reqRef, { by, name, text }) {
+    const msg = { id: core.randomId ? core.randomId() : Math.random().toString(36).slice(2, 10), by, name: String(name || '').slice(0, 120), text: String(text || '').trim().slice(0, 1500), at: new Date() };
+    await reqRef.update({ messages: FieldValue.arrayUnion(msg), updatedAt: FieldValue.serverTimestamp() });
+    return msg;
+  }
+
+  function requestMessageEmail({ toSide, order, request, requestId, fromName, text, lang }) {
+    const et = lang !== 'en';
+    const svc = requestName(request, lang);
+    const title = et ? `Uus sõnum: ${svc}` : `New message: ${svc}`;
+    if (toSide === 'provider') {
+      return {
+        subject: `SUKODA | Sõnum: ${requestName(request, 'et')} — ${primaryName(order) || primaryEmail(order)}`,
+        html: providerWrap('Klient kirjutas', `${escapeHtml(fromName || primaryName(order) || 'Klient')} lisas pöördumisele „${escapeHtml(requestName(request, 'et'))}“ sõnumi. Vasta töölaual — vastus jõuab kliendile portaali ja e-postiga.`,
+          `<div style="background:#FFFFFF;padding:20px 24px;border-left:2px solid #B8976A;margin:16px 0;font-size:14px;line-height:1.6;color:#2C2824;">${escapeHtml(text).replace(/\n/g, '<br>')}</div>`,
+          { href: `${HALDUS_URL}?tab=requests`, label: 'AVA TÖÖLAUD' }),
+      };
+    }
+    const tt = t(lang);
+    const who = fromName || (et ? 'Meeskond' : 'The team');
+    const html = wrap(
+      H2(title) + P(`${tt.hello(escapeHtml(firstName(primaryName(order))))} ${escapeHtml(et ? `${who} kirjutas sinu pöördumisele.` : `${who} wrote on your request.`)}`)
+      + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border-left:2px solid #B8976A;">
+          ${LABEL(tt.service)}
+          <p style="margin:0 0 16px;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
+          <p style="margin:0;font-size:14px;line-height:1.6;color:#2C2824;">${escapeHtml(text).replace(/\n/g, '<br>')}</p>
+        </div>`
+      + P(et ? 'Vasta portaalis — nii jääb kogu vestlus kodu juurde kirja.' : 'Reply in the portal — that way the whole conversation stays with the home.', 'font-size:13px;color:#6B6560;')
+      + portalBlock(lang, requestUrl(requestId)),
+      lang,
+      brandOf(order),
+    );
+    return { subject: et ? `SUKODA | Sõnum: ${svc}` : `SUKODA | Message: ${svc}`, html };
   }
 
   // ============================================================
@@ -1363,13 +1617,15 @@ module.exports = function createHaldus(deps) {
     return {
       plan,
       planName: core.PROVIDER_PLANS[plan].name,
+      // Contracted partners (set up by SUKODA): no cap, no self-serve billing, no invite cards on the desk
+      enterprise: plan === 'enterprise',
       homes,
       limit: limit === Infinity ? null : limit,
       status: provider.planStatus || null,
       periodEnd: tsToIso(provider.planPeriodEnd),
       cancelAtPeriodEnd: !!provider.planCancelAtPeriodEnd,
       hasSubscription: !!provider.planSubscriptionId && core.PLAN_ACTIVE_STATUSES.includes(provider.planStatus),
-      plans: Object.values(core.PROVIDER_PLANS).map((p) => ({ id: p.id, name: p.name, price: p.price, homes: p.homes, blurb: p.blurb.et })),
+      plans: core.SELF_SERVE_PLANS.map((id) => core.PROVIDER_PLANS[id]).map((p) => ({ id: p.id, name: p.name, price: p.price, homes: p.homes, blurb: p.blurb.et })),
     };
   }
 
@@ -1754,7 +2010,7 @@ module.exports = function createHaldus(deps) {
     return {
       subject: `SUKODA | Uus kodu kutsekaardiga: ${name}`,
       html: providerWrap('Uus kodu kutsekaardiga',
-        `Tere, ${escapeHtml(firstName(provider.name))}. Keegi sisestas sinu kutsekaardi koodi ja tema kodu on nüüd sinu töölaual. Klient sai portaali lingi. Ava töölaud ja lisa graafik — siis saab ta kalendrikutsed kohe.`,
+        `Tere, ${escapeHtml(greetName(provider))}. Keegi sisestas sinu kutsekaardi koodi ja tema kodu on nüüd sinu töölaual. Klient sai portaali lingi. Ava töölaud ja lisa graafik — siis saab ta kalendrikutsed kohe.`,
         `<div style="background:#FFFFFF;padding:28px;border-left:2px solid #B8976A;">
           ${LABEL('Kodu')}
           <p style="margin:0;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(name)}</p>
@@ -2004,7 +2260,7 @@ module.exports = function createHaldus(deps) {
           + P(`${escapeHtml(who)} kasutab SUKODA koduportaali ja soovib, et tema kodu ajad, kalendrikutsed ja soovid liiguksid edaspidi selle kaudu — otse sinult, ilma SMS-ideta.`)
           + P('SUKODA Töölaud on sinu tööriist: lisad kliendi, määrad ajad või korduva graafiku, ja klient ning tema pere saavad kalendrikutsed, muudatused ja meeldetuletused ise. Kliendi soovid jõuavad sinuni ja sa kinnitad aja ühe klikiga. Alustamine on tasuta ja võtab kaks minutit.')
           + `<div style="text-align:center;margin:32px 0;"><a href="${url}" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">Ava oma töölaud</a></div>`
-          + P(`Kui sul on küsimusi, vasta sellele kirjale — see jõuab otse ${escapeHtml(who)}-le. SUKODA kohta: tere@sukoda.ee.`, 'font-size:12px;'),
+          + P(`Kui sul on küsimusi, vasta sellele kirjale — see jõuab otse kutsujale (${escapeHtml(who)}). SUKODA kohta: tere@sukoda.ee.`, 'font-size:12px;'),
           'et',
         ),
       });
@@ -2054,7 +2310,7 @@ module.exports = function createHaldus(deps) {
       const orderIds = new Set(orders.map((o) => o.doc.id));
       const billingInfo = billingView(provider, activeHomeCount(orders));
       const customers = orders
-        .map(({ doc, role }) => serializeCustomer(doc.id, doc.data(), role))
+        .map(({ doc, role }) => serializeCustomer(doc.id, doc.data(), role, provider.id))
         .sort((a, b) => a.name.localeCompare(b.name, 'et'));
 
       const [bookingSnap, requestSnap, inviteCards] = await Promise.all([
@@ -2088,7 +2344,9 @@ module.exports = function createHaldus(deps) {
         bookings,
         requests,
         range: { from: fromStr, to: toStr },
-        catalogue: core.SERVICE_CATALOGUE.map((s) => ({ id: s.id, category: s.category, name: s.name.et, priceHint: s.priceHint.et, durationMin: s.durationMin })),
+        // Visit types for the desk: only things that become a visit (written questions and messages never do)
+        // Only the partner's own categories — a warranty team should not be offered "Tavakoristus"
+        catalogue: core.SERVICE_CATALOGUE.filter((s) => (s.kind || 'visit') !== 'question' && providerServices(provider).includes(s.category)).map((s) => ({ id: s.id, category: s.category, name: s.name.et, priceHint: s.priceHint.et, durationMin: s.durationMin })),
         // Upkeep the housekeeper can take on at a home; `byProvider` = typically part of a cleaning service
         maintenanceCatalogue: core.MAINTENANCE_CATALOGUE.map((m) => ({ id: m.id, name: m.name.et, hint: m.hint.et, intervalMonths: m.intervalMonths, byProvider: !!m.byProvider, homeTypes: m.homeTypes })),
         maintenanceIntervals: core.MAINTENANCE_INTERVALS,
@@ -2168,7 +2426,7 @@ module.exports = function createHaldus(deps) {
       const doc = await home.ref.get();
       res.status(200).json({
         success: true,
-        customer: serializeCustomer(orderId, doc.data(), 'cleaning'),
+        customer: serializeCustomer(orderId, doc.data(), 'cleaning', provider.id),
         createdVisits: created.map((c) => serializeBooking(c.id, c)),
         skippedHolidays: skipped,
         welcomeSent,
@@ -2182,6 +2440,15 @@ module.exports = function createHaldus(deps) {
       const acc = await accessOrder(provider, b.orderId);
       if (!acc) return res.status(404).json({ error: 'Klienti ei leitud' });
       const { ref, order } = acc;
+
+      // Only the housekeeper's role edits the home itself; other partners keep their own notes and nothing else
+      const canEditHome = acc.role === 'cleaning';
+      if (!canEditHome) {
+        if (b.providerNotes == null) return res.status(403).json({ error: 'Kodu andmeid haldab koduhooldaja. Saad muuta ainult oma märkmeid.' });
+        await ref.update({ [`providerNotesBy.${provider.id}`]: str(b.providerNotes, 1000), updatedAt: FieldValue.serverTimestamp() });
+        const fresh = await ref.get();
+        return res.status(200).json({ success: true, customer: serializeCustomer(ref.id, fresh.data(), acc.role, provider.id) });
+      }
 
       const update = { updatedAt: FieldValue.serverTimestamp() };
       const customer = { ...(order.customer || {}) };
@@ -2209,7 +2476,11 @@ module.exports = function createHaldus(deps) {
         update.contacts = c.contacts.filter((x) => x.email !== primaryEmail({ ...order, ...update }));
         update.contactEmails = contactEmailsOf(update.contacts);
       }
-      if (b.providerNotes != null) update.providerNotes = str(b.providerNotes, 1000);
+      if (b.providerNotes != null) {
+        // Housekeeper's notes live in the per-provider map too; the legacy field is kept in sync for older readers
+        update.providerNotes = str(b.providerNotes, 1000);
+        update[`providerNotesBy.${provider.id}`] = update.providerNotes;
+      }
       if (b.homeProfile && typeof b.homeProfile === 'object') {
         const hp = b.homeProfile;
         update.homeProfile = {
@@ -2228,7 +2499,7 @@ module.exports = function createHaldus(deps) {
       }
 
       const doc = await ref.get();
-      res.status(200).json({ success: true, customer: serializeCustomer(ref.id, doc.data(), acc.role) });
+      res.status(200).json({ success: true, customer: serializeCustomer(ref.id, doc.data(), acc.role, provider.id) });
     },
 
     'POST /api/haldus/customers/away': async (req, res) => {
@@ -2279,6 +2550,7 @@ module.exports = function createHaldus(deps) {
       const acc = await accessOrder(provider, req.body?.orderId);
       if (!acc) return res.status(404).json({ error: 'Klienti ei leitud' });
       const { ref, order } = acc;
+      if (acc.role !== 'cleaning') return res.status(403).json({ error: 'Kodu saab arhiveerida ainult koduhooldaja või SUKODA.' });
       if (order.source !== 'manual') {
         return res.status(400).json({ error: 'SUKODA kaudu tellinud klienti saab lõpetada ainult SUKODA. Kirjuta tere@sukoda.ee.' });
       }
@@ -2298,10 +2570,14 @@ module.exports = function createHaldus(deps) {
       if (!provider) return res.status(401).json({ error: 'Unauthorized' });
       const acc = await accessOrder(provider, req.body?.orderId);
       if (!acc) return res.status(404).json({ error: 'Klienti ei leitud' });
+      // A fresh link replaces the household's live session, so only the housekeeper who created the home may send it
+      if (acc.role !== 'cleaning' || acc.order.source !== 'manual') {
+        return res.status(403).json({ error: 'Portaali lingi saab uuesti saata ainult kodu loonud koduhooldaja. Klient saab uue lingi ka ise portaalist oma e-postiga.' });
+      }
       const email = primaryEmail(acc.order);
       if (!core.isValidEmail(email)) return res.status(400).json({ error: 'Kliendil pole e-posti' });
       const portalUrl = await issueClientToken(acc.ref);
-      await sendEmail({ to: email, ...welcomeEmail({ order: acc.order, providerName: provider.name, portalUrl, lang: langOf(acc.order) }), replyTo: providerReplyTo(provider) });
+      await sendCustomerMail(acc.order, welcomeEmail({ order: acc.order, providerName: provider.name, portalUrl, lang: langOf(acc.order), role: acc.role }), { to: email, replyTo: providerReplyTo(provider) });
       res.status(200).json({ success: true });
     },
 
@@ -2378,6 +2654,11 @@ module.exports = function createHaldus(deps) {
       const durationMin = Number.isInteger(Number(b.durationMin)) ? Math.min(600, Math.max(15, Number(b.durationMin))) : (order.schedule?.durationMin || core.SIZE_DEFAULT_DURATION[order.size] || 180);
       const end = new Date(start.getTime() + durationMin * 60000);
       const serviceId = b.serviceId && core.getService(b.serviceId) ? b.serviceId : null;
+      // A partner may only add visits of its own trade; the bare "Tavakoristus" (no serviceId) is the housekeeper's
+      const visitCat = serviceId ? core.getService(serviceId).category : 'cleaning';
+      if (visitCat !== acc.role || !providerServices(provider).includes(visitCat)) {
+        return res.status(403).json({ error: 'Saad lisada ainult oma valdkonna visiite' });
+      }
       const markCompleted = b.completed === true;
 
       if (!markCompleted && start < new Date()) return res.status(400).json({ error: 'Aeg on möödas. Möödunud visiidi saad lisada „tehtud“ märkega.' });
@@ -2433,9 +2714,12 @@ module.exports = function createHaldus(deps) {
         try { await calService.cancelBooking(booking.calBookingUid, 'Cancelled by provider'); } catch (e) { console.error('Cal.com cancel failed:', e); }
       }
       const reason = str(b.reason, 300);
-      await ref.update({ status: 'cancelled', cancelReason: reason || 'Tühistas koduhooldaja', cancelledAt: FieldValue.serverTimestamp(), cancelledBy: 'provider', updatedAt: FieldValue.serverTimestamp() });
+      await ref.update({ status: 'cancelled', cancelReason: reason || (acc.role === 'cleaning' ? 'Tühistas koduhooldaja' : 'Tühistas partner'), cancelledAt: FieldValue.serverTimestamp(), cancelledBy: 'provider', updatedAt: FieldValue.serverTimestamp() });
       if (booking.requestId) {
-        await db.collection('serviceRequests').doc(booking.requestId).set({ status: 'requested', bookingId: null, scheduledAt: null, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+        // The request reopens; the thread says why, so the household is not left guessing
+        const reqRef = db.collection('serviceRequests').doc(booking.requestId);
+        await reqRef.set({ status: 'requested', bookingId: null, scheduledAt: null, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+        try { await appendRequestMessage(reqRef, { by: 'provider', name: provider.name, text: reason ? `Aeg tühistatud: ${reason}` : 'Aeg tühistatud — pakume uue aja.' }); } catch (e) { console.error('cancel thread note failed', e); }
       }
       if (b.notify !== false) await sendVisitNotification('cancelled', { order, booking, provider, reason });
       res.status(200).json({ success: true });
@@ -2447,13 +2731,24 @@ module.exports = function createHaldus(deps) {
       const b = req.body || {};
       const acc = await accessBooking(provider, b.bookingId);
       if (!acc) return res.status(404).json({ error: 'Visiiti ei leitud' });
-      const { ref, booking } = acc;
+      const { ref, booking, order } = acc;
       if (booking.status === 'completed') return res.status(200).json({ success: true });
       if (booking.status === 'cancelled') return res.status(400).json({ error: 'Tühistatud visiiti ei saa tehtuks märkida' });
-      await ref.update({ status: 'completed', completedAt: FieldValue.serverTimestamp(), completedBy: 'provider', ...(b.note != null ? { note: str(b.note, 500) } : {}), updatedAt: FieldValue.serverTimestamp() });
+      const note = b.note != null ? str(b.note, 500) : '';
+      await ref.update({ status: 'completed', completedAt: FieldValue.serverTimestamp(), completedBy: 'provider', ...(b.note != null ? { note } : {}), updatedAt: FieldValue.serverTimestamp() });
       await db.collection('orders').doc(booking.orderId).update({ totalVisits: FieldValue.increment(1), lastVisitAt: booking.scheduledAt || FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
       if (booking.requestId) {
-        await db.collection('serviceRequests').doc(booking.requestId).set({ status: 'completed', completedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+        // Close the loop on the request: a line in the thread and a short note to the household
+        const reqRef = db.collection('serviceRequests').doc(booking.requestId);
+        const reqDoc = await reqRef.get();
+        await reqRef.set({ status: 'completed', completedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+        const clientNote = str(b.clientNote, 500);
+        try {
+          await appendRequestMessage(reqRef, { by: 'provider', name: provider.name, text: clientNote ? `Tehtud. ${clientNote}` : 'Tehtud.' });
+          if (reqDoc.exists && b.notify !== false) {
+            await sendCustomerMail(order, requestCompletedEmail({ order, request: reqDoc.data(), requestId: reqRef.id, providerName: provider.name, note: clientNote, lang: langOf(order) }), { replyTo: providerReplyTo(provider) });
+          }
+        } catch (e) { console.error('request completed notice failed', e); }
       }
       res.status(200).json({ success: true });
     },
@@ -2491,10 +2786,12 @@ module.exports = function createHaldus(deps) {
         if (!target) return res.status(404).json({ error: 'Algset visiiti ei leitud (võib olla tühistatud)' });
         const result = await rescheduleVisit({ provider, ref: target.ref, booking: target.booking, order, start, durationMin: b.durationMin, force: b.force, notify: true });
         if (result.error) return res.status(result.status).json(result);
+        // The ask was "move my visit" — once moved it is done. The visit itself carries the new time; nothing stays open.
         await reqRef.update({
-          status: 'confirmed', bookingId: target.ref.id, scheduledAt: Timestamp.fromDate(start),
-          providerMessage: str(b.message, 300), confirmedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp(),
+          status: 'completed', bookingId: target.ref.id, scheduledAt: Timestamp.fromDate(start),
+          providerMessage: str(b.message, 300), confirmedAt: FieldValue.serverTimestamp(), completedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp(),
         });
+        try { await appendRequestMessage(reqRef, { by: 'provider', name: provider.name, text: str(b.message, 300) || `Uus aeg kinnitatud: ${formatDate(start, 'et')}, ${formatTime(start)}` }); } catch (e) { console.error('confirm thread note failed', e); }
         return res.status(200).json({ success: true, booking: serializeBooking(target.ref.id, result.updated) });
       }
 
@@ -2515,8 +2812,30 @@ module.exports = function createHaldus(deps) {
         status: 'confirmed', bookingId: booking.id, scheduledAt: Timestamp.fromDate(start), price,
         providerMessage: str(b.message, 300), confirmedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp(),
       });
+      try { await appendRequestMessage(reqRef, { by: 'provider', name: provider.name, text: str(b.message, 300) || `Aeg kinnitatud: ${formatDate(start, 'et')}, ${formatTime(start)}` }); } catch (e) { console.error('confirm thread note failed', e); }
       await sendVisitNotification('confirmed', { order, booking, provider });
       res.status(200).json({ success: true, booking: serializeBooking(booking.id, booking) });
+    },
+
+    /** The provider writes on a request without closing it — a clarifying question, an update. Client is notified. */
+    'POST /api/haldus/requests/message': async (req, res) => {
+      const provider = await authenticateProvider(req);
+      if (!provider) return res.status(401).json({ error: 'Unauthorized' });
+      const b = req.body || {};
+      const reqRef = db.collection('serviceRequests').doc(docId(b.requestId));
+      const reqDoc = await reqRef.get();
+      if (!reqDoc.exists || reqDoc.data().providerId !== provider.id) return res.status(404).json({ error: 'Pöördumist ei leitud' });
+      if (reqDoc.data().status === 'cancelled') return res.status(400).json({ error: 'Pöördumine on tühistatud — sellele ei saa enam kirjutada' });
+      const text = str(b.text, 1500);
+      if (text.length < 2) return res.status(400).json({ error: 'Kirjuta sõnum' });
+      const acc = await accessOrder(provider, reqDoc.data().orderId);
+      if (!acc) return res.status(404).json({ error: 'Klienti ei leitud' });
+      await appendRequestMessage(reqRef, { by: 'provider', name: provider.name, text });
+      // A written reply on an open request answers it; a follow-up on a handled one keeps its state
+      if (reqDoc.data().status === 'requested') await reqRef.update({ status: 'answered', providerMessage: text.slice(0, 300), answeredAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
+      await sendCustomerMail(acc.order, requestMessageEmail({ toSide: 'client', order: acc.order, request: reqDoc.data(), requestId: reqRef.id, fromName: provider.name, text, lang: langOf(acc.order) }), { replyTo: providerReplyTo(provider) });
+      const fresh = await reqRef.get();
+      res.status(200).json({ success: true, request: serializeRequest(reqRef.id, fresh.data()) });
     },
 
     /** Answer in writing — questions, or anything that needs no visit. Closes the request as 'answered'. */
@@ -2533,8 +2852,9 @@ module.exports = function createHaldus(deps) {
       if (message.length < 2) return res.status(400).json({ error: 'Kirjuta vastus' });
       const acc = await accessOrder(provider, request.orderId);
       if (!acc) return res.status(404).json({ error: 'Klienti ei leitud' });
-      await reqRef.update({ status: 'answered', providerMessage: message, answeredAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
-      await sendEmail({ to: primaryEmail(acc.order), ...requestAnsweredEmail({ order: acc.order, request, providerName: provider.name, message, lang: langOf(acc.order) }), replyTo: providerReplyTo(provider) });
+      await reqRef.update({ status: 'answered', providerMessage: message.slice(0, 300), answeredAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
+      await appendRequestMessage(reqRef, { by: 'provider', name: provider.name, text: message });
+      await sendCustomerMail(acc.order, requestAnsweredEmail({ order: acc.order, request, requestId: reqRef.id, providerName: provider.name, message, lang: langOf(acc.order) }), { replyTo: providerReplyTo(provider) });
       res.status(200).json({ success: true });
     },
 
@@ -2549,9 +2869,13 @@ module.exports = function createHaldus(deps) {
       if (request.status !== 'requested') return res.status(400).json({ error: 'Soov on juba käsitletud' });
       const acc = await accessOrder(provider, request.orderId);
       if (!acc) return res.status(404).json({ error: 'Klienti ei leitud' });
-      const message = str(b.message, 300);
-      await reqRef.update({ status: 'declined', providerMessage: message, declinedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
-      await sendEmail({ to: primaryEmail(acc.order), ...requestDeclinedEmail({ order: acc.order, request, providerName: provider.name, message, lang: langOf(acc.order) }), replyTo: providerReplyTo(provider) });
+      const message = str(b.message, 600);
+      const kind = requestKind(request);
+      // An issue that is not covered is "reviewed", a visit slot that does not fit needs a new time
+      const fallback = kind === 'issue' ? 'Vaatasime kirjelduse üle — see ei kuulu garantii alla. Kui soovid, tellime töö tasulisena.' : 'Soovitud aeg ei sobi — paku palun uut aega.';
+      await reqRef.update({ status: 'declined', outcome: kind === 'issue' ? 'not_covered' : 'new_time', providerMessage: message.slice(0, 300), declinedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
+      try { await appendRequestMessage(reqRef, { by: 'provider', name: provider.name, text: message || fallback }); } catch (e) { console.error('decline thread note failed', e); }
+      await sendCustomerMail(acc.order, requestDeclinedEmail({ order: acc.order, request, requestId: reqRef.id, providerName: provider.name, message, lang: langOf(acc.order) }), { replyTo: providerReplyTo(provider) });
       res.status(200).json({ success: true });
     },
   };
@@ -2565,6 +2889,52 @@ module.exports = function createHaldus(deps) {
     const out = {};
     for (const [cat, def] of Object.entries(core.SERVICE_CATEGORIES)) out[cat] = order[def.orderField] || null;
     return out;
+  }
+
+  /**
+   * Terms per category on a home: what the developer (or the household's own deal) includes, until when, and what
+   * applies after. order.terms = { [category]: { included, until: 'YYYY-MM-DD'|null, quota, after, billedBy } }
+   */
+  function termsFor(order, category) {
+    const t = order?.terms?.[category];
+    if (!t || typeof t !== 'object') return null;
+    // Optional whitelist: only these service ids are covered (e.g. ['regular'] — the deep clean is still paid)
+    const services = Array.isArray(t.services) ? t.services.map(String).filter(Boolean) : null;
+    return { included: t.included === true, until: core.parseDateStr(t.until) ? t.until : null, quota: String(t.quota || ''), after: String(t.after || ''), billedBy: String(t.billedBy || ''), services: services && services.length ? services : null };
+  }
+  /** Do the home's terms cover this specific service (or the category as a whole when no service is given)? */
+  function termsCover(tm, svc) {
+    if (!tm || !tm.included) return false;
+    if (!svc || !tm.services) return true;
+    return tm.services.includes(svc.id);
+  }
+  /** One line the household reads under a service: “Hinnas sees kuni 14. märts 2027 · 2 h kuus” / “alates 45 €/h · arve Kodulahe Haldus OÜ” */
+  function priceLabelFor({ order, category, svc, lang, showPrices }) {
+    const et = lang !== 'en';
+    const today = todayTallinnStr();
+    const tm = termsFor(order, category);
+    const fmt = (d) => {
+      const date = core.parseDateStr(d);
+      if (!date) return d;
+      return date.toLocaleDateString(et ? 'et-EE' : 'en-GB', { timeZone: 'Europe/Tallinn', day: 'numeric', month: 'long', year: 'numeric' });
+    };
+    // A free-text message ("something else", a note to the housekeeper) has no price line at all
+    if (svc && (svc.id === 'other' || svc.id === 'cleaning-note')) return { text: '', included: false };
+    // A quote-first question (extra works from the builder) shows its hint, not "free"
+    if (svc && svc.pricing === 'quote') return { text: svc.priceHint?.[lang] || svc.priceHint?.et || '', included: false };
+    if (svc && (svc.kind || 'visit') === 'question') return { text: et ? 'Tasuta' : 'Free', included: true };
+    const covered = termsCover(tm, svc);
+    if (covered && (!tm.until || tm.until >= today)) {
+      // Warranty is not "included in the price" — it is the builder's obligation, until the warranty ends
+      const head = category === 'warranty' ? (et ? 'Garantii korras' : 'Under warranty') : (et ? 'Hinnas sees' : 'Included');
+      return { text: head + (tm.until ? (et ? ' kuni ' : ' until ') + fmt(tm.until) : '') + (tm.quota ? ' · ' + tm.quota : ''), included: true, until: tm.until, quota: tm.quota, after: tm.after };
+    }
+    if (covered && tm.until && tm.until < today) {
+      return { text: (tm.after || (svc?.priceHint?.[lang] || svc?.priceHint?.et || '')) + (tm.billedBy ? (et ? ' · arve ' : ' · billed by ') + tm.billedBy : ''), included: false, expired: tm.until };
+    }
+    const hint = svc ? (showPrices === false && tm?.after ? tm.after : (showPrices === false ? '' : (svc.priceHint?.[lang] || svc.priceHint?.et || ''))) : (tm?.after || '');
+    const bill = tm?.billedBy ? (et ? 'arve ' : 'billed by ') + tm.billedBy : (showPrices === false ? (et ? 'hind kokkuleppel tegijaga' : 'price agreed with the provider') : '');
+    return { text: [hint, bill].filter(Boolean).join(' · '), included: false };
   }
 
   /** “Something else” goes to whoever runs this home: the developer's after-sales team when there is one, otherwise the housekeeper */
@@ -2845,7 +3215,13 @@ module.exports = function createHaldus(deps) {
         viewer: auth.viewer || null,
         partners,
         // Developer after-sales white label: who runs this home's portal (name + project), UI only
-        brand: order.brand && order.brand.name ? { name: String(order.brand.name), project: String(order.brand.project || ''), tagline: String(order.brand.tagline || ''), warrantyUntil: String(order.brand.warrantyUntil || '') } : null,
+        brand: order.brand && order.brand.name ? {
+          name: String(order.brand.name), project: String(order.brand.project || ''), tagline: String(order.brand.tagline || ''), warrantyUntil: String(order.brand.warrantyUntil || ''),
+          // 24h emergency line for the building (leak, power) — shown only when the developer has set one
+          emergencyPhone: String(order.brand.emergencyPhone || ''),
+          // Optional project picture (same-origin path or https URL); without it the header runs full width
+          image: /^(\/|https:\/\/)/.test(String(order.brand.image || '')) ? String(order.brand.image) : '',
+        } : null,
         // Services the household said it would want once a partner exists
         interests: [...new Set(interestSnap.docs.map((d) => d.data().serviceId))],
         contacts: Array.isArray(order.contacts) ? order.contacts : [],
@@ -2860,12 +3236,15 @@ module.exports = function createHaldus(deps) {
           id, label: c[lang] || c.et,
           partnerName: partnerDocs[id]?.name || null,
           partnerBusiness: partnerDocs[id]?.businessName || '',
+          terms: termsFor(order, id),
+          priceLabel: priceLabelFor({ order, category: id, svc: null, lang, showPrices }),
           // Without a partner the household can only register interest — nothing is promised
           orderable: !!routes[id],
         })),
         catalogue: core.SERVICE_CATALOGUE.map((s) => ({
           id: s.id, kind: s.kind || 'visit', category: effectiveCategory(s, routes), categoryLabel: core.categoryLabel(effectiveCategory(s, routes), lang), name: s.name[lang] || s.name.et, description: s.description[lang] || s.description.et,
           priceHint: showPrices ? (s.priceHint[lang] || s.priceHint.et) : null, durationMin: s.durationMin,
+          priceLabel: priceLabelFor({ order, category: effectiveCategory(s, routes), svc: s, lang, showPrices }),
         })),
         flowers: flowerSettings(order, florist),
         timeWindows: Object.entries(core.TIME_WINDOWS).map(([id, w]) => ({ id, label: w[lang] || w.et })),
@@ -2922,6 +3301,8 @@ module.exports = function createHaldus(deps) {
       } else if (b.action === 'remove') {
         const gone = docs.find((d) => d.id === String(b.documentId || ''));
         if (!gone) return res.status(404).json({ error: lang === 'et' ? 'Dokumenti ei leitud' : 'Document not found' });
+        // The handover folder is the developer's record of the home — the household cannot delete it
+        if (gone.source === 'developer') return res.status(403).json({ error: lang === 'et' ? 'Arendaja dokumente saab eemaldada ainult arendaja' : 'Only the developer can remove the developer\'s documents' });
         docs = docs.filter((d) => d !== gone);
         if (gone.file?.path) await docsBucket().file(gone.file.path).delete({ ignoreNotFound: true }).catch((e) => console.warn('doc file delete', e.message));
       } else {
@@ -3032,6 +3413,8 @@ module.exports = function createHaldus(deps) {
       }
       const timeWindow = core.TIME_WINDOWS[b.timeWindow] ? b.timeWindow : 'any';
       const note = str(b.note, 500);
+      const access = str(b.access, 400);
+      const urgent = b.urgent === true;
       const kind = svc.kind || 'visit';
       if ((svc.id === 'other' || kind !== 'visit') && note.length < 5) return res.status(400).json({ error: lang === 'et' ? (kind === 'question' ? 'Kirjuta palun oma küsimus' : 'Kirjelda palun, mis ja kus') : (kind === 'question' ? 'Please write your question' : 'Please describe what and where') });
       if (kind === 'question') preferredDate = null;
@@ -3058,6 +3441,7 @@ module.exports = function createHaldus(deps) {
       }
       const provider = await loadProvider(providerId);
 
+      const firstMsg = note ? [{ id: core.randomId(), by: 'client', name: primaryName(order) || '', text: note, at: new Date() }] : [];
       const data = {
         orderId,
         providerId: providerId || null,
@@ -3071,6 +3455,9 @@ module.exports = function createHaldus(deps) {
         preferredDate,
         timeWindow,
         note,
+        access,
+        urgent,
+        messages: firstMsg,
         status: 'requested',
         lang,
         source: 'portal',
@@ -3080,8 +3467,8 @@ module.exports = function createHaldus(deps) {
       const ref = await db.collection('serviceRequests').add(data);
       const request = { ...data, createdAt: new Date() };
 
-      // Instant confirmation to the customer (primary only — contacts get the confirmed time later)
-      await sendEmail({ to: primaryEmail(order), ...requestReceivedEmail({ order, request, providerName: provider?.name || '', lang }), replyTo: providerReplyTo(provider) });
+      // Instant confirmation to the customer (primary only — contacts get the confirmed time later). Replies go to the partner; the thread lives in the portal.
+      await sendCustomerMail(order, requestReceivedEmail({ order, request, requestId: ref.id, providerName: provider?.name || '', lang }), { replyTo: providerReplyTo(provider) });
       // Provider (or operator when unrouted) + operator copy
       const providerMail = providerNewRequestEmail({ order, request });
       const providerTo = providerReplyTo(provider);
@@ -3136,7 +3523,8 @@ module.exports = function createHaldus(deps) {
         customerPhone: order.customer?.phone || '',
         address: booking.address || primaryAddress(order),
         serviceId: null,
-        category: 'cleaning',
+        // A partner visit (warranty call, handyman) keeps its own category so the desk and the portal colour it right
+        category: core.getService(booking.serviceId)?.category || 'cleaning',
         preferredDate: b.preferredDate,
         timeWindow,
         note: str(b.note, 500),
@@ -3149,12 +3537,38 @@ module.exports = function createHaldus(deps) {
       const ref = await db.collection('serviceRequests').add(data);
       const request = { ...data, createdAt: new Date() };
 
-      await sendEmail({ to: primaryEmail(order), ...requestReceivedEmail({ order, request, providerName: provider?.name || '', lang }), replyTo: providerReplyTo(provider) });
+      await sendCustomerMail(order, requestReceivedEmail({ order, request, requestId: ref.id, providerName: provider?.name || '', lang }), { replyTo: providerReplyTo(provider) });
       const providerMail = providerNewRequestEmail({ order, request });
       const providerTo = providerReplyTo(provider) || NOTIFICATION_EMAIL;
       await sendEmail({ to: providerTo, ...providerMail });
 
       res.status(200).json({ success: true, request: { ...serializeRequest(ref.id, request), serviceName: requestName(request, lang), createdAt: new Date().toISOString() }, providerName: provider?.name || null });
+    },
+
+    /** The household writes on its own request; the provider is notified and answers from the desk */
+    'POST /api/me/requests/message': async (req, res) => {
+      if (!checkRateLimit(req, res, 'portal-req-msg', 30, 60000)) return;
+      const auth = await authenticateClient(req);
+      if (!auth) return res.status(401).json({ error: 'Unauthorized' });
+      const { orderId, order } = auth;
+      const ref = db.collection('serviceRequests').doc(docId(req.body?.requestId));
+      const doc = await ref.get();
+      if (!doc.exists || doc.data().orderId !== orderId) return res.status(404).json({ error: 'Not found' });
+      const text = str(req.body?.text, 1500);
+      if (text.length < 2) return res.status(400).json({ error: langOf(order) === 'et' ? 'Kirjuta sõnum' : 'Write a message' });
+      const r = doc.data();
+      if (r.status === 'cancelled') return res.status(400).json({ error: langOf(order) === 'et' ? 'See pöördumine on tühistatud' : 'This request is cancelled' });
+      const name = auth.viewer?.name || primaryName(order) || '';
+      const msg = await appendRequestMessage(ref, { by: 'client', name, text });
+      // A follow-up on an answered or declined request puts it back on the partner's desk
+      if (r.status === 'answered' || r.status === 'declined') {
+        await ref.update({ status: 'requested', updatedAt: FieldValue.serverTimestamp() });
+      }
+      const provider = await loadProvider(r.providerId);
+      const to = providerReplyTo(provider) || NOTIFICATION_EMAIL;
+      await sendEmail({ to, ...requestMessageEmail({ toSide: 'provider', order, request: r, fromName: name, text, lang: 'et' }) });
+      const fresh = await ref.get();
+      res.status(200).json({ success: true, request: { ...serializeRequest(ref.id, fresh.data()), serviceName: requestName(fresh.data(), langOf(order)) }, message: { ...msg, at: msg.at.toISOString() } });
     },
 
     'POST /api/me/requests/cancel': async (req, res) => {
@@ -3165,7 +3579,7 @@ module.exports = function createHaldus(deps) {
       const doc = await ref.get();
       if (!doc.exists || doc.data().orderId !== orderId) return res.status(404).json({ error: 'Not found' });
       const r = doc.data();
-      if (r.status !== 'requested') return res.status(400).json({ error: langOf(order) === 'et' ? 'Kinnitatud soovi tühistamiseks kirjuta otse tegijale' : 'Contact your provider to cancel a confirmed request' });
+      if (r.status !== 'requested') return res.status(400).json({ error: langOf(order) === 'et' ? 'Kinnitatud soovi tühistamiseks kirjuta pöördumise juurde — meeskond tühistab aja' : 'To cancel a confirmed request, write on the request — the team will cancel the time' });
       await ref.update({ status: 'cancelled', cancelledAt: FieldValue.serverTimestamp(), cancelledBy: 'client', updatedAt: FieldValue.serverTimestamp() });
       const provider = await loadProvider(r.providerId);
       const to = providerReplyTo(provider) || NOTIFICATION_EMAIL;
@@ -3192,6 +3606,30 @@ module.exports = function createHaldus(deps) {
         if (o.floristId) counts[o.floristId] = (counts[o.floristId] || 0) + 1;
       }
       res.status(200).json({ providers: providers.map((p) => ({ ...p, customerCount: counts[p.id] || 0 })) });
+    },
+
+    /** Terms per category on a home (what is included, until when, what applies after, who bills) */
+    'POST /api/admin/home-terms': async (req, res) => {
+      if (!authenticateAdmin(req)) return res.status(401).json({ error: 'Unauthorized' });
+      const b = req.body || {};
+      const orderRef = db.collection('orders').doc(docId(b.orderId));
+      const orderDoc = await orderRef.get();
+      if (!orderDoc.exists) return res.status(404).json({ error: 'Kodu ei leitud' });
+      const input = b.terms && typeof b.terms === 'object' ? b.terms : {};
+      const terms = {};
+      for (const cat of Object.keys(core.SERVICE_CATEGORIES)) {
+        const t = input[cat];
+        if (!t || typeof t !== 'object') continue;
+        const until = core.parseDateStr(t.until) ? t.until : null;
+        const cleaned = { included: t.included === true, until, quota: str(t.quota, 80), after: str(t.after, 120), billedBy: str(t.billedBy, 120) };
+        // Optional whitelist of covered service ids (e.g. only the regular clean is included, not the deep clean)
+        const knownSvc = (s) => s && (s === 'regular' || core.getService(s)); // 'regular' = the scheduled clean itself (not a catalogue extra)
+        const services = Array.isArray(t.services) ? t.services.map((s) => str(s, 40)).filter(knownSvc) : (typeof t.services === 'string' ? t.services.split(',').map((s) => s.trim()).filter(knownSvc) : []);
+        if (services.length) cleaned.services = services;
+        if (cleaned.included || cleaned.quota || cleaned.after || cleaned.billedBy) terms[cat] = cleaned;
+      }
+      await orderRef.update({ terms, updatedAt: FieldValue.serverTimestamp() });
+      res.status(200).json({ success: true, terms });
     },
 
     'POST /api/admin/providers': async (req, res) => {
@@ -3286,7 +3724,7 @@ module.exports = function createHaldus(deps) {
       // role = any service category; the order field comes from the category definition
       const role = core.SERVICE_CATEGORIES[b.role] ? b.role : 'cleaning';
       const field = core.SERVICE_CATEGORIES[role].orderField;
-      const nameField = role === 'flowers' ? 'floristName' : role === 'cleaning' ? 'providerName' : `${role}Name`;
+      const nameField = core.SERVICE_CATEGORIES[role].nameField || `${role}Name`;
 
       let provider = null;
       if (b.providerId) {
@@ -3317,7 +3755,7 @@ module.exports = function createHaldus(deps) {
         const order = { ...orderDoc.data(), providerId: provider.id, providerName: provider.name };
         const lang = langOf(order);
         const portalUrl = await issueClientToken(orderRef);
-        await sendEmail({ to: primaryEmail(order), ...welcomeEmail({ order, providerName: provider.name, portalUrl, lang }), replyTo: providerReplyTo(provider) });
+        await sendCustomerMail(order, welcomeEmail({ order, providerName: provider.name, portalUrl, lang, role }), { replyTo: providerReplyTo(provider) });
         if (upcoming.length) {
           await notifyOrder(order, scheduleEmail({ order, bookings: upcoming.map((u) => ({ ...u, providerName: provider.name })), providerName: provider.name, lang }), { replyTo: providerReplyTo(provider) });
         }

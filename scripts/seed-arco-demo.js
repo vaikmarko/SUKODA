@@ -30,6 +30,7 @@ const PROVIDER_ID = 'arco-vara-jarelteenindus';
 const HANDYMAN_ID = 'kodulahe-haldus-tehnik';
 const HANDYMAN = {
   name: 'Kodulahe Haldus · tehnik',
+  contactName: 'Mart Mets', // the building manager's technician — the same Mart the answered request points to
   email: 'vaikmarko+tehnik@gmail.com',
   phone: '+372 5555 1234',
   businessName: 'Kodulahe Haldus OÜ',
@@ -38,6 +39,7 @@ const DOCS_BUCKET = 'sukoda-77b52-home-docs';
 const DEMO_DOCS_DIR = require('path').join(__dirname, 'demo-docs');
 const PROVIDER = {
   name: 'Arco Vara järelteenindus',
+  contactName: 'Kristjan Kask', // after-sales lead — the desk and the e-mails greet a person, not a department
   email: 'vaikmarko+arco@gmail.com',
   phone: '+372 614 4630',
   businessName: 'Arco Vara AS · Kodulahe',
@@ -232,6 +234,7 @@ async function main() {
     services: ['warranty'],
     status: 'active',
     lang: 'et',
+    plan: 'enterprise', // contracted partner: no home cap, no self-serve billing or invite cards on the desk
     createdBy: 'admin',
     createdAt: existingProvider?.createdAt || now,
     updatedAt: now,
@@ -239,7 +242,7 @@ async function main() {
   console.log(`Provider: ${PROVIDER_ID} (${existingProvider ? 'updated' : 'created'})`);
   const existingHandyman = await getDoc('providers', HANDYMAN_ID);
   await patchDoc('providers', HANDYMAN_ID, {
-    ...HANDYMAN, notifyEmail: HANDYMAN.email, services: ['handyman'], status: 'active', lang: 'et', createdBy: 'admin',
+    ...HANDYMAN, notifyEmail: HANDYMAN.email, services: ['handyman'], status: 'active', lang: 'et', plan: 'enterprise', createdBy: 'admin',
     createdAt: existingHandyman?.createdAt || now, updatedAt: now,
   });
   console.log(`Provider: ${HANDYMAN_ID} (${existingHandyman ? 'updated' : 'created'})`);
@@ -260,10 +263,13 @@ async function main() {
     towels: hp.towels || 'Vannitoa seinakapp.',
     specialRequests: hp.specialRequests || 'Heledad põrandad — palun sisejalatsid. Rõdu uks jääb suletuks.',
   };
+  // One warranty date for the brand line, the terms and the service cards; the 24h line matches the seeded emergency doc
+  const WARRANTY_UNTIL = '2028-03-14';
+  const brand = { name: 'Arco Vara', project: 'Kodulahe · Iili 8', tagline: 'Sinu uus kodu Kodulahes — garantii, hooldus, ajad ja dokumendid ühes kohas.', warrantyUntil: WARRANTY_UNTIL, emergencyPhone: '+372 600 0000' };
   await patchDoc('orders', order.id, {
     customer: { address: ADDRESS },
     homeProfile,
-    brand: { name: 'Arco Vara', project: 'Kodulahe · Iili 8', tagline: 'Sinu uus kodu Kodulahes — garantii, hooldus, ajad ja dokumendid ühes kohas.', warrantyUntil: '2028-03-14' },
+    brand,
     warrantyId: PROVIDER_ID,
     warrantyName: PROVIDER.name,
     handymanId: HANDYMAN_ID,
@@ -271,8 +277,15 @@ async function main() {
     documents,
     maintenance,
     maintenanceNextDue,
+    // What this home includes, until when, and who bills after — the portal reads this on every service card
+    terms: {
+      warranty: { included: true, until: brand.warrantyUntil, quota: '', after: 'pärast garantiiaega kokkuleppel', billedBy: 'Arco Vara' },
+      handyman: { included: true, until: '2027-03-14', quota: '2 h kuus koduhoolduslepingus', after: 'alates 45 €/h', billedBy: 'Kodulahe Haldus OÜ' },
+      // Only the scheduled clean is in the deal; extras (deep clean, windows…) keep their own price
+      cleaning: { included: true, services: ['regular'], quota: 'regulaarne koristus lepingus', after: '', billedBy: 'SUKODA' },
+    },
     updatedAt: now,
-  }, ['customer.address', 'homeProfile', 'brand', 'warrantyId', 'warrantyName', 'handymanId', 'handymanName', 'documents', 'maintenance', 'maintenanceNextDue', 'updatedAt']);
+  }, ['customer.address', 'homeProfile', 'brand', 'warrantyId', 'warrantyName', 'handymanId', 'handymanName', 'documents', 'maintenance', 'maintenanceNextDue', 'terms', 'updatedAt']);
   console.log(`Order updated: address, brand, warranty + handyman partners, ${documents.length} documents (${documents.filter((d) => d.file).length} files), ${maintenance.length} upkeep items`);
 
   // Past visits that were never ticked off read as done — this home's history is tidy
@@ -297,8 +310,14 @@ async function main() {
   await setDoc('serviceRequests', rid('req-done'), {
     ...base, serviceId: 'systems-tuning', preferredDate: '2026-09-08', timeWindow: 'morning',
     note: 'Ventilatsioon tundub õhtuti liiga tugev ja põrandaküte elutoas ei lähe soojaks.',
+    access: 'Välisukse kood 1408#. Võti on Kristil.',
     status: 'completed', scheduledAt: doneAt, price: null,
     providerMessage: 'Ventilatsioon seadistatud režiimile 2 (öösel 1), termostaadid 21 °C. Filtrid vahetatud, järgmine märtsis.',
+    messages: [
+      { id: 'm1', by: 'client', name: customerName, text: 'Ventilatsioon tundub õhtuti liiga tugev ja põrandaküte elutoas ei lähe soojaks.', at: tallinn('2026-09-04', '18:20') },
+      { id: 'm2', by: 'provider', name: PROVIDER.name, text: 'Tuleme teisipäeval, 8. septembril kell 10. Filtrid võtame kaasa, termostaadid vaatame üle.', at: tallinn('2026-09-05', '09:10') },
+      { id: 'm3', by: 'provider', name: PROVIDER.name, text: 'Ventilatsioon seadistatud režiimile 2 (öösel 1), termostaadid 21 °C. Filtrid vahetatud, järgmine märtsis.', at: tallinn('2026-09-08', '11:05') },
+    ],
     createdAt: tallinn('2026-09-04', '18:20'), confirmedAt: tallinn('2026-09-05', '09:10'), completedAt: tallinn('2026-09-08', '11:05'), updatedAt: tallinn('2026-09-08', '11:05'),
   });
   const confirmedAt = tallinn('2026-09-25', '14:00');
@@ -306,9 +325,15 @@ async function main() {
   await setDoc('serviceRequests', rid('req-confirmed'), {
     ...base, serviceId: 'warranty-claim', preferredDate: null, timeWindow: 'afternoon',
     note: 'Vannitoa uks ei sulgu korralikult — hing on vajunud, uks käib vastu lengi.',
+    access: 'Olen sel ajal kodus.',
     status: 'confirmed', scheduledAt: confirmedAt, price: null, bookingId: visitId,
     providerMessage: 'Tuleme reedel, võtame uue hinge kaasa. Kestab umbes 30 minutit, kohal peab olema keegi täiskasvanu.',
-    createdAt: tallinn('2026-09-18', '20:40'), confirmedAt: tallinn('2026-09-19', '08:55'), updatedAt: tallinn('2026-09-19', '08:55'),
+    messages: [
+      { id: 'm1', by: 'client', name: customerName, text: 'Vannitoa uks ei sulgu korralikult — hing on vajunud, uks käib vastu lengi.', at: tallinn('2026-09-18', '20:40') },
+      { id: 'm2', by: 'provider', name: PROVIDER.name, text: 'Tuleme reedel 25.09 kell 14. Võtame uue hinge kaasa. Kestab umbes 30 minutit, kohal peab olema keegi täiskasvanu.', at: tallinn('2026-09-19', '08:55') },
+      { id: 'm3', by: 'client', name: customerName, text: 'Selge, olen kodus. Kui midagi muutub, kirjutan siia.', at: tallinn('2026-09-19', '10:12') },
+    ],
+    createdAt: tallinn('2026-09-18', '20:40'), confirmedAt: tallinn('2026-09-19', '08:55'), updatedAt: tallinn('2026-09-19', '10:12'),
   });
   await setDoc('bookings', visitId, {
     orderId: order.id, providerId: PROVIDER_ID, providerName: PROVIDER.name,
@@ -323,6 +348,10 @@ async function main() {
   await setDoc('serviceRequests', rid('req-open'), {
     ...base, serviceId: 'warranty-claim', preferredDate: null, timeWindow: 'any',
     note: 'Elutoa suure akna tihend vilistab tugeva tuulega ja alumises servas tekib hommikuti kondensaat.',
+    access: 'Välisukse kood 1408#. Võti on Kristil.',
+    messages: [
+      { id: 'm1', by: 'client', name: customerName, text: 'Elutoa suure akna tihend vilistab tugeva tuulega ja alumises servas tekib hommikuti kondensaat.', at: openCreated },
+    ],
     status: 'requested', createdAt: openCreated, updatedAt: openCreated,
   });
   // A question answered in writing — the third shape of a request (no visit, no time)
@@ -331,6 +360,10 @@ async function main() {
     note: 'Vajan teist parklapulti P-23 jaoks. Kelle käest saab ja mis see maksab?',
     status: 'answered',
     providerMessage: 'Tere, Anna! Teise puldi saab halduri käest — Kodulahe Haldus OÜ, Mart Mets, +372 5555 1234. Hind 45 €, pult programmeeritakse kohapeal. Andsin haldurile teada.',
+    messages: [
+      { id: 'm1', by: 'client', name: customerName, text: 'Vajan teist parklapulti P-23 jaoks. Kelle käest saab ja mis see maksab?', at: tallinn('2026-09-15', '19:05') },
+      { id: 'm2', by: 'provider', name: PROVIDER.name, text: 'Tere, Anna! Teise puldi saab halduri käest — Kodulahe Haldus OÜ, Mart Mets, +372 5555 1234. Hind 45 €, pult programmeeritakse kohapeal. Andsin haldurile teada.', at: tallinn('2026-09-16', '09:20') },
+    ],
     createdAt: tallinn('2026-09-15', '19:05'), answeredAt: tallinn('2026-09-16', '09:20'), updatedAt: tallinn('2026-09-16', '09:20'),
   });
   console.log('Requests: 1 done · 1 answered · 1 confirmed (visit 25.09 14:00) · 1 open');

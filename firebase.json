@@ -35,7 +35,7 @@
       {
         "source": "**/*.html",
         "headers": [
-          { "key": "Cache-Control", "value": "public, max-age=300, s-maxage=600" }
+          { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
         ]
       }
     ],
@@ -126,6 +126,13 @@
       },
       {
         "source": "/api/admin/providers/**",
+        "function": {
+          "functionId": "adminProvidersApi",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/admin/home-terms",
         "function": {
           "functionId": "adminProvidersApi",
           "region": "europe-west1"

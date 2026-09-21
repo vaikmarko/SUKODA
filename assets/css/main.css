@@ -95,6 +95,8 @@ body {
   white-space: nowrap;
 }
 .p-btn-2:hover { background: var(--color-black); color: var(--color-paper); }
+/* Compact variant for inline forms and card headers (same voice, smaller frame) */
+.p-btn-sm, .p-btn-2.p-btn-sm { height: 2.25rem; padding: 0 1rem; font-size: 10px; }
 /* Small call-to-action inside a clickable catalogue card */
 .p-cta {
   display: inline-flex; align-items: center;

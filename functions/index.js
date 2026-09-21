@@ -1342,12 +1342,14 @@ async function sendAllEmails(order, orderId, portalToken) {
  */
 const EMAIL_FROM = 'SUKODA <tere@sukoda.ee>';
 
-async function sendEmail({ to, subject, html, replyTo }) {
+async function sendEmail({ to, subject, html, replyTo, from }) {
   // Validate recipient email
   if (!to || typeof to !== 'string' || !to.includes('@')) {
     console.error('sendEmail: invalid or missing recipient:', to);
     return;
   }
+  // White-label sender name (e.g. "Arco Vara järelteenindus <tere@sukoda.ee>") — the address stays on our verified domain
+  const fromHeader = from && /<tere@sukoda\.ee>$/.test(from) ? from : EMAIL_FROM;
 
   if (!getResend()) {
     console.log('Resend not configured, saving to Firestore instead');
@@ -1363,7 +1365,7 @@ async function sendEmail({ to, subject, html, replyTo }) {
   try {
     // Domain sukoda.ee is verified in Resend - DNS records configured in Zone.ee
     const { data, error } = await getResend().emails.send({
-      from: EMAIL_FROM,
+      from: fromHeader,
       to,
       subject,
       html,
