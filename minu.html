@@ -11,6 +11,7 @@
     <link rel="apple-touch-icon" href="assets/logo/icon-square.svg">
     <link rel="preload" href="/assets/fonts/cormorant-garamond-400.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/assets/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
+    <script type="module" src="/assets/js/minu/mount.js"></script>
     <script type="module" src="/assets/js/main.js"></script>
 </head>
 <body class="antialiased" x-data="{
@@ -30,6 +31,43 @@
     viewer: null,
     bookings: [],
     activeTab: 'overview',
+    locale() {
+        if (this.lang === 'en') return 'en-GB';
+        if (this.lang === 'ru') return 'ru-RU';
+        return 'et-EE';
+    },
+    t(key, vars) {
+        const row = (window.SUKODA_MINU && window.SUKODA_MINU.dict && window.SUKODA_MINU.dict[key]) || {};
+        const s = row[this.lang] || row.et || key;
+        if (!vars) return s;
+        return String(s).replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '');
+    },
+    get nextThing() {
+        const pick = window.SUKODA_MINU && window.SUKODA_MINU.pickNextThing;
+        return pick ? pick(this) : { kind: 'loading', eyebrow: '', title: '', body: '', action: '', thenLine: '', refId: '', pending: false };
+    },
+    runNext() {
+        const n = this.nextThing;
+        if (!n || n.kind === 'loading') return;
+        if (n.kind === 'unpaid') { this.loadProfile(); return; }
+        if (n.kind === 'request') {
+            const r = (this.extras.requests || []).find((x) => x.id === n.refId);
+            if (r) this.openThread(r);
+            return;
+        }
+        if (n.kind === 'visit') {
+            if (n.pending) { this.activeTab = 'visits'; return; }
+            const b = (this.upcomingBookings || []).find((x) => x.id === n.refId);
+            if (b) this.changeTime(b);
+            return;
+        }
+        if (n.kind === 'away') { this.activeTab = 'visits'; return; }
+        if (n.kind === 'calm') {
+            const s = (this.extras.catalogue || []).find((x) => x.id === 'warranty-claim');
+            if (s) this.openRequest(s);
+            else this.activeTab = 'extras';
+        }
+    },
 
     homeProfile: {
         access: '',
@@ -487,11 +525,11 @@
     get providerFirstName() { return (this.maintenance.provider?.name || this.extras.provider?.name || '').split(' ')[0]; },
     nextLabel(item) {
         const d = new Date(item.nextDueAt + 'T12:00:00');
-        return d.toLocaleDateString(this.lang === 'et' ? 'et-EE' : 'en-GB', { month: 'long', year: 'numeric' });
+        return d.toLocaleDateString(this.locale(), { month: 'long', year: 'numeric' });
     },
     lastDoneLabel(item) {
         if (!item.lastDoneAt) return '';
-        const d = new Date(item.lastDoneAt + 'T12:00:00').toLocaleDateString(this.lang === 'et' ? 'et-EE' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        const d = new Date(item.lastDoneAt + 'T12:00:00').toLocaleDateString(this.locale(), { day: 'numeric', month: 'short', year: 'numeric' });
         return (this.lang === 'et' ? 'viimati ' : 'last ') + d;
     },
     async assignMaintenance(item, doneBy) { await this.maintenanceAction({ action: 'update', itemId: item.id, doneBy }, 'own-' + item.id); },
@@ -501,9 +539,9 @@
     },
     dueLabel(item) {
         const d = new Date(item.nextDueAt + 'T12:00:00');
-        const s = d.toLocaleDateString(this.lang === 'et' ? 'et-EE' : 'en-GB', { day: 'numeric', month: 'long' });
-        if (item.state === 'overdue') return this.lang === 'et' ? `Aeg möödas · ${s}` : `Overdue · ${s}`;
-        if (item.state === 'due') return this.lang === 'et' ? `Peagi · ${s}` : `Soon · ${s}`;
+        const s = d.toLocaleDateString(this.locale(), { day: 'numeric', month: 'long' });
+        if (item.state === 'overdue') return this.t('overdueOn', { date: s });
+        if (item.state === 'due') return this.t('dueOn', { date: s });
         return s;
     },
     async maintenanceAction(body, busyKey) {
@@ -625,26 +663,38 @@
     },
     /** One list of what waits on the household: requests waiting on someone, upkeep due, a time pending. Confirmed visits live in the calendar. */
     get attention() {
-        const et = this.lang === 'et';
         const out = [];
         for (const r of this.awaitingRequests) {
+            const who = r.providerName ? ' · ' + (r.status === 'declined' ? r.providerName : this.shortName(r.providerName)) : '';
             out.push({
-                key: 'req-' + r.id, dot: this.partnerDot(r.category),
+                key: 'req-' + r.id,
                 title: r.serviceName + (r.note ? ' — ' + r.note : ''),
-                sub: r.status === 'declined'
-                    ? (this.isNotCovered(r) ? (et ? 'Ei kuulu garantiisse — vaata vastust' : 'Not under warranty — see the reply') : (et ? 'Vajab uut aega — paku päev' : 'Needs a new time — suggest a day')) + (r.providerName ? ' · ' + r.providerName : '')
-                    : (et ? 'Saadetud ' : 'Sent ') + this.formatDateLong(r.createdAt) + (r.providerName ? ' · ' + this.shortName(r.providerName) : ''),
-                chip: this.requestStatusLabel(r.status, r), chipClass: this.requestStatusColor(r.status),
+                sub: (r.status === 'declined'
+                    ? (this.isNotCovered(r) ? this.t('notCoveredBody') : this.t('needsNewTime'))
+                    : this.t('sentOn', { date: this.formatDateLong(r.createdAt) })) + who,
+                chip: this.requestStatusLabel(r.status, r),
                 go: () => this.openThread(r),
             });
         }
         for (const b of this.upcomingBookings) {
             if (!this.pendingRescheduleIds.includes(b.id)) continue;
-            out.push({ key: 'resch-' + b.id, dot: 'bg-amber-400', title: (et ? 'Uus aeg ootel: ' : 'New time pending: ') + this.visitLabel(b), sub: this.formatDateShort(b.scheduledAt) + ' · ' + this.formatTime(b.scheduledAt), chip: et ? 'Ootel' : 'Pending', chipClass: 'text-amber-600 bg-amber-50', go: () => { this.activeTab = 'visits'; } });
+            out.push({
+                key: 'resch-' + b.id,
+                title: this.t('newTimePending', { what: this.visitLabel(b) }),
+                sub: this.formatDateShort(b.scheduledAt) + ' · ' + this.formatTime(b.scheduledAt),
+                chip: this.t('pending'),
+                go: () => { this.activeTab = 'visits'; },
+            });
         }
         for (const it of this.maintHomeItems) {
             if (it.state === 'ok') continue;
-            out.push({ key: 'maint-' + it.id, dot: it.state === 'overdue' ? 'bg-red-400' : 'bg-accent', title: it.name, sub: this.dueLabel(it) + (it.doerName ? ' · ' + (et ? 'telli: ' : 'order: ') + it.doerName : ''), chip: it.state === 'overdue' ? (et ? 'Üle aja' : 'Overdue') : (et ? 'Peagi' : 'Due'), chipClass: it.state === 'overdue' ? 'text-red-500 bg-red-50' : 'text-accent bg-accent/10', go: () => { this.activeTab = 'home'; this.$nextTick(() => document.getElementById('hooldus')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); } });
+            out.push({
+                key: 'maint-' + it.id,
+                title: it.name,
+                sub: this.dueLabel(it) + (it.doerName ? ' · ' + this.t('orderDoer', { name: it.doerName }) : ''),
+                chip: it.state === 'overdue' ? this.t('overdue') : this.t('dueSoon'),
+                go: () => { this.activeTab = 'home'; this.$nextTick(() => document.getElementById('hooldus')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); },
+            });
         }
         return out.slice(0, 6);
     },
@@ -672,7 +722,7 @@
         const cat = (this.extras.categories || []).find((c) => c.id === 'warranty');
         const d = cat?.terms?.until || this.brand?.warrantyUntil;
         if (!d) return '';
-        return window.SUKODA_TIME.formatDate(String(d).slice(0, 10) + 'T12:00:00', this.lang === 'et' ? 'et-EE' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+        return window.SUKODA_TIME.formatDate(String(d).slice(0, 10) + 'T12:00:00', this.locale(), { day: 'numeric', month: 'long', year: 'numeric' });
     },
     get handymanStanding() {
         const cat = (this.extras.categories || []).find((c) => c.id === 'handyman');
@@ -694,8 +744,8 @@
     get partners() {
         if (Array.isArray(this.extras.partners) && this.extras.partners.length) return this.extras.partners;
         const out = [];
-        if (this.order?.provider) out.push({ category: 'cleaning', label: this.lang === 'et' ? 'Koristus' : 'Cleaning', ...this.order.provider });
-        if (this.extras.florist) out.push({ category: 'flowers', label: this.lang === 'et' ? 'Lilled' : 'Flowers', ...this.extras.florist });
+        if (this.order?.provider) out.push({ category: 'cleaning', label: this.t('cleaning'), ...this.order.provider });
+        if (this.extras.florist) out.push({ category: 'flowers', label: this.t('flowers'), ...this.extras.florist });
         return out;
     },
     /** Ask the housekeeper to change or stop the standing rhythm — a request, not a self-service switch */
@@ -745,7 +795,7 @@
             const key = window.SUKODA_TIME.getYearMonth(new Date(b.scheduledAt));
             let g = groups.find((x) => x.key === key);
             if (!g) {
-                g = { key, label: window.SUKODA_TIME.formatDate(b.scheduledAt, this.lang === 'et' ? 'et-EE' : 'en-GB', { month: 'long', year: 'numeric' }), items: [] };
+                g = { key, label: window.SUKODA_TIME.formatDate(b.scheduledAt, this.locale(), { month: 'long', year: 'numeric' }), items: [] };
                 groups.push(g);
             }
             g.items.push(b);
@@ -753,8 +803,8 @@
         return groups;
     },
     dayNumber(iso) { return iso ? window.SUKODA_TIME.formatDate(iso, 'en-GB', { day: 'numeric' }) : ''; },
-    weekdayShort(iso) { return iso ? window.SUKODA_TIME.formatDate(iso, this.lang === 'et' ? 'et-EE' : 'en-GB', { weekday: 'short' }).replace('.', '') : ''; },
-    monthShort(iso) { return iso ? window.SUKODA_TIME.formatDate(iso, this.lang === 'et' ? 'et-EE' : 'en-GB', { month: 'short' }).replace('.', '') : ''; },
+    weekdayShort(iso) { return iso ? window.SUKODA_TIME.formatDate(iso, this.locale(), { weekday: 'short' }).replace('.', '') : ''; },
+    monthShort(iso) { return iso ? window.SUKODA_TIME.formatDate(iso, this.locale(), { month: 'short' }).replace('.', '') : ''; },
 
     // ---- Dokumendid ----
     get documents() { return this.extras.documents || { items: [], categories: [] }; },
@@ -863,11 +913,9 @@
         }
     },
     requestStatusLabel(status, r) {
-        const et = { requested: 'Ootab vastust', confirmed: 'Kinnitatud', completed: 'Tehtud', answered: 'Vastatud', declined: 'Vajab uut aega', cancelled: 'Tühistatud' };
-        const en = { requested: 'Awaiting reply', confirmed: 'Confirmed', completed: 'Done', answered: 'Answered', declined: 'Needs a new time', cancelled: 'Cancelled' };
-        // A reviewed defect report that is not under warranty is not a request for a new time
-        if (status === 'declined' && r && (r.outcome === 'not_covered' || (!r.outcome && r.kind === 'issue'))) return this.lang === 'et' ? 'Vaadatud üle' : 'Reviewed';
-        return (this.lang === 'et' ? et : en)[status] || status;
+        const keys = { requested: 'statusRequested', confirmed: 'statusConfirmed', completed: 'statusCompleted', answered: 'statusAnswered', declined: 'statusDeclined', cancelled: 'statusCancelled' };
+        if (status === 'declined' && r && (r.outcome === 'not_covered' || (!r.outcome && r.kind === 'issue'))) return this.t('statusReviewed');
+        return keys[status] ? this.t(keys[status]) : (status || '');
     },
     isNotCovered(r) { return !!r && r.status === 'declined' && (r.outcome === 'not_covered' || (!r.outcome && r.kind === 'issue')); },
     requestStatusColor(status) {
@@ -1264,26 +1312,26 @@
 
     visitLabel(b) {
         if (b?.kind === 'extra' && b.serviceName) return b.serviceName;
-        return this.lang === 'et' ? 'Koristus' : 'Cleaning';
+        return this.t('cleaning');
     },
 
     formatDate(iso) {
         if (!iso) return '';
         const opts = { weekday: 'long', day: 'numeric', month: 'long' };
-        return window.SUKODA_TIME.formatDate(iso, this.lang === 'et' ? 'et-EE' : 'en-GB', opts);
+        return window.SUKODA_TIME.formatDate(iso, this.locale(), opts);
     },
 
     formatDateShort(v) {
         if (!v) return '';
         const iso = v.length === 10 ? v + 'T12:00:00' : v;
-        return window.SUKODA_TIME.formatDate(iso, this.lang === 'et' ? 'et-EE' : 'en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+        return window.SUKODA_TIME.formatDate(iso, this.locale(), { weekday: 'short', day: 'numeric', month: 'short' });
     },
 
     /** Records and history carry the year: “14. märts 2026” — the folder outlives the season */
     formatDateLong(v) {
         if (!v) return '';
         const iso = v.length === 10 ? v + 'T12:00:00' : v;
-        return window.SUKODA_TIME.formatDate(iso, this.lang === 'et' ? 'et-EE' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        return window.SUKODA_TIME.formatDate(iso, this.locale(), { day: 'numeric', month: 'short', year: 'numeric' });
     },
 
     /** A read-only fact for developer homes; a toggle for the household's own home */
@@ -1299,7 +1347,7 @@
 
     formatTime(iso) {
         if (!iso) return '';
-        return window.SUKODA_TIME.formatTime(iso, this.lang === 'et' ? 'et-EE' : 'en-GB', { hour: '2-digit', minute: '2-digit' });
+        return window.SUKODA_TIME.formatTime(iso, this.locale(), { hour: '2-digit', minute: '2-digit' });
     },
 }">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[10000] focus:bg-accent focus:text-paper focus:px-4 focus:py-2 focus:text-sm focus:font-sans">Skip to main content</a>
@@ -1326,6 +1374,8 @@
                         <button @click="lang = 'et'; localStorage.setItem('sukoda_lang', 'et')" :class="lang === 'et' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">ET</button>
                         <span class="text-[#D4CFC8]">/</span>
                         <button @click="lang = 'en'; localStorage.setItem('sukoda_lang', 'en')" :class="lang === 'en' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">EN</button>
+                        <span class="text-muted-light">/</span>
+                        <button @click="lang = 'ru'; localStorage.setItem('sukoda_lang', 'ru')" :class="lang === 'ru' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">RU</button>
                     </div>
                 </div>
             </nav>
@@ -1400,8 +1450,10 @@
                             <button type="button" @click="lang = 'et'; localStorage.setItem('sukoda_lang', 'et')" :class="lang === 'et' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">ET</button>
                             <span class="text-[#D4CFC8]">/</span>
                             <button type="button" @click="lang = 'en'; localStorage.setItem('sukoda_lang', 'en')" :class="lang === 'en' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">EN</button>
+                            <span class="text-muted-light">/</span>
+                            <button type="button" @click="lang = 'ru'; localStorage.setItem('sukoda_lang', 'ru')" :class="lang === 'ru' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">RU</button>
                         </div>
-                        <button type="button" @click="logout()" class="text-xs uppercase tracking-[0.16em] font-sans font-medium text-muted hover:text-black transition-colors" x-text="lang === 'et' ? 'Logi välja' : 'Log out'"></button>
+                        <button type="button" @click="logout()" class="text-xs uppercase tracking-[0.16em] font-sans font-medium text-muted hover:text-black transition-colors" x-text="t('logOut')"></button>
                     </div>
                 </div>
             </nav>
@@ -1411,9 +1463,9 @@
                 <div class="grid lg:grid-cols-12 items-stretch">
                     <div class="px-6 md:px-12 py-8 md:py-12 flex flex-col justify-center" :class="brand?.image ? 'lg:col-span-7' : 'lg:col-span-12'">
                         <div class="accent-line mb-4"></div>
-                        <h1 class="font-serif text-3xl md:text-4xl font-light" x-text="(lang === 'et' ? 'Tere, ' : 'Hello, ') + ((viewer?.name || order?.customerName || '').split(' ')[0])"></h1>
+                        <h1 class="font-serif text-3xl md:text-4xl font-light" x-text="t('hello') + ((viewer?.name || order?.customerName || '').split(' ')[0])"></h1>
                         <p class="text-sm text-muted font-sans font-light mt-3" x-show="(order?.customerAddress || order?.address) || brand?.warrantyUntil">
-                            <span x-text="order?.customerAddress || order?.address"></span><span x-show="brand?.warrantyUntil && (order?.customerAddress || order?.address)"> · </span><span x-show="brand?.warrantyUntil" x-text="(lang === 'et' ? 'Garantii kuni ' : 'Warranty until ') + (brand?.warrantyUntil ? window.SUKODA_TIME.formatDate(brand.warrantyUntil + 'T12:00:00', lang === 'et' ? 'et-EE' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '')"></span>
+                            <span x-text="order?.customerAddress || order?.address"></span><span x-show="brand?.warrantyUntil && (order?.customerAddress || order?.address)"> · </span><span x-show="brand?.warrantyUntil" x-text="brand?.warrantyUntil ? t('warrantyUntil', { date: window.SUKODA_TIME.formatDate(brand.warrantyUntil + 'T12:00:00', locale(), { day: 'numeric', month: 'long', year: 'numeric' }) }) : ''"></span>
                         </p>
                     </div>
                     <!-- The home. Only with a real project picture from the developer — never a stock interior under the project's name. -->
@@ -1430,7 +1482,7 @@
             <!-- Tab navigation: the home portal — cleaning is one service among several -->
             <div class="px-6 md:px-12 grid-line-b overflow-x-auto">
                 <div class="flex gap-8 md:gap-12 text-[13px] md:text-sm uppercase tracking-[0.14em] font-sans font-medium whitespace-nowrap">
-                    <button @click="activeTab = 'overview'" :class="activeTab === 'overview' ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black border-b-2 border-transparent'" class="py-4 transition-colors" x-text="lang === 'et' ? 'Ülevaade' : 'Overview'"></button>
+                    <button @click="activeTab = 'overview'" :class="activeTab === 'overview' ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black border-b-2 border-transparent'" class="py-4 transition-colors" x-text="t('tabKodu')"></button>
                     <button @click="activeTab = 'extras'" :class="activeTab === 'extras' ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black border-b-2 border-transparent'" class="py-4 transition-colors relative">
                         <span x-text="lang === 'et' ? 'Teenused' : 'Services'"></span>
                         <span x-show="awaitingRequests.length" x-cloak class="absolute top-2 -right-5 bg-accent text-white text-[10px] rounded-full w-[18px] h-[18px] flex items-center justify-center" x-text="awaitingRequests.length"></span>
@@ -1442,167 +1494,7 @@
 
             <main id="main-content" class="px-6 md:px-12 py-8 md:py-12">
 
-                <!-- ─────────────────────────────────── -->
-                <!-- TAB 1: OVERVIEW                      -->
-                <!-- ─────────────────────────────────── -->
-                <div x-show="activeTab === 'overview'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
-                    <div class="grid lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-                        <div class="lg:col-span-8 space-y-6 lg:space-y-8 min-w-0">
-
-                        <!-- Away notice (compact) -->
-                        <div x-show="extras.away?.length" x-cloak class="flex items-center justify-between gap-4 bg-amber-50/70 border border-amber-200 px-5 py-4">
-                            <p class="text-sm font-sans text-amber-800">
-                                <span x-text="lang === 'et' ? 'Eemal: ' : 'Away: '"></span>
-                                <span x-text="(extras.away || []).map(p => formatDateShort(p.from) + (p.to !== p.from ? ' – ' + formatDateShort(p.to) : '')).join(' · ')"></span>
-                            </p>
-                            <button type="button" @click="activeTab = 'visits'" class="text-[11px] uppercase tracking-[0.16em] font-sans text-amber-800 hover:text-black shrink-0" x-text="lang === 'et' ? 'Muuda' : 'Edit'"></button>
-                        </div>
-
-                        <!-- Next visit (hero) -->
-                        <div x-show="upcomingBookings.length > 0" class="bg-white border border-[#E8E3DD] p-have">
-                            <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
-                                <h2 class="p-h"><span class="p-num">01</span><span x-text="lang === 'et' ? 'Järgmine visiit' : 'Next visit'"></span></h2>
-                                <button type="button" @click="activeTab = 'visits'" class="text-[11px] uppercase tracking-[0.16em] font-sans text-accent hover:text-black transition-colors" x-text="lang === 'et' ? 'Kalender →' : 'Calendar →'"></button>
-                            </div>
-                            <div class="p-6 md:p-8 flex flex-wrap items-center justify-between gap-5">
-                                <div class="flex items-center gap-5 min-w-0">
-                                    <div class="w-16 h-16 rounded-full bg-accent/10 flex flex-col items-center justify-center shrink-0 leading-none">
-                                        <span class="font-serif text-3xl text-accent" x-text="dayNumber(upcomingBookings[0]?.scheduledAt)"></span>
-                                        <span class="text-[10px] uppercase tracking-[0.14em] text-muted font-sans mt-0.5" x-text="monthShort(upcomingBookings[0]?.scheduledAt)"></span>
-                                    </div>
-                                    <div class="min-w-0">
-                                        <p class="font-serif text-2xl md:text-3xl font-light capitalize leading-tight" x-text="formatDate(upcomingBookings[0]?.scheduledAt)"></p>
-                                        <p class="text-base text-muted font-sans font-light mt-1.5"><span class="text-black" x-text="formatTime(upcomingBookings[0]?.scheduledAt)"></span> · <span x-text="visitLabel(upcomingBookings[0])"></span><span x-show="upcomingBookings[0]?.providerName || order?.provider?.name" x-text="' · ' + (upcomingBookings[0]?.providerName || order?.provider?.name)"></span></p>
-                                    </div>
-                                </div>
-                                <span x-show="pendingRescheduleIds.includes(upcomingBookings[0]?.id)" class="inline-flex px-3 py-1.5 text-[10px] uppercase tracking-[0.15em] font-sans text-amber-600 bg-amber-50 rounded-full shrink-0" x-text="lang === 'et' ? 'Uus aeg ootel' : 'New time pending'"></span>
-                                <button type="button" x-show="!pendingRescheduleIds.includes(upcomingBookings[0]?.id)" @click="changeTime(upcomingBookings[0])" class="p-btn shrink-0" x-text="lang === 'et' ? 'Muuda aega' : 'Reschedule'"></button>
-                            </div>
-                            <!-- Small extras belong to the visit, not to a separate list -->
-                            <div x-show="visitAddons.length && upcomingBookings[0]?.kind !== 'extra'" x-cloak class="px-6 md:px-8 py-4 border-t border-[#E8E3DD]">
-                                <button type="button" @click="openAddonChooser()" class="text-[11px] uppercase tracking-[0.16em] font-sans text-muted hover:text-black" x-text="lang === 'et' ? 'Lisa sellele visiidile →' : 'Add to this visit →'"></button>
-                            </div>
-                            <!-- Then: the next few, as a compact strip -->
-                            <div x-show="upcomingBookings.length > 1" class="border-t border-[#E8E3DD] overflow-hidden">
-                                <div class="grid grid-cols-3 sm:grid-cols-[auto_1fr_1fr_1fr] -mr-px">
-                                    <div class="hidden sm:flex px-4 md:px-6 py-3 border-r border-[#E8E3DD] bg-cream/30 items-center">
-                                        <p class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans" x-text="lang === 'et' ? 'Edasi' : 'Then'"></p>
-                                    </div>
-                                    <template x-for="b in upcomingBookings.slice(1, 4)" :key="b.id">
-                                        <div class="px-4 md:px-6 py-3 border-r border-[#E8E3DD] min-w-0">
-                                            <p class="text-sm font-sans truncate" x-text="formatDateShort(b.scheduledAt)"></p>
-                                            <p class="text-xs text-muted font-sans font-light truncate"><span x-text="formatTime(b.scheduledAt)"></span> · <span x-text="visitLabel(b)"></span></p>
-                                        </div>
-                                    </template>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- No upcoming visits -->
-                        <div x-show="upcomingBookings.length === 0 && order?.status === 'paid' && !order?.pausedAt" class="bg-white border border-[#E8E3DD] p-8 md:p-10 text-center">
-                            <svg class="w-8 h-8 text-muted mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                            <p class="text-base text-muted font-sans font-light" x-text="lang === 'et' ? 'Visiite pole veel planeeritud' : 'No visits scheduled yet'"></p>
-                        </div>
-
-                        <!-- 02 · What needs you: open requests, upkeep that is due, a time waiting for confirmation. One list, no hunting. -->
-                        <div class="bg-white border border-[#E8E3DD]">
-                            <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
-                                <h2 class="p-h"><span class="p-num">02</span><span x-text="lang === 'et' ? 'Vajab sinu tähelepanu' : 'Needs your attention'"></span></h2>
-                                <span x-show="attention.length" class="text-[11px] font-sans text-muted" x-text="attention.length"></span>
-                            </div>
-                            <div x-show="attention.length" class="divide-y divide-[#E8E3DD]">
-                                <template x-for="a in attention" :key="a.key">
-                                    <button type="button" @click="a.go()" class="w-full text-left px-6 py-4 flex items-center gap-4 hover:bg-cream/40 transition-colors group">
-                                        <span class="w-2.5 h-2.5 rounded-full shrink-0" :class="a.dot"></span>
-                                        <span class="min-w-0 flex-1">
-                                            <span class="font-sans text-base block truncate" x-text="a.title"></span>
-                                            <span class="text-sm text-muted font-sans font-light block truncate" x-text="a.sub"></span>
-                                        </span>
-                                        <span class="inline-flex px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] font-sans rounded-full shrink-0" :class="a.chipClass" x-text="a.chip"></span>
-                                        <svg class="w-4 h-4 text-muted/50 group-hover:text-black transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"></path></svg>
-                                    </button>
-                                </template>
-                            </div>
-                            <p x-show="extrasLoaded && !attention.length" class="px-6 py-8 text-sm text-muted font-sans font-light flex items-center gap-3">
-                                <span class="w-2.5 h-2.5 rounded-full bg-green-500 shrink-0"></span>
-                                <span x-text="lang === 'et' ? 'Kõik on korras. Midagi ei oota sinu otsust.' : 'All is well. Nothing is waiting on you.'"></span>
-                            </p>
-                        </div>
-
-                        <!-- 03 · What do you need? Four verbs. Everything else lives under Teenused. -->
-                        <div class="bg-white border border-[#E8E3DD]">
-                            <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
-                                <h2 class="p-h"><span class="p-num">03</span><span x-text="lang === 'et' ? 'Mida sa vajad?' : 'What do you need?'"></span></h2>
-                                <button type="button" @click="activeTab = 'extras'" class="text-[11px] uppercase tracking-[0.16em] font-sans text-accent hover:text-black transition-colors" x-text="lang === 'et' ? 'Kõik teenused →' : 'All services →'"></button>
-                            </div>
-                            <div class="divide-y divide-[#E8E3DD]">
-                                <template x-for="q in quickActions" :key="q.id">
-                                    <button type="button" @click="q.go()" class="group w-full text-left px-6 py-4 flex items-baseline justify-between gap-4 hover:bg-cream/40 transition-colors">
-                                        <span class="font-sans text-sm font-light" x-text="q.title"></span>
-                                        <span class="shrink-0 text-[11px] uppercase tracking-[0.14em] font-sans text-muted group-hover:text-black" x-text="q.cta"></span>
-                                    </button>
-                                </template>
-                            </div>
-                        </div>
-
-                        </div>
-
-                        <aside class="lg:col-span-4 space-y-6 lg:space-y-8 min-w-0">
-                        <!-- Home partners -->
-                        <div x-show="extrasLoaded && partners.length" x-cloak class="bg-white border border-[#E8E3DD]">
-                            <div class="px-6 py-4 border-b border-[#E8E3DD]">
-                                <h2 class="p-h" x-text="lang === 'et' ? 'Kelle poole pöörduda' : 'Who to contact'"></h2>
-                            </div>
-                            <!-- One entry per role: the housekeeper, the builder's warranty team, the florist … each with a way to reach them -->
-                            <div class="divide-y divide-[#E8E3DD]">
-                                <template x-for="p in partners" :key="'partner-' + p.category">
-                                    <div class="px-6 py-3 flex items-center justify-between gap-4">
-                                        <span class="min-w-0">
-                                            <span class="block font-sans text-sm truncate" x-text="p.contactName || p.name"></span>
-                                            <span class="block text-xs text-muted font-sans font-light truncate" x-text="p.label"></span>
-                                        </span>
-                                        <span class="flex items-center gap-4 shrink-0">
-                                            <a x-show="p.phone" :href="'tel:' + p.phone" class="text-[11px] uppercase tracking-[0.14em] font-sans text-muted hover:text-black" x-text="p.phone"></a>
-                                            <button type="button" @click="askPartner(p)" class="text-[11px] uppercase tracking-[0.14em] font-sans text-muted hover:text-black" x-text="lang === 'et' ? 'Kirjuta' : 'Write'"></button>
-                                        </span>
-                                    </div>
-                                </template>
-                            </div>
-                        </div>
-
-                        <!-- The home in four numbers. Developer homes already carry their facts in the header — one place each. -->
-                        <div class="border border-[#E8E3DD]" x-show="extrasLoaded && !brand" x-cloak>
-                            <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
-                                <h2 class="p-h" x-text="lang === 'et' ? 'Minu kodu' : 'My home'"></h2>
-                                <button type="button" @click="activeTab = 'home'" class="text-[11px] uppercase tracking-[0.16em] font-sans text-accent hover:text-black transition-colors" x-text="lang === 'et' ? 'Ava →' : 'Open →'"></button>
-                            </div>
-                            <div class="grid grid-cols-2 divide-x divide-y divide-[#E8E3DD] -mb-px">
-                                <button type="button" @click="activeTab = 'home'; $nextTick(() => document.getElementById('dokumendid')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))" class="p-5 text-left hover:bg-cream/40 transition-colors">
-                                    <span class="block font-serif text-2xl font-light leading-none" x-text="documents.items.length"></span>
-                                    <span class="block text-[10px] uppercase tracking-[0.14em] text-muted font-sans mt-2" x-text="lang === 'et' ? (documents.items.length === 1 ? 'Dokument kaustas' : 'Dokumenti kaustas') : 'Documents'"></span>
-                                </button>
-                                <button type="button" @click="activeTab = 'home'; $nextTick(() => document.getElementById('hooldus')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))" class="p-5 text-left hover:bg-cream/40 transition-colors">
-                                    <span class="block font-serif text-2xl font-light leading-none" x-text="maintenance.items.length"></span>
-                                    <span class="block text-[10px] uppercase tracking-[0.14em] text-muted font-sans mt-2" x-text="lang === 'et' ? (maintenance.items.length === 1 ? 'Hoolduskirje' : 'Hoolduskirjet') : 'Upkeep items'"></span>
-                                </button>
-                                <button type="button" @click="activeTab = 'home'" class="p-5 text-left hover:bg-cream/40 transition-colors">
-                                    <span class="block font-serif text-2xl font-light leading-none" x-text="1 + contacts.length"></span>
-                                    <span class="block text-[10px] uppercase tracking-[0.14em] text-muted font-sans mt-2" x-text="lang === 'et' ? 'Saab teateid' : 'Notified'"></span>
-                                </button>
-                                <button type="button" @click="activeTab = 'home'" class="p-5 text-left hover:bg-cream/40 transition-colors">
-                                    <span class="block font-serif text-2xl font-light leading-none" x-text="profileFilled.length + '/' + profileFields.length"></span>
-                                    <span class="block text-[10px] uppercase tracking-[0.14em] text-muted font-sans mt-2" x-text="lang === 'et' ? 'Kodu info' : 'Home info'"></span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Who to talk to: the developer's after-sales team for a developer home, SUKODA otherwise. The building's 24h line only when the developer has set one. -->
-                        <p x-show="brand?.emergencyPhone" x-cloak class="text-sm text-muted font-sans font-light px-1">
-                            <span x-text="lang === 'et' ? 'Avarii 24h: ' : 'Emergency 24h: '"></span><a :href="'tel:' + (brand?.emergencyPhone || '').replace(/\s+/g, '')" class="text-black hover:text-accent transition-colors" x-text="brand?.emergencyPhone"></a>
-                        </p>
-                        </aside>
-                    </div>
-                </div>
+                <div id="minu-kodu"></div>
 
                 <!-- ─────────────────────────────────── -->
                 <!-- TAB 2: HOME PROFILE                  -->
@@ -1918,7 +1810,7 @@
                                                         <span class="text-[10px] uppercase tracking-[0.14em] text-muted font-sans mt-0.5" x-text="weekdayShort(booking.scheduledAt)"></span>
                                                     </div>
                                                     <div class="min-w-0">
-                                                        <p class="font-sans text-base"><span class="capitalize" x-text="window.SUKODA_TIME.formatDate(booking.scheduledAt, lang === 'et' ? 'et-EE' : 'en-GB', { weekday: 'long' })"></span> · <span x-text="formatTime(booking.scheduledAt)"></span></p>
+                                                        <p class="font-sans text-base"><span class="capitalize" x-text="window.SUKODA_TIME.formatDate(booking.scheduledAt, locale(), { weekday: 'long' })"></span> · <span x-text="formatTime(booking.scheduledAt)"></span></p>
                                                         <p class="text-sm text-muted font-sans font-light truncate"><span x-text="visitLabel(booking)"></span><span x-show="booking.providerName || order?.provider?.name" x-text="' · ' + (booking.providerName || order?.provider?.name)"></span><span x-show="booking.price" x-text="' · ' + booking.price"></span></p>
                                                         <p x-show="booking.customerNote" class="text-xs text-muted font-sans font-light mt-1" x-text="booking.customerNote"></p>
                                                     </div>
