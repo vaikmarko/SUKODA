@@ -21,11 +21,11 @@ function langOf(source) {
 
 /**
  * One value from `{ et, en, ru }`. A missing key or a blank string falls back to `et`,
- * so an empty `ru` cannot hide the Estonian text. Functions and other non-strings
- * are returned as stored when the chosen language has one.
+ * so an empty `ru` cannot hide the Estonian text. Functions are returned as stored
+ * when the chosen language has one. Anything that is not a text object returns undefined.
  */
 function pick(obj, lang) {
-  if (obj == null || typeof obj !== 'object') return obj;
+  if (obj == null || typeof obj !== 'object') return undefined;
   const l = lang === 'en' || lang === 'ru' ? lang : 'et';
   const v = obj[l];
   if (typeof v === 'string') {
@@ -49,13 +49,13 @@ function pick(obj, lang) {
  * Anything without a matching partner is routed to the SUKODA operator, who finds one.
  */
 const SERVICE_CATEGORIES = {
-  cleaning: { et: 'Koristus', en: 'Cleaning', orderField: 'providerId', nameField: 'providerName' },
+  cleaning: { et: 'Koristus', en: 'Cleaning', ru: 'Уборка', orderField: 'providerId', nameField: 'providerName' },
   // Developer after-sales: the builder's warranty team handles defects, inspections and "how does this work"
-  warranty: { et: 'Garantii ja maja', en: 'Warranty & building', orderField: 'warrantyId', nameField: 'warrantyName' },
-  flowers: { et: 'Lilled', en: 'Flowers', orderField: 'floristId', nameField: 'floristName' },
-  handyman: { et: 'Remondimees', en: 'Handyman', orderField: 'handymanId', nameField: 'handymanName' },
-  building: { et: 'Maja ja haldur', en: 'Building & manager', orderField: 'managerId', nameField: 'managerName' },
-  garden: { et: 'Aed & õu', en: 'Garden & outdoors', orderField: 'gardenerId', nameField: 'gardenerName' },
+  warranty: { et: 'Garantii ja maja', en: 'Warranty & building', ru: 'Гарантия и дом', orderField: 'warrantyId', nameField: 'warrantyName' },
+  flowers: { et: 'Lilled', en: 'Flowers', ru: 'Цветы', orderField: 'floristId', nameField: 'floristName' },
+  handyman: { et: 'Remondimees', en: 'Handyman', ru: 'Мастер', orderField: 'handymanId', nameField: 'handymanName' },
+  building: { et: 'Maja ja haldur', en: 'Building & manager', ru: 'Дом и управляющий', orderField: 'managerId', nameField: 'managerName' },
+  garden: { et: 'Aed & õu', en: 'Garden & outdoors', ru: 'Сад и двор', orderField: 'gardenerId', nameField: 'gardenerName' },
 };
 
 function categoryLabel(category, lang) {
@@ -68,123 +68,123 @@ const SERVICE_CATALOGUE = [
   {
     id: 'extra-clean',
     category: 'cleaning',
-    name: { et: 'Koristus', en: 'Cleaning' },
+    name: { et: 'Koristus', en: 'Cleaning', ru: 'Уборка' },
     description: {
       et: 'Eraldi visiit lisaks korduvale graafikule.',
-      en: 'A separate visit, in addition to the standing schedule.',
+      en: 'A separate visit, in addition to the standing schedule.', ru: 'Отдельный визит помимо постоянного графика.',
     },
-    priceHint: { et: 'hind kokkuleppel', en: 'price on request' },
+    priceHint: { et: 'hind kokkuleppel', en: 'price on request', ru: 'цена по договорённости' },
     durationMin: 180,
   },
   {
     id: 'deep-clean',
     category: 'cleaning',
-    name: { et: 'Süvapuhastus', en: 'Deep clean' },
+    name: { et: 'Süvapuhastus', en: 'Deep clean', ru: 'Генеральная уборка' },
     description: {
       et: 'Põhjalik hooajaline puhastus: kapid seest, radiaatorid, liistud, plaadivahed.',
-      en: 'Thorough seasonal clean: inside cupboards, radiators, skirting boards, tile grout.',
+      en: 'Thorough seasonal clean: inside cupboards, radiators, skirting boards, tile grout.', ru: 'Тщательная сезонная уборка: шкафы внутри, радиаторы, плинтусы, швы плитки.',
     },
-    priceHint: { et: 'alates 89 €', en: 'from €89' },
+    priceHint: { et: 'alates 89 €', en: 'from €89', ru: 'от 89 €' },
     durationMin: 240,
   },
   {
     id: 'windows',
     category: 'cleaning',
-    name: { et: 'Aknad ja rõdu', en: 'Windows and balcony' },
+    name: { et: 'Aknad ja rõdu', en: 'Windows and balcony', ru: 'Окна и балкон' },
     description: {
       et: 'Aknad seest ja rõdult, raamid ja aknalauad. Rõdu põrand, klaasid ja äravool lehtedest puhtaks. Kevadel ja sügisel.',
-      en: 'Windows from inside and from the balcony, frames and sills. Balcony floor, glass and the drain cleared of leaves. In spring and autumn.',
+      en: 'Windows from inside and from the balcony, frames and sills. Balcony floor, glass and the drain cleared of leaves. In spring and autumn.', ru: 'Окна изнутри и с балкона, рамы и подоконники. Пол балкона, стёкла и слив очищены от листьев. Весной и осенью.',
     },
-    priceHint: { et: 'alates 45 €', en: 'from €45' },
+    priceHint: { et: 'alates 45 €', en: 'from €45', ru: 'от 45 €' },
     durationMin: 120,
   },
   {
     id: 'fridge-oven',
     category: 'cleaning',
-    name: { et: 'Külmkapp ja ahi', en: 'Fridge & oven' },
+    name: { et: 'Külmkapp ja ahi', en: 'Fridge & oven', ru: 'Холодильник и духовка' },
     description: {
       et: 'Külmkapi ja ahju põhjalik puhastus seest ja väljast.',
-      en: 'Deep clean of fridge and oven, inside and out.',
+      en: 'Deep clean of fridge and oven, inside and out.', ru: 'Тщательная чистка холодильника и духовки внутри и снаружи.',
     },
-    priceHint: { et: 'alates 35 €', en: 'from €35' },
+    priceHint: { et: 'alates 35 €', en: 'from €35', ru: 'от 35 €' },
     durationMin: 90,
   },
   {
     id: 'ironing',
     category: 'cleaning',
-    name: { et: 'Triikimine', en: 'Ironing' },
+    name: { et: 'Triikimine', en: 'Ironing', ru: 'Глажка' },
     description: {
       et: 'Triikimine visiidi ajal või eraldi ajal. Hind tunni alusel.',
-      en: 'Ironing during a visit or at a separate time. Priced per hour.',
+      en: 'Ironing during a visit or at a separate time. Priced per hour.', ru: 'Глажка во время визита или отдельно. Цена за час.',
     },
-    priceHint: { et: '25 €/h', en: '€25/h' },
+    priceHint: { et: '25 €/h', en: '€25/h', ru: '25 €/ч' },
     durationMin: 60,
   },
   {
     id: 'laundry',
     category: 'cleaning',
-    name: { et: 'Pesu', en: 'Laundry' },
+    name: { et: 'Pesu', en: 'Laundry', ru: 'Стирка' },
     description: {
       et: 'Pesumasin, kuivati ja voltimine. Koos koristusega või eraldi.',
-      en: 'Washing, drying and folding. With a clean or on its own.',
+      en: 'Washing, drying and folding. With a clean or on its own.', ru: 'Стиральная машина, сушка и складывание. Вместе с уборкой или отдельно.',
     },
-    priceHint: { et: '25 €/h', en: '€25/h' },
+    priceHint: { et: '25 €/h', en: '€25/h', ru: '25 €/ч' },
     durationMin: 60,
   },
   {
     id: 'rugs',
     category: 'cleaning',
-    name: { et: 'Vaibad', en: 'Rugs' },
+    name: { et: 'Vaibad', en: 'Rugs', ru: 'Ковры' },
     description: {
       et: 'Vaiba puhastus. Suurus ja materjal lepime vastuses.',
-      en: 'Rug cleaning. Size and material are agreed in the reply.',
+      en: 'Rug cleaning. Size and material are agreed in the reply.', ru: 'Чистка ковра. Размер и материал согласуем в ответе.',
     },
-    priceHint: { et: 'hind kokkuleppel', en: 'price on request' },
+    priceHint: { et: 'hind kokkuleppel', en: 'price on request', ru: 'цена по договорённости' },
     durationMin: 60,
   },
   {
     id: 'linens',
     category: 'cleaning',
-    name: { et: 'Voodipesu vahetus', en: 'Linen change' },
+    name: { et: 'Voodipesu vahetus', en: 'Linen change', ru: 'Смена постельного белья' },
     description: {
       et: 'Voodipesu ja rätikute vahetus, kasutatud pesu masinasse. Soovi korral ka madratsi pööramine.',
-      en: 'Change bed linen and towels, used linen into the machine. Mattress turning as well, if you want it.',
+      en: 'Change bed linen and towels, used linen into the machine. Mattress turning as well, if you want it.', ru: 'Смена постельного белья и полотенец, использованное бельё в машину. По желанию также переворот матраса.',
     },
-    priceHint: { et: 'alates 20 €', en: 'from €20' },
+    priceHint: { et: 'alates 20 €', en: 'from €20', ru: 'от 20 €' },
     durationMin: 30,
   },
   {
     id: 'appliance-care',
     category: 'cleaning',
     kind: 'visit',
-    name: { et: 'Kodumasinate hooldus', en: 'Appliance care' },
+    name: { et: 'Kodumasinate hooldus', en: 'Appliance care', ru: 'Уход за бытовой техникой' },
     description: {
       et: 'Pesumasina filter ja tihend, nõudepesumasina filter ja pihustid, pliidikubu filter, veekeetja ja kohvimasina katlakivi, äravoolud. Koduhooldaja teeb koristuse käigus.',
-      en: 'Washing-machine filter and seal, dishwasher filter and spray arms, hood filter, kettle and coffee-machine limescale, drains. The housekeeper does it during a clean.',
+      en: 'Washing-machine filter and seal, dishwasher filter and spray arms, hood filter, kettle and coffee-machine limescale, drains. The housekeeper does it during a clean.', ru: 'Фильтр и уплотнитель стиральной машины, фильтр и разбрызгиватели посудомоечной машины, фильтр вытяжки, накипь чайника и кофемашины, сливы. Домработница делает это во время уборки.',
     },
-    priceHint: { et: 'alates 25 €', en: 'from €25' },
+    priceHint: { et: 'alates 25 €', en: 'from €25', ru: 'от 25 €' },
     durationMin: 45,
   },
   {
     id: 'away-care',
     category: 'cleaning',
-    name: { et: 'Kodu hoidmine reisi ajal', en: 'Looking after the home while you travel' },
+    name: { et: 'Kodu hoidmine reisi ajal', en: 'Looking after the home while you travel', ru: 'Присмотр за домом во время поездки' },
     description: {
       et: 'Taimede kastmine, post, tuulutamine ja pilk peale. Märgi eemalolek Minu kodu all, et koristusajad nihkuksid.',
-      en: 'Watering plants, post, airing and a look around. Mark the time away under My home so cleaning times shift.',
+      en: 'Watering plants, post, airing and a look around. Mark the time away under My home so cleaning times shift.', ru: 'Полив растений, почта, проветривание и осмотр. Отметьте отсутствие в разделе «Мой дом», чтобы сдвинуть время уборки.',
     },
-    priceHint: { et: '15 €/visiit', en: '€15/visit' },
+    priceHint: { et: '15 €/visiit', en: '€15/visit', ru: '15 €/визит' },
     durationMin: 30,
   },
   {
     id: 'flowers',
     category: 'flowers',
-    name: { et: 'Värsked lilled', en: 'Fresh flowers' },
+    name: { et: 'Värsked lilled', en: 'Fresh flowers', ru: 'Свежие цветы' },
     description: {
       et: 'Kimp sinu eelistuse järgi, külalisteks või tähtpäevaks. Koduhooldaja toob koristusvisiidiga või lillepood toob koju.',
-      en: 'A bouquet to your preference, for guests or a special day. The housekeeper brings it with a cleaning visit, or the florist delivers it home.',
+      en: 'A bouquet to your preference, for guests or a special day. The housekeeper brings it with a cleaning visit, or the florist delivers it home.', ru: 'Букет по вашему предпочтению, для гостей или к празднику. Домработница принесёт его с уборкой, либо цветочный магазин доставит домой.',
     },
-    priceHint: { et: 'alates 35 €', en: 'from €35' },
+    priceHint: { et: 'alates 35 €', en: 'from €35', ru: 'от 35 €' },
     durationMin: 0,
   },
   // — Garantii ja maja (arendaja järelteenindus) —
@@ -192,58 +192,58 @@ const SERVICE_CATALOGUE = [
     id: 'warranty-claim',
     kind: 'issue', // a defect: description first, an inspection time is optional
     category: 'warranty',
-    name: { et: 'Garantiipöördumine', en: 'Warranty claim' },
+    name: { et: 'Garantiipöördumine', en: 'Warranty claim', ru: 'Гарантийное обращение' },
     description: {
       et: 'Pragu, vuuk, uks või aken, mis ei sulgu, külm põrand, niiskus, müra. Kirjelda, garantiimeeskond kinnitab ülevaatuse aja. Kui pole kindel, kas see on garantii, küsi ikka.',
-      en: 'A crack, a joint, a door or window that will not close, a cold floor, damp, noise. Describe it and the warranty team confirms an inspection time. If you are not sure it is warranty, ask anyway.',
+      en: 'A crack, a joint, a door or window that will not close, a cold floor, damp, noise. Describe it and the warranty team confirms an inspection time. If you are not sure it is warranty, ask anyway.', ru: 'Трещина, шов, дверь или окно, которое не закрывается, холодный пол, сырость, шум. Опишите, гарантийная команда подтвердит время осмотра. Если не уверены, что это гарантия, всё равно спросите.',
     },
-    priceHint: { et: 'Garantii korras', en: 'Under warranty' },
+    priceHint: { et: 'Garantii korras', en: 'Under warranty', ru: 'По гарантии' },
     durationMin: 60,
   },
   {
     id: 'warranty-inspection',
     category: 'warranty',
-    name: { et: 'Garantiiülevaatus', en: 'Warranty inspection' },
+    name: { et: 'Garantiiülevaatus', en: 'Warranty inspection', ru: 'Гарантийный осмотр' },
     description: {
       et: '1. ja 2. aasta lõpus käib garantiimeeskond kodu üle. Aja saab siit sobivaks nihutada või varem kutsuda, kui märkamisi on kogunenud.',
-      en: 'At the end of year 1 and year 2 the warranty team walks the home. The time can be moved here, or called earlier if notes have piled up.',
+      en: 'At the end of year 1 and year 2 the warranty team walks the home. The time can be moved here, or called earlier if notes have piled up.', ru: 'В конце 1-го и 2-го года гарантийная команда осматривает дом. Время можно перенести здесь или вызвать раньше, если замечаний накопилось.',
     },
-    priceHint: { et: 'Garantii korras', en: 'Under warranty' },
+    priceHint: { et: 'Garantii korras', en: 'Under warranty', ru: 'По гарантии' },
     durationMin: 90,
   },
   {
     id: 'systems-tuning',
     category: 'warranty',
-    name: { et: 'Kütte ja ventilatsiooni seadistus', en: 'Heating and ventilation setup' },
+    name: { et: 'Kütte ja ventilatsiooni seadistus', en: 'Heating and ventilation setup', ru: 'Настройка отопления и вентиляции' },
     description: {
       et: 'Ventilatsiooni režiimid, põrandakütte termostaadid ja ajakavad. Seadistame su elurütmi järgi ja näitame, kuidas kodu töötab. Esimesel aastal garantii korras.',
-      en: 'Ventilation modes, floor-heating thermostats and schedules. We set them to your rhythm and show how the home works. Covered by warranty in the first year.',
+      en: 'Ventilation modes, floor-heating thermostats and schedules. We set them to your rhythm and show how the home works. Covered by warranty in the first year.', ru: 'Режимы вентиляции, термостаты тёплого пола и расписания. Настроим под ваш ритм и покажем, как дом работает. В первый год по гарантии.',
     },
-    priceHint: { et: 'Garantii korras', en: 'Under warranty' },
+    priceHint: { et: 'Garantii korras', en: 'Under warranty', ru: 'По гарантии' },
     durationMin: 60,
   },
   {
     id: 'home-manual',
     kind: 'question', // answered in writing — no visit, no time
     category: 'warranty',
-    name: { et: 'Küsimus kodu kohta', en: 'A question about the home' },
+    name: { et: 'Küsimus kodu kohta', en: 'A question about the home', ru: 'Вопрос о доме' },
     description: {
       et: 'Kuidas panna ventilatsioon suverežiimile, kus on peakraan, mida katab köögitehnika garantii. Vastame kirjalikult.',
-      en: 'How to set the ventilation to summer mode, where the main stopcock is, what the kitchen-appliance warranty covers. We reply in writing.',
+      en: 'How to set the ventilation to summer mode, where the main stopcock is, what the kitchen-appliance warranty covers. We reply in writing.', ru: 'Как поставить вентиляцию в летний режим, где главный кран, что покрывает гарантия кухонной техники. Ответим письменно.',
     },
-    priceHint: { et: 'Tasuta', en: 'Free' },
+    priceHint: { et: 'Tasuta', en: 'Free', ru: 'Бесплатно' },
     durationMin: 30,
   },
   {
     id: 'building-question',
     kind: 'question', // answered in writing — no visit, no time
     category: 'building',
-    name: { et: 'Küsimus maja ja ühistu kohta', en: 'A question about the building and the association' },
+    name: { et: 'Küsimus maja ja ühistu kohta', en: 'A question about the building and the association', ru: 'Вопрос о доме и товариществе' },
     description: {
       et: 'Parkimine, panipaik, prügimaja kood, võtmed ja puldid, kodukord, ühistu arved. Haldur vastab kirjalikult.',
-      en: 'Parking, storage, the waste-room code, keys and fobs, house rules, association bills. The manager replies in writing.',
+      en: 'Parking, storage, the waste-room code, keys and fobs, house rules, association bills. The manager replies in writing.', ru: 'Парковка, кладовая, код мусорной комнаты, ключи и пульты, правила дома, счета товарищества. Управляющий ответит письменно.',
     },
-    priceHint: { et: 'Tasuta', en: 'Free' },
+    priceHint: { et: 'Tasuta', en: 'Free', ru: 'Бесплатно' },
     durationMin: 30,
   },
   {
@@ -251,158 +251,158 @@ const SERVICE_CATALOGUE = [
     kind: 'question', // a quote first — the builder's team replies in writing, the work is agreed from there
     pricing: 'quote', // not free: the price label shows the hint, not “Tasuta”
     category: 'warranty',
-    name: { et: 'Lisatööd ehitajalt', en: 'Extra works from the builder' },
+    name: { et: 'Lisatööd ehitajalt', en: 'Extra works from the builder', ru: 'Дополнительные работы от застройщика' },
     description: {
       et: 'Rõdu klaasimine, jahutus, lisapistikud, lisavalgustus. Sama meeskond, kes maja ehitas, saadab hinnapakkumise. Töö algab alles sinu kinnitusega.',
-      en: 'Balcony glazing, cooling, extra sockets, extra lighting. The team that built the house sends a quote. Work starts only once you confirm.',
+      en: 'Balcony glazing, cooling, extra sockets, extra lighting. The team that built the house sends a quote. Work starts only once you confirm.', ru: 'Остекление балкона, охлаждение, дополнительные розетки, дополнительное освещение. Та же команда, что строила дом, пришлёт смету. Работа начнётся только после вашего подтверждения.',
     },
-    priceHint: { et: 'Hinnapakkumine', en: 'Quote' },
+    priceHint: { et: 'Hinnapakkumine', en: 'Quote', ru: 'Смета' },
     durationMin: 30,
   },
   // — Remondimees —
   {
     id: 'hang-mount',
     category: 'handyman',
-    name: { et: 'Piltide ja riiulite paigaldus', en: 'Hanging pictures & shelves' },
+    name: { et: 'Piltide ja riiulite paigaldus', en: 'Hanging pictures & shelves', ru: 'Установка картин и полок' },
     description: {
       et: 'Maalid, peeglid, riiulid, kardinapuud ja teler seinale. Õige kinnitus õigesse seina, jälgi jätmata.',
-      en: 'Paintings, mirrors, shelves, curtain rails and a television on the wall. The right fixing in the right wall, without a mark left behind.',
+      en: 'Paintings, mirrors, shelves, curtain rails and a television on the wall. The right fixing in the right wall, without a mark left behind.', ru: 'Картины, зеркала, полки, карнизы и телевизор на стену. Нужное крепление в нужную стену, без следов.',
     },
-    priceHint: { et: 'alates 45 €', en: 'from €45' },
+    priceHint: { et: 'alates 45 €', en: 'from €45', ru: 'от 45 €' },
     durationMin: 90,
   },
   {
     id: 'vent-filters',
     category: 'handyman',
-    name: { et: 'Ventilatsiooni filtrid ja kütte kontroll', en: 'Ventilation filters and heating check' },
+    name: { et: 'Ventilatsiooni filtrid ja kütte kontroll', en: 'Ventilation filters and heating check', ru: 'Фильтры вентиляции и проверка отопления' },
     description: {
       et: 'Soojustagastusega ventilatsiooni filtrite vahetus, seadme ja põrandakütte termostaatide hooajaline kontroll. Kevadel ja enne kütteperioodi.',
-      en: 'Filter change for heat-recovery ventilation, and a seasonal check of the unit and the floor-heating thermostats. In spring and before the heating season.',
+      en: 'Filter change for heat-recovery ventilation, and a seasonal check of the unit and the floor-heating thermostats. In spring and before the heating season.', ru: 'Замена фильтров вентиляции с рекуперацией, сезонная проверка устройства и термостатов тёплого пола. Весной и перед отопительным сезоном.',
     },
-    priceHint: { et: 'alates 55 €', en: 'from €55' },
+    priceHint: { et: 'alates 55 €', en: 'from €55', ru: 'от 55 €' },
     durationMin: 60,
   },
   {
     id: 'small-repairs',
     category: 'handyman',
-    name: { et: 'Pisiremont', en: 'Small repairs' },
+    name: { et: 'Pisiremont', en: 'Small repairs', ru: 'Мелкий ремонт' },
     description: {
       et: 'Pirnid ja patareid, ummistunud äravool, lahti tulnud käepide, kasutusest tekkinud kriimud ja augud. See, mis ei ole ehitaja garantii. Kahtluse korral küsi enne garantiimeeskonnalt.',
-      en: 'Bulbs and batteries, a blocked drain, a handle that has come loose, scratches and holes from use. What is not the builder warranty. If in doubt, ask the warranty team first.',
+      en: 'Bulbs and batteries, a blocked drain, a handle that has come loose, scratches and holes from use. What is not the builder warranty. If in doubt, ask the warranty team first.', ru: 'Лампочки и батарейки, засор слива, открутившаяся ручка, царапины и отверстия от пользования. То, что не входит в гарантию застройщика. При сомнении сначала спросите гарантийную команду.',
     },
-    priceHint: { et: 'alates 45 €/h', en: 'from €45/h' },
+    priceHint: { et: 'alates 45 €/h', en: 'from €45/h', ru: 'от 45 €/ч' },
     durationMin: 90,
   },
   {
     id: 'assembly',
     category: 'handyman',
-    name: { et: 'Mööbli kokkupanek', en: 'Furniture assembly' },
+    name: { et: 'Mööbli kokkupanek', en: 'Furniture assembly', ru: 'Сборка мебели' },
     description: {
       et: 'Uue mööbli kokkupanek ja paigaldus, pakendi äravedu.',
-      en: 'Assembly and placement of new furniture, packaging taken away.',
+      en: 'Assembly and placement of new furniture, packaging taken away.', ru: 'Сборка и установка новой мебели, вывоз упаковки.',
     },
-    priceHint: { et: 'alates 45 €/h', en: 'from €45/h' },
+    priceHint: { et: 'alates 45 €/h', en: 'from €45/h', ru: 'от 45 €/ч' },
     durationMin: 120,
   },
   {
     id: 'curtains',
     category: 'handyman',
-    name: { et: 'Kardinad', en: 'Curtains' },
+    name: { et: 'Kardinad', en: 'Curtains', ru: 'Шторы' },
     description: {
       et: 'Kardinapuu seina ja kardinad üles. Mõõdud võtame kohapeal.',
-      en: 'A curtain rail on the wall and the curtains hung. We measure on site.',
+      en: 'A curtain rail on the wall and the curtains hung. We measure on site.', ru: 'Карниз на стену и шторы повесить. Размеры снимем на месте.',
     },
-    priceHint: { et: 'alates 45 €', en: 'from €45' },
+    priceHint: { et: 'alates 45 €', en: 'from €45', ru: 'от 45 €' },
     durationMin: 90,
   },
   {
     id: 'lock',
     category: 'handyman',
-    name: { et: 'Lukuvahetus', en: 'Lock change' },
+    name: { et: 'Lukuvahetus', en: 'Lock change', ru: 'Замена замка' },
     description: {
       et: 'Välisukse südamiku vahetus. Südamiku võid tuua ise.',
-      en: 'A new cylinder in the front door. You can bring the cylinder yourself.',
+      en: 'A new cylinder in the front door. You can bring the cylinder yourself.', ru: 'Замена личинки входной двери. Личинку можете принести сами.',
     },
-    priceHint: { et: 'alates 45 €', en: 'from €45' },
+    priceHint: { et: 'alates 45 €', en: 'from €45', ru: 'от 45 €' },
     durationMin: 45,
   },
   {
     id: 'appliance-install',
     category: 'handyman',
-    name: { et: 'Kodumasina paigaldus', en: 'Appliance installation' },
+    name: { et: 'Kodumasina paigaldus', en: 'Appliance installation', ru: 'Установка бытовой техники' },
     description: {
       et: 'Pesumasin, nõudepesumasin, pliit või õhupuhasti oma kohale ja ühendatud.',
-      en: 'A washing machine, dishwasher, hob or hood set in place and connected.',
+      en: 'A washing machine, dishwasher, hob or hood set in place and connected.', ru: 'Стиральная машина, посудомоечная машина, плита или вытяжка на место и подключены.',
     },
-    priceHint: { et: 'alates 45 €', en: 'from €45' },
+    priceHint: { et: 'alates 45 €', en: 'from €45', ru: 'от 45 €' },
     durationMin: 90,
   },
   // — Aed & õu —
   {
     id: 'lawn',
     category: 'garden',
-    name: { et: 'Muru niitmine', en: 'Lawn mowing' },
+    name: { et: 'Muru niitmine', en: 'Lawn mowing', ru: 'Стрижка газона' },
     description: {
       et: 'Niitmine, servade trimmimine ja niite äravedu. Ühekordselt või hooajaks.',
-      en: 'Mowing, edge trimming and clippings removed. One-off or for the season.',
+      en: 'Mowing, edge trimming and clippings removed. One-off or for the season.', ru: 'Кошение, подравнивание краёв и вывоз скошенной травы. Разово или на сезон.',
     },
-    priceHint: { et: 'alates 45 €', en: 'from €45' },
+    priceHint: { et: 'alates 45 €', en: 'from €45', ru: 'от 45 €' },
     durationMin: 90,
   },
   {
     id: 'hedge',
     category: 'garden',
-    name: { et: 'Heki ja põõsaste lõikus', en: 'Hedge & shrub trimming' },
+    name: { et: 'Heki ja põõsaste lõikus', en: 'Hedge & shrub trimming', ru: 'Стрижка живой изгороди и кустов' },
     description: {
       et: 'Hekk, põõsad ja viljapuud õigel ajal ja õige kujuga; oksad ära.',
-      en: 'Hedges, shrubs and fruit trees trimmed at the right time and shape; branches removed.',
+      en: 'Hedges, shrubs and fruit trees trimmed at the right time and shape; branches removed.', ru: 'Изгородь, кусты и плодовые деревья вовремя и в нужной форме; ветки уберём.',
     },
-    priceHint: { et: 'alates 65 €', en: 'from €65' },
+    priceHint: { et: 'alates 65 €', en: 'from €65', ru: 'от 65 €' },
     durationMin: 120,
   },
   {
     id: 'outdoor-wash',
     category: 'garden',
-    name: { et: 'Terrassi ja tänavakivide pesu', en: 'Terrace & paving wash' },
+    name: { et: 'Terrassi ja tänavakivide pesu', en: 'Terrace & paving wash', ru: 'Мойка террасы и брусчатки' },
     description: {
       et: 'Survepesu terrassile, tänavakividele ja fassaadi alaosale; vihmaveerennide puhastus.',
-      en: 'Pressure wash for terrace, paving and lower façade; gutters cleared.',
+      en: 'Pressure wash for terrace, paving and lower façade; gutters cleared.', ru: 'Мойка под давлением террасы, брусчатки и нижней части фасада; чистка водостоков.',
     },
-    priceHint: { et: 'alates 95 €', en: 'from €95' },
+    priceHint: { et: 'alates 95 €', en: 'from €95', ru: 'от 95 €' },
     durationMin: 180,
   },
   {
     id: 'seasonal-garden',
     category: 'garden',
-    name: { et: 'Kevad- ja sügiskoristus õues', en: 'Spring & autumn garden clean-up' },
+    name: { et: 'Kevad- ja sügiskoristus õues', en: 'Spring & autumn garden clean-up', ru: 'Весенняя и осенняя уборка двора' },
     description: {
       et: 'Lehed, peenrad, aiamööbli hooajaline sisse-välja, lumelükkamise kokkulepe talveks.',
-      en: 'Leaves, beds, garden furniture in or out for the season, snow-clearing agreement for winter.',
+      en: 'Leaves, beds, garden furniture in or out for the season, snow-clearing agreement for winter.', ru: 'Листья, грядки, сезонная установка садовой мебели, договор на уборку снега зимой.',
     },
-    priceHint: { et: 'hind kokkuleppel', en: 'price on request' },
+    priceHint: { et: 'hind kokkuleppel', en: 'price on request', ru: 'цена по договорённости' },
     durationMin: 180,
   },
   {
     id: 'cleaning-note',
     kind: 'question', // a written message to the housekeeper — no visit, no time; the reply comes in writing
     category: 'cleaning',
-    name: { et: 'Sõnum koduhooldajale', en: 'Message to the housekeeper' },
+    name: { et: 'Sõnum koduhooldajale', en: 'Message to the housekeeper', ru: 'Сообщение домработнице' },
     description: {
       et: 'Rütmi muutus, eritähelepanu, küsimus — kirjuta, koduhooldaja vastab siia.',
-      en: 'A change of rhythm, extra attention, a question — write it and the housekeeper replies here.',
+      en: 'A change of rhythm, extra attention, a question — write it and the housekeeper replies here.', ru: 'Изменение ритма, особое внимание, вопрос — напишите, домработница ответит здесь.',
     },
-    priceHint: { et: '', en: '' },
+    priceHint: { et: '', en: '', ru: '' },
     durationMin: 0,
   },
   {
     id: 'other',
     category: 'cleaning',
-    name: { et: 'Muu soov', en: 'Something else' },
+    name: { et: 'Muu soov', en: 'Something else', ru: 'Другое пожелание' },
     description: {
       et: 'Kui sobivat kaarti ei ole, kirjelda. Suuname õigele inimesele ja vastame.',
-      en: 'If no card fits, describe it. We route it to the right person and reply.',
+      en: 'If no card fits, describe it. We route it to the right person and reply.', ru: 'Если подходящей карточки нет, опишите. Направим нужному человеку и ответим.',
     },
-    priceHint: { et: 'hind kokkuleppel', en: 'price on request' },
+    priceHint: { et: 'hind kokkuleppel', en: 'price on request', ru: 'цена по договорённости' },
     durationMin: 60,
   },
 ];
@@ -427,10 +427,10 @@ function serviceName(serviceId, lang) {
 
 // Preferred time windows a customer can pick when requesting a service
 const TIME_WINDOWS = {
-  morning: { et: 'Hommik (9–12)', en: 'Morning (9–12)', from: '09:00', to: '12:00' },
-  afternoon: { et: 'Pärastlõuna (12–17)', en: 'Afternoon (12–17)', from: '12:00', to: '17:00' },
-  any: { et: 'Sobib iga aeg', en: 'Any time', from: '09:00', to: '17:00' },
-  'with-visit': { et: 'Koos järgmise koristusega', en: 'With the next cleaning visit', from: null, to: null },
+  morning: { et: 'Hommik (9–12)', en: 'Morning (9–12)', ru: 'Утро (9–12)', from: '09:00', to: '12:00' },
+  afternoon: { et: 'Pärastlõuna (12–17)', en: 'Afternoon (12–17)', ru: 'День (12–17)', from: '12:00', to: '17:00' },
+  any: { et: 'Sobib iga aeg', en: 'Any time', ru: 'Подойдёт любое время', from: '09:00', to: '17:00' },
+  'with-visit': { et: 'Koos järgmise koristusega', en: 'With the next cleaning visit', ru: 'Вместе со следующей уборкой', from: null, to: null },
 };
 
 function timeWindowLabel(key, lang) {
@@ -749,22 +749,22 @@ function liveAwayPeriods(awayPeriods, todayStr) {
  * household would rather order than DIY; `homeTypes` narrows suggestions (house-only items).
  */
 const MAINTENANCE_CATALOGUE = [
-  { id: 'vent-filters', name: { et: 'Ventilatsiooni filtrid', en: 'Ventilation filters' }, hint: { et: 'Vaheta või pese — must filter tähendab kehva õhku ja suuremat elektriarvet.', en: 'Replace or wash — a dirty filter means poor air and a higher electricity bill.' }, intervalMonths: 6, serviceId: 'vent-filters', homeTypes: ['apartment', 'house'], byProvider: false },
+  { id: 'vent-filters', name: { et: 'Ventilatsiooni filtrid', en: 'Ventilation filters', ru: 'Фильтры вентиляции' }, hint: { et: 'Vaheta või pese — must filter tähendab kehva õhku ja suuremat elektriarvet.', en: 'Replace or wash — a dirty filter means poor air and a higher electricity bill.', ru: 'Замените или промойте — грязный фильтр означает плохой воздух и больший счёт за электричество.' }, intervalMonths: 6, serviceId: 'vent-filters', homeTypes: ['apartment', 'house'], byProvider: false },
   // New-build home: what the developer's after-sales team wants the owner to keep an eye on
-  { id: 'warranty-inspection', name: { et: 'Garantiiülevaatus', en: 'Warranty inspection' }, hint: { et: '1. ja 2. aasta lõpus, enne garantii lõppu — puudused ühe aktiga kirja.', en: 'At the end of year 1 and year 2, before the warranty ends — defects recorded in one report.' }, intervalMonths: 12, serviceId: 'warranty-inspection', homeTypes: ['apartment', 'house'] },
-  { id: 'floor-heating', name: { et: 'Põrandakütte termostaadid', en: 'Floor-heating thermostats' }, hint: { et: 'Enne kütteperioodi režiimid ja ajakavad üle vaadata. Tehnik teeb koos filtritega.', en: 'Before the heating season, look over modes and schedules. The technician does it together with the filters.' }, intervalMonths: 12, serviceId: 'vent-filters', homeTypes: ['apartment', 'house'] },
-  { id: 'sealant-check', name: { et: 'Silikoonvuukide kontroll', en: 'Silicone seal check' }, hint: { et: 'Vannituba ja köök: pragunenud vuuk laseb vee alla. Garantiiajal parandab ehitaja. Pärast garantiiaega teeb tehnik.', en: 'Bathroom and kitchen: a cracked seal lets water through. Fixed by the builder during warranty. After the warranty the technician does it.' }, intervalMonths: 12, serviceId: 'warranty-claim', homeTypes: ['apartment', 'house', 'summer'] },
-  { id: 'washer-service', name: { et: 'Pesumasina hooldus', en: 'Washing machine service' }, hint: { et: 'Puhasta filter ja tihend, käivita tühi 90° programm.', en: 'Clean the filter and seal, run an empty 90° cycle.' }, intervalMonths: 3, serviceId: 'appliance-care', homeTypes: ['apartment', 'house', 'summer'], byProvider: true },
-  { id: 'dishwasher-filter', name: { et: 'Nõudepesumasina filter', en: 'Dishwasher filter' }, hint: { et: 'Loputa filter ja pihustid; sool ja loputusvahend üle vaadata.', en: 'Rinse the filter and spray arms; check salt and rinse aid.' }, intervalMonths: 1, serviceId: 'appliance-care', homeTypes: ['apartment', 'house', 'summer'], byProvider: true },
-  { id: 'hood-filter', name: { et: 'Pliidikubu filter', en: 'Range hood filter' }, hint: { et: 'Metallfilter nõudepesumasinasse, süsinikfilter vahetada.', en: 'Metal filter in the dishwasher, carbon filter replaced.' }, intervalMonths: 3, serviceId: 'appliance-care', homeTypes: ['apartment', 'house', 'summer'], byProvider: true },
-  { id: 'mattress', name: { et: 'Madratsi pööramine', en: 'Mattress turning' }, hint: { et: 'Pööra või keera madrats, koos voodipesu vahetusega.', en: 'Turn or rotate the mattress, together with the linen change.' }, intervalMonths: 6, serviceId: 'linens', homeTypes: ['apartment', 'house', 'summer'], byProvider: true },
-  { id: 'smoke-detector', name: { et: 'Suitsuanduri kontroll', en: 'Smoke detector check' }, hint: { et: 'Testnupp ja patarei. Andur ise vahetada iga 10 aasta tagant.', en: 'Test button and battery. Replace the detector itself every 10 years.' }, intervalMonths: 12, serviceId: 'small-repairs', homeTypes: ['apartment', 'house', 'summer'] },
-  { id: 'heat-pump', name: { et: 'Soojuspumba filtrid', en: 'Heat pump filters' }, hint: { et: 'Siseosa filtrid pesta; välisosa lehtedest puhtaks.', en: 'Wash indoor unit filters; clear the outdoor unit of leaves.' }, intervalMonths: 3, serviceId: 'small-repairs', homeTypes: ['house', 'summer'] },
-  { id: 'boiler', name: { et: 'Boileri ja veesüsteemi kontroll', en: 'Water heater and plumbing check' }, hint: { et: 'Kaitseklapp, anood, lekked ja segistid.', en: 'Safety valve, anode, leaks and taps.' }, intervalMonths: 24, serviceId: 'small-repairs', homeTypes: ['house', 'summer'] },
-  { id: 'deep-clean', name: { et: 'Süvapuhastus', en: 'Deep clean' }, hint: { et: 'Mööbli alt, vaibad, radiaatorid, lambid — see, mida tavakoristus ei kata.', en: 'Under furniture, rugs, radiators, lamps — what a regular clean does not cover.' }, intervalMonths: 6, serviceId: 'deep-clean', homeTypes: ['apartment', 'house', 'summer'], byProvider: true },
-  { id: 'windows', name: { et: 'Aknad ja rõdu', en: 'Windows and balcony' }, hint: { et: 'Kevadel ja sügisel aknad seest, rõdu põrand ja klaasid, rõdu äravool lehtedest puhtaks.', en: 'In spring and autumn the windows from inside, the balcony floor and glass, and the balcony drain cleared of leaves.' }, intervalMonths: 6, serviceId: 'windows', homeTypes: ['apartment', 'house', 'summer'], byProvider: true },
-  { id: 'gutters', name: { et: 'Vihmaveerennid', en: 'Gutters' }, hint: { et: 'Lehed välja enne külmi, äravool kontrollida.', en: 'Leaves out before the frost, check the downpipes.' }, intervalMonths: 12, serviceId: 'seasonal-garden', homeTypes: ['house', 'summer'] },
-  { id: 'chimney', name: { et: 'Korstnapühkija', en: 'Chimney sweep' }, hint: { et: 'Kord aastas, kui on ahi, kamin või katel.', en: 'Once a year if you have a stove, fireplace or boiler.' }, intervalMonths: 12, serviceId: 'other', homeTypes: ['house', 'summer'] },
+  { id: 'warranty-inspection', name: { et: 'Garantiiülevaatus', en: 'Warranty inspection', ru: 'Гарантийный осмотр' }, hint: { et: '1. ja 2. aasta lõpus, enne garantii lõppu — puudused ühe aktiga kirja.', en: 'At the end of year 1 and year 2, before the warranty ends — defects recorded in one report.', ru: 'В конце 1-го и 2-го года, до конца гарантии — недостатки одним актом.' }, intervalMonths: 12, serviceId: 'warranty-inspection', homeTypes: ['apartment', 'house'] },
+  { id: 'floor-heating', name: { et: 'Põrandakütte termostaadid', en: 'Floor-heating thermostats', ru: 'Термостаты тёплого пола' }, hint: { et: 'Enne kütteperioodi režiimid ja ajakavad üle vaadata. Tehnik teeb koos filtritega.', en: 'Before the heating season, look over modes and schedules. The technician does it together with the filters.', ru: 'Перед отопительным сезоном проверьте режимы и расписания. Техник делает это вместе с фильтрами.' }, intervalMonths: 12, serviceId: 'vent-filters', homeTypes: ['apartment', 'house'] },
+  { id: 'sealant-check', name: { et: 'Silikoonvuukide kontroll', en: 'Silicone seal check', ru: 'Проверка силиконовых швов' }, hint: { et: 'Vannituba ja köök: pragunenud vuuk laseb vee alla. Garantiiajal parandab ehitaja. Pärast garantiiaega teeb tehnik.', en: 'Bathroom and kitchen: a cracked seal lets water through. Fixed by the builder during warranty. After the warranty the technician does it.', ru: 'Ванная и кухня: треснувший шов пропускает воду. Во время гарантии чинит застройщик. После гарантии это делает техник.' }, intervalMonths: 12, serviceId: 'warranty-claim', homeTypes: ['apartment', 'house', 'summer'] },
+  { id: 'washer-service', name: { et: 'Pesumasina hooldus', en: 'Washing machine service', ru: 'Обслуживание стиральной машины' }, hint: { et: 'Puhasta filter ja tihend, käivita tühi 90° programm.', en: 'Clean the filter and seal, run an empty 90° cycle.', ru: 'Очистите фильтр и уплотнитель, запустите пустую программу 90°.' }, intervalMonths: 3, serviceId: 'appliance-care', homeTypes: ['apartment', 'house', 'summer'], byProvider: true },
+  { id: 'dishwasher-filter', name: { et: 'Nõudepesumasina filter', en: 'Dishwasher filter', ru: 'Фильтр посудомоечной машины' }, hint: { et: 'Loputa filter ja pihustid; sool ja loputusvahend üle vaadata.', en: 'Rinse the filter and spray arms; check salt and rinse aid.', ru: 'Промойте фильтр и разбрызгиватели; проверьте соль и ополаскиватель.' }, intervalMonths: 1, serviceId: 'appliance-care', homeTypes: ['apartment', 'house', 'summer'], byProvider: true },
+  { id: 'hood-filter', name: { et: 'Pliidikubu filter', en: 'Range hood filter', ru: 'Фильтр вытяжки' }, hint: { et: 'Metallfilter nõudepesumasinasse, süsinikfilter vahetada.', en: 'Metal filter in the dishwasher, carbon filter replaced.', ru: 'Металлический фильтр в посудомоечную машину, угольный фильтр заменить.' }, intervalMonths: 3, serviceId: 'appliance-care', homeTypes: ['apartment', 'house', 'summer'], byProvider: true },
+  { id: 'mattress', name: { et: 'Madratsi pööramine', en: 'Mattress turning', ru: 'Переворот матраса' }, hint: { et: 'Pööra või keera madrats, koos voodipesu vahetusega.', en: 'Turn or rotate the mattress, together with the linen change.', ru: 'Переверните или поверните матрас вместе со сменой белья.' }, intervalMonths: 6, serviceId: 'linens', homeTypes: ['apartment', 'house', 'summer'], byProvider: true },
+  { id: 'smoke-detector', name: { et: 'Suitsuanduri kontroll', en: 'Smoke detector check', ru: 'Проверка дымового датчика' }, hint: { et: 'Testnupp ja patarei. Andur ise vahetada iga 10 aasta tagant.', en: 'Test button and battery. Replace the detector itself every 10 years.', ru: 'Кнопка теста и батарейка. Сам датчик менять каждые 10 лет.' }, intervalMonths: 12, serviceId: 'small-repairs', homeTypes: ['apartment', 'house', 'summer'] },
+  { id: 'heat-pump', name: { et: 'Soojuspumba filtrid', en: 'Heat pump filters', ru: 'Фильтры теплового насоса' }, hint: { et: 'Siseosa filtrid pesta; välisosa lehtedest puhtaks.', en: 'Wash indoor unit filters; clear the outdoor unit of leaves.', ru: 'Промойте фильтры внутреннего блока; очистите наружный блок от листьев.' }, intervalMonths: 3, serviceId: 'small-repairs', homeTypes: ['house', 'summer'] },
+  { id: 'boiler', name: { et: 'Boileri ja veesüsteemi kontroll', en: 'Water heater and plumbing check', ru: 'Проверка бойлера и водопровода' }, hint: { et: 'Kaitseklapp, anood, lekked ja segistid.', en: 'Safety valve, anode, leaks and taps.', ru: 'Предохранительный клапан, анод, протечки и смесители.' }, intervalMonths: 24, serviceId: 'small-repairs', homeTypes: ['house', 'summer'] },
+  { id: 'deep-clean', name: { et: 'Süvapuhastus', en: 'Deep clean', ru: 'Генеральная уборка' }, hint: { et: 'Mööbli alt, vaibad, radiaatorid, lambid — see, mida tavakoristus ei kata.', en: 'Under furniture, rugs, radiators, lamps — what a regular clean does not cover.', ru: 'Под мебелью, ковры, радиаторы, лампы — то, что обычная уборка не покрывает.' }, intervalMonths: 6, serviceId: 'deep-clean', homeTypes: ['apartment', 'house', 'summer'], byProvider: true },
+  { id: 'windows', name: { et: 'Aknad ja rõdu', en: 'Windows and balcony', ru: 'Окна и балкон' }, hint: { et: 'Kevadel ja sügisel aknad seest, rõdu põrand ja klaasid, rõdu äravool lehtedest puhtaks.', en: 'In spring and autumn the windows from inside, the balcony floor and glass, and the balcony drain cleared of leaves.', ru: 'Весной и осенью окна изнутри, пол и стёкла балкона, слив балкона очистить от листьев.' }, intervalMonths: 6, serviceId: 'windows', homeTypes: ['apartment', 'house', 'summer'], byProvider: true },
+  { id: 'gutters', name: { et: 'Vihmaveerennid', en: 'Gutters', ru: 'Водостоки' }, hint: { et: 'Lehed välja enne külmi, äravool kontrollida.', en: 'Leaves out before the frost, check the downpipes.', ru: 'Листья убрать до морозов, проверить водосточные трубы.' }, intervalMonths: 12, serviceId: 'seasonal-garden', homeTypes: ['house', 'summer'] },
+  { id: 'chimney', name: { et: 'Korstnapühkija', en: 'Chimney sweep', ru: 'Трубочист' }, hint: { et: 'Kord aastas, kui on ahi, kamin või katel.', en: 'Once a year if you have a stove, fireplace or boiler.', ru: 'Раз в год, если есть печь, камин или котёл.' }, intervalMonths: 12, serviceId: 'other', homeTypes: ['house', 'summer'] },
 ];
 const MAINTENANCE_BY_ID = Object.fromEntries(MAINTENANCE_CATALOGUE.map((m) => [m.id, m]));
 const MAX_MAINTENANCE_ITEMS = 30;
@@ -851,13 +851,13 @@ function maintenanceNextDue(items) {
 
 const DOCUMENT_CATEGORIES = {
   // Pre-filled by the developer at handover: the folder the owner otherwise never finds again
-  handover: { et: 'Üleandmine ja garantii', en: 'Handover and warranty' },
-  ownership: { et: 'Omand ja lepingud', en: 'Ownership and contracts' },
-  appliances: { et: 'Seadmed, juhendid, garantiid', en: 'Appliances, manuals, warranties' },
-  building: { et: 'Maja ja ühistu', en: 'Building and association' },
-  insurance: { et: 'Kindlustus', en: 'Insurance' },
-  works: { et: 'Tehtud tööd', en: 'Work done' },
-  other: { et: 'Muu', en: 'Other' },
+  handover: { et: 'Üleandmine ja garantii', en: 'Handover and warranty', ru: 'Передача и гарантия' },
+  ownership: { et: 'Omand ja lepingud', en: 'Ownership and contracts', ru: 'Собственность и договоры' },
+  appliances: { et: 'Seadmed, juhendid, garantiid', en: 'Appliances, manuals, warranties', ru: 'Техника, инструкции, гарантии' },
+  building: { et: 'Maja ja ühistu', en: 'Building and association', ru: 'Дом и товарищество' },
+  insurance: { et: 'Kindlustus', en: 'Insurance', ru: 'Страхование' },
+  works: { et: 'Tehtud tööd', en: 'Work done', ru: 'Выполненные работы' },
+  other: { et: 'Muu', en: 'Other', ru: 'Прочее' },
 };
 const MAX_DOCUMENTS = 40;
 
@@ -880,11 +880,11 @@ function sanitizeDocument(input) {
  * Paid plans are Stripe subscriptions created on demand by lookup key, so no dashboard setup is needed.
  */
 const PROVIDER_PLANS = {
-  free: { id: 'free', name: 'Tasuta', price: 0, homes: 3, lookupKey: null, blurb: { et: 'Kuni 3 kodu. Kõik funktsioonid, ilma ajapiiranguta.', en: 'Up to 3 homes. Every feature, no time limit.' } },
-  pro: { id: 'pro', name: 'Standard', price: 19, homes: 20, lookupKey: 'sukoda_provider_pro_monthly', blurb: { et: 'Kuni 20 kodu. Iga kuu tühistatav.', en: 'Up to 20 homes. Cancel any month.' } },
-  studio: { id: 'studio', name: 'Stuudio', price: 39, homes: null, lookupKey: 'sukoda_provider_studio_monthly', blurb: { et: 'Piiramatult kodusid. Iga kuu tühistatav.', en: 'Unlimited homes. Cancel any month.' } },
+  free: { id: 'free', name: 'Tasuta', price: 0, homes: 3, lookupKey: null, blurb: { et: 'Kuni 3 kodu. Kõik funktsioonid, ilma ajapiiranguta.', en: 'Up to 3 homes. Every feature, no time limit.', ru: 'До 3 домов. Все функции, без ограничения по времени.' } },
+  pro: { id: 'pro', name: 'Standard', price: 19, homes: 20, lookupKey: 'sukoda_provider_pro_monthly', blurb: { et: 'Kuni 20 kodu. Iga kuu tühistatav.', en: 'Up to 20 homes. Cancel any month.', ru: 'До 20 домов. Можно отменить в любой месяц.' } },
+  studio: { id: 'studio', name: 'Stuudio', price: 39, homes: null, lookupKey: 'sukoda_provider_studio_monthly', blurb: { et: 'Piiramatult kodusid. Iga kuu tühistatav.', en: 'Unlimited homes. Cancel any month.', ru: 'Без ограничения числа домов. Можно отменить в любой месяц.' } },
   // Contracted partners (a developer's after-sales team, a building manager): set up by SUKODA, no cap, no card, no self-serve billing
-  enterprise: { id: 'enterprise', name: 'Partner', price: 0, homes: null, lookupKey: null, blurb: { et: 'Kokkuleppel SUKODA-ga. Piiramatult kodusid.', en: 'By agreement with SUKODA. Unlimited homes.' } },
+  enterprise: { id: 'enterprise', name: 'Partner', price: 0, homes: null, lookupKey: null, blurb: { et: 'Kokkuleppel SUKODA-ga. Piiramatult kodusid.', en: 'By agreement with SUKODA. Unlimited homes.', ru: 'По договорённости с SUKODA. Без ограничения числа домов.' } },
 };
 const PLAN_ACTIVE_STATUSES = ['active', 'trialing', 'past_due'];
 

@@ -20,25 +20,30 @@ test('service catalogue: every entry has et+en name and description, a known cat
     assert.ok(s.id, 'id missing');
     assert.ok(!ids.has(s.id), `duplicate id ${s.id}`);
     ids.add(s.id);
-    assert.ok(s.name?.et && s.name?.en, `${s.id}: name et/en`);
-    assert.ok(s.description?.et && s.description?.en, `${s.id}: description et/en`);
+    assert.ok(s.name?.et && s.name?.en && s.name?.ru, `${s.id}: name et/en/ru`);
+    assert.ok(s.description?.et && s.description?.en && s.description?.ru, `${s.id}: description et/en/ru`);
     // priceHint may be empty (a message has no price) but never in one language only
     assert.equal(Boolean(s.priceHint?.et), Boolean(s.priceHint?.en), `${s.id}: priceHint in one language only`);
+    assert.equal(Boolean(s.priceHint?.et), Boolean(s.priceHint?.ru), `${s.id}: priceHint ru`);
     assert.ok(core.SERVICE_CATEGORIES[s.category], `${s.id}: unknown category ${s.category}`);
   }
 });
 
-test('service categories, time windows, document categories, plans: et+en', () => {
-  for (const [k, c] of Object.entries(core.SERVICE_CATEGORIES)) assert.ok(c.et && c.en, `category ${k}`);
-  for (const [k, w] of Object.entries(core.TIME_WINDOWS)) assert.ok(w.et && w.en, `time window ${k}`);
-  for (const [k, d] of Object.entries(core.DOCUMENT_CATEGORIES)) assert.ok(d.et && d.en, `document category ${k}`);
-  for (const [k, p] of Object.entries(core.PROVIDER_PLANS)) assert.ok(p.blurb?.et && p.blurb?.en, `plan ${k}`);
+test('service categories, time windows, document categories, plans: et+en+ru', () => {
+  for (const [k, c] of Object.entries(core.SERVICE_CATEGORIES)) assert.ok(c.et && c.en && c.ru, `category ${k}`);
+  for (const [k, w] of Object.entries(core.TIME_WINDOWS)) assert.ok(w.et && w.en && w.ru, `time window ${k}`);
+  for (const [k, d] of Object.entries(core.DOCUMENT_CATEGORIES)) assert.ok(d.et && d.en && d.ru, `document category ${k}`);
+  for (const [k, p] of Object.entries(core.PROVIDER_PLANS)) assert.ok(p.blurb?.et && p.blurb?.en && p.blurb?.ru, `plan ${k}`);
 });
 
-test('ru, where present, is never an empty string (fallback to et must not be masked by "")', () => {
+test('ru is present on every et+en text, and blank only when et is blank', () => {
   const walk = (obj, trail) => {
     if (!obj || typeof obj !== 'object') return;
-    if ('et' in obj && 'ru' in obj) assert.ok(typeof obj.ru === 'string' && obj.ru.trim(), `${trail}: ru is empty`);
+    if (typeof obj.et === 'string' && typeof obj.en === 'string') {
+      assert.equal(typeof obj.ru, 'string', `${trail}: ru missing`);
+      if (obj.et.trim() || obj.en.trim()) assert.ok(obj.ru.trim(), `${trail}: ru is empty`);
+      return;
+    }
     for (const [k, v] of Object.entries(obj)) walk(v, `${trail}.${k}`);
   };
   walk(core.SERVICE_CATEGORIES, 'SERVICE_CATEGORIES');
@@ -51,8 +56,8 @@ test('ru, where present, is never an empty string (fallback to et must not be ma
 
 test('maintenance catalogue: et+en, valid interval, serviceId exists in the service catalogue', () => {
   for (const m of core.MAINTENANCE_CATALOGUE) {
-    assert.ok(m.name?.et && m.name?.en, `${m.id}: name`);
-    assert.ok(m.hint?.et && m.hint?.en, `${m.id}: hint`);
+    assert.ok(m.name?.et && m.name?.en && m.name?.ru, `${m.id}: name`);
+    assert.ok(m.hint?.et && m.hint?.en && m.hint?.ru, `${m.id}: hint`);
     assert.ok(core.MAINTENANCE_INTERVALS.includes(m.intervalMonths), `${m.id}: interval ${m.intervalMonths}`);
     assert.ok(core.getService(m.serviceId), `${m.id}: serviceId ${m.serviceId} not in catalogue`);
     for (const t of m.homeTypes) assert.ok(core.HOME_TYPES.includes(t), `${m.id}: home type ${t}`);
@@ -80,10 +85,12 @@ test('pick returns the asked language and falls back to et', () => {
   assert.equal(core.pick(text, null), 'Tere');
   assert.equal(core.pick({ et: 'Tere', en: 'Hello', ru: '  ' }, 'ru'), 'Tere', 'blank ru must not hide et');
   assert.equal(core.pick({ et: 'Tere', en: 'Hello' }, 'ru'), 'Tere');
+  assert.equal(core.pick({ et: 'Tere', en: '', ru: 'Здравствуйте' }, 'en'), 'Tere', 'blank en falls back to et');
   assert.equal(core.pick({ et: '', en: '', ru: '' }, 'ru'), '');
   const fns = { et: (n) => `et ${n}`, en: (n) => `en ${n}`, ru: (n) => `ru ${n}` };
   assert.equal(core.pick(fns, 'ru')('Mari'), 'ru Mari');
-  assert.equal(core.pick(null, 'en'), null);
+  assert.equal(core.pick(null, 'en'), undefined);
+  assert.equal(core.pick('Tere', 'ru'), undefined);
 });
 
 test('serviceKind defaults to visit; question/issue kinds are explicit', () => {
@@ -92,7 +99,10 @@ test('serviceKind defaults to visit; question/issue kinds are explicit', () => {
   assert.equal(core.serviceKind('warranty-claim'), 'issue');
   assert.equal(core.serviceKind('does-not-exist'), 'visit');
   assert.equal(core.serviceName('flowers', 'en'), 'Fresh flowers');
+  assert.equal(core.serviceName('flowers', 'ru'), 'Свежие цветы');
   assert.equal(core.serviceName('flowers', 'xx'), 'Värsked lilled', 'unknown lang falls back to et');
+  assert.equal(core.categoryLabel('cleaning', 'ru'), 'Уборка');
+  assert.equal(core.timeWindowLabel('morning', 'ru'), 'Утро (9–12)');
 });
 
 // ------------------------------------------------------------

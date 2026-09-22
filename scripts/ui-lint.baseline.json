@@ -49,7 +49,5 @@
     "lugu.html": 23
   },
   "etOnlyCore": {},
-  "noRuCore": {
-    "functions/lib/haldus-core.js": 141
-  }
+  "noRuCore": {}
 }
