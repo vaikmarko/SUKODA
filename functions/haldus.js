@@ -3285,11 +3285,11 @@ module.exports = function createHaldus(deps) {
     };
   }
 
-  /** Maintenance for the provider's desk: Estonian, flat, with state */
+  /** Maintenance for the provider's desk: flat, with state. nameEn follows the desk language toggle. */
   function serializeMaintenanceForProvider(order) {
     const today = todayTallinnStr();
     return (Array.isArray(order.maintenance) ? order.maintenance : []).map((it) => ({
-      id: it.id, catalogId: it.catalogId || null, name: core.maintenanceName(it, 'et'), intervalMonths: it.intervalMonths,
+      id: it.id, catalogId: it.catalogId || null, name: core.maintenanceName(it, 'et'), nameEn: core.maintenanceName(it, 'en'), intervalMonths: it.intervalMonths,
       lastDoneAt: it.lastDoneAt || null, lastDoneBy: it.lastDoneBy || null, nextDueAt: it.nextDueAt, state: core.maintenanceState(it, today),
       doneBy: it.doneBy === 'provider' ? 'provider' : 'home', note: it.note || '',
     })).sort((a, b) => (a.nextDueAt < b.nextDueAt ? -1 : 1));

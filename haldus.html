@@ -1409,7 +1409,7 @@
                 const maint = this.customerOf(b)?.maintenance || [];
                 for (const it of maint) {
                     if (it.doneBy !== 'provider' || !it.nextDueAt || it.nextDueAt > this.todayStr) continue;
-                    lines.push(it.name);
+                    lines.push(this.lang === 'en' ? (it.nameEn || it.name) : it.name);
                 }
                 return lines;
             },
