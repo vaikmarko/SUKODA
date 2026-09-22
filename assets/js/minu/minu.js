@@ -75,8 +75,8 @@ export const minuHtml = `<div x-show="activeTab === 'home'" x-transition:enter="
                                 <h2 class="p-h"><span class="p-num">01</span><span x-text="t('tabHome')"></span></h2>
                                 <!-- Home type: a fact about the home, and it narrows the upkeep suggestions. The developer already knows what it built. -->
                                 <div x-show="!brand" class="flex items-center gap-1 text-[11px] uppercase tracking-[0.14em] font-sans shrink-0">
-                                    <template x-for="t in ['apartment', 'house', 'summer']" :key="t">
-                                        <button type="button" @click="setHomeType(t)" :class="maintenance.homeType === t ? 'bg-black text-paper border-black' : 'border-line text-muted hover:text-black'" class="px-3 py-1.5 border transition-colors duration-150" x-text="homeTypeLabel(t)"></button>
+                                    <template x-for="kind in ['apartment', 'house', 'summer']" :key="kind">
+                                        <button type="button" @click="setHomeType(kind)" :class="maintenance.homeType === kind ? 'bg-black text-paper border-black' : 'border-line text-muted hover:text-black'" class="px-3 py-1.5 border transition-colors duration-150" x-text="homeTypeLabel(kind)"></button>
                                     </template>
                                 </div>
                                 <p x-show="brand && homeTypeText" x-cloak class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans shrink-0"><span x-text="homeTypeText"></span><span x-show="brand?.project" x-text="' · ' + brand?.project"></span></p>
