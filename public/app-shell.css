@@ -138,10 +138,16 @@ html.js:not(.stay) .shell {
   outline-offset: 2px;
 }
 
+@media (max-width: 40rem) {
+  body {
+    align-items: flex-end;
+  }
+}
+
 .langs {
   display: flex;
   gap: 0.25rem;
-  margin-top: 2rem;
+  margin-top: 1.5rem;
 }
 
 .langs button {
