@@ -1,9 +1,36 @@
+import { existsSync } from 'fs';
 import { defineConfig } from 'vite';
 import tailwindcss from '@tailwindcss/vite';
 import { resolve } from 'path';
 
+/* Firebase cleanUrls serves /app as public/app.html. Vite has no such alias,
+   so /app fell through to the marketing index. Rewrite before the SPA fallback. */
+function appShellRoute(root) {
+  const file = resolve(root, 'public/app.html');
+  const rewrite = (req) => {
+    if (!existsSync(file)) return;
+    const raw = req.url || '/';
+    const q = raw.indexOf('?');
+    const path = q === -1 ? raw : raw.slice(0, q);
+    const search = q === -1 ? '' : raw.slice(q);
+    const clean = path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path;
+    if (clean === '/app') req.url = '/app.html' + search;
+  };
+  const attach = (server) => {
+    server.middlewares.use((req, _res, next) => {
+      rewrite(req);
+      next();
+    });
+  };
+  return {
+    name: 'sukoda-app-shell',
+    configureServer: attach,
+    configurePreviewServer: attach,
+  };
+}
+
 export default defineConfig({
-  plugins: [tailwindcss()],
+  plugins: [appShellRoute(__dirname), tailwindcss()],
   build: {
     outDir: 'dist',
     emptyOutDir: true,

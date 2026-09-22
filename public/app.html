@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="SUKODA">
+    <title>SUKODA</title>
+    <script>document.documentElement.classList.add('js')</script>
+    <noscript><meta http-equiv="refresh" content="0;url=/minu"></noscript>
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="icon" type="image/png" href="/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="/icons/icon-180.png">
+    <link rel="stylesheet" href="/app-shell.css">
+</head>
+<body>
+    <main class="shell">
+        <p class="eyebrow">SUKODA</p>
+        <h1 class="p-h" id="title"></h1>
+        <p class="lead" id="lead"></p>
+        <div class="langs" id="langs" role="group">
+            <button type="button" data-lang="et">ET</button>
+            <button type="button" data-lang="en">EN</button>
+            <button type="button" data-lang="ru">RU</button>
+        </div>
+        <div class="actions">
+            <button type="button" class="p-btn-2" id="later" hidden></button>
+            <button type="button" class="p-btn" id="primary"></button>
+        </div>
+    </main>
+    <script src="/app.js"></script>
+</body>
+</html>
