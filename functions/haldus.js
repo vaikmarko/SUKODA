@@ -138,11 +138,20 @@ module.exports = function createHaldus(deps) {
           if (rateLimitName && !checkRateLimit(req, res, rateLimitName, rateLimitMax, 60000)) return;
           const idx = req.path.indexOf('/api/');
           const path = (idx >= 0 ? req.path.slice(idx) : req.path).replace(/\/+$/, '');
-          const handler = handlers[`${req.method} ${path}`];
+          // One parameterized route: POST /api/haldus/visits/:id/done. Other paths stay exact-match.
+          const doneMatch = req.method === 'POST' ? path.match(/^\/api\/haldus\/visits\/([^/]+)\/done$/) : null;
+          let visitId = null;
+          if (doneMatch) {
+            try { visitId = decodeURIComponent(doneMatch[1]); } catch (e) { visitId = doneMatch[1]; }
+          }
+          const handler = visitId != null
+            ? handlers['POST /api/haldus/visits/:id/done']
+            : handlers[`${req.method} ${path}`];
           if (!handler) {
-            const anyMethod = Object.keys(handlers).some((k) => k.endsWith(` ${path}`));
+            const anyMethod = !doneMatch && Object.keys(handlers).some((k) => k.endsWith(` ${path}`));
             return res.status(anyMethod ? 405 : 404).json({ error: anyMethod ? 'Method not allowed' : 'Not found' });
           }
+          if (visitId != null) req.visitId = visitId;
           try {
             await handler(req, res);
           } catch (error) {
@@ -2486,6 +2495,135 @@ module.exports = function createHaldus(deps) {
     },
   };
 
+  /**
+   * Housekeeper rows whose deadline has arrived move forward.
+   * Due means nextDueAt is on or before the visit day. Both dates are YYYY-MM-DD in Tallinn.
+   * The next deadline is that visit day plus the row's interval in months
+   * (core.completeMaintenanceItem). Household rows, and rows that are not due yet, stay put.
+   * The returned list is what gets written, so the notice can use the new nextDueAt.
+   */
+  function advanceDueRhythm(order, { visitDate, today, role }) {
+    const items = Array.isArray(order?.maintenance) ? order.maintenance.map((it) => ({ ...it })) : [];
+    if (role !== 'cleaning' || !items.length) return { items, advanced: [], changed: false };
+    const advanced = [];
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i];
+      if (!it || it.doneBy !== 'provider') continue;
+      if (!it.nextDueAt || it.nextDueAt > visitDate) continue;
+      if (!core.MAINTENANCE_INTERVALS.includes(Number(it.intervalMonths))) continue;
+      const r = core.completeMaintenanceItem(it, visitDate, today);
+      if (r.error || !r.item) continue;
+      items[i] = { ...r.item, lastDoneBy: 'provider' };
+      advanced.push(items[i]);
+    }
+    return { items, advanced, changed: advanced.length > 0 };
+  }
+
+  /**
+   * Mark one visit done. Idempotent. Rolls due rhythm in the same transaction as the visit,
+   * then notifies from the written rows (new nextDueAt), not the order we read at the start.
+   * Does not touch access codes and does not add a recipient.
+   */
+  async function markVisitDone({ provider, visitId, note }) {
+    const acc = await accessBooking(provider, visitId);
+    if (!acc) return { status: 404, body: { error: { et: 'Visiiti ei leitud', en: 'Visit not found' } } };
+    const { ref, orderRef, role } = acc;
+    const today = todayTallinnStr();
+    let outcome;
+    try {
+      outcome = await db.runTransaction(async (tx) => {
+        const bDoc = await tx.get(ref);
+        if (!bDoc.exists) return { missing: true };
+        const booking = bDoc.data();
+        if (booking.providerId ? booking.providerId !== provider.id : role !== 'cleaning') return { missing: true };
+        if (booking.status === 'completed') return { already: true };
+        if (booking.status === 'cancelled') return { cancelled: true };
+        if (!['scheduled', 'confirmed'].includes(booking.status)) return { blocked: true };
+        const start = toDate(booking.scheduledAt);
+        const visitDate = start ? tallinnDateStr(start) : today;
+        if (visitDate > today) return { future: true };
+        const oDoc = await tx.get(orderRef);
+        const order = oDoc.exists ? oDoc.data() : acc.order;
+        const rhythm = advanceDueRhythm(order, { visitDate, today, role });
+        const patch = {
+          status: 'completed',
+          completedAt: FieldValue.serverTimestamp(),
+          completedBy: 'provider',
+          updatedAt: FieldValue.serverTimestamp(),
+        };
+        if (note) patch.note = note;
+        tx.update(ref, patch);
+        const orderPatch = {
+          totalVisits: FieldValue.increment(1),
+          lastVisitAt: booking.scheduledAt || FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        };
+        if (rhythm.changed) {
+          orderPatch.maintenance = rhythm.items;
+          orderPatch.maintenanceNextDue = core.maintenanceNextDue(rhythm.items);
+        }
+        tx.update(orderRef, orderPatch);
+        const freshOrder = rhythm.changed
+          ? { ...order, maintenance: rhythm.items, maintenanceNextDue: core.maintenanceNextDue(rhythm.items) }
+          : order;
+        return { booking, freshOrder, rhythm };
+      });
+    } catch (e) {
+      console.error('visit done failed:', visitId, e);
+      return { status: 500, body: { error: { et: 'Visiiti ei õnnestunud tehtuks märkida. Proovi uuesti.', en: 'Could not mark the visit done. Try again.' } } };
+    }
+    if (outcome.missing) return { status: 404, body: { error: { et: 'Visiiti ei leitud', en: 'Visit not found' } } };
+    if (outcome.already) return { status: 200, body: { success: true, already: true, rhythm: [] } };
+    if (outcome.cancelled) return { status: 400, body: { error: { et: 'Tühistatud visiiti ei saa tehtuks märkida.', en: 'A cancelled visit cannot be marked done.', ru: 'Отменённый визит нельзя отметить выполненным.' } } };
+    if (outcome.future) return { status: 400, body: { error: { et: 'Tulevast visiiti ei saa veel tehtuks märkida.', en: 'A future visit cannot be marked done yet.', ru: 'Будущий визит ещё нельзя отметить выполненным.' } } };
+    if (outcome.blocked) return { status: 400, body: { error: { et: 'Seda visiiti ei saa tehtuks märkida.', en: 'This visit cannot be marked done.', ru: 'Этот визит нельзя отметить выполненным.' } } };
+
+    const { booking, freshOrder, rhythm } = outcome;
+    const lang = langOf(freshOrder);
+    const advanced = rhythm.advanced || [];
+    let notified = false;
+    try {
+      notified = await sendVisitDoneNotice({ order: freshOrder, booking, provider, note, advanced, lang });
+    } catch (e) {
+      console.error('visit done notice failed', ref.id, e);
+    }
+    return {
+      status: 200,
+      body: {
+        success: true,
+        notified,
+        rhythm: advanced.map((it) => ({ id: it.id, name: core.maintenanceName(it, lang), nextDueAt: it.nextDueAt })),
+      },
+    };
+  }
+
+  /**
+   * One notice to the resident, built from the rows just written (new nextDueAt).
+   * A visit that came from a request keeps the old primary-address mail.
+   * Any other visit uses the same recipient list as a confirmed visit.
+   * Never includes an entrance code.
+   */
+  async function sendVisitDoneNotice({ order, booking, provider, note, advanced, lang }) {
+    const rhythmText = rhythmPlain(advanced, lang);
+    const clientNote = [note, rhythmText].filter(Boolean).join('\n');
+    const doneWord = { et: 'Tehtud.', en: 'Done.' }[lang] || 'Tehtud.';
+    if (booking.requestId) {
+      const reqRef = db.collection('serviceRequests').doc(docId(booking.requestId));
+      const reqDoc = await reqRef.get();
+      await reqRef.set({ status: 'completed', completedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+      try {
+        await appendRequestMessage(reqRef, { by: 'provider', name: provider.name, text: note ? `${doneWord} ${note}` : doneWord });
+      } catch (e) { console.error('visit done thread failed', booking.requestId, e); }
+      if (reqDoc.exists) {
+        return !!(await sendCustomerMail(order, requestCompletedEmail({
+          order, request: reqDoc.data(), requestId: reqRef.id, providerName: provider.name, note: clientNote, lang,
+        }), { replyTo: PORTAL_REPLY_TO }));
+      }
+    }
+    const n = await notifyOrder(order, visitDoneEmail({ order, provider, note, items: advanced, lang }), { replyTo: PORTAL_REPLY_TO });
+    return n > 0;
+  }
+
   const haldusHandlers = {
     /** Pick a plan: a live subscription is switched in place (prorated); otherwise Stripe Checkout */
     'POST /api/haldus/billing/checkout': async (req, res) => {
@@ -3127,6 +3265,14 @@ module.exports = function createHaldus(deps) {
       res.status(200).json({ success: true });
     },
 
+    'POST /api/haldus/visits/:id/done': async (req, res) => {
+      const provider = await authenticateProvider(req);
+      if (!provider) return res.status(401).json({ error: { et: 'Logi uuesti sisse.', en: 'Sign in again.' } });
+      const note = req.body && req.body.note != null ? str(req.body.note, 500) : null;
+      const result = await markVisitDone({ provider, visitId: req.visitId, note: note || null });
+      res.status(result.status).json(result.body);
+    },
+
     'POST /api/haldus/visits/note': async (req, res) => {
       const provider = await authenticateProvider(req);
       if (!provider) return res.status(401).json({ error: 'Unauthorized' });
@@ -3358,11 +3504,11 @@ module.exports = function createHaldus(deps) {
     };
   }
 
-  /** Maintenance for the provider's desk: Estonian, flat, with state */
+  /** Maintenance for the provider's desk: flat, with state. nameEn follows the desk language toggle. */
   function serializeMaintenanceForProvider(order) {
     const today = todayTallinnStr();
     return (Array.isArray(order.maintenance) ? order.maintenance : []).map((it) => ({
-      id: it.id, catalogId: it.catalogId || null, name: core.maintenanceName(it, 'et'), intervalMonths: it.intervalMonths,
+      id: it.id, catalogId: it.catalogId || null, name: core.maintenanceName(it, 'et'), nameEn: core.maintenanceName(it, 'en'), intervalMonths: it.intervalMonths,
       lastDoneAt: it.lastDoneAt || null, lastDoneBy: it.lastDoneBy || null, nextDueAt: it.nextDueAt, state: core.maintenanceState(it, today),
       doneBy: it.doneBy === 'provider' ? 'provider' : 'home', note: it.note || '',
     })).sort((a, b) => (a.nextDueAt < b.nextDueAt ? -1 : 1));
@@ -3441,6 +3587,67 @@ module.exports = function createHaldus(deps) {
         lang,
       ),
     };
+  }
+
+  function mailLang(lang) {
+    return lang === 'en' ? 'en' : 'et';
+  }
+
+  /** Plain lines for the request mail: the new due date, never the one just passed. No access codes. */
+  function rhythmPlain(items, lang) {
+    const L = mailLang(lang);
+    const nextWord = { et: 'järgmine kord', en: 'next time' }[L];
+    return (items || []).map((it) => {
+      const name = core.maintenanceName(it, L);
+      const due = it.nextDueAt ? core.parseDateStr(it.nextDueAt) : null;
+      const when = due ? formatDate(due, L) : '';
+      return when ? `${name} — ${nextWord} ${when}` : name;
+    }).filter(Boolean).join('\n');
+  }
+
+  /** HTML lines for the visit-done mail. Same dates as rhythmPlain. */
+  function rhythmMovedLines(items, lang) {
+    const L = mailLang(lang);
+    const nextWord = { et: 'järgmine kord', en: 'next time' }[L];
+    return (items || []).map((it) => {
+      const name = escapeHtml(core.maintenanceName(it, L));
+      const due = it.nextDueAt ? core.parseDateStr(it.nextDueAt) : null;
+      const when = due ? `${nextWord} ${escapeHtml(formatDate(due, L))}` : '';
+      return `<p style="margin:0 0 8px 0;color:#2C2824;font-size:16px;font-family:Georgia,'Times New Roman',serif;font-weight:300;">${name}${when ? ` <span style="color:#8A8578;font-size:13px;font-family:Helvetica,Arial,sans-serif;">· ${when}</span>` : ''}</p>`;
+    }).join('');
+  }
+
+  /** Resident notice when a visit is marked done and it was not tied to a request. Same recipients as other visit mail. */
+  function visitDoneEmail({ order, provider, note, items, lang }) {
+    const L = mailLang(lang);
+    const copy = {
+      et: {
+        subject: 'SUKODA | Tehtud',
+        intro: (who) => `${who} märkis visiidi tehtuks.`,
+        moved: 'Need read liikusid sinu kodu hooldusrütmis edasi. Sina ei pea midagi tegema.',
+      },
+      en: {
+        subject: 'SUKODA | Done',
+        intro: (who) => `${who} marked the visit done.`,
+        moved: 'These moved forward in your home upkeep. Nothing for you to do.',
+      },
+    }[L];
+    const tt = t(L);
+    const list = (items || []).length
+      ? `<div style="background:#FFFFFF;padding:20px 28px;margin-bottom:20px;border-left:2px solid #B8976A;">${rhythmMovedLines(items, L)}</div>`
+        + P(copy.moved)
+      : '';
+    const html = wrap(
+      H2(tt.completedTitle)
+      + P(`${tt.hello(escapeHtml(firstName(primaryName(order))))} ${escapeHtml(copy.intro(provider?.name || ''))}`)
+      + (note ? P(`${tt.note}: ${escapeHtml(note)}`) : '')
+      + list
+      + P(tt.completedNote)
+      + portalBlock(L),
+      L,
+      brandOf(order),
+    );
+    return { subject: brandSubject(order, copy.subject), html };
   }
 
   /** To the provider: what is due at her clients' homes in the next two weeks, one mail, one line per item */

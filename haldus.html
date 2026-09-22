@@ -142,7 +142,7 @@
                 <div class="flex gap-8 md:gap-12 text-xs md:text-[13px] uppercase tracking-[0.16em] font-sans font-medium whitespace-nowrap">
                     <template x-for="tab in tabs" :key="tab.id">
                         <button type="button" @click="activeTab = tab.id" :class="activeTab === tab.id ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black'" class="pb-4 pt-4 transition-colors relative">
-                            <span x-text="tab.label"></span>
+                            <span x-text="tab.key ? t(tab.key) : tab.label"></span>
                             <span x-show="tab.id === 'requests' && pendingRequests.length" class="absolute top-2 -right-5 bg-accent text-white text-[10px] rounded-full w-[18px] h-[18px] flex items-center justify-center" x-text="pendingRequests.length"></span>
                         </button>
                     </template>
@@ -153,6 +153,61 @@
 
                 <p x-show="globalError" x-cloak class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 text-sm font-sans" x-text="globalError"></p>
                 <p x-show="toast" x-cloak x-transition class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] bg-black text-paper px-6 py-3 text-xs font-sans tracking-wide shadow-lg" x-text="toast"></p>
+
+                <!-- ─────────── TÄNA ─────────── -->
+                <div x-show="activeTab === 'today'">
+                    <div class="max-w-3xl">
+                        <div class="flex items-end justify-between gap-4 mb-6">
+                            <div>
+                                <p class="eyebrow" x-text="t('tabToday')"></p>
+                                <h2 class="font-serif text-2xl font-light mt-2 capitalize" x-text="todayHeading()"></h2>
+                            </div>
+                            <div class="flex items-center gap-3 shrink-0">
+                                <button type="button" @click="setLang('et')" class="text-xs font-sans py-3 px-2" :class="{ 'text-black': lang !== 'en', 'text-muted': lang === 'en' }" :aria-pressed="lang !== 'en'">ET</button>
+                                <button type="button" @click="setLang('en')" class="text-xs font-sans py-3 px-2" :class="{ 'text-black': lang === 'en', 'text-muted': lang !== 'en' }" :aria-pressed="lang === 'en'">EN</button>
+                            </div>
+                        </div>
+                        <div x-show="todayVisits.length === 0" class="border border-line bg-cream/40 p-8 text-center">
+                            <p class="text-sm text-muted font-sans" x-text="t('todayEmpty')"></p>
+                        </div>
+                        <div class="space-y-4">
+                            <template x-for="b in todayVisits" :key="b.id">
+                                <article class="border border-line bg-paper p-4">
+                                    <p class="font-sans text-sm text-muted" x-text="visitWhen(b)"></p>
+                                    <h3 class="font-serif text-2xl font-light mt-1" x-text="b.customerName"></h3>
+                                    <a x-show="addressFor(b)" :href="mapsHref(addressFor(b))" target="_blank" rel="noopener" class="text-sm font-sans text-black underline underline-offset-4 mt-1 inline-block" :aria-label="t('openMap')" x-text="addressFor(b)"></a>
+                                    <template x-if="accessVisible(b)">
+                                        <div class="mt-4">
+                                            <p class="eyebrow" x-text="t('access')"></p>
+                                            <p class="font-serif text-2xl font-light mt-1" x-text="entranceCode(b)"></p>
+                                        </div>
+                                    </template>
+                                    <p x-show="hasAccess(b) && !accessVisible(b)" class="text-sm text-muted font-sans mt-4" x-text="t('accessLater')"></p>
+                                    <a x-show="residentPhone(b)" :href="telHref(residentPhone(b))" class="p-btn-2 w-full mt-4" :aria-label="t('call')" x-text="residentPhone(b)"></a>
+                                    <div x-show="todayTasks(b).length" class="mt-4">
+                                        <p class="eyebrow" x-text="t('todayList')"></p>
+                                        <ul class="mt-2 space-y-1">
+                                            <template x-for="(line, i) in todayTasks(b)" :key="b.id + '-' + i">
+                                                <li class="text-sm font-sans font-light" x-text="line"></li>
+                                            </template>
+                                        </ul>
+                                    </div>
+                                    <div x-show="standingNote(b)" class="mt-4">
+                                        <p class="eyebrow" x-text="t('standing')"></p>
+                                        <p class="text-sm font-sans font-light mt-1" x-text="standingNote(b)"></p>
+                                    </div>
+                                    <p x-show="bringLine(b)" class="text-sm font-sans mt-4" x-text="bringLine(b)"></p>
+                                    <label class="block mt-4">
+                                        <span class="eyebrow" x-text="t('noteLabel')"></span>
+                                        <textarea rows="2" class="h-input resize-none font-sans mt-1" :placeholder="t('notePh')" :value="todayNotes[b.id] || ''" @input="todayNotes[b.id] = $event.target.value"></textarea>
+                                    </label>
+                                    <button type="button" class="p-btn w-full mt-4 disabled:opacity-40" :disabled="todaySavingId === b.id" @click="markTodayDone(b)" x-text="todaySavingId === b.id ? t('saving') : t('done')"></button>
+                                </article>
+                            </template>
+                        </div>
+                        <button type="button" @click="openVisitModal({ date: todayStr })" class="text-xs font-sans text-accent mt-6 py-3" x-text="t('addVisit')"></button>
+                    </div>
+                </div>
 
                 <!-- ─────────── ÜLEVAADE ─────────── -->
                 <div x-show="activeTab === 'overview'">
@@ -190,19 +245,6 @@
                                         <span class="font-light min-w-0 truncate"><span :class="e.item.state === 'overdue' ? 'text-red-500' : 'text-accent'" x-text="fmtDateShort(e.item.nextDueAt)"></span> · <span x-text="e.item.name"></span> · <span class="text-muted" x-text="e.customer.name"></span></span>
                                         <button type="button" @click="openCustomerDetail(e.customer)" class="text-[11px] uppercase tracking-[0.15em] text-accent hover:text-black shrink-0">Ava</button>
                                     </div>
-                                </template>
-                            </div>
-                        </div>
-
-                        <div>
-                            <div class="flex items-center justify-between mb-4">
-                                <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans">Täna · <span x-text="fmtDateLong(todayStr)"></span></p>
-                                <button type="button" @click="openVisitModal({ date: todayStr })" class="text-[11px] uppercase tracking-[0.16em] text-accent hover:text-black font-sans">+ Lisa visiit</button>
-                            </div>
-                            <div x-show="todayVisits.length === 0" class="bg-cream/40 border border-[#E8E3DD] p-8 text-center text-sm text-muted font-sans font-light">Täna visiite ei ole.</div>
-                            <div class="space-y-3">
-                                <template x-for="b in todayVisits" :key="b.id">
-                                    <div x-html="visitCard(b)" @click="handleCardClick($event, b)"></div>
                                 </template>
                             </div>
                         </div>
@@ -892,6 +934,28 @@
         const T = () => window.SUKODA_TIME;
         const pad = (n) => String(n).padStart(2, '0');
         const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        const COPY = {
+            tabToday: { et: 'Täna', en: 'Today' },
+            todayEmpty: { et: 'Täna kodusid ei ole.', en: 'No homes today.' },
+            addVisit: { et: 'Lisa visiit', en: 'Add a visit' },
+            access: { et: 'Sissepääs', en: 'Access' },
+            accessLater: { et: 'Sissepääs on näha visiidi ajal.', en: 'The entrance code shows during the visit.' },
+            openMap: { et: 'Ava aadress kaardil', en: 'Open the address in maps' },
+            todayList: { et: 'Tänane nimekiri', en: "Today's list" },
+            bringFlowers: { et: 'Võta kaasa: lilled', en: 'Bring: flowers' },
+            standing: { et: 'Püsimärkus', en: 'Standing note' },
+            alreadyDone: { et: 'See visiit on juba tehtud.', en: 'This visit is already done.' },
+            doneQuiet: { et: 'Tehtud. Teade ei läinud välja — kirjuta portaalis, kui vaja.', en: 'Done. The notice did not go out — write in the portal if needed.' },
+            noteLabel: { et: 'Märkus elanikule', en: 'Note for the resident' },
+            notePh: { et: 'Valikuline — jõuab elanikule teatega', en: 'Optional — the resident sees it' },
+            done: { et: 'Tehtud', en: 'Done' },
+            saving: { et: 'Märgin…', en: 'Saving…' },
+            markedDone: { et: 'Märgitud tehtuks. Elanik saab teate.', en: 'Marked done. The resident is notified.' },
+            markedQuiet: { et: 'Märgitud tehtuks. Teadet ei läinud — elanikul pole e-posti.', en: 'Marked done. No notice went out — the resident has no e-mail.' },
+            markedDoneRhythm: { et: 'Tehtud. Elanik sai teate ja rütm liikus edasi.', en: 'Done. The resident was notified and the rhythm moved on.' },
+            saveFailed: { et: 'Ei õnnestunud. Proovi uuesti.', en: 'Could not save. Try again.' },
+            call: { et: 'Helista', en: 'Call' },
+        };
         const MONTHS = ['Jaanuar', 'Veebruar', 'Märts', 'Aprill', 'Mai', 'Juuni', 'Juuli', 'August', 'September', 'Oktoober', 'November', 'Detsember'];
         const WEEKDAYS = ['pühapäev', 'esmaspäev', 'teisipäev', 'kolmapäev', 'neljapäev', 'reede', 'laupäev'];
 
@@ -918,8 +982,14 @@
             signupMode: new URLSearchParams(location.search).get('alusta') != null, signupForm: { name: '', businessName: '', email: '', phone: '', services: ['cleaning'], city: '' },
             range: { from: '', to: '' },
             todayStr: '',
-            activeTab: 'overview',
+            lang: 'et',
+            T: COPY,
+            nowTick: 0,
+            todayNotes: {},
+            todaySavingId: '',
+            activeTab: 'today',
             tabs: [
+                { id: 'today', key: 'tabToday' },
                 { id: 'overview', label: 'Ülevaade' }, { id: 'calendar', label: 'Kalender' }, { id: 'customers', label: 'Kliendid' },
                 { id: 'requests', label: 'Pöördumised' }, { id: 'summary', label: 'Kokkuvõte' }, { id: 'account', label: 'Konto' },
             ],
@@ -943,6 +1013,11 @@
 
             // ---------- lifecycle ----------
             async init() {
+                const storedLang = localStorage.getItem('sukoda_lang');
+                this.lang = storedLang === 'en' ? 'en' : 'et';
+                document.documentElement.lang = this.lang;
+                this.nowTick = Date.now();
+                setInterval(() => { this.nowTick = Date.now(); }, 30000);
                 this.todayStr = T().getDateString();
                 this.calMonth = this.todayStr.slice(0, 7);
                 this.summaryMonth = this.todayStr.slice(0, 7);
@@ -1174,7 +1249,11 @@
             fmtDateFull(v) { if (!v) return ''; const iso = v.length === 10 ? v + 'T12:00:00' : v; return T().formatDate(iso, 'et-EE', { day: 'numeric', month: 'long', year: 'numeric' }); },
             get isEnterprise() { return this.billing?.enterprise === true || this.billing?.plan === 'enterprise'; },
             get isCleaningProvider() { return (this.provider?.services || ['cleaning']).includes('cleaning'); },
-            get visibleHomeProfileFields() { const role = this.detail.customer?.role || 'cleaning'; return role === 'cleaning' ? this.homeProfileFields : this.homeProfileFields.filter((f) => ['pets', 'allergies', 'specialRequests'].includes(f.key)); },
+            get visibleHomeProfileFields() {
+                const role = this.detail.customer?.role || 'cleaning';
+                const fields = role === 'cleaning' ? this.homeProfileFields : this.homeProfileFields.filter((f) => ['pets', 'allergies', 'specialRequests'].includes(f.key));
+                return fields.filter((f) => f.key !== 'access');
+            },
             roleLabel(role) { return { warranty: 'Garantii', handyman: 'Tehnik', building: 'Haldur', flowers: 'Lilled', garden: 'Aed', cleaning: 'Koristus' }[role] || ''; },
 
             visitCard(b, { compact = false } = {}) {
@@ -1249,13 +1328,103 @@
                     await this.loadData(this.range.from, this.range.to);
                 } catch (e) { v.error = e.message; } finally { v.saving = false; }
             },
-            async completeVisit(b) {
+            async completeVisit(b, note) {
+                if (!b || this.todaySavingId) return;
+                this.todaySavingId = b.id;
+                this.globalError = '';
                 try {
-                    const res = await this.api('/api/haldus/visits/complete', { method: 'POST', body: JSON.stringify({ bookingId: b.id }) });
-                    if (!res.ok) throw new Error((await res.json()).error);
-                    this.showToast('Märgitud tehtuks');
+                    const body = {};
+                    const text = String(note || '').trim();
+                    if (text) body.note = text;
+                    const res = await this.api('/api/haldus/visits/' + encodeURIComponent(b.id) + '/done', { method: 'POST', body: JSON.stringify(body) });
+                    const d = await res.json().catch(() => ({}));
+                    if (res.status === 401) { this.logout(); return; }
+                    if (!res.ok) { this.globalError = this.errText(d); return; }
+                    const moved = Array.isArray(d.rhythm) && d.rhythm.length > 0;
+                    if (d.already) this.showToast(this.t('alreadyDone'));
+                    else if (d.notified === false) this.showToast(this.t('doneQuiet'));
+                    else this.showToast(moved ? this.t('markedDoneRhythm') : this.t('markedDone'));
+                    if (text) this.todayNotes[b.id] = '';
                     await this.loadData(this.range.from, this.range.to);
-                } catch (e) { this.globalError = e.message; }
+                } catch (e) { this.globalError = this.t('saveFailed'); }
+                finally { this.todaySavingId = ''; }
+            },
+            markTodayDone(b) { return this.completeVisit(b, this.todayNotes[b.id]); },
+            errText(d) {
+                const e = d && d.error;
+                if (e && typeof e === 'object') return e[this.lang] || e.et || this.t('saveFailed');
+                if (typeof e === 'string' && e.length < 200 && !/exception|firestore|undefined|token/i.test(e)) return e;
+                return this.t('saveFailed');
+            },
+            setLang(code) {
+                this.lang = code === 'en' ? 'en' : 'et';
+                try { localStorage.setItem('sukoda_lang', this.lang); } catch (e) { /* private mode */ }
+                document.documentElement.lang = this.lang;
+            },
+            t(key) {
+                const row = (this.T && this.T[key]) || {};
+                return row[this.lang] || row.et || key;
+            },
+            todayHeading() {
+                if (!this.todayStr) return '';
+                const loc = this.lang === 'en' ? 'en-GB' : 'et-EE';
+                return T().formatDate(this.todayStr + 'T12:00:00', loc, { weekday: 'long', day: 'numeric', month: 'long' });
+            },
+            customerOf(b) { return this.customers.find((c) => c.id === b.orderId) || null; },
+            visitWhen(b) {
+                const a = this.fmtTime(b.scheduledAt);
+                const z = this.fmtTime(b.endTime);
+                return z ? a + '–' + z : a;
+            },
+            mapsHref(address) { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(address || ''); },
+            telHref(phone) {
+                const n = String(phone || '').replace(/[^\d+]/g, '');
+                return n ? 'tel:' + n : '';
+            },
+            addressFor(b) { return String(this.customerOf(b)?.address || b.address || '').trim(); },
+            residentPhone(b) { return String(this.customerOf(b)?.phone || b.customerPhone || '').trim(); },
+            hasAccess(b) { return String(this.customerOf(b)?.homeProfile?.access || '').trim().length > 0; },
+            entranceCode(b) {
+                if (!this.accessVisible(b)) return '';
+                return String(this.customerOf(b)?.homeProfile?.access || '').trim();
+            },
+            accessVisible(b) {
+                if (!b || !this.hasAccess(b)) return false;
+                const start = new Date(b.scheduledAt).getTime();
+                const end = new Date(b.endTime || b.scheduledAt).getTime();
+                if (!Number.isFinite(start)) return false;
+                const now = this.nowTick || Date.now();
+                const windowMs = 2 * 60 * 60 * 1000;
+                return now >= start - windowMs && now <= Math.max(end, start) + windowMs;
+            },
+            todayTasks(b) {
+                const lines = [];
+                const day = this.dateOf(b.scheduledAt);
+                if (b.kind === 'extra' && b.serviceName) lines.push(b.serviceName);
+                for (const o of this.bookings) {
+                    if (o.id === b.id || o.orderId !== b.orderId || o.status === 'cancelled') continue;
+                    if (this.dateOf(o.scheduledAt) !== day) continue;
+                    if (o.kind === 'extra' && o.serviceName) lines.push(o.serviceName);
+                }
+                const maint = this.customerOf(b)?.maintenance || [];
+                for (const it of maint) {
+                    if (it.doneBy !== 'provider' || !it.nextDueAt || it.nextDueAt > this.todayStr) continue;
+                    lines.push(this.lang === 'en' ? (it.nameEn || it.name) : it.name);
+                }
+                return lines;
+            },
+            standingNote(b) {
+                const c = this.customerOf(b);
+                const hp = c?.homeProfile || {};
+                return [hp.pets, hp.specialRequests, hp.linens, hp.allergies].map((s) => String(s || '').trim()).filter(Boolean).join(' · ');
+            },
+            bringLine(b) {
+                const c = this.customerOf(b);
+                const extraFlowers = this.bookings.some((o) => o.orderId === b.orderId && o.status !== 'cancelled' && this.dateOf(o.scheduledAt) === this.dateOf(b.scheduledAt) && (o.serviceId === 'flowers' || o.flowersOrdered));
+                if (!b.flowersOrdered && !c?.flowers?.auto && !extraFlowers) return '';
+                const pref = c?.homeProfile?.flowerPreference;
+                const base = this.t('bringFlowers');
+                return pref ? base + ' · ' + pref : base;
             },
             cancelVisit(b) {
                 this.openMsgModal({
