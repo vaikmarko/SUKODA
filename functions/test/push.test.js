@@ -26,7 +26,10 @@ test('request status, new request and upkeep repeat the e-mail subject', () => {
   assert.equal(push.text('request_status', 'en', { status: 'declined', service: 'Windows' }).title, 'SUKODA | "Windows" needs a new time');
   assert.equal(push.text('new_request', 'et', { service: 'Süvapuhastus', name: 'Anna' }).title, 'SUKODA | Uus soov: Süvapuhastus — Anna');
   assert.equal(push.text('new_request', 'et', { service: 'Süvapuhastus', name: 'Anna' }).body, 'Anna soovib teenust. Kinnita aeg või vasta töölaual — klient näeb seda portaalis.');
-  assert.equal(push.text('rhythm_due', 'ru', { count: 2 }).title, 'SUKODA | Уход за домом: 2 дел в этом месяце');
+  assert.equal(push.text('rhythm_due', 'ru', { count: 2 }).title, 'SUKODA | Уход за домом: 2 дела в этом месяце');
+  assert.equal(push.text('rhythm_due', 'ru', { count: 5 }).title, 'SUKODA | Уход за домом: 5 дел в этом месяце');
+  assert.match(push.text('new_request', 'ru', { name: 'Anna', service: 'Уборка' }).body, /на рабочем столе/);
+  assert.match(push.text('request_status', 'ru', { status: 'declined', service: 'Окна', providerName: 'Mari' }).body, /не может прийти в желаемое время/);
   assert.equal(push.text('rhythm_due', 'et', { count: 1, name: 'Aknad', home: 'Iili 8' }).body.startsWith('Iili 8 — need asjad on järgmise kahe nädala jooksul'), true);
 });
 

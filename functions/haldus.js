@@ -235,7 +235,7 @@ module.exports = function createHaldus(deps) {
       subjIssueReviewed: (s) => `SUKODA | Pöördumine vaadatud üle: ${s}`,
       issueReviewedTitle: 'Pöördumine vaadatud üle',
       issueReviewedIntro: (p) => (p ? `${p} vaatas sinu pöördumise üle. Kirjeldatud puudus ei kuulu kahjuks garantii alla — selgitus on allpool.` : 'Vaatasime sinu pöördumise üle. Kirjeldatud puudus ei kuulu kahjuks garantii alla — selgitus on allpool.'),
-      issueReviewedNote: 'Kui soovid, tellime töö tasulisena.',
+      issueReviewedNote: 'Kui soovid, tellime töö tasulisena — kirjuta portaalis selle pöördumise juurde, siis lepime aja kokku.',
       message: 'Sõnum',
       explanation: 'Selgitus',
 
@@ -248,14 +248,14 @@ module.exports = function createHaldus(deps) {
 
       subjAway: 'SUKODA | Eemalolek on kirjas',
       awayTitle: 'Eemalolek on kirjas',
-      awayIntro: (p, by) => (by === 'provider' && p ? `${p} märkis, et olete eemal. Sel ajal visiite ei toimu.` : (p ? `Andsime partnerile ${p} teada, et olete eemal. Sel ajal visiite ei toimu.` : 'Sel ajal visiite ei toimu.')),
+      awayIntro: (p, by) => (by === 'provider' && p ? `${p} märkis, et oled eemal. Sel ajal visiite ei toimu.` : (p ? `Andsime partnerile ${p} teada, et oled eemal. Sel ajal visiite ei toimu.` : 'Sel ajal visiite ei toimu.')),
       awayPeriod: 'Eemal',
       awayCancelled: 'Tühistatud visiidid',
       awayNone: 'Sellesse vahemikku ei jäänud ühtegi visiiti.',
       awayResume: 'Pärast tagasitulekut jätkuvad ajad tavapäraselt. Kui plaanid muutuvad, saad eemaloleku portaalis eemaldada.',
       subjAwayRemoved: 'SUKODA | Eemalolek eemaldatud',
       awayRemovedTitle: 'Eemalolek eemaldatud',
-      awayRemovedIntro: (p) => (p ? `${p} teab, et olete siiski kodus. Taastatud ja eelseisvad ajad on allpool.` : 'Taastatud ja eelseisvad ajad on allpool.'),
+      awayRemovedIntro: (p) => (p ? `${p} teab, et oled siiski kodus. Taastatud ja eelseisvad ajad on allpool.` : 'Taastatud ja eelseisvad ajad on allpool.'),
     },
     en: {
       hello: (n) => (n ? `Hello, ${n}.` : 'Hello.'),
@@ -430,11 +430,11 @@ module.exports = function createHaldus(deps) {
 
       subjRequestDeclined: (s) => `SUKODA | «${s}» нужно новое время`,
       requestDeclinedTitle: 'Нужно новое время',
-      requestDeclinedIntro: (p) => (p ? `К сожалению, ${p} не может в желаемое время. Откройте обращение в портале и предложите новое время — так разговор останется при доме.` : 'К сожалению, желаемое время не подходит. Откройте обращение в портале и предложите новое время.'),
+      requestDeclinedIntro: (p) => (p ? `К сожалению, ${p} не может прийти в желаемое время. Откройте обращение в портале и предложите новое время — так разговор останется при доме.` : 'К сожалению, желаемое время не подходит. Откройте обращение в портале и предложите новое время.'),
       subjIssueReviewed: (s) => `SUKODA | Обращение рассмотрено: ${s}`,
       issueReviewedTitle: 'Обращение рассмотрено',
       issueReviewedIntro: (p) => (p ? `Ваше обращение рассмотрено (${p}). Описанный недостаток, к сожалению, не входит в гарантию — пояснение ниже.` : 'Мы рассмотрели ваше обращение. Описанный недостаток, к сожалению, не входит в гарантию — пояснение ниже.'),
-      issueReviewedNote: 'Если хотите, закажем работу платно.',
+      issueReviewedNote: 'Если хотите, закажем работу платно — напишите у этого обращения в портале, и мы согласуем время.',
       message: 'Сообщение',
       explanation: 'Пояснение',
 
@@ -497,7 +497,7 @@ module.exports = function createHaldus(deps) {
   }
   function brandHeader(brand, lang) {
     const line = brand.project ? `${brand.name} · ${brand.project}` : brand.name;
-    const by = core.pick({ et: 'portaali pakub SUKODA', en: 'portaali pakub SUKODA', ru: 'портал предоставляет SUKODA' }, lang);
+    const by = core.pick({ et: 'portaali pakub SUKODA', en: 'portal by SUKODA', ru: 'портал от SUKODA' }, lang);
     return `
     <div style="padding:44px 40px 36px;text-align:center;border-bottom:1px solid #E8E3DD;">
       <h1 style="color:#2C2824;font-size:24px;margin:0 0 8px 0;font-family:Georgia,'Times New Roman',serif;font-weight:300;letter-spacing:1px;">${escapeHtml(line)}</h1>
@@ -506,7 +506,7 @@ module.exports = function createHaldus(deps) {
     </div>`;
   }
   function brandFooter(brand, lang) {
-    const by = core.pick({ et: 'PORTAALI PAKUB', en: 'PORTAL BY', ru: 'ПОРТАЛ ПРЕДОСТАВЛЯЕТ' }, lang);
+    const by = core.pick({ et: 'PORTAALI PAKUB', en: 'PORTAL BY', ru: 'ПОРТАЛ ОТ' }, lang);
     return `
     <div style="padding:32px 40px 28px;text-align:center;border-top:1px solid #E8E3DD;">
       <p style="color:#2C2824;font-size:16px;margin:0 0 6px 0;font-family:Georgia,'Times New Roman',serif;font-weight:300;letter-spacing:2px;">${escapeHtml(brand.name)}</p>
@@ -3462,7 +3462,7 @@ module.exports = function createHaldus(deps) {
       subject: core.pick({
         et: `SUKODA | Hooldus ees: ${n === 1 ? one : `${n} asja su klientide kodudes`}`,
         en: `SUKODA | Upkeep due: ${n === 1 ? one : `${n} things in your clients' homes`}`,
-        ru: `SUKODA | Срок ухода: ${n === 1 ? one : `${n} дел в домах клиентов`}`,
+        ru: `SUKODA | Срок ухода: ${n === 1 ? one : `${n} ${core.ruPlural(n, 'дело', 'дела', 'дел')} в домах клиентов`}`,
       }, lang),
       push: push.message({ type: 'rhythm_due', lang, title: deskTitle, body: deskBody, url: `${HALDUS_URL}?tab=customers`, audience: 'provider' }),
       html: wrap(
@@ -3473,7 +3473,7 @@ module.exports = function createHaldus(deps) {
           ru: `${escapeHtml(provider.name)}, эти дела, которые вы взяли на себя, нужно сделать в ближайшие две недели. Когда сделаете, отметьте на рабочем столе — клиент получит одну строку.`,
         }, lang))
         + `<div style="background:#FFFFFF;padding:8px 28px 12px;margin-bottom:28px;border-left:2px solid #B8976A;">${rows}</div>`
-        + `<div style="text-align:center;margin:32px 0;"><a href="${HALDUS_URL}?tab=customers" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">${core.pick({ et: 'Ava töölaud', en: 'Open the desk', ru: 'Открыть стол' }, lang)}</a></div>`
+        + `<div style="text-align:center;margin:32px 0;"><a href="${HALDUS_URL}?tab=customers" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">${core.pick({ et: 'Ava töölaud', en: 'Open the desk', ru: 'Открыть рабочий стол' }, lang)}</a></div>`
         + P(core.pick({ et: 'Iga kirje kohta üks meeldetuletus.', en: 'One reminder per item.', ru: 'Одно напоминание на каждую запись.' }, lang), 'font-size:12px;'),
         lang,
       ),
@@ -3530,12 +3530,12 @@ module.exports = function createHaldus(deps) {
     const n = items.length;
     const one = core.maintenanceName(items[0], lang);
     const rhythmTitle = core.pick({ et: 'Kodu hooldusrütm', en: 'Home upkeep', ru: 'Ритм ухода за домом' }, lang);
-    const rhythmBody = n === 1 ? one : core.pick({ et: `${n} asja sel kuul`, en: `${n} things this month`, ru: `${n} дел в этом месяце` }, lang);
+    const rhythmBody = n === 1 ? one : core.pick({ et: `${n} asja sel kuul`, en: `${n} things this month`, ru: `${n} ${core.ruPlural(n, 'дело', 'дела', 'дел')} в этом месяце` }, lang);
     return {
       subject: core.pick({
         et: `SUKODA | Kodu hooldus: ${n === 1 ? one : `${n} asja sel kuul`}`,
         en: `SUKODA | Home upkeep: ${n === 1 ? one : `${n} things this month`}`,
-        ru: `SUKODA | Уход за домом: ${n === 1 ? one : `${n} дел в этом месяце`}`,
+        ru: `SUKODA | Уход за домом: ${n === 1 ? one : `${n} ${core.ruPlural(n, 'дело', 'дела', 'дел')} в этом месяце`}`,
       }, lang),
       push: push.message({ type: 'rhythm_due', lang, title: rhythmTitle, body: rhythmBody, url: PORTAL_URL }),
       html: wrap(

@@ -12,11 +12,7 @@ const core = require('./lib/haldus-core');
 const TYPES = ['morning', 'new_request', 'visit_tomorrow', 'rhythm_due', 'request_status'];
 
 function ruHomes(n) {
-  const n10 = n % 10;
-  const n100 = n % 100;
-  if (n10 === 1 && n100 !== 11) return 'дом';
-  if (n10 >= 2 && n10 <= 4 && (n100 < 12 || n100 > 14)) return 'дома';
-  return 'домов';
+  return core.ruPlural(n, 'дом', 'дома', 'домов');
 }
 
 function line(lang, text) {
@@ -70,7 +66,7 @@ function newRequest(vars) {
       body: {
         et: `${name} soovib olemasoleva visiidi aega muuta. Kinnita uus aeg töölaual — kõik pere kontaktid saavad kohe uue kalendrikutse.`,
         en: `${name} wants to change an existing visit. Confirm the new time on the desk — every household contact gets a new calendar invite.`,
-        ru: `${name} хочет перенести существующий визит. Подтвердите новое время на столе — все контакты семьи сразу получат приглашение в календарь.`,
+        ru: `${name} хочет перенести существующий визит. Подтвердите новое время на рабочем столе — все контакты семьи сразу получат приглашение в календарь.`,
       },
     };
   }
@@ -80,7 +76,7 @@ function newRequest(vars) {
       body: {
         et: `${name} küsib. Vasta töölaual — vastus jõuab kliendile portaali ja e-postiga.`,
         en: `${name} is asking. Reply on the desk — the answer reaches the client in the portal and by e-mail.`,
-        ru: `${name} спрашивает. Ответьте на столе — ответ дойдёт клиенту в портал и на почту.`,
+        ru: `${name} спрашивает. Ответьте на рабочем столе — ответ дойдёт клиенту в портал и на почту.`,
       },
     };
   }
@@ -95,7 +91,7 @@ function newRequest(vars) {
       body: {
         et: `${name} kirjeldas puudust. Paku töölaual ülevaatuse aeg või vasta kirjalikult — klient näeb seda portaalis.`,
         en: `${name} described a defect. Offer an inspection time on the desk or reply in writing — the client sees it in the portal.`,
-        ru: `${name} описал недостаток. Предложите на столе время осмотра или ответьте письменно — клиент увидит это в портале.`,
+        ru: `${name} описал недостаток. Предложите на рабочем столе время осмотра или ответьте письменно — клиент увидит это в портале.`,
       },
     };
   }
@@ -108,7 +104,7 @@ function newRequest(vars) {
     body: {
       et: `${name} soovib teenust. Kinnita aeg või vasta töölaual — klient näeb seda portaalis.`,
       en: `${name} wants a service. Confirm a time or reply on the desk — the client sees it in the portal.`,
-      ru: `${name} хочет услугу. Подтвердите время или ответьте на столе — клиент увидит это в портале.`,
+      ru: `${name} хочет услугу. Подтвердите время или ответьте на рабочем столе — клиент увидит это в портале.`,
     },
   };
 }
@@ -128,7 +124,7 @@ function requestStatus(vars) {
       body: {
         et: who ? `${who} ei saa kahjuks soovitud ajal. Ava pöördumine portaalis ja paku uut aega — nii jääb vestlus kodu juurde.` : 'Soovitud aeg kahjuks ei sobi. Ava pöördumine portaalis ja paku uut aega.',
         en: who ? `Unfortunately ${who} cannot make the requested time. Open the request in your portal and propose a new time — that way the conversation stays with the home.` : 'Unfortunately the requested time does not work. Open the request in your portal and propose a new time.',
-        ru: who ? `К сожалению, ${who} не может в желаемое время. Откройте обращение в портале и предложите новое время — так разговор останется при доме.` : 'К сожалению, желаемое время не подходит. Откройте обращение в портале и предложите новое время.',
+        ru: who ? `К сожалению, ${who} не может прийти в желаемое время. Откройте обращение в портале и предложите новое время — так разговор останется при доме.` : 'К сожалению, желаемое время не подходит. Откройте обращение в портале и предложите новое время.',
       },
     };
   }
@@ -227,7 +223,7 @@ function rhythmDue(vars) {
     title: {
       et: `SUKODA | Kodu hooldus: ${n === 1 ? one : `${n} asja sel kuul`}`,
       en: `SUKODA | Home upkeep: ${n === 1 ? one : `${n} things this month`}`,
-      ru: `SUKODA | Уход за домом: ${n === 1 ? one : `${n} дел в этом месяце`}`,
+      ru: `SUKODA | Уход за домом: ${n === 1 ? one : `${n} ${core.ruPlural(n, 'дело', 'дела', 'дел')} в этом месяце`}`,
     },
     body: {
       et: `${home || 'Sinu kodu'} — need asjad on järgmise kahe nädala jooksul aeg üle vaadata. Tee ise ja märgi portaalis tehtuks, või telli tegija sealt samast.`,

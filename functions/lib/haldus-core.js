@@ -36,6 +36,17 @@ function pick(obj, lang) {
   return obj.et;
 }
 
+/** Russian noun after a count: 1 дом, 2 дома, 5 домов, 11 домов, 21 дом. */
+function ruPlural(n, one, few, many) {
+  const value = Math.abs(Math.trunc(Number(n)));
+  if (!Number.isFinite(value)) return many;
+  const n10 = value % 10;
+  const n100 = value % 100;
+  if (n10 === 1 && n100 !== 11) return one;
+  if (n10 >= 2 && n10 <= 4 && (n100 < 12 || n100 > 14)) return few;
+  return many;
+}
+
 // ------------------------------------------------------------
 // Service catalogue (lisateenused) shown in /minu
 // ------------------------------------------------------------
@@ -84,7 +95,7 @@ const SERVICE_CATALOGUE = [
       et: 'Põhjalik hooajaline puhastus: kapid seest, radiaatorid, liistud, plaadivahed.',
       en: 'Thorough seasonal clean: inside cupboards, radiators, skirting boards, tile grout.', ru: 'Тщательная сезонная уборка: шкафы внутри, радиаторы, плинтусы, швы плитки.',
     },
-    priceHint: { et: 'alates 89 €', en: 'from €89', ru: 'от 89 €' },
+    priceHint: { et: 'alates 89 €', en: 'from 89 €', ru: 'от 89 €' },
     durationMin: 240,
   },
   {
@@ -95,7 +106,7 @@ const SERVICE_CATALOGUE = [
       et: 'Aknad seest ja rõdult, raamid ja aknalauad. Rõdu põrand, klaasid ja äravool lehtedest puhtaks. Kevadel ja sügisel.',
       en: 'Windows from inside and from the balcony, frames and sills. Balcony floor, glass and the drain cleared of leaves. In spring and autumn.', ru: 'Окна изнутри и с балкона, рамы и подоконники. Пол балкона, стёкла и слив очищены от листьев. Весной и осенью.',
     },
-    priceHint: { et: 'alates 45 €', en: 'from €45', ru: 'от 45 €' },
+    priceHint: { et: 'alates 45 €', en: 'from 45 €', ru: 'от 45 €' },
     durationMin: 120,
   },
   {
@@ -106,7 +117,7 @@ const SERVICE_CATALOGUE = [
       et: 'Külmkapi ja ahju põhjalik puhastus seest ja väljast.',
       en: 'Deep clean of fridge and oven, inside and out.', ru: 'Тщательная чистка холодильника и духовки внутри и снаружи.',
     },
-    priceHint: { et: 'alates 35 €', en: 'from €35', ru: 'от 35 €' },
+    priceHint: { et: 'alates 35 €', en: 'from 35 €', ru: 'от 35 €' },
     durationMin: 90,
   },
   {
@@ -117,7 +128,7 @@ const SERVICE_CATALOGUE = [
       et: 'Triikimine visiidi ajal või eraldi ajal. Hind tunni alusel.',
       en: 'Ironing during a visit or at a separate time. Priced per hour.', ru: 'Глажка во время визита или отдельно. Цена за час.',
     },
-    priceHint: { et: '25 €/h', en: '€25/h', ru: '25 €/ч' },
+    priceHint: { et: '25 €/h', en: '25 €/h', ru: '25 €/ч' },
     durationMin: 60,
   },
   {
@@ -128,7 +139,7 @@ const SERVICE_CATALOGUE = [
       et: 'Pesumasin, kuivati ja voltimine. Koos koristusega või eraldi.',
       en: 'Washing, drying and folding. With a clean or on its own.', ru: 'Стиральная машина, сушка и складывание. Вместе с уборкой или отдельно.',
     },
-    priceHint: { et: '25 €/h', en: '€25/h', ru: '25 €/ч' },
+    priceHint: { et: '25 €/h', en: '25 €/h', ru: '25 €/ч' },
     durationMin: 60,
   },
   {
@@ -150,7 +161,7 @@ const SERVICE_CATALOGUE = [
       et: 'Voodipesu ja rätikute vahetus, kasutatud pesu masinasse. Soovi korral ka madratsi pööramine.',
       en: 'Change bed linen and towels, used linen into the machine. Mattress turning as well, if you want it.', ru: 'Смена постельного белья и полотенец, использованное бельё в машину. По желанию также переворот матраса.',
     },
-    priceHint: { et: 'alates 20 €', en: 'from €20', ru: 'от 20 €' },
+    priceHint: { et: 'alates 20 €', en: 'from 20 €', ru: 'от 20 €' },
     durationMin: 30,
   },
   {
@@ -160,9 +171,9 @@ const SERVICE_CATALOGUE = [
     name: { et: 'Kodumasinate hooldus', en: 'Appliance care', ru: 'Уход за бытовой техникой' },
     description: {
       et: 'Pesumasina filter ja tihend, nõudepesumasina filter ja pihustid, pliidikubu filter, veekeetja ja kohvimasina katlakivi, äravoolud. Koduhooldaja teeb koristuse käigus.',
-      en: 'Washing-machine filter and seal, dishwasher filter and spray arms, hood filter, kettle and coffee-machine limescale, drains. The housekeeper does it during a clean.', ru: 'Фильтр и уплотнитель стиральной машины, фильтр и разбрызгиватели посудомоечной машины, фильтр вытяжки, накипь чайника и кофемашины, сливы. Домработница делает это во время уборки.',
+      en: 'Washing-machine filter and seal, dishwasher filter and spray arms, hood filter, kettle and coffee-machine limescale, drains. The housekeeper does it during a clean.', ru: 'Фильтр и уплотнитель стиральной машины, фильтр и разбрызгиватели посудомоечной машины, фильтр вытяжки, накипь чайника и кофемашины, сливы. Специалист по дому делает это во время уборки.',
     },
-    priceHint: { et: 'alates 25 €', en: 'from €25', ru: 'от 25 €' },
+    priceHint: { et: 'alates 25 €', en: 'from 25 €', ru: 'от 25 €' },
     durationMin: 45,
   },
   {
@@ -173,7 +184,7 @@ const SERVICE_CATALOGUE = [
       et: 'Taimede kastmine, post, tuulutamine ja pilk peale. Märgi eemalolek Minu kodu all, et koristusajad nihkuksid.',
       en: 'Watering plants, post, airing and a look around. Mark the time away under My home so cleaning times shift.', ru: 'Полив растений, почта, проветривание и осмотр. Отметьте отсутствие в разделе «Мой дом», чтобы сдвинуть время уборки.',
     },
-    priceHint: { et: '15 €/visiit', en: '€15/visit', ru: '15 €/визит' },
+    priceHint: { et: '15 €/visiit', en: '15 €/visit', ru: '15 €/визит' },
     durationMin: 30,
   },
   {
@@ -182,9 +193,9 @@ const SERVICE_CATALOGUE = [
     name: { et: 'Värsked lilled', en: 'Fresh flowers', ru: 'Свежие цветы' },
     description: {
       et: 'Kimp sinu eelistuse järgi, külalisteks või tähtpäevaks. Koduhooldaja toob koristusvisiidiga või lillepood toob koju.',
-      en: 'A bouquet to your preference, for guests or a special day. The housekeeper brings it with a cleaning visit, or the florist delivers it home.', ru: 'Букет по вашему предпочтению, для гостей или к празднику. Домработница принесёт его с уборкой, либо цветочный магазин доставит домой.',
+      en: 'A bouquet to your preference, for guests or a special day. The housekeeper brings it with a cleaning visit, or the florist delivers it home.', ru: 'Букет по вашему предпочтению, для гостей или к празднику. Специалист по дому принесёт его с уборкой, либо цветочный магазин доставит домой.',
     },
-    priceHint: { et: 'alates 35 €', en: 'from €35', ru: 'от 35 €' },
+    priceHint: { et: 'alates 35 €', en: 'from 35 €', ru: 'от 35 €' },
     durationMin: 0,
   },
   // — Garantii ja maja (arendaja järelteenindus) —
@@ -268,7 +279,7 @@ const SERVICE_CATALOGUE = [
       et: 'Maalid, peeglid, riiulid, kardinapuud ja teler seinale. Õige kinnitus õigesse seina, jälgi jätmata.',
       en: 'Paintings, mirrors, shelves, curtain rails and a television on the wall. The right fixing in the right wall, without a mark left behind.', ru: 'Картины, зеркала, полки, карнизы и телевизор на стену. Нужное крепление в нужную стену, без следов.',
     },
-    priceHint: { et: 'alates 45 €', en: 'from €45', ru: 'от 45 €' },
+    priceHint: { et: 'alates 45 €', en: 'from 45 €', ru: 'от 45 €' },
     durationMin: 90,
   },
   {
@@ -279,7 +290,7 @@ const SERVICE_CATALOGUE = [
       et: 'Soojustagastusega ventilatsiooni filtrite vahetus, seadme ja põrandakütte termostaatide hooajaline kontroll. Kevadel ja enne kütteperioodi.',
       en: 'Filter change for heat-recovery ventilation, and a seasonal check of the unit and the floor-heating thermostats. In spring and before the heating season.', ru: 'Замена фильтров вентиляции с рекуперацией, сезонная проверка устройства и термостатов тёплого пола. Весной и перед отопительным сезоном.',
     },
-    priceHint: { et: 'alates 55 €', en: 'from €55', ru: 'от 55 €' },
+    priceHint: { et: 'alates 55 €', en: 'from 55 €', ru: 'от 55 €' },
     durationMin: 60,
   },
   {
@@ -290,7 +301,7 @@ const SERVICE_CATALOGUE = [
       et: 'Pirnid ja patareid, ummistunud äravool, lahti tulnud käepide, kasutusest tekkinud kriimud ja augud. See, mis ei ole ehitaja garantii. Kahtluse korral küsi enne garantiimeeskonnalt.',
       en: 'Bulbs and batteries, a blocked drain, a handle that has come loose, scratches and holes from use. What is not the builder warranty. If in doubt, ask the warranty team first.', ru: 'Лампочки и батарейки, засор слива, открутившаяся ручка, царапины и отверстия от пользования. То, что не входит в гарантию застройщика. При сомнении сначала спросите гарантийную команду.',
     },
-    priceHint: { et: 'alates 45 €/h', en: 'from €45/h', ru: 'от 45 €/ч' },
+    priceHint: { et: 'alates 45 €/h', en: 'from 45 €/h', ru: 'от 45 €/ч' },
     durationMin: 90,
   },
   {
@@ -301,7 +312,7 @@ const SERVICE_CATALOGUE = [
       et: 'Uue mööbli kokkupanek ja paigaldus, pakendi äravedu.',
       en: 'Assembly and placement of new furniture, packaging taken away.', ru: 'Сборка и установка новой мебели, вывоз упаковки.',
     },
-    priceHint: { et: 'alates 45 €/h', en: 'from €45/h', ru: 'от 45 €/ч' },
+    priceHint: { et: 'alates 45 €/h', en: 'from 45 €/h', ru: 'от 45 €/ч' },
     durationMin: 120,
   },
   {
@@ -312,7 +323,7 @@ const SERVICE_CATALOGUE = [
       et: 'Kardinapuu seina ja kardinad üles. Mõõdud võtame kohapeal.',
       en: 'A curtain rail on the wall and the curtains hung. We measure on site.', ru: 'Карниз на стену и шторы повесить. Размеры снимем на месте.',
     },
-    priceHint: { et: 'alates 45 €', en: 'from €45', ru: 'от 45 €' },
+    priceHint: { et: 'alates 45 €', en: 'from 45 €', ru: 'от 45 €' },
     durationMin: 90,
   },
   {
@@ -323,7 +334,7 @@ const SERVICE_CATALOGUE = [
       et: 'Välisukse südamiku vahetus. Südamiku võid tuua ise.',
       en: 'A new cylinder in the front door. You can bring the cylinder yourself.', ru: 'Замена личинки входной двери. Личинку можете принести сами.',
     },
-    priceHint: { et: 'alates 45 €', en: 'from €45', ru: 'от 45 €' },
+    priceHint: { et: 'alates 45 €', en: 'from 45 €', ru: 'от 45 €' },
     durationMin: 45,
   },
   {
@@ -334,7 +345,7 @@ const SERVICE_CATALOGUE = [
       et: 'Pesumasin, nõudepesumasin, pliit või õhupuhasti oma kohale ja ühendatud.',
       en: 'A washing machine, dishwasher, hob or hood set in place and connected.', ru: 'Стиральная машина, посудомоечная машина, плита или вытяжка на место и подключены.',
     },
-    priceHint: { et: 'alates 45 €', en: 'from €45', ru: 'от 45 €' },
+    priceHint: { et: 'alates 45 €', en: 'from 45 €', ru: 'от 45 €' },
     durationMin: 90,
   },
   // — Aed & õu —
@@ -346,7 +357,7 @@ const SERVICE_CATALOGUE = [
       et: 'Niitmine, servade trimmimine ja niite äravedu. Ühekordselt või hooajaks.',
       en: 'Mowing, edge trimming and clippings removed. One-off or for the season.', ru: 'Кошение, подравнивание краёв и вывоз скошенной травы. Разово или на сезон.',
     },
-    priceHint: { et: 'alates 45 €', en: 'from €45', ru: 'от 45 €' },
+    priceHint: { et: 'alates 45 €', en: 'from 45 €', ru: 'от 45 €' },
     durationMin: 90,
   },
   {
@@ -357,7 +368,7 @@ const SERVICE_CATALOGUE = [
       et: 'Hekk, põõsad ja viljapuud õigel ajal ja õige kujuga; oksad ära.',
       en: 'Hedges, shrubs and fruit trees trimmed at the right time and shape; branches removed.', ru: 'Изгородь, кусты и плодовые деревья вовремя и в нужной форме; ветки уберём.',
     },
-    priceHint: { et: 'alates 65 €', en: 'from €65', ru: 'от 65 €' },
+    priceHint: { et: 'alates 65 €', en: 'from 65 €', ru: 'от 65 €' },
     durationMin: 120,
   },
   {
@@ -368,7 +379,7 @@ const SERVICE_CATALOGUE = [
       et: 'Survepesu terrassile, tänavakividele ja fassaadi alaosale; vihmaveerennide puhastus.',
       en: 'Pressure wash for terrace, paving and lower façade; gutters cleared.', ru: 'Мойка под давлением террасы, брусчатки и нижней части фасада; чистка водостоков.',
     },
-    priceHint: { et: 'alates 95 €', en: 'from €95', ru: 'от 95 €' },
+    priceHint: { et: 'alates 95 €', en: 'from 95 €', ru: 'от 95 €' },
     durationMin: 180,
   },
   {
@@ -386,10 +397,10 @@ const SERVICE_CATALOGUE = [
     id: 'cleaning-note',
     kind: 'question', // a written message to the housekeeper — no visit, no time; the reply comes in writing
     category: 'cleaning',
-    name: { et: 'Sõnum koduhooldajale', en: 'Message to the housekeeper', ru: 'Сообщение домработнице' },
+    name: { et: 'Sõnum koduhooldajale', en: 'Message to the housekeeper', ru: 'Сообщение специалисту по дому' },
     description: {
       et: 'Rütmi muutus, eritähelepanu, küsimus — kirjuta, koduhooldaja vastab siia.',
-      en: 'A change of rhythm, extra attention, a question — write it and the housekeeper replies here.', ru: 'Изменение ритма, особое внимание, вопрос — напишите, домработница ответит здесь.',
+      en: 'A change of rhythm, extra attention, a question — write it and the housekeeper replies here.', ru: 'Изменение ритма, особое внимание, вопрос — напишите, специалист по дому ответит здесь.',
     },
     priceHint: { et: '', en: '', ru: '' },
     durationMin: 0,
@@ -910,6 +921,7 @@ module.exports = {
   LANGS,
   langOf,
   pick,
+  ruPlural,
   PROVIDER_PLANS,
   PLAN_ACTIVE_STATUSES,
   SELF_SERVE_PLANS,

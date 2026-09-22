@@ -76,6 +76,29 @@ test('langOf keeps et, en and ru; anything else is Estonian', () => {
   assert.equal(core.langOf('EN'), 'et', 'codes are lowercase');
 });
 
+test('ruPlural follows Russian count forms', () => {
+  assert.equal(core.ruPlural(1, 'дом', 'дома', 'домов'), 'дом');
+  assert.equal(core.ruPlural(21, 'дело', 'дела', 'дел'), 'дело');
+  assert.equal(core.ruPlural(2, 'дело', 'дела', 'дел'), 'дела');
+  assert.equal(core.ruPlural(4, 'дело', 'дела', 'дел'), 'дела');
+  assert.equal(core.ruPlural(5, 'дело', 'дела', 'дел'), 'дел');
+  assert.equal(core.ruPlural(11, 'дом', 'дома', 'домов'), 'домов');
+  assert.equal(core.ruPlural(12, 'дом', 'дома', 'домов'), 'домов');
+  assert.equal(core.ruPlural(0, 'дело', 'дела', 'дел'), 'дел');
+});
+
+test('catalogue money keeps the euro sign after the amount, and the housekeeper is not a maid', () => {
+  for (const s of core.SERVICE_CATALOGUE) {
+    for (const lang of ['et', 'en', 'ru']) {
+      const hint = s.priceHint?.[lang] || '';
+      assert.equal(/€\d/.test(hint), false, `${s.id} ${lang}: ${hint}`);
+    }
+  }
+  const blob = JSON.stringify(core.SERVICE_CATALOGUE);
+  assert.equal(/домработ/i.test(blob), false);
+  assert.equal(core.getService('cleaning-note').name.ru, 'Сообщение специалисту по дому');
+});
+
 test('pick returns the asked language and falls back to et', () => {
   const text = { et: 'Tere', en: 'Hello', ru: 'Здравствуйте' };
   assert.equal(core.pick(text, 'et'), 'Tere');
