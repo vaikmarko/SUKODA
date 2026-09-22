@@ -7,6 +7,10 @@
   --color-cream: #F5F0EB;
   --color-accent: #B8976A;
   --color-muted: #6B6560;
+  /* Lines and quiet text — use these instead of raw hex in HTML (border-line, border-line-strong, text-muted-light) */
+  --color-line: #E8E3DD;
+  --color-line-strong: #D4CFC8;
+  --color-muted-light: #B8B2AA;
 
   --font-serif: "Cormorant Garamond", Georgia, serif;
   --font-sans: "Inter", system-ui, sans-serif;
@@ -72,6 +76,16 @@ body {
   letter-spacing: 0.2em;
   color: var(--color-accent);
   flex-shrink: 0;
+}
+/* Field label / eyebrow: the one caps label. Use this class, never hand-written text-[10px]/[11px] + tracking */
+.eyebrow {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  line-height: 1.4;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-muted);
 }
 /* Primary action: one per card */
 .p-btn {

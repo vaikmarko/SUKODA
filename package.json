@@ -7,9 +7,14 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "deploy": "npm run build && firebase deploy --only hosting",
-    "deploy:functions": "firebase deploy --only functions",
-    "deploy:all": "npm run build && firebase deploy"
+    "test": "node --test 'functions/test/**/*.test.js'",
+    "test:watch": "node --test --watch 'functions/test/**/*.test.js'",
+    "lint:ui": "node scripts/ui-lint.js",
+    "check:syntax": "for f in functions/*.js functions/lib/*.js; do node --check \"$f\" || exit 1; done",
+    "check": "npm run lint:ui && npm run check:syntax && npm test",
+    "deploy": "npm run check && npm run build && firebase deploy --only hosting",
+    "deploy:functions": "npm run check && firebase deploy --only functions",
+    "deploy:all": "npm run check && npm run build && firebase deploy"
   },
   "repository": {
     "type": "git",

@@ -1,0 +1,80 @@
+---
+description: SUKODA session rules — scope control, quality gates, ET/EN/RU parity, testing, deploy checklist, summary format
+alwaysApply: true
+---
+
+# SUKODA Session Rules
+
+Process rules for every chat in this repo. Product direction lives in `PLATVORMIPLAAN_2026.md`; design voice in `.cursor/rules/portal-html.mdc`; backend in `.cursor/rules/functions.mdc`.
+
+## 0. Pre-deploy checklist (READ BEFORE EVERY `firebase deploy`)
+
+- [ ] **Scope contained:** every changed line traces to the request. No "while I'm here" cleanups.
+- [ ] **ET + EN both present** for every new user-facing string (HTML ternary `lang === 'et' ? … : …`, `{ et, en }` objects in `functions/lib/haldus-core.js`, e-mail templates via `langOf(order)`).
+- [ ] **Design voice honored:** tokens only (`text-muted`, `bg-paper`, `border-line`), `.p-btn` / `.p-btn-2` / `.p-cta` for actions, `.eyebrow` for labels, no new `text-[Npx]`, no new raw hex. `npm run lint:ui` green.
+- [ ] **Tests pass:** `npm test` green. Any change to `functions/lib/haldus-core.js` has a test.
+- [ ] **Syntax check:** `npm run check` (runs lint + tests + `node --check` on every function file).
+- [ ] **`/review` run** for any change touching >3 files, money, scheduling, auth or e-mail.
+- [ ] **`/verify` run** for behaviour changes (real request against emulator or prod with a demo account).
+- [ ] **Copy rule applied:** every new sentence in the portal answers "what do I do now?" — otherwise delete it.
+- [ ] **Summary written** in §6 format.
+
+Do not deploy and "see what happens". Fix first.
+
+## 1. Documentation authority
+
+- Product scope and phases → `PLATVORMIPLAAN_2026.md`. If a request contradicts it, say so before building.
+- Runtime setup → `SETUP.md`; manual test flows → `TEST_GUIDE.md`; security findings → `docs/PORTAL-AUDIT.md`.
+- `TEHNILINE_ARENDUS.md` and `ARIPLAAN.md` are historical. Do not treat them as the current architecture.
+- If docs are missing or conflict: state what you assume, then proceed on the smallest reversible path.
+
+## 2. Scope control
+
+- Do only what the prompt asks. No refactoring unrelated code, no new abstractions unless requested.
+- `minu.html` (2 500 lines), `haldus.html` (1 600), `functions/haldus.js` (4 000), `functions/index.js` (6 500) are mega-files. Touch only the block you need; never reformat surrounding code. Module extraction happens only for the screen a sprint is working on.
+- Out-of-scope improvements go in the summary as suggestions, not in the diff.
+
+## 3. Think before coding
+
+- State assumptions explicitly. If you did not read the handler, say "I think X but did not verify".
+- Trace from the UI: find the `fetch('/api/…')` in the HTML → the `'METHOD /api/…'` key in `functions/haldus.js` or the export in `functions/index.js` → the Firestore writes. Never guess which endpoint a button calls.
+- **Find all mutation paths.** `orders` is written from both `functions/index.js` and `functions/haldus.js` (77+ sites). Before changing how a field is written or read, grep both files: `grep -n "fieldName" functions/index.js functions/haldus.js`.
+- Modification before evaluation: when a handler both changes an order and then decides on notifications/reminders, it must evaluate the changed data, not the stale snapshot.
+
+## 4. Stop conditions
+
+Ask before proceeding when a decision affects: money (Stripe amounts, splits, refunds), who receives an e-mail or push, deletion of Firestore data, auth/session behaviour, Firestore rules, or anything that changes the Arco/Cristelle journeys defined in `PLATVORMIPLAAN_2026.md` §4.
+
+## 5. Testing rules
+
+- **Pure logic lives in `functions/lib/haldus-core.js`** (no Firebase imports) and is tested in `functions/test/*.test.js` with `node:test`. New scheduling, pricing, sanitizing, reminder or catalogue logic goes there first, with a test.
+- **Bug fix = regression test** when the bug is in pure logic. Reproduce, then fix.
+- Handlers that need Firestore are verified with `/verify` against the emulator (`firebase emulators:start`) or with a demo account (`scripts/seed-arco-demo.js`), not with unit tests.
+- Run `npm test` before every commit that touches `functions/`.
+- Catalogue parity is a test: every text entry in `SERVICE_CATALOGUE`, `MAINTENANCE_CATALOGUE`, `DOCUMENT_CATEGORIES`, `TIME_WINDOWS`, `PROVIDER_PLANS` must have `et` and `en`, and `ru` where present must be non-empty. The lint counts entries still missing `ru`; that count may only fall. Languages are `et | en | ru` everywhere — see `portal-html.mdc` and `functions.mdc`.
+
+## 6. Summary format (every completed task ends with this)
+
+```
+────────────────────────
+Kokkuvõte
+────────────────────────
+```
+
+**Kontekst** — 1–2 lauset: milline voog või ekraan.
+**Mis oli katki ja miks** — kui asjakohane, lihtsas keeles.
+**Mis muutus selles promptis** — loetelu ainult nähtavast käitumisest, ilma failinimedeta. Nii, et Cristelle või Arco järelteenindus saaks sellest aru.
+**Seis** — Commit: JAH/EI (hash) · Deploy: EI / hosting / functions:<nimi> · Testid: N läbis · `lint:ui`: roheline/punane · Plaan (`PLATVORMIPLAAN_2026.md`): uuendatud / ei vajanud.
+
+## 7. Git and deploy
+
+- Commit when a unit of work is complete, in Estonian, scoped to the change (see `git log` for the voice). Never mix unrelated changes.
+- Never `firebase deploy` without instruction. When asked: `npm run deploy` (hosting) or `npm run deploy:functions` — both run `npm run check` first. Deploy single functions when possible: `firebase deploy --only functions:haldusApi`.
+- Never deploy `firestore:rules` as a side effect. Rules changes are their own task with their own review.
+- Secrets stay in Firebase secrets (`SECRETS` in `functions/haldus.js`) and `.env*` files that are gitignored. Never paste keys into code, docs or chat.
+
+## 8. Autonomy
+
+- Edit files without asking; describe afterwards.
+- Run the fastest relevant check after each change (`npm test`, `npm run lint:ui`, `node --check functions/haldus.js`).
+- Ask only before destructive or irreversible actions: deleting Firestore data, deploying rules, refunds, force-push, mass e-mail.

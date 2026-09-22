@@ -1,0 +1,59 @@
+---
+description: Firebase Functions backend — pure logic in haldus-core, handler conventions, auth scoping, money, e-mail, crons
+globs: functions/**/*.js
+alwaysApply: false
+---
+
+# Cloud Functions rules
+
+## Where code goes
+
+| Kind of code | Location | Test |
+|---|---|---|
+| Pure logic: catalogue, schedule maths, sanitizers, reminders, plans, holidays | `functions/lib/haldus-core.js` (no Firebase, no network) | `functions/test/*.test.js` (`node:test`) — mandatory |
+| Portal / desk / admin / lunasta handlers, e-mail templates, crons | `functions/haldus.js` (factory, receives `sendEmail`, `db`) | `/verify` against emulator or demo account |
+| Landing checkout, Stripe webhooks, gift cards, legacy client portal | `functions/index.js` | `/verify` |
+| Shared config, rate limit, secrets | `functions/lib/config.js` | — |
+| Zod schemas for request bodies | `functions/lib/schemas.js` | unit test if non-trivial |
+| New integrations (Hausing, Graph, push) | `functions/lib/<name>.js` — one file per external system, credentials via `SECRETS`, defensive parsing, never leaks upstream errors to the client | unit test for mapping/parsing with fixtures |
+
+Never add Firebase or network calls to `haldus-core.js`. If a helper needs `db`, it belongs in `haldus.js`.
+
+## Handler conventions (`functions/haldus.js`)
+
+- Routes are keys `'METHOD /api/…'` in `haldusHandlers`, `portalHandlers`, `adminHandlers`, `lunastaHandlers`; each router has a rate limit. New route → same map, same shape.
+- **Auth first, then body.** Provider routes: `authenticateProvider(req)`; portal routes: the client session helper. Every Firestore query is scoped to `provider.id` or the session's `orderId`. Never trust an `orderId` from the body without checking it belongs to the caller.
+- Input: `str(v, max)` and `core.sanitize*` helpers, or a Zod schema from `lib/schemas.js`. Cap every string and array.
+- **Languages are `et | en | ru`.** `langOf(order)` returns one of the three (extend it when you touch it; today it knows only et/en). Every user-facing text object is `{ et, en, ru }`; pick with one helper `pick(obj, lang)` that falls back to `et`. Never `const et = lang !== 'en'` in new code — that pattern is binary and is why the templates cannot do Russian today.
+- Error responses: `res.status(4xx).json({ error: { et: '…', en: '…', ru: '…' } })` for new handlers — plain sentences for the screen ("Nimi on kohustuslik" / "Name is required" / "Укажите имя"). Legacy handlers return a single Estonian string; convert them when touched. Never leak stack traces, Firestore paths or Stripe error bodies.
+- Success responses: `{ success: true, … }` or the serialized object (`serializeBooking`, `serializeRequest`, `serializeCustomer`). Reuse the serializers; do not hand-build a second shape of the same object.
+- Idempotency for anything the UI can double-submit (redeem, confirm, complete, pay): check state before writing, use transactions for balance/credit/slot changes.
+
+## Money
+
+- Amounts in integer cents in Firestore (`*Cents`), formatted only at the edge.
+- Stripe calls live behind a helper; every webhook is deduplicated via `stripeWebhookEvents`.
+- Splits (sponsor / resident / provider / fee) are computed in **one** pure function in `haldus-core.js` with tests covering: fully sponsored, partly sponsored, extras only, zero. Handlers call it; they never re-derive the split.
+- Any change to prices, splits, refunds or payouts is a stop condition (ask first).
+
+## Scheduling
+
+- Dates are `YYYY-MM-DD` strings in Tallinn time; use `parseDateStr` / `toDateStr` / `addDays` / `addMonths` from core. Never `new Date(str)` on a date string.
+- Conflict check (`overlaps`) runs server-side on every create/reschedule. Provider `leadDays` (default 14), availability, away periods and `holidayName` are respected on the server, not only in the UI.
+- Crons are idempotent: they mark what they sent (`remindedFor`, `holidayNoticesSent`) and can run twice without double e-mails.
+
+## E-mail and notifications
+
+- All mail through `sendEmail` with templates in `haldus.js`; every template takes `lang` and produces ET and EN.
+- Recipients through `core.resolveRecipients(order)` — never `order.customer.email` directly (contacts with `notify` would be skipped).
+- A notification says *what* and links to the card in the portal. The content lives in the portal, not in the mail body (plan §0.5). Reply-to points to the provider only where a human reply is expected.
+- Push (when added): same five event types as the plan (§0.6), same payload builder as the e-mail so the two never disagree.
+
+## Logging
+
+- `console.error('<function>: <what>', err)` with the entity id, in a `try/catch` around each unit in loops so one bad order does not stop a cron. No `console.log` of request bodies or tokens.
+
+## Verify the server before testing
+
+- Emulator: `firebase emulators:start` (functions on :5001). Prod check: `curl -s https://sukoda.ee/api/haldus/me -H 'Authorization: Bearer <demo token>'`.
+- After deploying a single function, confirm with `firebase functions:log --only <name>` that it cold-starts without errors.

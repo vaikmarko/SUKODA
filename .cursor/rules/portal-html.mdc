@@ -1,0 +1,103 @@
+---
+description: Portal and landing pages (Alpine + Tailwind v4) — design voice, tokens, ET/EN/RU parity, copy rules, information density
+globs: *.html,assets/css/*.css,assets/js/*.js
+alwaysApply: false
+---
+
+# Portal pages — one voice
+
+Authority: `assets/css/main.css` (`@theme` tokens + `.p-*` portal classes). `src/assets/css/main.css` is a stale copy — do not edit it, do not import it.
+
+## The standard (read before writing any screen)
+
+SUKODA must be a simple, logical, beautiful, modern app that makes a resident, a cleaner and a developer's sales lead each say on first open: *"wow, how well thought out — this makes my life so much easier."* That is the acceptance criterion, not a slogan. Full version: `PLATVORMIPLAAN_2026.md` → "Standard". A screen is not done when it works; it is done when:
+
+1. **Understood in 5 seconds.** One title, one primary action, no term the user has to learn. Never two equal buttons side by side.
+2. **It thought ahead.** The next thing is at the top, forms are pre-filled with everything we already know, dates offered inside the provider's notice window. More than 3 fields to type by hand → ask where we already know the rest.
+3. **Nothing to hunt for.** Everything one task needs sits on one card. `code → first order` and `morning push → Done` take ≤ 4 taps and no back button.
+4. **Calm and beautiful.** Air, serif titles, sans text, one accent, one card shape. ≤ 3 font sizes and ≤ 2 text colours besides black per screen. Motion only when it shows what happened. Primary button under the thumb.
+5. **It removes a chore.** Every new screen can be described as "because of this, X no longer has to Y". If that sentence cannot be written, do not build the screen.
+6. **It just works.** Opens in a second on a weak network, never loses typed text, never shows a technical error, never asks the same thing twice.
+
+Before deploying any screen ask: can it be simpler without losing anything needed? Would Arco's sales lead show it to a buyer at key handover? Could Cristelle use it with gloves on in a stairwell? Three yeses or it is not done. Reference points are Apple Wallet and the Airbnb host app — then do less.
+
+## Voice (why yesterday's fixes were needed)
+
+The portal was rebuilt on 21.09 because pages had drifted: five different eyebrow sizes, a stat counter here, a marketing sentence there, a table where a card belonged. These rules keep it from drifting back.
+
+Three voices only, per `main.css`:
+1. **Section title** — `.p-h` (serif, black). Optional number `.p-num`.
+2. **Label** — `.eyebrow` (11px caps, muted). Never hand-write `text-[10px] uppercase tracking-[0.1Nem]` again; use the class.
+3. **Action** — `.p-btn` (primary, one per card), `.p-btn-2` (secondary), `.p-btn-sm` (inline), `.p-cta` (inside a clickable catalogue card).
+
+Body text: `text-sm` (14px) for content, `text-xs` (12px) for meta. Serif headings: `font-serif text-lg | text-xl | text-2xl | text-3xl`. Nothing else. No `text-[13px]`, no `font-medium` sprinkled on body text to "make it pop".
+
+## Tokens only
+
+- Colours: `text-black`, `text-muted`, `text-accent`, `bg-paper`, `bg-cream`, `border-line`, `border-line-strong`, `text-muted-light`. **No raw hex in HTML.** If a colour is missing, add a token to `@theme` in `assets/css/main.css` — once — then use it.
+- `npm run lint:ui` counts raw hex, `text-[Npx]`, hand-rolled eyebrows, inline `lang === 'et'` ternaries, one-language ternaries and two-language catalogue entries against `scripts/ui-lint.baseline.json`, per file. A count may only go down. If it goes up, the build fails and names the file.
+
+## Information density (the "Apple" rule)
+
+- A screen shows the **next thing** first, then what needs attention, then what the person can do. Never a menu of everything.
+- **No counters or stats for the resident** ("5 tegijat", "11 dokumenti"). Numbers appear only when the person needs to act on them (a price, a date, a ticket number).
+- **No marketing copy inside `/minu`, `/haldus`, `/lunasta`.** Sentences that explain the product ("Koristus on üks teenus paljudest") are deleted, not softened.
+- Every sentence answers "mida ma nüüd teen?" or "mis juhtub järgmisena?". If it answers neither, remove it.
+- Empty state = one sentence + one action. Not an illustration, not a paragraph.
+- Cards, not tables, for the resident. Tables only on the desk (`haldus.html`) where the provider scans many rows.
+- One primary `.p-btn` per card. Secondary actions are `.p-btn-2` or a text link.
+- Static catalogue text does not go into menus. A menu item is a name and, at most, one short line.
+
+## Three languages: et · en · ru
+
+Residents of Arco homes speak Estonian, English and Russian. Every user-visible string on the resident side (`minu.html`, `lunasta.html`, `index.html`, `arendajale.html`) exists in all three. The desk (`haldus.html`) is et + en now, ru when a provider needs it.
+
+**The inline ternary does not scale to three languages.** 589 `lang === 'et' ? … : …` exist today; they are frozen (the lint counts them per file and the count may only fall). New strings go through a per-page dictionary:
+
+```js
+// in the page's x-data, once
+T: {
+  pickTime: { et: 'Vali aeg', en: 'Pick a time', ru: 'Выберите время' },
+  logOut:   { et: 'Logi välja', en: 'Log out', ru: 'Выйти' },
+},
+t(key, vars) { const s = (this.T[key] || {})[this.lang] || (this.T[key] || {}).et || key; return vars ? s.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '') : s; },
+```
+
+```html
+<!-- ❌ -->
+<span>Vali aeg</span>
+<span x-text="lang === 'et' ? 'Vali aeg' : 'Pick a time'"></span>
+
+<!-- ✅ -->
+<span x-text="t('pickTime')"></span>
+<input :placeholder="t('searchDocs')" :aria-label="t('searchDocs')">
+```
+
+- A key without all three languages is a bug, not a style issue. Fallback to `et` exists so a missing translation never shows an empty string, but the lint and review still flag it.
+- When a sprint touches a screen, migrate that screen's ternaries to `T` in the same change — no separate "i18n sprint".
+- Language switch: `lang` in `x-data`, persisted in `localStorage.sukoda_lang`, values `et | en | ru`. The switcher shows three options. The backend stores the resident's choice on the order (`order.lang`) so e-mails and push arrive in the same language as the screen.
+- Placeholders, `aria-label`, `title`, button text, empty states and error toasts are user-visible strings.
+- Voice: Estonian sina-form; English plain, no marketing; Russian «вы» form, neutral, no diminutives. No exclamation marks, no emoji in any language. Dates with the year (`12.03.2026`), times `HH:MM`, money `229 €` in every language.
+- Never show `err.message` from `fetch` raw. Backend errors come as `{ error: { et, en, ru } }` or a code the page maps through `T` (see `functions.mdc`). Legacy handlers that still return a single Estonian string are shown as-is until that handler is touched.
+
+## Communication happens in the app
+
+A message thread, a request status, a reschedule — the content lives on the card in the portal. E-mail and push only say "there is something new" and link to the card. Never build a flow where the reply arrives by e-mail and the portal shows nothing (this was a real 21.09 bug).
+
+## Accessibility and states
+
+- Dialogs: `role="dialog"`, `aria-modal="true"`, labelled title, Escape closes, focus returns to the trigger.
+- Icon-only buttons have `aria-label` (all three languages).
+- Every async action has a disabled/loading state (`:disabled="saving"`) and a failure path the user can act on. "Midagi läks valesti" alone is forbidden — say what to do next.
+- Touch targets ≥ 44px on the portal; `.p-btn` is 44px by design.
+
+## Alpine conventions
+
+- One `x-data` per page (`portal()` / `desk()`), state in that object; no globals.
+- API calls through one helper (`api(path, body)`) that attaches the session token and normalises errors.
+- Show the page only after the first load resolves (`x-cloak` + `loaded` flag). No flash of empty tabs — the 21.09 "5 seconds before content" complaint came from this.
+- Dates and money through the shared helpers in the page, not inline `toLocaleDateString` with ad-hoc options.
+
+## Pattern rule
+
+If the same card/list/dialog structure appears in 3+ places, flag it in the summary as a pattern candidate with a proposed `.p-*` class. Do not extract speculatively.

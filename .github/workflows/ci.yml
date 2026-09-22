@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Pure-logic tests and the UI lint need no dependencies; the syntax check
+      # of functions/*.js needs the functions node_modules for `require` resolution
+      # only at runtime, not for `node --check`, so nothing is installed here.
+      - name: UI lint (drift ratchet)
+        run: node scripts/ui-lint.js
+
+      - name: Syntax check functions
+        run: for f in functions/*.js functions/lib/*.js; do node --check "$f" || exit 1; done
+
+      - name: Unit tests (haldus-core)
+        run: node --test 'functions/test/**/*.test.js'
+
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Vite build
+        run: npm run build
