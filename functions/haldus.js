@@ -13,6 +13,9 @@
 const crypto = require('crypto');
 const core = require('./lib/haldus-core');
 const push = require('./push');
+const hausing = require('./lib/hausing');
+const sharepoint = require('./lib/sharepoint');
+const homePass = require('./lib/home-pass');
 
 module.exports = function createHaldus(deps) {
   const {
@@ -1721,6 +1724,7 @@ module.exports = function createHaldus(deps) {
       // What this home's deal includes per category — the provider should never be surprised by “but it's included”
       terms: o.terms ? (cleaning ? o.terms : (o.terms[role] ? { [role]: o.terms[role] } : null)) : null,
       brand: o.brand?.name ? { name: o.brand.name, project: o.brand.project || '' } : null,
+      floorPlan: /^https:\/\//.test(String(o.floorPlan || '')) ? String(o.floorPlan) : null,
       maintenance: cleaning ? serializeMaintenanceForProvider(o) : null,
       // Part of the partner's service standard: flowers ordered automatically before each visit
       flowers: cleaning || role === 'flowers'
@@ -2464,7 +2468,14 @@ module.exports = function createHaldus(deps) {
           input: { name: b.name, email: b.email, phone: b.phone, address: b.address, size: b.size, lang: b.lang, contacts, force: true },
           createdBy: `invite:${v.found.id}`,
           enforcePlanCap: false,
-          extraFields: { inviteCardId: v.found.id, inviteCode: code },
+          extraFields: {
+            inviteCardId: v.found.id,
+            inviteCode: code,
+            ...(v.found.card.buildingId ? { buildingId: v.found.card.buildingId } : {}),
+            ...(v.found.card.handover ? { handover: v.found.card.handover } : {}),
+            ...(Array.isArray(v.found.card.buildingDocuments) && v.found.card.buildingDocuments.length ? { buildingDocuments: v.found.card.buildingDocuments } : {}),
+            ...(v.found.card.sponsor ? { sponsor: v.found.card.sponsor } : {}),
+          },
           operatorSubject: `SUKODA | Kutsekaardiga liitus kodu: ${str(b.name, 200)}`,
           operatorIntro: `${escapeHtml(provider.name)} (${escapeHtml(provider.email)}) — kutsekaart ${escapeHtml(code)} lunastati veebis.`,
         });
@@ -2955,6 +2966,101 @@ module.exports = function createHaldus(deps) {
     },
 
     // ---- Dashboard payload -----------------------------------
+    'GET /api/haldus/earned': async (req, res) => {
+      const provider = await authenticateProvider(req);
+      if (!provider) return res.status(401).json({ error: 'Unauthorized' });
+      const snap = await db.collection('bookings').where('providerId', '==', provider.id).limit(100).get();
+      const rows = snap.docs.map((d) => d.data()).filter((b) => b.status === 'completed').map((b) => b.payment || {});
+      res.status(200).json({
+        cents: core.earnedCents(rows),
+        connect: false,
+        payout: 'waiting-for-stripe',
+      });
+    },
+
+    'POST /api/haldus/availability': async (req, res) => {
+      const provider = await authenticateProvider(req);
+      if (!provider) return res.status(401).json({ error: 'Unauthorized' });
+      const availability = core.sanitizeAvailability(req.body || {});
+      await db.collection('providers').doc(provider.id).update({ availability, updatedAt: FieldValue.serverTimestamp() });
+      res.status(200).json({ success: true, availability });
+    },
+
+    'POST /api/haldus/buildings': async (req, res) => {
+      const provider = await authenticateProvider(req);
+      if (!provider) return res.status(401).json({ error: 'Unauthorized' });
+      if (core.effectivePlan(provider) !== 'enterprise') return res.status(403).json({ error: 'Forbidden' });
+      const built = core.sanitizeBuilding(req.body || {});
+      if (built.error) return res.status(400).json({ error: built.error });
+      const ref = db.collection('buildings').doc();
+      await ref.set({ ...built.building, providerId: provider.id, createdAt: FieldValue.serverTimestamp() });
+      res.status(200).json({ id: ref.id, building: built.building });
+    },
+
+    'POST /api/haldus/buildings/handover': async (req, res) => {
+      const provider = await authenticateProvider(req);
+      if (!provider) return res.status(401).json({ error: 'Unauthorized' });
+      if (core.effectivePlan(provider) !== 'enterprise') return res.status(403).json({ error: 'Forbidden' });
+      const draft = core.sanitizeHandover(req.body || {});
+      if (draft.error) return res.status(400).json({ error: draft.error });
+      const code = core.handoverCode(crypto.randomBytes(8));
+      if (!code) return res.status(500).json({ error: 'code' });
+      const clash = await db.collection('orders').where('giftCode', '==', code).limit(1).get();
+      if (!clash.empty) return res.status(409).json({ error: 'retry' });
+      let buildingDocuments = [];
+      let sponsor = null;
+      let buildingId = String(req.body?.buildingId || '').slice(0, 80);
+      if (buildingId) {
+        const buildingSnap = await db.collection('buildings').doc(buildingId).get();
+        const building = buildingSnap.exists ? buildingSnap.data() : null;
+        if (!building || building.providerId !== provider.id) return res.status(404).json({ error: 'building' });
+        buildingDocuments = Array.isArray(building.documents) ? building.documents : [];
+        sponsor = building.sponsor || null;
+      }
+      const orderRef = db.collection('orders').doc();
+      await orderRef.set({
+        type: 'gift',
+        package: 'moment',
+        size: 'medium',
+        customer: { name: 'SUKODA (Handover)', email: 'tere@sukoda.ee' },
+        recipient: { name: draft.handover.buyerName, email: draft.handover.buyerEmail },
+        deliveryMethod: 'physical',
+        giftCode: code,
+        lang: 'et',
+        status: 'paid',
+        physicalCard: true,
+        kind: 'invite',
+        assignedProviderId: provider.id,
+        assignedProviderName: provider.name || '',
+        assignedAt: Timestamp.fromDate(new Date()),
+        handover: draft.handover,
+        buildingId: buildingId || null,
+        buildingDocuments,
+        sponsor,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+      res.status(200).json({ code, path: '/lunasta' });
+    },
+
+    'POST /api/haldus/hausing/preview': async (req, res) => {
+      const provider = await authenticateProvider(req);
+      if (!provider) return res.status(401).json({ error: 'Unauthorized' });
+      const result = await hausing.relayTicket({
+        building: req.body?.building || {},
+        text: req.body?.text,
+        email: req.body?.email,
+        client: null,
+      });
+      res.status(200).json(result);
+    },
+
+    'POST /api/haldus/sharepoint/status': async (req, res) => {
+      const provider = await authenticateProvider(req);
+      if (!provider) return res.status(401).json({ error: 'Unauthorized' });
+      const result = await sharepoint.deltaSync({ building: req.body?.building || {}, graph: null });
+      res.status(200).json(result);
+    },
+
     'GET /api/haldus/me': async (req, res) => {
       const provider = await authenticateProvider(req);
       if (!provider) return res.status(401).json({ error: 'Unauthorized' });
@@ -3839,14 +3945,15 @@ module.exports = function createHaldus(deps) {
   }
 
   function serializeDocuments(order, lang) {
-    const docs = (Array.isArray(order.documents) ? order.documents : []).map((d) => ({
+    const row = (d, source) => ({
       id: d.id, title: d.title, url: d.url || null, category: d.category, categoryLabel: core.DOCUMENT_CATEGORIES[d.category]?.[lang] || core.DOCUMENT_CATEGORIES.other[lang], note: d.note || '', addedAt: d.addedAt || null,
-      // Who put it in the folder: the developer at handover, a partner, or the household itself
-      source: d.source || 'home', sourceName: d.sourceName || '',
-      // A real file in the home's folder — served through /api/me/documents/file (token-checked), never a public URL
+      page: Number.isInteger(Number(d.page)) && Number(d.page) > 0 ? Number(d.page) : null,
+      source: source || d.source || 'home', sourceName: d.sourceName || '',
       file: d.file ? { name: d.file.name, size: d.file.size || 0, contentType: d.file.contentType || 'application/octet-stream' } : null,
-    }));
-    return { items: docs, categories: Object.entries(core.DOCUMENT_CATEGORIES).map(([id, c]) => ({ id, label: c[lang] || c.et })) };
+    });
+    const inherited = (Array.isArray(order.buildingDocuments) ? order.buildingDocuments : []).map((d) => row(d, 'building'));
+    const docs = (Array.isArray(order.documents) ? order.documents : []).map((d) => row(d));
+    return { items: inherited.concat(docs), categories: Object.entries(core.DOCUMENT_CATEGORIES).map(([id, c]) => ({ id, label: c[lang] || c.et })) };
   }
 
   // ---- Home folder files (GCS bucket, uniform access, no public URLs) ----
@@ -4008,7 +4115,7 @@ module.exports = function createHaldus(deps) {
         // Services the household said it would want once a partner exists
         interests: [...new Set(interestSnap.docs.map((d) => d.data().serviceId))],
         contacts: Array.isArray(order.contacts) ? order.contacts : [],
-        provider: provider ? { name: provider.name, businessName: provider.businessName || '', phone: provider.phone || '', email: provider.email } : null,
+        provider: provider ? { name: provider.name, businessName: provider.businessName || '', phone: provider.phone || '', email: provider.email, leadDays: Number.isInteger(provider.availability?.leadDays) ? provider.availability.leadDays : 14 } : null,
         florist: florist ? { name: florist.name, businessName: florist.businessName || '' } : null,
         source: order.source || 'stripe',
         // Partner-billed customers have prices agreed directly with their housekeeper — no SUKODA price hints
@@ -4112,6 +4219,26 @@ module.exports = function createHaldus(deps) {
     },
 
     /** Open a file from the home's folder. Token may come as ?token= because the browser opens this in a new tab. */
+    'POST /api/me/documents/ask': async (req, res) => {
+      const auth = await authenticateClient(req);
+      if (!auth) return res.status(401).json({ error: 'Unauthorized' });
+      const order = auth.order;
+      res.status(200).json(homePass.askHome({
+        question: req.body?.question,
+        facts: order.facts,
+        documents: { building: order.buildingDocuments, home: order.documents },
+      }));
+    },
+
+    'GET /api/me/documents/export': async (req, res) => {
+      const auth = await authenticateClient(req);
+      if (!auth) return res.status(401).json({ error: 'Unauthorized' });
+      const zip = homePass.exportZip({ id: auth.orderId, ...auth.order });
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader('Content-Disposition', 'attachment; filename="kodu.zip"');
+      res.status(200).send(zip);
+    },
+
     'GET /api/me/documents/file': async (req, res) => {
       if (req.query?.token && !req.headers.authorization) req.headers.authorization = `Bearer ${String(req.query.token)}`;
       const auth = await authenticateClient(req);
@@ -4172,6 +4299,35 @@ module.exports = function createHaldus(deps) {
       res.status(200).json({ success: true, contacts });
     },
 
+    'POST /api/me/requests/quote': async (req, res) => {
+      const auth = await authenticateClient(req);
+      if (!auth) return res.status(401).json({ error: 'Unauthorized' });
+      const today = todayTallinnStr();
+      const svc = req.body?.serviceId ? core.getService(String(req.body.serviceId)) : null;
+      const hint = svc ? core.pick(svc.priceHint, langOf(auth.order)) : '';
+      const fromHint = core.guidePriceCents(hint);
+      const raw = req.body?.priceCents;
+      const priceCents = raw == null || raw === '' ? fromHint : raw;
+      let lead = 14;
+      if (auth.order.providerId) {
+        const providerSnap = await db.collection('providers').doc(auth.order.providerId).get();
+        const saved = providerSnap.exists ? providerSnap.data()?.availability?.leadDays : null;
+        if (Number.isInteger(saved)) lead = saved;
+      }
+      const split = core.splitVisitPayment({
+        priceCents,
+        sponsorCentsAvailable: core.sponsorRemainingCents(auth.order.sponsor, today),
+        ownerKind: core.ownerKindOf(auth.order),
+        payInApp: true,
+      });
+      res.status(200).json({
+        ...split,
+        priced: fromHint != null || (raw != null && raw !== ''),
+        earliest: core.earliestBookableDate(today, lead),
+        reason: 'preview',
+      });
+    },
+
     'POST /api/me/requests': async (req, res) => {
       if (!checkRateLimit(req, res, 'portal-requests', 10, 60000)) return;
       const auth = await authenticateClient(req);
@@ -4223,6 +4379,16 @@ module.exports = function createHaldus(deps) {
         return res.status(200).json({ success: true, interest: true, serviceId: svc.id });
       }
       const provider = await loadProvider(providerId);
+      if (preferredDate && kind === 'visit' && svc.category === 'cleaning' && !urgent) {
+        const earliest = core.earliestBookableDate(todayTallinnStr(), provider?.availability?.leadDays);
+        if (earliest && preferredDate < earliest) {
+          return res.status(400).json({ error: core.pick({
+            et: `Esimene vaba päev on ${earliest}.`,
+            en: `The first open day is ${earliest}.`,
+            ru: `Первый свободный день — ${earliest}.`,
+          }, lang) });
+        }
+      }
 
       const firstMsg = note ? [{ id: core.randomId(), by: 'client', name: primaryName(order) || '', text: note, at: new Date() }] : [];
       const data = {

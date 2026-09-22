@@ -960,6 +960,173 @@ function checkLoginCode({ email, code, record, now }) {
   return { ok: true };
 }
 
+const COMMISSION_RATE = 0.3;
+const STRIPE_PERCENT = 0.015;
+const STRIPE_FIXED_CENTS = 25;
+
+function ownerKindOf(order) {
+  const kind = order?.ownerKind;
+  if (kind === 'provider-invited' || kind === 'sukoda' || kind === 'developer') return kind;
+  if (order?.source === 'provider' || order?.source === 'invite') return 'provider-invited';
+  if (order?.brand?.name || order?.source === 'developer') return 'developer';
+  return 'sukoda';
+}
+
+function sponsorRemainingCents(sponsor, todayStr) {
+  if (!sponsor || typeof sponsor !== 'object') return 0;
+  if (sponsor.validUntil && todayStr && String(sponsor.validUntil) < String(todayStr)) return 0;
+  const budget = Math.max(0, Math.round(Number(sponsor.budgetCents) || 0));
+  const used = Math.max(0, Math.round(Number(sponsor.usedCents) || 0));
+  return Math.max(0, budget - used);
+}
+
+/**
+ * Preview a visit split. Never charges. Stripe's fee comes out of SUKODA's 30% on sent work.
+ * A provider's own client pays no commission; if they pay in the app, the card fee comes off the price.
+ */
+function splitVisitPayment({ priceCents, sponsorCentsAvailable = 0, ownerKind, payInApp = true }) {
+  const price = Math.max(0, Math.min(200000, Math.round(Number(priceCents) || 0)));
+  const pool = Math.max(0, Math.round(Number(sponsorCentsAvailable) || 0));
+  const sponsorCents = Math.min(price, pool);
+  const residentCents = price - sponsorCents;
+  const invited = ownerKind === 'provider-invited';
+  let feeCents = 0;
+  let stripeCents = 0;
+  if (payInApp && residentCents > 0) {
+    stripeCents = Math.round(residentCents * STRIPE_PERCENT) + STRIPE_FIXED_CENTS;
+  }
+  if (invited) {
+    if (stripeCents > price) stripeCents = price;
+    return {
+      priceCents: price, sponsorCents, residentCents, feeCents: 0, stripeCents,
+      providerCents: price - stripeCents, cardRequired: residentCents > 0, charged: false,
+    };
+  }
+  feeCents = Math.round(price * COMMISSION_RATE);
+  if (stripeCents > feeCents) stripeCents = feeCents;
+  return {
+    priceCents: price, sponsorCents, residentCents, feeCents, stripeCents,
+    providerCents: price - feeCents, cardRequired: residentCents > 0, charged: false,
+  };
+}
+
+function earnedCents(rows) {
+  return (rows || []).reduce((sum, row) => sum + Math.max(0, Math.round(Number(row?.providerCents) || 0)), 0);
+}
+
+function earliestBookableDate(todayStr, leadDays) {
+  const n = Number(leadDays);
+  const days = Number.isInteger(n) && n >= 0 && n <= 60 ? n : 14;
+  const today = parseDateStr(todayStr);
+  if (!today) return null;
+  return toDateStr(addDays(today, days));
+}
+
+function sanitizeAvailability(input) {
+  const rawDays = Array.isArray(input?.days) ? input.days : [1, 2, 3, 4, 5];
+  const days = [...new Set(rawDays.map((d) => Number(d)).filter((d) => d >= 1 && d <= 7))].sort((a, b) => a - b);
+  const lead = Number(input?.leadDays);
+  const max = Number(input?.maxPerDay);
+  const start = /^\d{2}:\d{2}$/.test(String(input?.hours?.start || '')) ? String(input.hours.start) : '08:00';
+  const end = /^\d{2}:\d{2}$/.test(String(input?.hours?.end || '')) ? String(input.hours.end) : '17:00';
+  const districts = (Array.isArray(input?.districts) ? input.districts : [])
+    .map((s) => String(s || '').trim()).filter(Boolean).slice(0, 12);
+  return {
+    days: days.length ? days : [1, 2, 3, 4, 5],
+    hours: { start, end },
+    leadDays: Number.isInteger(lead) ? Math.min(60, Math.max(0, lead)) : 14,
+    maxPerDay: Number.isInteger(max) ? Math.min(12, Math.max(1, max)) : 4,
+    districts,
+    priceNote: String(input?.priceNote || '').trim().slice(0, 240),
+  };
+}
+
+function visitWindowOpen(scheduledAt, endTime, now, windowMs = 2 * 60 * 60 * 1000) {
+  const start = new Date(scheduledAt).getTime();
+  const end = new Date(endTime || scheduledAt).getTime();
+  if (!Number.isFinite(start)) return false;
+  const t = new Date(now).getTime();
+  if (!Number.isFinite(t)) return false;
+  const close = Number.isFinite(end) ? Math.max(end, start) : start;
+  return t >= start - windowMs && t <= close + windowMs;
+}
+
+function warrantyUntilDate(handoverAt, months = 24) {
+  const start = parseDateStr(handoverAt);
+  if (!start) return null;
+  const n = Number(months);
+  const span = Number.isInteger(n) && n > 0 && n <= 60 ? n : 24;
+  return toDateStr(addMonths(start, span));
+}
+
+/** "alates 89 €" → 8900. A sentence without a number, or "kokkuleppel", has no guide price. */
+function guidePriceCents(hint) {
+  const text = String(hint || '');
+  if (/kokkuleppel|on request|договор/i.test(text)) return null;
+  const m = text.match(/(\d+(?:[.,]\d{1,2})?)/);
+  if (!m) return null;
+  const n = Number(m[1].replace(',', '.'));
+  if (!Number.isFinite(n) || n <= 0 || n > 2000) return null;
+  return Math.round(n * 100);
+}
+
+const HANDOVER_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+/** Eight characters a printed card can carry. `bytes` must be at least 8 random bytes. */
+function handoverCode(bytes) {
+  if (!Buffer.isBuffer(bytes) || bytes.length < 8) return null;
+  let out = '';
+  for (let i = 0; i < 8; i++) out += HANDOVER_ALPHABET[bytes[i] % HANDOVER_ALPHABET.length];
+  return out;
+}
+
+function routeChoice(value) {
+  return value === 'hausing' || value === 'email' || value === 'desk' ? value : 'desk';
+}
+
+/** A building the developer keeps: name, where warranty goes, documents the homes inherit. No secrets. */
+function sanitizeBuilding(input) {
+  const name = String(input?.name || '').trim().slice(0, 80);
+  if (!name) return { error: 'name' };
+  const documents = (Array.isArray(input?.documents) ? input.documents : []).slice(0, 40).map((d, i) => {
+    const title = String(d?.title || '').trim().slice(0, 120);
+    if (!title) return null;
+    const category = DOCUMENT_CATEGORIES[d?.category] ? d.category : 'other';
+    const url = /^https:\/\//.test(String(d?.url || '')) ? String(d.url).slice(0, 500) : '';
+    const page = Number(d?.page);
+    return {
+      id: String(d?.id || `b${i + 1}`).replace(/[^\w-]/g, '').slice(0, 40) || `b${i + 1}`,
+      title,
+      category,
+      url,
+      page: Number.isInteger(page) && page > 0 && page < 1000 ? page : null,
+      source: 'building',
+    };
+  }).filter(Boolean);
+  const budget = Math.max(0, Math.min(20000000, Math.round(Number(input?.sponsor?.budgetCents) || 0)));
+  const until = parseDateStr(input?.sponsor?.validUntil);
+  return {
+    building: {
+      name,
+      routes: {
+        warranty: routeChoice(input?.routes?.warranty),
+        building: routeChoice(input?.routes?.building),
+      },
+      documents,
+      sponsor: budget ? { budgetCents: budget, usedCents: 0, validUntil: until ? toDateStr(until) : null } : null,
+    },
+  };
+}
+
+function sanitizeHandover(input) {
+  const apartment = String(input?.apartment || '').trim().slice(0, 40);
+  const buyerName = String(input?.buyerName || '').trim().slice(0, 120);
+  const buyerEmail = normalizeEmail(input?.buyerEmail);
+  const keysAt = parseDateStr(input?.keysAt);
+  if (!apartment || !buyerName || !isValidEmail(buyerEmail) || !keysAt) return { error: 'fields' };
+  return { handover: { apartment, buyerName, buyerEmail, keysAt: toDateStr(keysAt) } };
+}
+
 module.exports = {
   LANGS,
   langOf,
@@ -979,6 +1146,18 @@ module.exports = {
   loginCodeExpiresAt,
   sessionExpiresAt,
   checkLoginCode,
+  ownerKindOf,
+  sponsorRemainingCents,
+  splitVisitPayment,
+  earnedCents,
+  earliestBookableDate,
+  sanitizeAvailability,
+  visitWindowOpen,
+  warrantyUntilDate,
+  guidePriceCents,
+  handoverCode,
+  sanitizeBuilding,
+  sanitizeHandover,
   MAINTENANCE_CATALOGUE,
   MAINTENANCE_INTERVALS,
   MAX_MAINTENANCE_ITEMS,

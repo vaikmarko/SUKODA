@@ -63,6 +63,7 @@
             return;
         }
         if (n.kind === 'away') { this.activeTab = 'visits'; return; }
+        if (n.kind === 'profile') { this.activeTab = 'home'; this.profileEditing = true; return; }
         if (n.kind === 'calm') {
             const s = (this.extras.catalogue || []).find((x) => x.id === 'warranty-claim');
             if (s) this.openRequest(s);
@@ -145,6 +146,7 @@
     requestService: null,
     addonChooser: false,
     requestDate: '',
+    quoteLine: '',
     requestWindow: 'any',
     requestNote: '',
     requestUrgent: false,
@@ -170,6 +172,8 @@
     maintShowSuggestions: false,
     maintOpen: null,
     docAdding: false,
+    askText: '',
+    askAnswer: '',
     docForm: { title: '', url: '', category: 'other', note: '' },
     docFile: null,
     docBusy: false,
@@ -387,6 +391,12 @@
     get minRequestDate() {
         return window.SUKODA_TIME.shiftDateString(window.SUKODA_TIME.getDateString(), 1);
     },
+    get requestDateMin() {
+        const cleaning = this.requestKind === 'visit' && this.requestService?.category === 'cleaning' && !this.requestUrgent;
+        const saved = this.extras?.provider?.leadDays;
+        const lead = cleaning ? (Number.isInteger(saved) ? saved : 14) : 1;
+        return window.SUKODA_TIME.shiftDateString(window.SUKODA_TIME.getDateString(), lead);
+    },
     isOrderable(service) {
         if (!service) return true;
         const cat = (this.extras.categories || []).find((c) => c.id === service.category);
@@ -405,6 +415,20 @@
         this.requestNote = '';
         this.requestError = '';
         this.requestDone = null;
+        this.quoteLine = '';
+        this.refreshQuote();
+    },
+    async refreshQuote() {
+        this.quoteLine = '';
+        const s = this.requestService;
+        if (!s || (s.kind || 'visit') !== 'visit') return;
+        try {
+            const res = await fetch('/api/me/requests/quote', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + this.token }, body: JSON.stringify({ serviceId: s.id }) });
+            const data = await res.json();
+            if (!res.ok || !data.priced || !data.priceCents) return;
+            if (!data.cardRequired) this.quoteLine = this.t('giftCovers');
+            else this.quoteLine = this.t('payBefore', { amount: (data.residentCents / 100).toFixed(2).replace('.', ',') + ' €' });
+        } catch (e) { /* the written price line stays */ }
     },
     closeRequest() {
         this.requestService = null;
@@ -838,6 +862,49 @@
     },
     /** Files are streamed through the API with the session token — the bucket itself is never public */
     fileHref(d) { return '/api/me/documents/file?id=' + encodeURIComponent(d.id) + '&token=' + encodeURIComponent(this.token); },
+    docHref(d) {
+        const base = d && d.file ? this.fileHref(d) : (d && d.url ? d.url : '');
+        const page = Number(d && d.page);
+        if (!base || !Number.isInteger(page) || page < 1) return base;
+        return base + '#page=' + page;
+    },
+    async askFolder() {
+        const question = String(this.askText || '').trim();
+        if (!question) return;
+        this.askAnswer = '';
+        try {
+            const res = await fetch('/api/me/documents/ask', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + this.token }, body: JSON.stringify({ question }) });
+            const data = await res.json();
+            if (!res.ok) { this.askAnswer = this.t('askEmpty'); return; }
+            const page = data.fact && data.fact.page ? ' · ' + this.t('askPage', { page: data.fact.page }) : '';
+            const line = data.fact ? data.fact.value + page : (data.document ? data.document.title : this.t('askEmpty'));
+            this.askAnswer = data.suggestTechnician ? line + ' ' + this.t('askTech') : line;
+        } catch (e) { this.askAnswer = this.t('askEmpty'); }
+    },
+    async sendAskToPerson() {
+        const question = String(this.askText || '').trim();
+        if (question.length < 5) { this.askAnswer = this.t('askEmpty'); return; }
+        try {
+            const res = await fetch('/api/me/requests', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + this.token }, body: JSON.stringify({ serviceId: 'home-manual', note: question }) });
+            const data = await res.json();
+            if (!res.ok) { this.askAnswer = (data && data.error) || this.t('askEmpty'); return; }
+            this.askAnswer = this.t('askSent');
+            if (data.request) this.extras = { ...this.extras, requests: [data.request].concat(this.extras.requests || []) };
+        } catch (e) { this.askAnswer = this.t('askEmpty'); }
+    },
+    async downloadHome() {
+        try {
+            const res = await fetch('/api/me/documents/export', { headers: { Authorization: 'Bearer ' + this.token } });
+            if (!res.ok) return;
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'kodu.zip';
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (e) {}
+    },
     onDocFile(e) {
         const f = e.target.files && e.target.files[0];
         this.docFile = f || null;
@@ -1768,6 +1835,7 @@
                         <div x-show="requestService?.id !== 'other' && requestService?.id !== 'cleaning-note' && (requestPriceLine || requestPriceBlurb)" class="mb-7 bg-cream/40 border border-[#E8E3DD] p-4">
                             <p class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans" x-text="lang === 'et' ? 'Hind' : 'Price'"></p>
                             <p x-show="requestPriceLine" class="font-sans text-sm mt-1.5" x-text="requestPriceLine"></p>
+                            <p x-show="quoteLine" class="font-sans text-sm mt-2" x-text="quoteLine"></p>
                             <p class="text-xs text-muted font-sans font-light mt-2 leading-relaxed" x-text="requestPriceBlurb"></p>
                         </div>
 
@@ -1801,8 +1869,9 @@
                                     <button type="button" @click="requestDate = ''" :class="!requestDate ? 'bg-black text-paper border-black' : 'border-[#E8E3DD] hover:border-accent bg-white'" class="py-3 px-3 border text-center text-xs font-sans transition-colors" x-text="lang === 'et' ? 'Esimesel võimalusel' : 'Earliest available'"></button>
                                     <button type="button" @click="if (!requestDate) requestDate = minRequestDate" :class="requestDate ? 'bg-black text-paper border-black' : 'border-[#E8E3DD] hover:border-accent bg-white'" class="py-3 px-3 border text-center text-xs font-sans transition-colors" x-text="lang === 'et' ? 'Valin päeva' : 'I will pick a day'"></button>
                                 </div>
-                                <input x-show="requestKind !== 'issue' || requestDate" type="date" x-model="requestDate" :min="minRequestDate" class="w-full bg-white border border-[#E8E3DD] focus:border-accent outline-none px-4 py-3 font-sans font-light text-sm" :class="requestKind === 'issue' ? 'mt-2' : ''">
-                                <p x-show="requestKind !== 'issue'" class="text-xs text-muted/70 font-sans font-light mt-1.5" x-text="lang === 'et' ? 'Jäta tühjaks, kui sobib esimesel võimalusel.' : 'Leave empty for the earliest available.'"></p>
+                                <input x-show="requestKind !== 'issue' || requestDate" type="date" x-model="requestDate" :min="requestDateMin" class="w-full bg-white border border-[#E8E3DD] focus:border-accent outline-none px-4 py-3 font-sans font-light text-sm" :class="requestKind === 'issue' ? 'mt-2' : ''">
+                                <p x-show="requestKind === 'visit' && requestService?.category === 'cleaning'" class="text-xs text-muted font-sans font-light mt-1.5" x-text="t('visitLead', { date: requestDateMin })"></p>
+                                <p x-show="requestKind !== 'issue' && !(requestKind === 'visit' && requestService?.category === 'cleaning')" class="text-xs text-muted/70 font-sans font-light mt-1.5" x-text="lang === 'et' ? 'Jäta tühjaks, kui sobib esimesel võimalusel.' : 'Leave empty for the earliest available.'"></p>
                             </div>
                             <div x-show="requestKind !== 'question' && isOrderable(requestService)">
                                 <label class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans block mb-3" x-text="lang === 'et' ? 'Kellaaeg' : 'Time of day'"></label>

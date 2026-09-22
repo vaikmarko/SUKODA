@@ -99,6 +99,12 @@ test('a waiting question is a line under the visit, not a second card', () => {
   assert.match(card.thenLine, /Filter/);
 });
 
+test('an empty home profile asks for linens, flowers and access', () => {
+  const card = pickNextThing(portal({ homeProfile: { linens: '', flowerPreference: '', access: '' } }));
+  assert.equal(card.kind, 'profile');
+  assert.equal(card.action, 'Täida');
+});
+
 test('calm empty state asks for one report', () => {
   const card = pickNextThing(portal({}));
   assert.equal(card.kind, 'calm');

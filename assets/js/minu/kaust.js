@@ -20,6 +20,14 @@ add({
   folderEmpty: { et: 'Kaust on veel tühi. Lisa esimene fail — leping, garantii või seadme juhend.', en: 'The folder is still empty. Add the first file — a contract, a warranty or an appliance manual.', ru: 'Папка ещё пуста. Добавьте первый файл — договор, гарантию или инструкцию к прибору.' },
   docTooBig: { et: 'Fail on suurem kui 8 MB', en: 'File is larger than 8 MB', ru: 'Файл больше 8 МБ' },
   docRemoveAsk: { et: 'Eemalda dokument nimekirjast?', en: 'Remove this document?', ru: 'Удалить документ из списка?' },
+  askLabel: { et: 'Küsi', en: 'Ask', ru: 'Спросите' },
+  askPh: { et: 'nt filtri mõõt', en: 'e.g. the filter size', ru: 'напр. размер фильтра' },
+  askEmpty: { et: 'Juhendites seda ei ole.', en: 'The guides do not say.', ru: 'В инструкциях этого нет.' },
+  askTech: { et: 'Kui pole kindel, telli tehnik.', en: 'If you are not sure, order a technician.', ru: 'Если не уверены, закажите техника.' },
+  askPage: { et: 'lk {page}', en: 'p. {page}', ru: 'стр. {page}' },
+  askPerson: { et: 'Saada inimesele', en: 'Send to a person', ru: 'Отправьте человеку' },
+  askSent: { et: 'Saadetud. Vastus tuleb siia.', en: 'Sent. The answer comes here.', ru: 'Отправлено. Ответ придёт сюда.' },
+  exportHome: { et: 'Laadi kodu alla', en: 'Download this home', ru: 'Скачайте дом' },
 });
 
 export const kaustHtml = `<div id="dokumendid" class="lg:col-span-12 bg-white border border-line p-have">
@@ -27,6 +35,16 @@ export const kaustHtml = `<div id="dokumendid" class="lg:col-span-12 bg-white bo
                                 <h2 class="p-h"><span class="p-num">03</span><span x-text="t('folderTitle')"></span></h2>
                                 <button type="button" @click="docAdding = !docAdding; docFile = null" class="p-btn-2 p-btn-sm" x-text="t('addFile')"></button>
                             </div>
+                            <form class="px-6 py-4 border-b border-line" @submit.prevent="askFolder()">
+                                <label class="eyebrow" for="ask-q" x-text="t('askLabel')"></label>
+                                <div class="flex flex-col sm:flex-row gap-3 mt-2">
+                                    <input id="ask-q" type="text" x-model="askText" maxlength="200" :placeholder="t('askPh')" class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-line-strong">
+                                    <button type="submit" class="p-btn shrink-0" x-text="t('askLabel')"></button>
+                                </div>
+                                <p class="text-sm font-sans font-light mt-3" x-show="askAnswer" x-text="askAnswer"></p>
+                                <button type="button" class="p-btn-2 mt-3" @click="sendAskToPerson()" x-text="t('askPerson')"></button>
+                                <button type="button" class="text-sm font-sans mt-3 underline underline-offset-4" @click="downloadHome()" x-text="t('exportHome')"></button>
+                            </form>
 
                             <!-- Add: a file (PDF or photo) or a link — one form -->
                             <div x-show="docAdding" x-cloak class="px-6 py-6 border-b border-line bg-white">
@@ -64,8 +82,8 @@ export const kaustHtml = `<div id="dokumendid" class="lg:col-span-12 bg-white bo
                                                         <span x-show="d.note" class="block text-xs text-muted font-sans font-light truncate" x-text="d.note"></span>
                                                     </span>
                                                     <span class="flex items-center gap-4 shrink-0">
-                                                        <button type="button" x-show="d.source !== 'developer'" @click="removeDocument(d)" class="text-[10px] uppercase tracking-[0.14em] text-muted hover:text-black font-sans" x-text="t('docRemove')"></button>
-                                                        <a x-show="d.file || d.url" :href="d.file ? fileHref(d) : d.url" target="_blank" rel="noopener" class="text-[11px] uppercase tracking-[0.14em] font-sans text-muted hover:text-black" x-text="t('docOpen')"></a>
+                                                        <button type="button" x-show="d.source !== 'developer' && d.source !== 'building'" @click="removeDocument(d)" class="text-[10px] uppercase tracking-[0.14em] text-muted hover:text-black font-sans" x-text="t('docRemove')"></button>
+                                                        <a x-show="d.file || d.url" :href="docHref(d)" target="_blank" rel="noopener" class="text-[11px] uppercase tracking-[0.14em] font-sans text-muted hover:text-black" x-text="t('docOpen')"></a>
                                                     </span>
                                                 </div>
                                             </template>

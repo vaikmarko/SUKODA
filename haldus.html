@@ -183,6 +183,7 @@
                                         </div>
                                     </template>
                                     <p x-show="hasAccess(b) && !accessVisible(b)" class="text-sm text-muted font-sans mt-4" x-text="t('accessLater')"></p>
+                                    <a x-show="accessVisible(b) && floorPlanFor(b)" :href="floorPlanFor(b)" target="_blank" rel="noopener" class="text-sm font-sans underline underline-offset-4 mt-4 inline-block" x-text="t('floorPlan')"></a>
                                     <a x-show="residentPhone(b)" :href="telHref(residentPhone(b))" class="p-btn-2 w-full mt-4" :aria-label="t('call')" x-text="residentPhone(b)"></a>
                                     <div x-show="todayTasks(b).length" class="mt-4">
                                         <p class="eyebrow" x-text="t('todayList')"></p>
@@ -482,6 +483,58 @@
                                 </template>
                             </div>
                             <p x-show="!invoices.length" class="text-sm text-muted font-sans font-light">Arveid veel pole. Esimene tuleb pärast esimest makset.</p>
+                        </div>
+
+                        <div>
+                            <p class="eyebrow" x-text="t('earned')"></p>
+                            <p class="font-serif text-2xl font-light mt-2" x-text="earnedLabel()"></p>
+                            <p class="text-sm text-muted font-sans font-light mt-2" x-text="t('earnedWait')"></p>
+                            <form class="mt-6 grid sm:grid-cols-2 gap-4" @submit.prevent="saveAvailability()">
+                                <label class="block">
+                                    <span class="h-label" x-text="t('leadLabel')"></span>
+                                    <input type="number" min="0" max="60" class="h-input" x-model.number="availForm.leadDays">
+                                </label>
+                                <label class="block">
+                                    <span class="h-label" x-text="t('hoursLabel')"></span>
+                                    <span class="flex gap-3">
+                                        <input type="time" class="h-input" x-model="availForm.hours.start">
+                                        <input type="time" class="h-input" x-model="availForm.hours.end">
+                                    </span>
+                                </label>
+                                <label class="block">
+                                    <span class="h-label" x-text="t('districtsLabel')"></span>
+                                    <input type="text" class="h-input" x-model="availForm.districtsText" placeholder="Kristiine, Kesklinn">
+                                </label>
+                                <label class="block">
+                                    <span class="h-label" x-text="t('priceNoteLabel')"></span>
+                                    <input type="text" class="h-input" maxlength="240" x-model="availForm.priceNote">
+                                </label>
+                                <button type="submit" class="h-btn h-btn-primary font-sans" x-text="t('saveAvail')"></button>
+                            </form>
+                        </div>
+
+                        <div x-show="isEnterprise" x-cloak class="border border-line bg-white p-5">
+                            <p class="h-label" x-text="t('buildingTitle')"></p>
+                            <form class="grid sm:grid-cols-2 gap-4" @submit.prevent="saveBuilding()">
+                                <label class="block sm:col-span-2"><span class="h-label" x-text="t('nameLabel')"></span><input class="h-input" x-model="buildingForm.name" required></label>
+                                <label class="block"><span class="h-label" x-text="t('routeWarranty')"></span>
+                                    <select class="h-select" x-model="buildingForm.warranty"><option value="desk" x-text="t('routeDesk')"></option><option value="email" x-text="t('routeMail')"></option><option value="hausing" x-text="t('routeHausing')"></option></select>
+                                </label>
+                                <label class="block"><span class="h-label" x-text="t('routeBuilding')"></span>
+                                    <select class="h-select" x-model="buildingForm.building"><option value="desk" x-text="t('routeDesk')"></option><option value="email" x-text="t('routeMail')"></option><option value="hausing" x-text="t('routeHausing')"></option></select>
+                                </label>
+                                <button type="submit" class="h-btn h-btn-primary font-sans" x-text="t('saveBuilding')"></button>
+                            </form>
+                            <form class="grid sm:grid-cols-2 gap-4 mt-6" @submit.prevent="handOver()">
+                                <p class="h-label sm:col-span-2" x-text="t('handoverTitle')"></p>
+                                <label class="block"><span class="h-label" x-text="t('aptLabel')"></span><input class="h-input" x-model="handoverForm.apartment" required></label>
+                                <label class="block"><span class="h-label" x-text="t('buyerLabel')"></span><input class="h-input" x-model="handoverForm.buyerName" required></label>
+                                <label class="block"><span class="h-label" x-text="t('emailLabel')"></span><input type="email" class="h-input" x-model="handoverForm.buyerEmail" required></label>
+                                <label class="block"><span class="h-label" x-text="t('keysLabel')"></span><input type="date" class="h-input" x-model="handoverForm.keysAt" required></label>
+                                <button type="submit" class="h-btn h-btn-primary font-sans" x-text="t('handoverTitle')"></button>
+                                <p x-show="handoverCode" class="font-serif text-3xl font-light sm:col-span-2" x-text="handoverCode"></p>
+                                <p x-show="handoverCode" class="text-sm text-muted font-sans font-light sm:col-span-2" x-text="t('handoverCode')"></p>
+                            </form>
                         </div>
 
                         <!-- Invitation cards: printed codes handed to this provider by SUKODA -->
@@ -949,6 +1002,29 @@
             noteLabel: { et: 'Märkus elanikule', en: 'Note for the resident' },
             notePh: { et: 'Valikuline — jõuab elanikule teatega', en: 'Optional — the resident sees it' },
             done: { et: 'Tehtud', en: 'Done' },
+            earned: { et: 'Teenitud', en: 'Earned' },
+            earnedWait: { et: 'Väljamakse ootab Stripe’i ühendust. Summa on tehtud visiitidest.', en: 'Payout waits for Stripe. The sum is from visits marked done.' },
+            earnedNone: { et: 'Tehtud visiite veel pole.', en: 'No completed visits yet.' },
+            leadLabel: { et: 'Etteteatamine, päevi', en: 'Notice, days' },
+            hoursLabel: { et: 'Tööaeg', en: 'Working hours' },
+            districtsLabel: { et: 'Linnaosad', en: 'Districts' },
+            priceNoteLabel: { et: 'Hinnad', en: 'Prices' },
+            saveAvail: { et: 'Salvesta tööaeg', en: 'Save working time' },
+            floorPlan: { et: 'Korruseplaan', en: 'Floor plan' },
+            buildingTitle: { et: 'Maja', en: 'Building' },
+            saveBuilding: { et: 'Salvesta maja', en: 'Save the building' },
+            nameLabel: { et: 'Nimi', en: 'Name' },
+            aptLabel: { et: 'Korter', en: 'Apartment' },
+            buyerLabel: { et: 'Ostja nimi', en: 'Buyer’s name' },
+            emailLabel: { et: 'E-post', en: 'E-mail' },
+            keysLabel: { et: 'Võtmete kuupäev', en: 'Key date' },
+            routeWarranty: { et: 'Garantii', en: 'Warranty' },
+            routeBuilding: { et: 'Maja', en: 'Building' },
+            routeDesk: { et: 'Töölaud', en: 'Desk' },
+            routeMail: { et: 'E-post', en: 'E-mail' },
+            routeHausing: { et: 'Hausing', en: 'Hausing' },
+            handoverTitle: { et: 'Anna üle', en: 'Hand over' },
+            handoverCode: { et: 'Kood elanikule', en: 'Code for the resident' },
             saving: { et: 'Märgin…', en: 'Saving…' },
             markedDone: { et: 'Märgitud tehtuks. Elanik saab teate.', en: 'Marked done. The resident is notified.' },
             markedQuiet: { et: 'Märgitud tehtuks. Teadet ei läinud — elanikul pole e-posti.', en: 'Marked done. No notice went out — the resident has no e-mail.' },
@@ -978,6 +1054,11 @@
 
             provider: null, customers: [], bookings: [], requests: [], catalogue: [], florists: [], maintenanceCatalogue: [],
             billing: { plan: 'free', planName: 'Tasuta', homes: 0, limit: 3, plans: [], hasSubscription: false, cancelAtPeriodEnd: false, periodEnd: null, status: null }, billingBusy: false, billingError: '', invoices: [], inviteCards: [],
+            earnedCents: null,
+            availForm: { leadDays: 14, maxPerDay: 4, hours: { start: '08:00', end: '17:00' }, districtsText: '', priceNote: '' },
+            buildingForm: { name: '', warranty: 'desk', building: 'desk' },
+            handoverForm: { buildingId: '', apartment: '', buyerName: '', buyerEmail: '', keysAt: '' },
+            handoverCode: '',
             profileForm: { name: '', businessName: '', phone: '', notifyEmail: '' }, profileSaving: false, profileSaved: false, maintenanceIntervals: [1, 2, 3, 6, 12, 24],
             signupMode: new URLSearchParams(location.search).get('alusta') != null, signupForm: { name: '', businessName: '', email: '', phone: '', services: ['cleaning'], city: '' },
             range: { from: '', to: '' },
@@ -1026,7 +1107,7 @@
                 // Deep link straight to a tab (e-mails: "Ava kalender" → /haldus?tab=calendar)
                 if (this.tabs.some((t) => t.id === params.get('tab'))) this.activeTab = params.get('tab');
                 if (params.get('billing') === 'success') { this.showToast('Makse õnnestus — pakett on aktiivne'); history.replaceState({}, '', '/haldus?tab=account'); }
-                this.$watch('activeTab', (t) => { if (t === 'account' && this.authenticated) this.loadInvoices(); });
+                this.$watch('activeTab', (t) => { if (t === 'account' && this.authenticated) { this.loadInvoices(); this.loadEarned(); } });
                 if (urlToken) {
                     try {
                         const res = await fetch('/api/haldus/auth/validate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: urlToken }) });
@@ -1054,7 +1135,7 @@
                     if (d.billing) this.billing = d.billing;
                     this.inviteCards = d.inviteCards || [];
                     this.profileForm = { name: d.provider.name || '', businessName: d.provider.businessName || '', phone: d.provider.phone || '', notifyEmail: d.provider.notifyEmail || '' };
-                    if (this.activeTab === 'account') this.loadInvoices();
+                    if (this.activeTab === 'account') { this.loadInvoices(); this.loadEarned(); }
                     this.range = d.range; this.authenticated = true;
                     if (this.detail.open && this.detail.customer) {
                         const fresh = this.customers.find((c) => c.id === this.detail.customer.id);
@@ -1388,6 +1469,11 @@
                 if (!this.accessVisible(b)) return '';
                 return String(this.customerOf(b)?.homeProfile?.access || '').trim();
             },
+            floorPlanFor(b) {
+                if (!this.accessVisible(b)) return '';
+                const url = String(this.customerOf(b)?.floorPlan || '');
+                return url.indexOf('https://') === 0 ? url : '';
+            },
             accessVisible(b) {
                 if (!b || !this.hasAccess(b)) return false;
                 const start = new Date(b.scheduledAt).getTime();
@@ -1577,6 +1663,44 @@
             async loadInvoices() {
                 if (this.isEnterprise) return;
                 try { const res = await this.api('/api/haldus/billing/invoices'); const d = await res.json(); if (res.ok) this.invoices = d.invoices || []; } catch (e) {}
+            },
+            earnedLabel() {
+                if (this.earnedCents == null) return '…';
+                if (!this.earnedCents) return this.t('earnedNone');
+                const euros = (this.earnedCents / 100).toFixed(2).replace('.', ',');
+                return euros + ' €';
+            },
+            async loadEarned() {
+                try {
+                    const res = await this.api('/api/haldus/earned');
+                    const d = await res.json();
+                    if (res.ok) this.earnedCents = Number(d.cents) || 0;
+                } catch (e) { this.earnedCents = 0; }
+            },
+            async saveAvailability() {
+                try {
+                    const districts = String(this.availForm.districtsText || '').split(',').map((s) => s.trim()).filter(Boolean);
+                    const res = await this.api('/api/haldus/availability', { method: 'POST', body: JSON.stringify({ leadDays: this.availForm.leadDays, maxPerDay: this.availForm.maxPerDay, days: [1, 2, 3, 4, 5], hours: this.availForm.hours, districts, priceNote: this.availForm.priceNote }) });
+                    if (!res.ok) throw new Error(this.t('saveFailed'));
+                    this.showToast(this.t('saveAvail'));
+                } catch (e) { this.showToast(e.message); }
+            },
+            async saveBuilding() {
+                try {
+                    const res = await this.api('/api/haldus/buildings', { method: 'POST', body: JSON.stringify({ name: this.buildingForm.name, routes: { warranty: this.buildingForm.warranty, building: this.buildingForm.building } }) });
+                    const d = await res.json();
+                    if (!res.ok) throw new Error(this.t('saveFailed'));
+                    this.handoverForm.buildingId = d.id || '';
+                    this.showToast(this.t('buildingTitle'));
+                } catch (e) { this.showToast(e.message); }
+            },
+            async handOver() {
+                try {
+                    const res = await this.api('/api/haldus/buildings/handover', { method: 'POST', body: JSON.stringify(this.handoverForm) });
+                    const d = await res.json();
+                    if (!res.ok || !d.code) throw new Error(this.t('saveFailed'));
+                    this.handoverCode = d.code;
+                } catch (e) { this.showToast(e.message); }
             },
             async saveProfile() {
                 if (this.profileSaving) return; this.profileSaving = true; this.profileSaved = false;

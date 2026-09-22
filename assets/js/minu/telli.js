@@ -20,6 +20,9 @@ add({
   groupTechnician: { et: 'Tehnik', en: 'Technician', ru: 'Техник' },
   groupGarden: { et: 'Aed', en: 'Garden', ru: 'Сад' },
   groupOther: { et: 'Muu', en: 'Other', ru: 'Другое' },
+  visitLead: { et: 'Esimene vaba päev on {date}.', en: 'The first open day is {date}.', ru: 'Первый свободный день — {date}.' },
+  giftCovers: { et: 'Kingitus katab. Kaarti ei küsita.', en: 'The gift covers this. No card is asked.', ru: 'Подарок покрывает. Карту не спрашиваем.' },
+  payBefore: { et: 'Enne tööd maksta {amount}. Makset ei võeta enne kinnitust.', en: 'To pay before the work: {amount}. Nothing is charged before you confirm.', ru: 'Перед работой к оплате {amount}. До подтверждения ничего не списываем.' },
 });
 
 export const telliHtml = `<div x-show="activeTab === 'extras'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">

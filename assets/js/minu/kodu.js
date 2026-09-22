@@ -30,6 +30,9 @@ Object.assign(dict, {
   awayTitle: { et: 'Oled eemal', en: 'You are away', ru: 'Вы в отъезде' },
   awayBody: { et: '{range}. Kui plaan muutub, muuda kuupäevi.', en: '{range}. If the plan changes, change the dates.', ru: '{range}. Если планы изменились, измените даты.' },
   editAway: { et: 'Muuda eemalolekut', en: 'Change the away dates', ru: 'Измените даты отъезда' },
+  firstOpenTitle: { et: 'Kolm asja enne esimest visiiti', en: 'Three things before the first visit', ru: 'Три вещи до первого визита' },
+  firstOpenBody: { et: 'Voodipesu, lilled ja kuidas sisse saada. Koduhooldaja näeb neid igal visiidil.', en: 'Linens, flowers and how to get in. The housekeeper sees them on every visit.', ru: 'Постельное бельё, цветы и как войти. Специалист по дому видит это на каждом визите.' },
+  firstOpenAction: { et: 'Täida', en: 'Fill in', ru: 'Заполните' },
   allClearTitle: { et: 'Praegu ei oota sind miski', en: 'Nothing is waiting on you', ru: 'Сейчас от вас ничего не требуется' },
   allClearBody: { et: 'Kui kodus on midagi katki, teata sellest ühe lausega.', en: 'If something at home is broken, report it in one sentence.', ru: 'Если дома что-то сломалось, сообщите об этом одним предложением.' },
   reportProblem: { et: 'Teata probleemist', en: 'Report a problem', ru: 'Сообщите о проблеме' },
@@ -194,6 +197,23 @@ function pickNextThing(vm) {
       action: '',
       thenLine: '',
     };
+  }
+
+  const hp = vm.homeProfile;
+  if (hp && typeof hp === 'object') {
+    const missing = ['linens', 'flowerPreference', 'access'].filter((k) => !String(hp[k] || '').trim());
+    if (missing.length) {
+      return {
+        kind: 'profile',
+        refId: '',
+        pending: false,
+        eyebrow: t('nextEyebrow'),
+        title: t('firstOpenTitle'),
+        body: t('firstOpenBody'),
+        action: t('firstOpenAction'),
+        thenLine: '',
+      };
+    }
   }
 
   return {
