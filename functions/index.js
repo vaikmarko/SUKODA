@@ -5887,7 +5887,7 @@ async function resolvePortalSession(tokenHash) {
   const order = orderDoc.data();
   const stillMember = (order.contactEmails || []).includes(s.email) || order.customer?.email === s.email;
   if (!stillMember || !['paid', 'cancelling'].includes(order.status)) return null;
-  const newExpiry = new Date(); newExpiry.setDate(newExpiry.getDate() + 30);
+  const newExpiry = haldusCore.sessionExpiresAt(new Date());
   await doc.ref.update({ expiresAt: admin.firestore.Timestamp.fromDate(newExpiry), lastSeenAt: admin.firestore.FieldValue.serverTimestamp() });
   return { orderId: orderDoc.id, order, viewer: { email: s.email, name: s.name || '', primary: false } };
 }
@@ -5937,9 +5937,8 @@ exports.validatePortalToken = functions
           return res.status(401).json({ error: 'Token expired' });
         }
 
-        // Refresh token expiry on use
-        const newExpiry = new Date();
-        newExpiry.setDate(newExpiry.getDate() + 30);
+        // Refresh token expiry on use (90 days from this visit)
+        const newExpiry = haldusCore.sessionExpiresAt(new Date());
         await orderDoc.ref.update({
           sessionTokenExpiresAt: admin.firestore.Timestamp.fromDate(newExpiry),
         });
@@ -6129,8 +6128,7 @@ exports.getClientProfile = functions
 
         // Refresh token expiry on use (same as validatePortalToken); member sessions refresh in resolvePortalSession
         if (auth.viewer?.primary !== false) {
-          const newExpiry = new Date();
-          newExpiry.setDate(newExpiry.getDate() + 30);
+          const newExpiry = haldusCore.sessionExpiresAt(new Date());
           await db.collection('orders').doc(orderId).update({
             sessionTokenExpiresAt: admin.firestore.Timestamp.fromDate(newExpiry),
           });

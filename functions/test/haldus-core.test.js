@@ -375,3 +375,29 @@ test('isValidEmail and normalizeEmail', () => {
   assert.equal(core.isValidEmail(''), false);
   assert.equal(core.normalizeEmail(' X@Y.EE '), 'x@y.ee');
 });
+
+test('login code is six digits, expires, and rejects a wrong or locked code', () => {
+  assert.equal(core.generateLoginCode(7), '000007');
+  assert.equal(core.generateLoginCode(999999), '999999');
+  assert.equal(core.generateLoginCode(1000000), null);
+  assert.equal(core.generateLoginCode(1.5), null);
+  const email = 'kristi@sukoda.ee';
+  const code = core.generateLoginCode(42);
+  const now = new Date('2026-09-23T12:00:00Z');
+  const record = {
+    codeHash: core.hashLoginCode(email, code),
+    expiresAt: core.loginCodeExpiresAt(now),
+    attempts: 0,
+  };
+  assert.notEqual(record.codeHash, code);
+  assert.equal(core.checkLoginCode({ email, code, record, now: new Date(now.getTime() + 1000) }).ok, true);
+  assert.equal(core.checkLoginCode({ email: 'Kristi@SUKODA.ee', code: '000042', record, now }).ok, true);
+  assert.equal(core.checkLoginCode({ email, code: '000043', record, now }).reason, 'mismatch');
+  assert.equal(core.checkLoginCode({ email, code, record, now: core.loginCodeExpiresAt(now) }).reason, 'expired');
+  assert.equal(core.checkLoginCode({ email, code, record: { ...record, attempts: 5 }, now }).reason, 'locked');
+  assert.equal(core.checkLoginCode({ email, code, record: null, now }).reason, 'missing');
+  const session = core.sessionExpiresAt(now);
+  assert.equal(session.toISOString(), '2026-12-22T12:00:00.000Z');
+  const extended = core.sessionExpiresAt(new Date('2026-10-01T08:00:00Z'));
+  assert.equal(extended.toISOString(), '2026-12-30T08:00:00.000Z');
+});

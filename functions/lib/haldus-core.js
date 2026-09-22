@@ -917,6 +917,49 @@ function planByLookupKey(key) {
   return Object.values(PROVIDER_PLANS).find((p) => p.lookupKey && p.lookupKey === key) || null;
 }
 
+/** In-app sign-in: a 6-digit code lives 10 minutes; the session lives 90 days and is refreshed on use. */
+const SESSION_DAYS = 90;
+const LOGIN_CODE_TTL_MS = 10 * 60 * 1000;
+const LOGIN_CODE_MAX_ATTEMPTS = 5;
+
+function generateLoginCode(randomInt) {
+  const n = Number(randomInt);
+  if (!Number.isInteger(n) || n < 0 || n > 999999) return null;
+  return String(n).padStart(6, '0');
+}
+
+function hashLoginCode(email, code) {
+  const crypto = require('crypto');
+  const key = `${normalizeEmail(email)}\n${String(code ?? '').trim()}`;
+  return crypto.createHash('sha256').update(key).digest('hex');
+}
+
+function loginCodeExpiresAt(now, ttlMs = LOGIN_CODE_TTL_MS) {
+  return new Date(new Date(now).getTime() + ttlMs);
+}
+
+function sessionExpiresAt(now, days = SESSION_DAYS) {
+  const d = new Date(now);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d;
+}
+
+/**
+ * Check a stored code. `record.expiresAt` is a Date or ISO string.
+ * Never returns the code. Reasons: missing, expired, locked, mismatch.
+ */
+function checkLoginCode({ email, code, record, now }) {
+  if (!record || typeof record.codeHash !== 'string' || !record.codeHash) return { ok: false, reason: 'missing' };
+  const exp = record.expiresAt instanceof Date ? record.expiresAt : new Date(record.expiresAt);
+  if (!Number.isFinite(exp.getTime()) || exp.getTime() <= new Date(now).getTime()) return { ok: false, reason: 'expired' };
+  const attempts = Number(record.attempts) || 0;
+  if (attempts >= LOGIN_CODE_MAX_ATTEMPTS) return { ok: false, reason: 'locked' };
+  const codeStr = String(code ?? '').trim();
+  if (!/^\d{6}$/.test(codeStr)) return { ok: false, reason: 'mismatch' };
+  if (hashLoginCode(email, codeStr) !== record.codeHash) return { ok: false, reason: 'mismatch' };
+  return { ok: true };
+}
+
 module.exports = {
   LANGS,
   langOf,
@@ -928,6 +971,14 @@ module.exports = {
   effectivePlan,
   planLimit,
   planByLookupKey,
+  SESSION_DAYS,
+  LOGIN_CODE_TTL_MS,
+  LOGIN_CODE_MAX_ATTEMPTS,
+  generateLoginCode,
+  hashLoginCode,
+  loginCodeExpiresAt,
+  sessionExpiresAt,
+  checkLoginCode,
   MAINTENANCE_CATALOGUE,
   MAINTENANCE_INTERVALS,
   MAX_MAINTENANCE_ITEMS,

@@ -43,7 +43,7 @@ module.exports = function createHaldus(deps) {
   const PORTAL_URL = `${SITE}/minu`;
   const SCHEDULE_HORIZON_DAYS = 45;
   const MAX_OPEN_REQUESTS = 5;
-  const TOKEN_DAYS = 30;
+  const TOKEN_DAYS = core.SESSION_DAYS;
 
   // Static imports (not admin.firestore.X): the functions emulator monkey-patches
   // admin.firestore during load, so statics read off it at require-time can be undefined.
@@ -2606,7 +2606,7 @@ module.exports = function createHaldus(deps) {
   async function sendVisitDoneNotice({ order, booking, provider, note, advanced, lang }) {
     const rhythmText = rhythmPlain(advanced, lang);
     const clientNote = [note, rhythmText].filter(Boolean).join('\n');
-    const doneWord = { et: 'Tehtud.', en: 'Done.' }[lang] || 'Tehtud.';
+    const doneWord = core.pick({ et: 'Tehtud.', en: 'Done.', ru: 'Сделано.' }, lang);
     if (booking.requestId) {
       const reqRef = db.collection('serviceRequests').doc(docId(booking.requestId));
       const reqDoc = await reqRef.get();
@@ -2622,6 +2622,84 @@ module.exports = function createHaldus(deps) {
     }
     const n = await notifyOrder(order, visitDoneEmail({ order, provider, note, items: advanced, lang }), { replyTo: PORTAL_REPLY_TO });
     return n > 0;
+  }
+
+  function loginCodeEmail(code, lang) {
+    const L = core.langOf(lang);
+    const subject = core.pick({
+      et: 'SUKODA | Sinu sisenemiskood',
+      en: 'SUKODA | Your sign-in code',
+      ru: 'SUKODA | Код для входа',
+    }, L);
+    const intro = core.pick({
+      et: 'Kirjuta see kood rakendusse. See kehtib 10 minutit.',
+      en: 'Enter this code in the app. It is valid for 10 minutes.',
+      ru: 'Введите этот код в приложении. Он действует 10 минут.',
+    }, L);
+    return { subject, html: wrap(H2(escapeHtml(code)) + P(intro), L) };
+  }
+
+  /** Same doors as the magic link: a paid home first, otherwise an active desk. Unknown e-mail is not an account. */
+  async function findLoginTarget(email) {
+    const byEmail = await db.collection('orders')
+      .where('customer.email', '==', email)
+      .where('status', 'in', ['paid', 'cancelling'])
+      .limit(10)
+      .get();
+    const paidAtMs = (d) => {
+      const v = d.data().paidAt;
+      if (!v) return 0;
+      if (typeof v.toMillis === 'function') return v.toMillis();
+      const dt = toDate(v);
+      return dt ? dt.getTime() : 0;
+    };
+    let orderDoc = byEmail.docs
+      .filter((d) => (d.data().type || 'subscription') === 'subscription')
+      .sort((a, b) => paidAtMs(b) - paidAtMs(a))[0] || null;
+    let member = false;
+    if (!orderDoc) {
+      const giftSnap = await db.collection('orders')
+        .where('recipient.email', '==', email)
+        .where('type', '==', 'gift')
+        .where('giftRedeemed', '==', true)
+        .limit(1)
+        .get();
+      if (!giftSnap.empty) orderDoc = giftSnap.docs[0];
+    }
+    if (!orderDoc) {
+      const memberSnap = await db.collection('orders').where('contactEmails', 'array-contains', email).limit(5).get();
+      orderDoc = memberSnap.docs.find((d) => ['paid', 'cancelling'].includes(d.data().status)) || null;
+      member = !!orderDoc;
+    }
+    if (orderDoc) return { audience: 'home', member, orderDoc, lang: core.langOf(orderDoc.data()) };
+    const provSnap = await db.collection('providers').where('email', '==', email).limit(1).get();
+    if (!provSnap.empty && provSnap.docs[0].data().status !== 'disabled') {
+      const doc = provSnap.docs[0];
+      return { audience: 'desk', providerDoc: doc, lang: core.langOf(doc.data()) };
+    }
+    return null;
+  }
+
+  async function issueLoginSession(target, email) {
+    const exp = Timestamp.fromDate(core.sessionExpiresAt(new Date()));
+    if (target.audience === 'desk') {
+      return { token: await issueProviderToken(target.providerDoc.ref), desk: true };
+    }
+    const { raw, hash } = newToken();
+    if (target.member) {
+      const order = target.orderDoc.data();
+      const contact = (order.contacts || []).find((c) => core.normalizeEmail(c.email) === email);
+      await db.collection('portalSessions').doc(hash).set({
+        orderId: target.orderDoc.id,
+        email,
+        name: contact?.name || '',
+        expiresAt: exp,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+    } else {
+      await target.orderDoc.ref.update({ sessionTokenHash: hash, sessionTokenExpiresAt: exp });
+    }
+    return { token: raw, desk: false };
   }
 
   const haldusHandlers = {
@@ -2689,6 +2767,74 @@ module.exports = function createHaldus(deps) {
     },
 
     // ---- Auth -------------------------------------------------
+    'POST /api/haldus/login/code': async (req, res) => {
+      if (!checkRateLimit(req, res, 'login-code', 5, 300000)) return;
+      const email = core.normalizeEmail(req.body?.email);
+      const badMail = { error: { et: 'Kirjuta e-post.', en: 'Enter an e-mail.', ru: 'Укажите эл. почту.' } };
+      if (!core.isValidEmail(email)) return res.status(400).json(badMail);
+      const rl = db.collection('rateLimits').doc(`login_code_${sha256(email)}`);
+      const rlDoc = await rl.get();
+      const lastSent = toDate(rlDoc.data()?.lastSent) || new Date(0);
+      if (lastSent > new Date(Date.now() - 10 * 60 * 1000)) return res.status(200).json({ sent: true });
+      const target = await findLoginTarget(email);
+      await rl.set({ lastSent: FieldValue.serverTimestamp(), count: FieldValue.increment(1) }, { merge: true });
+      if (!target) return res.status(200).json({ sent: true });
+      const code = core.generateLoginCode(crypto.randomInt(0, 1000000));
+      if (!code) {
+        return res.status(500).json({ error: { et: 'Koodi ei õnnestunud teha. Proovi uuesti.', en: 'Could not make a code. Try again.', ru: 'Не удалось создать код. Попробуйте снова.' } });
+      }
+      await db.collection('loginCodes').doc(sha256(email)).set({
+        codeHash: core.hashLoginCode(email, code),
+        expiresAt: Timestamp.fromDate(core.loginCodeExpiresAt(new Date())),
+        attempts: 0,
+        audience: target.audience,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+      try {
+        await sendEmail({ to: email, ...loginCodeEmail(code, target.lang) });
+      } catch (e) {
+        console.error('login code mail failed', sha256(email));
+        return res.status(500).json({ error: { et: 'Kirja ei õnnestunud saata. Proovi uuesti.', en: 'The e-mail could not be sent. Try again.', ru: 'Письмо не удалось отправить. Попробуйте снова.' } });
+      }
+      res.status(200).json({ sent: true });
+    },
+
+    'POST /api/haldus/login/verify': async (req, res) => {
+      if (!checkRateLimit(req, res, 'login-verify', 10, 300000)) return;
+      const email = core.normalizeEmail(req.body?.email);
+      const code = String(req.body?.code ?? '').trim();
+      const fail = { error: { et: 'Kood ei sobi. Kontrolli kirja või küsi uus.', en: 'That code does not work. Check the e-mail or ask for a new one.', ru: 'Код не подошёл. Проверьте письмо или запросите новый.' } };
+      if (!core.isValidEmail(email) || !/^\d{6}$/.test(code)) return res.status(401).json(fail);
+      const ref = db.collection('loginCodes').doc(sha256(email));
+      let audience = null;
+      try {
+        audience = await db.runTransaction(async (tx) => {
+          const snap = await tx.get(ref);
+          const data = snap.exists ? snap.data() : null;
+          const result = core.checkLoginCode({
+            email,
+            code,
+            record: data ? { codeHash: data.codeHash, expiresAt: toDate(data.expiresAt), attempts: data.attempts } : null,
+            now: new Date(),
+          });
+          if (!result.ok) {
+            if (result.reason === 'mismatch' && snap.exists) tx.update(ref, { attempts: FieldValue.increment(1) });
+            return null;
+          }
+          tx.delete(ref);
+          return data.audience;
+        });
+      } catch (e) {
+        console.error('login verify failed', sha256(email));
+        return res.status(500).json({ error: { et: 'Sisenemine ei õnnestunud. Proovi uuesti.', en: 'Sign-in failed. Try again.', ru: 'Вход не удался. Попробуйте снова.' } });
+      }
+      if (!audience) return res.status(401).json(fail);
+      const target = await findLoginTarget(email);
+      if (!target || target.audience !== audience) return res.status(401).json(fail);
+      const session = await issueLoginSession(target, email);
+      res.status(200).json({ token: session.token, desk: session.desk });
+    },
+
     'POST /api/haldus/magic-link': async (req, res) => {
       if (!checkRateLimit(req, res, 'haldus-magic', 5, 300000)) return;
       const email = core.normalizeEmail(req.body?.email);
@@ -3595,31 +3741,31 @@ module.exports = function createHaldus(deps) {
 
   /** Plain lines for the request mail: the new due date, never the one just passed. No access codes. */
   function rhythmPlain(items, lang) {
-    const L = mailLang(lang);
-    const nextWord = { et: 'järgmine kord', en: 'next time' }[L];
+    const L = core.langOf(lang);
+    const nextWord = core.pick({ et: 'järgmine kord', en: 'next time', ru: 'следующий раз' }, L);
     return (items || []).map((it) => {
       const name = core.maintenanceName(it, L);
       const due = it.nextDueAt ? core.parseDateStr(it.nextDueAt) : null;
-      const when = due ? formatDate(due, L) : '';
+      const when = due ? formatWhen(due, L) : '';
       return when ? `${name} — ${nextWord} ${when}` : name;
     }).filter(Boolean).join('\n');
   }
 
   /** HTML lines for the visit-done mail. Same dates as rhythmPlain. */
   function rhythmMovedLines(items, lang) {
-    const L = mailLang(lang);
-    const nextWord = { et: 'järgmine kord', en: 'next time' }[L];
+    const L = core.langOf(lang);
+    const nextWord = core.pick({ et: 'järgmine kord', en: 'next time', ru: 'следующий раз' }, L);
     return (items || []).map((it) => {
       const name = escapeHtml(core.maintenanceName(it, L));
       const due = it.nextDueAt ? core.parseDateStr(it.nextDueAt) : null;
-      const when = due ? `${nextWord} ${escapeHtml(formatDate(due, L))}` : '';
+      const when = due ? `${nextWord} ${escapeHtml(formatWhen(due, L))}` : '';
       return `<p style="margin:0 0 8px 0;color:#2C2824;font-size:16px;font-family:Georgia,'Times New Roman',serif;font-weight:300;">${name}${when ? ` <span style="color:#8A8578;font-size:13px;font-family:Helvetica,Arial,sans-serif;">· ${when}</span>` : ''}</p>`;
     }).join('');
   }
 
   /** Resident notice when a visit is marked done and it was not tied to a request. Same recipients as other visit mail. */
   function visitDoneEmail({ order, provider, note, items, lang }) {
-    const L = mailLang(lang);
+    const L = core.langOf(lang);
     const copy = {
       et: {
         subject: 'SUKODA | Tehtud',
@@ -3630,6 +3776,11 @@ module.exports = function createHaldus(deps) {
         subject: 'SUKODA | Done',
         intro: (who) => `${who} marked the visit done.`,
         moved: 'These moved forward in your home upkeep. Nothing for you to do.',
+      },
+      ru: {
+        subject: 'SUKODA | Сделано',
+        intro: (who) => `${who} отметил визит выполненным.`,
+        moved: 'Эти пункты сдвинулись в ритме ухода за домом. Вам ничего делать не нужно.',
       },
     }[L];
     const tt = t(L);

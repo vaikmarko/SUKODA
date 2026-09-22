@@ -86,6 +86,42 @@ html.js:not(.stay) .shell {
   color: var(--color-muted);
 }
 
+.field {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 0.5rem;
+  padding: 0.75rem 0;
+  border: 0;
+  border-bottom: 1px solid var(--color-black);
+  background: transparent;
+  color: var(--color-black);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+}
+
+.field:focus {
+  outline: none;
+  border-bottom-color: var(--color-accent);
+}
+
+.err {
+  margin: 0.75rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--color-black);
+}
+
+.card-line {
+  margin: 1rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.card-line a {
+  color: var(--color-black);
+}
+
 .actions {
   display: flex;
   flex-direction: column;
