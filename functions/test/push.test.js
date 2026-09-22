@@ -48,9 +48,11 @@ test('message keeps the e-mail sentence, and deliver without a key does not thro
   });
   assert.equal(payload.title, 'Homme on koristus');
   assert.equal(payload.type, 'visit_tomorrow');
-  assert.deepEqual(push.tokensFrom({ pushSubscriptions: [{ token: 'a' }, 'b'] }), ['a', 'b']);
+  assert.deepEqual(push.tokensFrom({ pushSubscriptions: [{ token: 'a' }, 'b', { fcmToken: 'c' }] }), ['a', 'b', 'c']);
   const prev = process.env.FCM_SERVER_KEY;
+  const prevNamed = process.env.SUKODA_FCM_KEY;
   delete process.env.FCM_SERVER_KEY;
+  delete process.env.SUKODA_FCM_KEY;
   const lines = [];
   const orig = console.error;
   console.error = (...args) => lines.push(args.map(String).join(' '));
@@ -61,12 +63,15 @@ test('message keeps the e-mail sentence, and deliver without a key does not thro
   } finally {
     console.error = orig;
     if (prev != null) process.env.FCM_SERVER_KEY = prev;
+    if (prevNamed != null) process.env.SUKODA_FCM_KEY = prevNamed;
   }
 });
 
 test('send without an FCM key logs and does not throw', async () => {
   const prev = process.env.FCM_SERVER_KEY;
+  const prevNamed = process.env.SUKODA_FCM_KEY;
   delete process.env.FCM_SERVER_KEY;
+  delete process.env.SUKODA_FCM_KEY;
   const lines = [];
   const orig = console.error;
   console.error = (...args) => lines.push(args.map(String).join(' '));
@@ -80,6 +85,7 @@ test('send without an FCM key logs and does not throw', async () => {
   } finally {
     console.error = orig;
     if (prev != null) process.env.FCM_SERVER_KEY = prev;
+    if (prevNamed != null) process.env.SUKODA_FCM_KEY = prevNamed;
   }
 });
 
@@ -102,6 +108,29 @@ test('send with a key delivers the e-mail sentence and does not call messaging w
   assert.equal(seen[0].data.type, 'visit_tomorrow');
   assert.equal(seen[0].data.orderId, 'home-1');
   assert.equal(seen[0].token, 'tok-1');
+});
+
+test('a key without an injected client does not call FCM', async () => {
+  const prev = global.fetch;
+  let called = false;
+  global.fetch = () => { called = true; throw new Error('network'); };
+  try {
+    const result = await push.deliver(push.message({
+      type: 'morning', lang: 'et', title: 'Tänane päev', body: 'Täna 1 kodu.',
+    }), { tokens: ['tok'], serverKey: 'not-a-real-key' });
+    assert.equal(result.sent, false);
+    assert.equal(result.reason, 'no-client');
+    assert.equal(called, false);
+    const vapid = await push.send('morning', {
+      serverKey: undefined,
+      lang: 'et',
+      tokens: ['tok'],
+      vars: { count: 1 },
+    });
+    assert.equal(vapid.sent, false);
+  } finally {
+    global.fetch = prev;
+  }
 });
 
 test('a messaging error does not throw, so the cron can still send e-mail', async () => {

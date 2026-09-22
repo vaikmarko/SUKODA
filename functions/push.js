@@ -2,8 +2,9 @@
  * Five push notifications. Title and body are the same sentences as the
  * resident or desk e-mail for that event. Missing language falls back to et.
  *
- * Without an FCM key the send logs and returns; it does not throw.
- * Cron stays where it is: only notifyOrder opts in, and only for a known type.
+ * Without an FCM or VAPID key the send logs and returns; it does not throw.
+ * A key does not call Google. The caller passes a messaging client; this file
+ * never opens fcm.googleapis.com. The 07:00 cron can later call send('morning').
  */
 
 const core = require('./lib/haldus-core');
@@ -272,7 +273,7 @@ function tokensOf(tokens) {
   const list = Array.isArray(tokens) ? tokens : [];
   const out = [];
   for (const item of list) {
-    const token = typeof item === 'string' ? item : item && item.token;
+    const token = typeof item === 'string' ? item : item && (item.token || item.fcmToken);
     if (token) out.push(String(token));
   }
   return out;
@@ -290,7 +291,8 @@ function dataOf(type, data) {
 
 function fcmKey(explicit) {
   if (explicit != null) return String(explicit).trim();
-  return String(process.env.FCM_SERVER_KEY || '').trim();
+  const env = process.env;
+  return String(env.SUKODA_FCM_KEY || env.FCM_SERVER_KEY || env.VAPID_PRIVATE_KEY || '').trim();
 }
 
 async function dispatch(messaging, message) {
@@ -300,17 +302,6 @@ async function dispatch(messaging, message) {
     await messaging.send({ token, notification: message.notification, data: message.data });
   }
   return { successCount: message.tokens.length };
-}
-
-function defaultMessaging() {
-  try {
-    const admin = require('firebase-admin');
-    if (!admin.apps || !admin.apps.length) return null;
-    return admin.messaging();
-  } catch (err) {
-    console.error('push: FCM messaging unavailable', err);
-    return null;
-  }
 }
 
 /** Payload for notifyOrder. Explicit title and body are the e-mail's own sentences. */
@@ -348,7 +339,7 @@ async function deliver(payload, options = {}) {
   }
   const tokens = tokensOf(options.tokens);
   if (!tokens.length) return { sent: false, reason: 'no-tokens' };
-  const messaging = options.messaging || defaultMessaging();
+  const messaging = options.messaging;
   if (!messaging) {
     console.error('push: FCM messaging unavailable', type);
     return { sent: false, reason: 'no-client' };

@@ -3452,12 +3452,19 @@ module.exports = function createHaldus(deps) {
       </div>`).join('');
     const n = entries.length;
     const one = n === 1 ? `${core.maintenanceName(entries[0].item, lang)} · ${primaryName(entries[0].order)}` : '';
+    const deskTitle = core.pick({ et: 'Hooldusrütm su klientide kodudes', en: 'Upkeep at your clients\' homes', ru: 'Ритм ухода в домах клиентов' }, lang);
+    const deskBody = core.pick({
+      et: `${provider.name || ''}, need asjad, mille oled võtnud enda peale, on järgmise kahe nädala jooksul aeg teha. Kui tehtud, märgi töölaual.`,
+      en: `${provider.name || ''}, these are the things you took on, due within two weeks. When done, tick them on the desk.`,
+      ru: `${provider.name || ''}, эти дела, которые вы взяли на себя, нужно сделать в ближайшие две недели. Когда сделаете, отметьте на рабочем столе.`,
+    }, lang);
     return {
       subject: core.pick({
         et: `SUKODA | Hooldus ees: ${n === 1 ? one : `${n} asja su klientide kodudes`}`,
         en: `SUKODA | Upkeep due: ${n === 1 ? one : `${n} things in your clients' homes`}`,
         ru: `SUKODA | Срок ухода: ${n === 1 ? one : `${n} дел в домах клиентов`}`,
       }, lang),
+      push: push.message({ type: 'rhythm_due', lang, title: deskTitle, body: deskBody, url: `${HALDUS_URL}?tab=customers`, audience: 'provider' }),
       html: wrap(
         H2(core.pick({ et: 'Hooldusrütm su klientide kodudes', en: 'Upkeep at your clients\' homes', ru: 'Ритм ухода в домах клиентов' }, lang))
         + P(core.pick({
@@ -3589,7 +3596,9 @@ module.exports = function createHaldus(deps) {
       const provider = await loadProvider(providerId);
       if (!provider) continue;
       try {
-        await sendEmail({ to: providerReplyTo(provider) || provider.email, ...providerMaintenanceReminderEmail({ provider, entries }) });
+        const providerMail = providerMaintenanceReminderEmail({ provider, entries });
+        await sendEmail({ to: providerReplyTo(provider) || provider.email, subject: providerMail.subject, html: providerMail.html });
+        await deliverMailPush(provider, providerMail);
         providers++;
         const refs = new Map();
         for (const e of entries) { if (!refs.has(e.ref.path)) refs.set(e.ref.path, { ref: e.ref, ids: new Set() }); refs.get(e.ref.path).ids.add(e.item.id); }
