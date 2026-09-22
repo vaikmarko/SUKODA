@@ -436,6 +436,33 @@ test('visit split never charges and keeps sponsor, resident and provider in bala
   assert.equal(core.guidePriceCents('alates 89 €'), 8900);
   assert.equal(core.guidePriceCents('hind kokkuleppel'), null);
   assert.equal(core.guidePriceCents('Garantii korras'), null);
+  const wish = core.orderQuote({
+    serviceId: 'extra-clean',
+    addonIds: ['flowers', 'linens', 'nope', 'flowers'],
+    sponsorCentsAvailable: 0,
+    ownerKind: 'sukoda',
+    today: '2026-09-23',
+    leadDays: 14,
+    lang: 'et',
+  });
+  assert.deepEqual(wish.lines.map((l) => l.id), ['extra-clean', 'flowers', 'linens']);
+  assert.equal(wish.unpriced, true);
+  assert.equal(wish.charged, false);
+  assert.equal(wish.payLater, true);
+  assert.equal(wish.earliest, '2026-10-07');
+  assert.equal(wish.lines.find((l) => l.id === 'flowers').cents, 3500);
+  const covered = core.orderQuote({
+    serviceId: 'windows',
+    addonIds: [],
+    sponsorCentsAvailable: 4500,
+    ownerKind: 'developer',
+    today: '2026-09-23',
+    leadDays: 14,
+  });
+  assert.equal(covered.unpriced, false);
+  assert.equal(covered.cardRequired, false);
+  assert.equal(covered.payLater, false);
+  assert.equal(covered.residentCents, 0);
   const building = core.sanitizeBuilding({ name: 'Iili 8', routes: { warranty: 'hausing', building: 'nope' }, documents: [{ title: 'Juhend', url: 'https://example.com/a.pdf', page: 14 }], sponsor: { budgetCents: 10000, validUntil: '2027-05-01' } });
   assert.equal(building.building.routes.warranty, 'hausing');
   assert.equal(building.building.routes.building, 'desk');

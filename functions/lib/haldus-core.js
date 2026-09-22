@@ -1127,6 +1127,59 @@ function sanitizeHandover(input) {
   return { handover: { apartment, buyerName, buyerEmail, keysAt: toDateStr(keysAt) } };
 }
 
+/** Extras on the resident order card. Unknown ids are dropped. */
+const TELLI_ADDONS = ['flowers', 'linens', 'windows', 'appliance-care'];
+
+function telliAddons(ids) {
+  const out = [];
+  const seen = new Set();
+  for (const id of Array.isArray(ids) ? ids : []) {
+    const key = String(id || '');
+    if (!TELLI_ADDONS.includes(key) || seen.has(key)) continue;
+    seen.add(key);
+    out.push(key);
+  }
+  return out;
+}
+
+/**
+ * Price a cleaning wish before anyone confirms it. Never charges.
+ * A line without a number (price on request) marks the quote unpriced.
+ */
+function orderQuote({ serviceId, addonIds, sponsorCentsAvailable, ownerKind, today, leadDays, lang }) {
+  const extras = telliAddons(addonIds);
+  const main = getService(serviceId) ? String(serviceId) : 'extra-clean';
+  const ids = [main].concat(extras.filter((id) => id !== main));
+  const lines = [];
+  let total = 0;
+  let unpriced = false;
+  for (const id of ids) {
+    const svc = getService(id);
+    if (!svc) continue;
+    const hint = pick(svc.priceHint, lang || 'et');
+    const cents = guidePriceCents(hint);
+    if (cents == null) unpriced = true;
+    else total += cents;
+    lines.push({ id, cents, hint });
+  }
+  const split = splitVisitPayment({
+    priceCents: total,
+    sponsorCentsAvailable,
+    ownerKind,
+    payInApp: true,
+  });
+  const payLater = unpriced || split.cardRequired;
+  return {
+    ...split,
+    lines,
+    unpriced,
+    priced: lines.length > 0 && !unpriced && total > 0,
+    payLater,
+    earliest: earliestBookableDate(today, leadDays),
+    charged: false,
+  };
+}
+
 module.exports = {
   LANGS,
   langOf,
@@ -1155,6 +1208,9 @@ module.exports = {
   visitWindowOpen,
   warrantyUntilDate,
   guidePriceCents,
+  TELLI_ADDONS,
+  telliAddons,
+  orderQuote,
   handoverCode,
   sanitizeBuilding,
   sanitizeHandover,

@@ -1810,6 +1810,8 @@ module.exports = function createHaldus(deps) {
       preferredDate: r.preferredDate || null,
       timeWindow: r.timeWindow || null,
       note: r.note || '',
+      addons: Array.isArray(r.addons) ? r.addons : [],
+      rhythm: r.rhythm === 'biweekly' || r.rhythm === 'once' ? r.rhythm : null,
       status: r.status,
       // For declined requests: 'not_covered' (issue reviewed, not under warranty) or 'new_time' (slot did not fit)
       outcome: r.outcome || null,
@@ -4303,29 +4305,22 @@ module.exports = function createHaldus(deps) {
       const auth = await authenticateClient(req);
       if (!auth) return res.status(401).json({ error: 'Unauthorized' });
       const today = todayTallinnStr();
-      const svc = req.body?.serviceId ? core.getService(String(req.body.serviceId)) : null;
-      const hint = svc ? core.pick(svc.priceHint, langOf(auth.order)) : '';
-      const fromHint = core.guidePriceCents(hint);
-      const raw = req.body?.priceCents;
-      const priceCents = raw == null || raw === '' ? fromHint : raw;
       let lead = 14;
       if (auth.order.providerId) {
         const providerSnap = await db.collection('providers').doc(auth.order.providerId).get();
         const saved = providerSnap.exists ? providerSnap.data()?.availability?.leadDays : null;
         if (Number.isInteger(saved)) lead = saved;
       }
-      const split = core.splitVisitPayment({
-        priceCents,
+      const quote = core.orderQuote({
+        serviceId: req.body?.serviceId,
+        addonIds: req.body?.addonIds,
         sponsorCentsAvailable: core.sponsorRemainingCents(auth.order.sponsor, today),
         ownerKind: core.ownerKindOf(auth.order),
-        payInApp: true,
+        today,
+        leadDays: lead,
+        lang: langOf(auth.order),
       });
-      res.status(200).json({
-        ...split,
-        priced: fromHint != null || (raw != null && raw !== ''),
-        earliest: core.earliestBookableDate(today, lead),
-        reason: 'preview',
-      });
+      res.status(200).json({ ...quote, reason: 'preview' });
     },
 
     'POST /api/me/requests': async (req, res) => {
@@ -4391,6 +4386,8 @@ module.exports = function createHaldus(deps) {
       }
 
       const firstMsg = note ? [{ id: core.randomId(), by: 'client', name: primaryName(order) || '', text: note, at: new Date() }] : [];
+      const addonIds = svc.category === 'cleaning' ? core.telliAddons(b.addonIds) : [];
+      const rhythm = svc.category === 'cleaning' && (b.rhythm === 'biweekly' || b.rhythm === 'once') ? b.rhythm : null;
       const data = {
         orderId,
         providerId: providerId || null,
@@ -4406,6 +4403,8 @@ module.exports = function createHaldus(deps) {
         note,
         access,
         urgent,
+        ...(addonIds.length ? { addons: addonIds } : {}),
+        ...(rhythm ? { rhythm } : {}),
         messages: firstMsg,
         status: 'requested',
         lang,

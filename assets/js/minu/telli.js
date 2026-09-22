@@ -1,7 +1,32 @@
 import { add } from './dict.js';
 
 add({
-  tabServices: { et: 'Teenused', en: 'Services', ru: 'Услуги' },
+  tabServices: { et: 'Telli', en: 'Order', ru: 'Заказ' },
+  telliTitle: { et: 'Koristus', en: 'Cleaning', ru: 'Уборка' },
+  telliOnce: { et: 'Üks kord', en: 'Once', ru: 'Один раз' },
+  telliRhythm: { et: 'Rütm', en: 'Rhythm', ru: 'Ритм' },
+  telliRhythmHint: { et: 'Iga kahe nädala tagant. Koduhooldaja kinnitab päevad.', en: 'Every two weeks. The housekeeper confirms the days.', ru: 'Каждые две недели. Специалист по дому подтвердит дни.' },
+  addonFlowers: { et: 'Lilled', en: 'Flowers', ru: 'Цветы' },
+  addonLinens: { et: 'Voodipesu', en: 'Bed linen', ru: 'Постельное бельё' },
+  addonWindows: { et: 'Aknad', en: 'Windows', ru: 'Окна' },
+  addonAppliances: { et: 'Kodumasinad', en: 'Appliances', ru: 'Бытовая техника' },
+  telliOn: { et: 'Sees', en: 'On', ru: 'Да' },
+  telliOff: { et: 'Ei', en: 'Off', ru: 'Нет' },
+  telliDate: { et: 'Päev', en: 'Day', ru: 'День' },
+  price: { et: 'Hind', en: 'Price', ru: 'Цена' },
+  priceOnReply: { et: 'Koristuse hinna kinnitab koduhooldaja vastuses.', en: 'The housekeeper confirms the cleaning price in the reply.', ru: 'Цену уборки специалист по дому подтвердит в ответе.' },
+  payWhenCard: { et: 'Tasumine tuleb, kui kaart on ühendatud.', en: 'Payment comes when a card is connected.', ru: 'Оплата будет, когда карта подключена.' },
+  sendWish: { et: 'Saada soov', en: 'Send the wish', ru: 'Отправить желание' },
+  sendWishCard: { et: 'Saada soov — tasumine, kui kaart on ühendatud', en: 'Send the wish — payment when a card is connected', ru: 'Отправить желание — оплата, когда карта подключена' },
+  telliSent: { et: 'Soov on kirjas. Koduhooldaja kinnitab aja.', en: 'The wish is in. The housekeeper confirms the time.', ru: 'Желание записано. Специалист по дому подтвердит время.' },
+  telliHandyman: { et: 'Remondimees', en: 'Handyman', ru: 'Мастер' },
+  telliWarranty: { et: 'Garantii ja maja', en: 'Warranty and the building', ru: 'Гарантия и дом' },
+  telliNoteOnce: { et: 'Üks koristus.', en: 'One clean.', ru: 'Одна уборка.' },
+  telliNoteRhythm: { et: 'Koristuse rütm, iga kahe nädala tagant.', en: 'A cleaning rhythm, every two weeks.', ru: 'Ритм уборки, каждые две недели.' },
+  telliNoteExtras: { et: 'Lisad: {list}.', en: 'Extras: {list}.', ru: 'Дополнительно: {list}.' },
+  telliHome: { et: 'Olen sel ajal kodus.', en: 'I will be home.', ru: 'Я буду дома.' },
+  telliSending: { et: 'Saadan…', en: 'Sending…', ru: 'Отправляю…' },
+  telliFailed: { et: 'Soovi saatmine ei õnnestunud. Proovi uuesti.', en: 'The wish did not go through. Try again.', ru: 'Желание не отправилось. Попробуйте снова.' },
   yourRequests: { et: 'Sinu pöördumised', en: 'Your requests', ru: 'Ваши обращения' },
   earlier: { et: 'Varasemad →', en: 'Earlier →', ru: 'Раньше →' },
   agreed: { et: 'Kokkulepitud', en: 'Already agreed', ru: 'Уже согласовано' },
@@ -74,25 +99,47 @@ export const telliHtml = `<div x-show="activeTab === 'extras'" x-transition:ente
                         </div>
                     </div>
 
-                    <!-- 01 · By need. Each row: what you need on the left, the concrete options on the right, who answers on every card. -->
-                    <div class="flex flex-wrap items-end justify-between gap-4 mb-4">
-                        <h2 class="p-h"><span class="p-num">01</span><span x-text="t('orderOrAsk')"></span></h2>
-                    </div>
-                    <div class="space-y-10 md:space-y-12">
-                        <template x-for="g in needGroups" :key="g.id">
-                            <section>
-                                <h3 class="font-serif text-2xl font-light mb-2" x-text="g.title"></h3>
-                                <div class="grid sm:grid-cols-2 sm:gap-x-16">
-                                    <template x-for="s in g.items" :key="s.id">
-                                        <button type="button" @click="openRequest(s)" class="group w-full text-left py-3 border-b border-line flex items-baseline justify-between gap-4 hover:border-black transition-colors">
-                                            <span class="font-sans text-sm font-light min-w-0" :class="isOrderable(s) ? 'text-black' : 'text-muted'" x-text="s.name"></span>
-                                            <span x-show="isOrderable(s)" class="shrink-0 text-muted/40 group-hover:text-black transition-colors" aria-hidden="true">→</span>
-                                            <span x-show="!isOrderable(s)" class="shrink-0 text-[11px] uppercase tracking-[0.14em] font-sans text-muted" x-text="(extras.interests || []).includes(s.id) ? t('noted') : t('registerInterest')"></span>
-                                        </button>
-                                    </template>
-                                </div>
-                            </section>
-                        </template>
+                    <section class="bg-white border border-line p-6 md:p-8 mb-12">
+                        <h2 class="p-h mb-6" x-text="t('telliTitle')"></h2>
+                        <div class="grid grid-cols-2 gap-2 mb-3" role="group" :aria-label="t('telliTitle')">
+                            <button type="button" @click="telliRhythm = 'once'" :aria-pressed="telliRhythm === 'once'" :class="telliRhythm === 'once' ? 'bg-black text-paper border-black' : 'bg-paper border-line text-black'" class="py-3 border font-sans text-sm" x-text="t('telliOnce')"></button>
+                            <button type="button" @click="telliRhythm = 'rhythm'" :aria-pressed="telliRhythm === 'rhythm'" :class="telliRhythm === 'rhythm' ? 'bg-black text-paper border-black' : 'bg-paper border-line text-black'" class="py-3 border font-sans text-sm" x-text="t('telliRhythm')"></button>
+                        </div>
+                        <p x-show="telliRhythm === 'rhythm'" class="text-sm text-muted font-sans font-light mb-6" x-text="t('telliRhythmHint')"></p>
+                        <div class="border-t border-line">
+                            <template x-for="row in telliAddonRows" :key="row.id">
+                                <button type="button" @click="toggleTelliAddon(row.id)" :aria-pressed="!!telliAddons[row.id]" class="w-full flex items-center justify-between gap-4 py-3 border-b border-line text-left">
+                                    <span class="font-sans text-sm font-light" x-text="t(row.label)"></span>
+                                    <span class="eyebrow" x-text="telliAddons[row.id] ? t('telliOn') : t('telliOff')"></span>
+                                </button>
+                            </template>
+                        </div>
+                        <label class="block mt-6">
+                            <span class="eyebrow" x-text="t('telliDate')"></span>
+                            <input type="date" x-model="telliDate" :min="telliDateMin" class="w-full mt-2 bg-paper border border-line focus:border-accent outline-none px-4 py-3 font-sans font-light text-sm">
+                        </label>
+                        <p class="text-xs text-muted font-sans font-light mt-2" x-text="t('visitLead', { date: telliDateMin })"></p>
+                        <div class="mt-6">
+                            <p class="eyebrow" x-text="t('price')"></p>
+                            <template x-for="(line, i) in telliPriceLines" :key="'price-' + i">
+                                <p class="text-sm font-sans font-light mt-2" x-text="line"></p>
+                            </template>
+                            <p class="text-sm font-sans mt-3" x-show="telliSumLine" x-text="telliSumLine"></p>
+                        </div>
+                        <p x-show="telliError" x-cloak class="text-sm text-muted font-sans font-light mt-4" x-text="telliError"></p>
+                        <p x-show="telliDone" x-cloak class="text-sm font-sans font-light mt-4" x-text="telliDone"></p>
+                        <button type="button" class="p-btn w-full mt-6 disabled:opacity-40" :disabled="telliBusy || !telliDate" @click="submitTelli()" x-text="telliBusy ? t('telliSending') : telliButtonLabel"></button>
+                    </section>
+
+                    <div class="mb-12">
+                        <button type="button" x-show="serviceById('small-repairs')" @click="openRequest(serviceById('small-repairs'))" class="w-full text-left py-3 border-b border-line flex items-baseline justify-between gap-4">
+                            <span class="font-sans text-sm font-light" x-text="t('telliHandyman')"></span>
+                            <span class="text-muted" aria-hidden="true">→</span>
+                        </button>
+                        <button type="button" x-show="serviceById('warranty-claim')" @click="openRequest(serviceById('warranty-claim'))" class="w-full text-left py-3 border-b border-line flex items-baseline justify-between gap-4">
+                            <span class="font-sans text-sm font-light" x-text="t('telliWarranty')"></span>
+                            <span class="text-muted" aria-hidden="true">→</span>
+                        </button>
                     </div>
 
 

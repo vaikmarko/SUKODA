@@ -155,6 +155,19 @@
     requestProcessing: false,
     requestError: '',
     requestDone: null,
+    telliRhythm: 'once',
+    telliAddons: { flowers: false, linens: false, windows: false, appliances: false },
+    telliAddonRows: [
+        { id: 'flowers', label: 'addonFlowers', serviceId: 'flowers' },
+        { id: 'linens', label: 'addonLinens', serviceId: 'linens' },
+        { id: 'windows', label: 'addonWindows', serviceId: 'windows' },
+        { id: 'appliances', label: 'addonAppliances', serviceId: 'appliance-care' },
+    ],
+    telliDate: '',
+    telliQuote: null,
+    telliBusy: false,
+    telliError: '',
+    telliDone: '',
 
     // Open request thread (past or current) — the conversation lives here, e-mail only notifies
     viewRequest: null,
@@ -265,6 +278,8 @@
                 const data = await res.json();
                 this.extras = { ...this.extras, ...data };
                 this.extrasLoaded = true;
+                if (!this.telliDate) this.telliDate = this.telliDateMin;
+                this.refreshTelliQuote();
                 // White label: the tab reads as the developer's portal
                 if (this.brand?.name) document.title = `${this.brand.name} | ${this.t('tabHome')}`;
             }
@@ -429,6 +444,97 @@
             if (!data.cardRequired) this.quoteLine = this.t('giftCovers');
             else this.quoteLine = this.t('payBefore', { amount: (data.residentCents / 100).toFixed(2).replace('.', ',') + ' €' });
         } catch (e) { /* the written price line stays */ }
+    },
+    serviceById(id) {
+        return (this.extras.catalogue || []).find((s) => s.id === id) || null;
+    },
+    get telliDateMin() {
+        const saved = this.extras?.provider?.leadDays;
+        const lead = Number.isInteger(saved) ? saved : 14;
+        return window.SUKODA_TIME.shiftDateString(window.SUKODA_TIME.getDateString(), lead);
+    },
+    telliAddonIds() {
+        return this.telliAddonRows.filter((row) => this.telliAddons[row.id]).map((row) => row.serviceId);
+    },
+    toggleTelliAddon(id) {
+        this.telliAddons = { ...this.telliAddons, [id]: !this.telliAddons[id] };
+        this.telliDone = '';
+        this.refreshTelliQuote();
+    },
+    euro(cents) {
+        const n = Number(cents) / 100;
+        if (!Number.isFinite(n) || n < 0) return '';
+        const text = Math.round(n * 100) % 100 === 0 ? String(Math.round(n)) : n.toFixed(2).replace('.', ',');
+        return text + ' €';
+    },
+    get telliPriceLines() {
+        const q = this.telliQuote;
+        if (!q || !Array.isArray(q.lines) || !q.lines.length) return [this.t('priceOnReply')];
+        return q.lines.map((line) => {
+            const name = line.id === 'extra-clean' ? this.t('telliTitle') : (this.serviceById(line.id)?.name || '');
+            return line.hint ? name + ' · ' + line.hint : name;
+        }).filter(Boolean);
+    },
+    get telliSumLine() {
+        const q = this.telliQuote;
+        if (!q || q.unpriced) return '';
+        if (!q.cardRequired) return this.t('giftCovers');
+        if (q.residentCents) return this.t('payBefore', { amount: this.euro(q.residentCents) });
+        return '';
+    },
+    get telliButtonLabel() {
+        const q = this.telliQuote;
+        if (q && !q.payLater && !q.unpriced) return this.t('sendWish');
+        return this.t('sendWishCard');
+    },
+    async refreshTelliQuote() {
+        if (!this.token) return;
+        try {
+            const res = await fetch('/api/me/requests/quote', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + this.token },
+                body: JSON.stringify({ serviceId: 'extra-clean', addonIds: this.telliAddonIds() }),
+            });
+            const data = await res.json();
+            if (res.ok) this.telliQuote = data;
+        } catch (e) { /* the price lines stay as written */ }
+    },
+    async submitTelli() {
+        if (this.telliBusy || !this.telliDate) return;
+        this.telliBusy = true;
+        this.telliError = '';
+        this.telliDone = '';
+        const ids = this.telliAddonIds();
+        const names = ids.map((id) => this.serviceById(id)?.name).filter(Boolean);
+        const note = [
+            this.t(this.telliRhythm === 'rhythm' ? 'telliNoteRhythm' : 'telliNoteOnce'),
+            names.length ? this.t('telliNoteExtras', { list: names.join(', ') }) : '',
+        ].filter(Boolean).join(' ');
+        try {
+            const res = await fetch('/api/me/requests', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + this.token },
+                body: JSON.stringify({
+                    serviceId: 'extra-clean',
+                    preferredDate: this.telliDate,
+                    timeWindow: 'any',
+                    note,
+                    access: (this.homeProfile.access || '').trim() || this.t('telliHome'),
+                    urgent: false,
+                    addonIds: ids,
+                    rhythm: this.telliRhythm === 'rhythm' ? 'biweekly' : 'once',
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'failed');
+            this.telliDone = data.interest ? this.t('noted') : this.t('telliSent');
+            this.telliAddons = { flowers: false, linens: false, windows: false, appliances: false };
+            await this.loadExtras();
+        } catch (e) {
+            this.telliError = e.message && e.message !== 'failed' ? e.message : this.t('telliFailed');
+        } finally {
+            this.telliBusy = false;
+        }
     },
     closeRequest() {
         this.requestService = null;
