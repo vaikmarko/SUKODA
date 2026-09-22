@@ -69,6 +69,17 @@ test('ask finds an approved fact and a building document, and flags heating', ()
   const heat = pass.askHome({ question: 'kuidas küte töötab', facts, documents });
   assert.equal(heat.suggestTechnician, true);
   assert.equal(heat.fact, null);
+  const onlyDoc = pass.askHome({ question: 'juhend', facts, documents });
+  assert.equal(onlyDoc.fact, null);
+  assert.equal(onlyDoc.document.title, 'Ventilatsiooni juhend');
+  const linked = pass.askHome({
+    question: 'mis filter on',
+    facts,
+    documents: { building: [{ id: 'doc-1', title: 'Ventilatsiooni juhend', url: 'https://sukoda.ee/juhend.pdf', file: { path: 'secret/path' }, page: 14 }], home: [] },
+  });
+  assert.equal(linked.document.url, 'https://sukoda.ee/juhend.pdf');
+  assert.equal(linked.document.hasFile, true);
+  assert.equal(JSON.stringify(linked.document).includes('secret'), false);
   const inherited = pass.documentsForHome(documents.building, [{ id: 'h1', title: 'Akt' }]);
   assert.equal(inherited.length, 2);
   assert.equal(inherited[0].scope, 'building');

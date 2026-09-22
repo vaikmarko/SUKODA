@@ -23,8 +23,9 @@ add({
   askLabel: { et: 'Küsi', en: 'Ask', ru: 'Спросите' },
   askPh: { et: 'nt filtri mõõt', en: 'e.g. the filter size', ru: 'напр. размер фильтра' },
   askEmpty: { et: 'Juhendites seda ei ole.', en: 'The guides do not say.', ru: 'В инструкциях этого нет.' },
-  askTech: { et: 'Kui pole kindel, telli tehnik.', en: 'If you are not sure, order a technician.', ru: 'Если не уверены, закажите техника.' },
   askPage: { et: 'lk {page}', en: 'p. {page}', ru: 'стр. {page}' },
+  askOpen: { et: 'Ava juhend', en: 'Open the guide', ru: 'Откройте инструкцию' },
+  askTechBtn: { et: 'Telli tehnik', en: 'Order a technician', ru: 'Закажите техника' },
   askPerson: { et: 'Saada inimesele', en: 'Send to a person', ru: 'Отправьте человеку' },
   askSent: { et: 'Saadetud. Vastus tuleb siia.', en: 'Sent. The answer comes here.', ru: 'Отправлено. Ответ придёт сюда.' },
   exportHome: { et: 'Laadi kodu alla', en: 'Download this home', ru: 'Скачайте дом' },
@@ -41,8 +42,14 @@ export const kaustHtml = `<div id="dokumendid" class="lg:col-span-12 bg-white bo
                                     <input id="ask-q" type="text" x-model="askText" maxlength="200" :placeholder="t('askPh')" class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-line-strong">
                                     <button type="submit" class="p-btn shrink-0" x-text="t('askLabel')"></button>
                                 </div>
-                                <p class="text-sm font-sans font-light mt-3" x-show="askAnswer" x-text="askAnswer"></p>
-                                <button type="button" class="p-btn-2 mt-3" @click="sendAskToPerson()" x-text="t('askPerson')"></button>
+                                <div x-show="askCard" x-cloak class="mt-4 border border-line p-4 text-left">
+                                    <p class="text-sm font-sans font-light" x-show="askCard && askCard.fact" x-text="askCard && askCard.fact"></p>
+                                    <p class="text-sm text-muted font-sans font-light mt-1" x-show="askCard && askCard.place" x-text="askCard && askCard.place"></p>
+                                    <p class="text-sm font-sans font-light" x-show="askCard && !askCard.fact" x-text="t('askEmpty')"></p>
+                                    <a x-show="askCard && askCard.action === 'open'" class="p-btn mt-4 no-underline" :href="askCard ? askCard.href : ''" target="_blank" rel="noopener" x-text="t('askOpen')"></a>
+                                    <button type="button" x-show="askCard && askCard.action === 'tech'" class="p-btn mt-4" @click="orderTechnician()" x-text="t('askTechBtn')"></button>
+                                    <button type="button" x-show="askCard && askCard.action === 'person'" class="p-btn mt-4" @click="sendAskToPerson()" x-text="t('askPerson')"></button>
+                                </div>
                                 <button type="button" class="text-sm font-sans mt-3 underline underline-offset-4" @click="downloadHome()" x-text="t('exportHome')"></button>
                             </form>
 

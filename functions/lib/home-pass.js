@@ -23,14 +23,24 @@ function askHome({ question, facts, documents }) {
   }) || null;
   const docs = documentsForHome(documents?.building, documents?.home);
   const linked = fact?.sourceDocId ? docs.find((d) => d.id === fact.sourceDocId) : null;
-  const document = linked || docs.find((d) => {
+  const titled = docs.find((d) => {
     const blob = `${d.title || ''} ${d.category || ''}`.toLowerCase();
     return words.some((w) => blob.includes(w));
   }) || null;
+  const document = linked || titled;
+  const page = document?.page || fact?.page || null;
+  const url = /^https:\/\//.test(String(document?.url || '')) ? String(document.url).slice(0, 500) : '';
   return {
     found: !!(fact || document),
     fact: fact ? { key: fact.key, value: fact.value, page: fact.page || null, sourceDocId: fact.sourceDocId || null } : null,
-    document: document ? { id: document.id, title: document.title, page: document.page || fact?.page || null, scope: document.scope } : null,
+    document: document ? {
+      id: document.id,
+      title: document.title,
+      page,
+      scope: document.scope,
+      url,
+      hasFile: !!(document.file && document.file.path),
+    } : null,
     sensitive,
     suggestTechnician: sensitive,
   };

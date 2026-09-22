@@ -186,7 +186,7 @@
     maintOpen: null,
     docAdding: false,
     askText: '',
-    askAnswer: '',
+    askCard: null,
     docForm: { title: '', url: '', category: 'other', note: '' },
     docFile: null,
     docBusy: false,
@@ -974,29 +974,54 @@
         if (!base || !Number.isInteger(page) || page < 1) return base;
         return base + '#page=' + page;
     },
+    askDocHref(doc) {
+        if (!doc) return '';
+        const local = (this.documents.items || []).find((d) => d.id === doc.id);
+        if (local) return this.docHref(local);
+        const page = Number(doc.page);
+        const hash = Number.isInteger(page) && page > 0 ? '#page=' + page : '';
+        if (doc.hasFile && doc.id) return this.fileHref({ id: doc.id }) + hash;
+        return doc.url ? doc.url + hash : '';
+    },
+    askCardFrom(data) {
+        const fact = data && data.fact && data.fact.value ? data.fact : null;
+        if (!fact) return { fact: '', place: '', action: 'person', href: '' };
+        const doc = data.document || null;
+        const pageNo = fact.page || (doc && doc.page) || null;
+        const page = pageNo ? this.t('askPage', { page: pageNo }) : '';
+        const title = doc && doc.title ? doc.title : '';
+        const place = [title, page].filter(Boolean).join(' · ');
+        if (data.suggestTechnician) return { fact: fact.value, place, action: 'tech', href: '' };
+        const href = this.askDocHref(doc);
+        if (href) return { fact: fact.value, place, action: 'open', href };
+        return { fact: fact.value, place, action: 'person', href: '' };
+    },
     async askFolder() {
         const question = String(this.askText || '').trim();
         if (!question) return;
-        this.askAnswer = '';
+        this.askCard = null;
         try {
             const res = await fetch('/api/me/documents/ask', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + this.token }, body: JSON.stringify({ question }) });
             const data = await res.json();
-            if (!res.ok) { this.askAnswer = this.t('askEmpty'); return; }
-            const page = data.fact && data.fact.page ? ' · ' + this.t('askPage', { page: data.fact.page }) : '';
-            const line = data.fact ? data.fact.value + page : (data.document ? data.document.title : this.t('askEmpty'));
-            this.askAnswer = data.suggestTechnician ? line + ' ' + this.t('askTech') : line;
-        } catch (e) { this.askAnswer = this.t('askEmpty'); }
+            this.askCard = res.ok ? this.askCardFrom(data) : { fact: '', place: '', action: 'person', href: '' };
+        } catch (e) { this.askCard = { fact: '', place: '', action: 'person', href: '' }; }
+    },
+    orderTechnician() {
+        const svc = this.serviceById('systems-tuning');
+        if (!svc) return;
+        this.openRequest(svc);
+        this.requestNote = String(this.askText || '').trim();
     },
     async sendAskToPerson() {
         const question = String(this.askText || '').trim();
-        if (question.length < 5) { this.askAnswer = this.t('askEmpty'); return; }
+        if (question.length < 5) { this.askCard = { fact: '', place: '', action: 'person', href: '' }; return; }
         try {
             const res = await fetch('/api/me/requests', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + this.token }, body: JSON.stringify({ serviceId: 'home-manual', note: question }) });
             const data = await res.json();
-            if (!res.ok) { this.askAnswer = (data && data.error) || this.t('askEmpty'); return; }
-            this.askAnswer = this.t('askSent');
+            if (!res.ok) { this.askCard = { fact: (data && data.error) || '', place: '', action: 'person', href: '' }; return; }
+            this.askCard = { fact: this.t('askSent'), place: '', action: '', href: '' };
             if (data.request) this.extras = { ...this.extras, requests: [data.request].concat(this.extras.requests || []) };
-        } catch (e) { this.askAnswer = this.t('askEmpty'); }
+        } catch (e) { this.askCard = { fact: '', place: '', action: 'person', href: '' }; }
     },
     async downloadHome() {
         try {
