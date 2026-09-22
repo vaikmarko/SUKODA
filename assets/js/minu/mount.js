@@ -5,6 +5,7 @@
 import { dict } from './dict.js';
 import { koduHtml, pickNextThing } from './kodu.js';
 import { telliHtml } from './telli.js';
+import { kaustHtml } from './kaust.js';
 
 window.SUKODA_MINU = { dict, pickNextThing };
 
@@ -12,3 +13,5 @@ const kodu = document.getElementById('minu-kodu');
 if (kodu) kodu.outerHTML = koduHtml;
 const telli = document.getElementById('minu-telli');
 if (telli) telli.outerHTML = telliHtml;
+const kaust = document.getElementById('minu-kaust');
+if (kaust) kaust.outerHTML = kaustHtml;

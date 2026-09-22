@@ -1,7 +1,7 @@
 {
   "hex": {
     "index.html": 63,
-    "minu.html": 109,
+    "minu.html": 96,
     "haldus.html": 53,
     "lunasta.html": 12,
     "admin.html": 74,
@@ -15,7 +15,7 @@
   },
   "px": {
     "index.html": 77,
-    "minu.html": 69,
+    "minu.html": 61,
     "haldus.html": 45,
     "lunasta.html": 20,
     "admin.html": 113,
@@ -28,7 +28,7 @@
   },
   "eyebrow": {
     "index.html": 67,
-    "minu.html": 67,
+    "minu.html": 59,
     "haldus.html": 41,
     "lunasta.html": 19,
     "admin.html": 86,
@@ -42,7 +42,7 @@
   "emptyEn": {},
   "ternary": {
     "index.html": 175,
-    "minu.html": 233,
+    "minu.html": 214,
     "lunasta.html": 75,
     "kingitus.html": 103,
     "success.html": 54,

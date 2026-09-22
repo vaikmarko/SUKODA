@@ -847,7 +847,7 @@
         if (!this.docForm.title) return;
         if (this.docFile) {
             const f = this.docFile;
-            if (f.size > 8 * 1024 * 1024) { this.docError = this.lang === 'et' ? 'Fail on suurem kui 8 MB' : 'File is larger than 8 MB'; return; }
+            if (f.size > 8 * 1024 * 1024) { this.docError = this.t('docTooBig'); return; }
             const data = await new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result)); r.onerror = reject; r.readAsDataURL(f); });
             this.docBusy = true; this.docError = '';
             try {
@@ -862,7 +862,7 @@
         if (await this.documentAction({ action: 'add', ...this.docForm })) { this.docAdding = false; this.docForm = { title: '', url: '', category: 'other', note: '' }; }
     },
     async removeDocument(d) {
-        if (!confirm(this.lang === 'et' ? 'Eemalda dokument nimekirjast?' : 'Remove this document?')) return;
+        if (!confirm(this.t('docRemoveAsk'))) return;
         await this.documentAction({ action: 'remove', documentId: d.id });
     },
     async submitRequest() {
@@ -1721,60 +1721,8 @@
 
                         </aside>
 
-                        <!-- ── Kodu kaust: everything that belongs to the home, as real files — handed over with the keys, handed on with the home ── -->
-                        <div id="dokumendid" class="lg:col-span-12 bg-white border border-[#E8E3DD] p-have">
-                            <div class="flex flex-wrap items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
-                                <h2 class="p-h"><span class="p-num">03</span><span x-text="lang === 'et' ? 'Kodu kaust' : 'Home folder'"></span></h2>
-                                <button type="button" @click="docAdding = !docAdding; docFile = null" class="p-btn-2 p-btn-sm" x-text="lang === 'et' ? '+ Lisa fail' : '+ Add a file'"></button>
-                            </div>
+                        <div id="minu-kaust"></div>
 
-                            <!-- Add: a file (PDF or photo) or a link — one form -->
-                            <div x-show="docAdding" x-cloak class="px-6 py-6 border-b border-[#E8E3DD] bg-white">
-                                <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                                    <label class="block lg:col-span-2 border border-dashed border-[#D4CFC8] hover:border-black transition-colors p-4 cursor-pointer flex items-center gap-4" :class="docFile ? 'border-black bg-cream/40' : ''">
-                                        <svg class="w-6 h-6 text-accent shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 16V4m0 0l-4 4m4-4l4 4M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"></path></svg>
-                                        <span class="min-w-0">
-                                            <span class="font-sans text-sm block truncate" x-text="docFile ? docFile.name : (lang === 'et' ? 'Vali fail — PDF või foto' : 'Choose a file — PDF or photo')"></span>
-                                            <span class="text-xs text-muted font-sans font-light" x-text="docFile ? Math.round(docFile.size / 1024) + ' KB' : (lang === 'et' ? 'kuni 8 MB · või jäta tühjaks ja lisa link' : 'up to 8 MB · or leave empty and add a link')"></span>
-                                        </span>
-                                        <input type="file" class="hidden" accept="application/pdf,image/jpeg,image/png,image/webp,image/heic" @change="onDocFile($event)">
-                                    </label>
-                                    <label class="block"><span class="text-[10px] uppercase tracking-[0.15em] text-muted font-sans block mb-1" x-text="lang === 'et' ? 'Pealkiri' : 'Title'"></span><input type="text" x-model="docForm.title" maxlength="120" :placeholder="lang === 'et' ? 'nt Kodukindlustus 2026' : 'e.g. Home insurance 2026'" class="w-full bg-transparent border-b border-[#E8E3DD] focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-[#D4CFC8]"></label>
-                                    <label class="block"><span class="text-[10px] uppercase tracking-[0.15em] text-muted font-sans block mb-1" x-text="lang === 'et' ? 'Kategooria' : 'Category'"></span>
-                                        <select x-model="docForm.category" class="w-full bg-transparent border-b border-[#E8E3DD] py-2 font-sans font-light text-base outline-none"><template x-for="c in documents.categories" :key="c.id"><option :value="c.id" x-text="c.label"></option></template></select></label>
-                                    <label class="block lg:col-span-2" x-show="!docFile"><span class="text-[10px] uppercase tracking-[0.15em] text-muted font-sans block mb-1" x-text="lang === 'et' ? 'Link (kui faili pole)' : 'Link (if there is no file)'"></span><input type="url" x-model="docForm.url" placeholder="https://" class="w-full bg-transparent border-b border-[#E8E3DD] focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-[#D4CFC8]"></label>
-                                    <label class="block lg:col-span-2"><span class="text-[10px] uppercase tracking-[0.15em] text-muted font-sans block mb-1" x-text="lang === 'et' ? 'Märge' : 'Note'"></span><input type="text" x-model="docForm.note" maxlength="300" :placeholder="lang === 'et' ? 'nt kehtib kuni 03.2028' : 'e.g. valid until 03.2028'" class="w-full bg-transparent border-b border-[#E8E3DD] focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-[#D4CFC8]"></label>
-                                </div>
-                                <div class="flex items-center gap-4 mt-5">
-                                    <button type="button" @click="addDocument()" :disabled="!docForm.title || docBusy" class="p-btn" x-text="docBusy ? (lang === 'et' ? 'Salvestan…' : 'Saving…') : (docFile ? (lang === 'et' ? 'Laadi kausta' : 'Upload to folder') : (lang === 'et' ? 'Lisa kausta' : 'Add to folder'))"></button>
-                                    <button type="button" @click="docAdding = false; docFile = null" class="text-[11px] uppercase tracking-[0.15em] text-muted hover:text-black font-sans" x-text="lang === 'et' ? 'Loobu' : 'Cancel'"></button>
-                                    <p x-show="docError" x-cloak class="text-sm text-red-500 font-sans font-light" x-text="docError"></p>
-                                </div>
-                            </div>
-
-                            <div x-show="documents.items.length">
-                                <template x-for="group in documentsByCategory" :key="group.id">
-                                    <div class="border-b border-[#E8E3DD] last:border-b-0">
-                                        <p class="px-6 pt-5 pb-1 text-[10px] uppercase tracking-[0.16em] text-muted font-sans" x-text="group.label"></p>
-                                        <div class="divide-y divide-[#E8E3DD]">
-                                            <template x-for="d in group.items" :key="d.id">
-                                                <div class="px-6 py-3 flex items-center justify-between gap-4">
-                                                    <span class="min-w-0">
-                                                        <span class="block font-sans text-sm truncate" x-text="d.title"></span>
-                                                        <span x-show="d.note" class="block text-xs text-muted font-sans font-light truncate" x-text="d.note"></span>
-                                                    </span>
-                                                    <span class="flex items-center gap-4 shrink-0">
-                                                        <button type="button" x-show="d.source !== 'developer'" @click="removeDocument(d)" class="text-[10px] uppercase tracking-[0.14em] text-muted hover:text-black font-sans" x-text="lang === 'et' ? 'Eemalda' : 'Remove'"></button>
-                                                        <a x-show="d.file || d.url" :href="d.file ? fileHref(d) : d.url" target="_blank" rel="noopener" class="text-[11px] uppercase tracking-[0.14em] font-sans text-muted hover:text-black" x-text="lang === 'et' ? 'Ava' : 'Open'"></a>
-                                                    </span>
-                                                </div>
-                                            </template>
-                                        </div>
-                                    </div>
-                                </template>
-                            </div>
-                            <p x-show="!documents.items.length" class="px-6 py-10 text-center text-sm text-muted font-sans font-light" x-text="lang === 'et' ? 'Kaust on veel tühi. Lisa esimene fail — leping, garantii või seadme juhend.' : 'The folder is still empty. Add the first file — a contract, a warranty or an appliance manual.'"></p>
-                        </div>
                     </div>
                 </div>
 
