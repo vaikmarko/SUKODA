@@ -12,6 +12,7 @@
 
 const crypto = require('crypto');
 const core = require('./lib/haldus-core');
+const push = require('./push');
 
 module.exports = function createHaldus(deps) {
   const {
@@ -663,7 +664,11 @@ module.exports = function createHaldus(deps) {
       H2(heading) + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(intro)}`) + providerLine(providerName, lang, category) + body + portalBlock(lang, portalUrl),
       lang, brand,
     );
-    return { subject: brandSubject(order, subject), html };
+    return {
+      subject: brandSubject(order, subject),
+      html,
+      push: kind === 'reminder' ? push.message({ type: 'visit_tomorrow', lang, title: heading, body: intro, url: portalUrl }) : undefined,
+    };
   }
 
   function scheduleEmail({ order, bookings, providerName, lang }) {
@@ -805,7 +810,11 @@ module.exports = function createHaldus(deps) {
       + P(tt.requestReceivedNote) + portalBlock(lang, requestUrl(requestId)),
       lang, brandOf(order),
     );
-    return { subject: brandSubject(order, subject), html };
+    return {
+      subject: brandSubject(order, subject),
+      html,
+      push: push.message({ type: 'request_status', lang, title, body: intro, url: requestUrl(requestId) }),
+    };
   }
 
   /** Visit kinds: the requested time does not work — propose another. Issue kind: reviewed, not under warranty. */
@@ -814,9 +823,11 @@ module.exports = function createHaldus(deps) {
     const name = firstName(primaryName(order));
     const svc = requestName(request, lang);
     const issue = requestKind(request) === 'issue';
+    const heading = issue ? tt.issueReviewedTitle : tt.requestDeclinedTitle;
+    const intro = issue ? tt.issueReviewedIntro(providerName) : tt.requestDeclinedIntro(providerName);
     const html = wrap(
-      H2(issue ? tt.issueReviewedTitle : tt.requestDeclinedTitle)
-      + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(issue ? tt.issueReviewedIntro(providerName) : tt.requestDeclinedIntro(providerName))}`)
+      H2(heading)
+      + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(intro)}`)
       + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border-left:2px solid #B8976A;">
           ${LABEL(tt.service)}
           <p style="margin:0;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
@@ -826,7 +837,11 @@ module.exports = function createHaldus(deps) {
       + portalBlock(lang, requestUrl(requestId)),
       lang, brandOf(order),
     );
-    return { subject: brandSubject(order, issue ? tt.subjIssueReviewed(svc) : tt.subjRequestDeclined(svc)), html };
+    return {
+      subject: brandSubject(order, issue ? tt.subjIssueReviewed(svc) : tt.subjRequestDeclined(svc)),
+      html,
+      push: push.message({ type: 'request_status', lang, title: heading, body: intro, url: requestUrl(requestId) }),
+    };
   }
 
   function requestAnsweredEmail({ order, request, requestId, providerName, message, lang }) {
@@ -857,7 +872,11 @@ module.exports = function createHaldus(deps) {
       + portalBlock(lang, requestUrl(requestId)),
       lang, brandOf(order),
     );
-    return { subject: brandSubject(order, core.pick({ et: `SUKODA | Vastus: ${svc}`, en: `SUKODA | Answer: ${svc}`, ru: `SUKODA | Ответ: ${svc}` }, lang)), html };
+    return {
+      subject: brandSubject(order, core.pick({ et: `SUKODA | Vastus: ${svc}`, en: `SUKODA | Answer: ${svc}`, ru: `SUKODA | Ответ: ${svc}` }, lang)),
+      html,
+      push: push.message({ type: 'request_status', lang, title, body: replied, url: requestUrl(requestId) }),
+    };
   }
 
   /** The partner marked the visit behind a request as done */
@@ -877,7 +896,11 @@ module.exports = function createHaldus(deps) {
       + P(tt.completedNote) + portalBlock(lang, requestUrl(requestId)),
       lang, brandOf(order),
     );
-    return { subject: brandSubject(order, tt.subjCompleted(svc)), html };
+    return {
+      subject: brandSubject(order, tt.subjCompleted(svc)),
+      html,
+      push: push.message({ type: 'request_status', lang, title: tt.completedTitle, body: tt.completedIntro(providerName, svc), url: requestUrl(requestId) }),
+    };
   }
 
   // ============================================================
@@ -1141,6 +1164,9 @@ module.exports = function createHaldus(deps) {
     const subjectLead = isReschedule ? 'Aja muutmise soov' : kind === 'question' ? 'Küsimus' : kind === 'issue' ? (/pöördumin/i.test(svc) ? svc : `Pöördumine: ${svc}`) : `Uus soov: ${svc}`;
     return {
       subject: `SUKODA | ${subjectLead} — ${primaryName(order) || primaryEmail(order)}`,
+      push: push.message({
+        type: 'new_request', lang: 'et', title, body: intro, url: `${HALDUS_URL}?tab=requests`, audience: 'provider',
+      }),
       html: providerWrap(title, intro,
         `<div style="background:#FFFFFF;padding:28px;border-left:2px solid #B8976A;">
           ${LABEL(isReschedule ? 'Visiit' : kind === 'question' ? 'Teema' : 'Teenus')}
@@ -1171,7 +1197,17 @@ module.exports = function createHaldus(deps) {
   // Notification dispatch
   // ============================================================
 
-  async function notifyOrder(order, { subject, html }, { replyTo } = {}) {
+  async function deliverMailPush(order, mail) {
+    if (!mail || !mail.push) return;
+    try {
+      await push.deliver(mail.push, { tokens: push.tokensFrom(order) });
+    } catch (e) {
+      console.error('notifyOrder: push failed', e && e.message);
+    }
+  }
+
+  async function notifyOrder(order, mail, { replyTo } = {}) {
+    const { subject, html } = mail || {};
     const lang = core.langOf(order);
     const subj = subject && typeof subject === 'object' ? core.pick(subject, lang) : subject;
     const body = html && typeof html === 'object' ? core.pick(html, lang) : html;
@@ -1179,14 +1215,20 @@ module.exports = function createHaldus(deps) {
     for (const r of recipients) {
       await sendEmail({ to: r.email, subject: brandSubject(order, subj), html: body, replyTo, from: brandFrom(order) });
     }
+    await deliverMailPush(order, mail);
     return recipients.length;
   }
 
   /** One customer-facing mail to the primary address, carrying the home's brand (sender name + subject prefix) */
-  async function sendCustomerMail(order, { subject, html }, { replyTo, to } = {}) {
+  async function sendCustomerMail(order, mail, { replyTo, to } = {}) {
+    const { subject, html } = mail || {};
     const email = to || primaryEmail(order);
     if (!core.isValidEmail(email)) return false;
-    await sendEmail({ to: email, subject: brandSubject(order, subject), html, replyTo, from: brandFrom(order) });
+    const lang = core.langOf(order);
+    const subj = subject && typeof subject === 'object' ? core.pick(subject, lang) : subject;
+    const body = html && typeof html === 'object' ? core.pick(html, lang) : html;
+    await sendEmail({ to: email, subject: brandSubject(order, subj), html: body, replyTo, from: brandFrom(order) });
+    await deliverMailPush(order, mail);
     return true;
   }
 
@@ -1813,7 +1855,11 @@ module.exports = function createHaldus(deps) {
       lang,
       brandOf(order),
     );
-    return { subject: core.pick({ et: `SUKODA | Sõnum: ${svc}`, en: `SUKODA | Message: ${svc}`, ru: `SUKODA | Сообщение: ${svc}` }, lang), html };
+    return {
+      subject: core.pick({ et: `SUKODA | Sõnum: ${svc}`, en: `SUKODA | Message: ${svc}`, ru: `SUKODA | Сообщение: ${svc}` }, lang),
+      html,
+      push: push.message({ type: 'request_status', lang, title, body: wrote, url: requestUrl(requestId) }),
+    };
   }
 
   // ============================================================
@@ -3476,12 +3522,15 @@ module.exports = function createHaldus(deps) {
     }).join('');
     const n = items.length;
     const one = core.maintenanceName(items[0], lang);
+    const rhythmTitle = core.pick({ et: 'Kodu hooldusrütm', en: 'Home upkeep', ru: 'Ритм ухода за домом' }, lang);
+    const rhythmBody = n === 1 ? one : core.pick({ et: `${n} asja sel kuul`, en: `${n} things this month`, ru: `${n} дел в этом месяце` }, lang);
     return {
       subject: core.pick({
         et: `SUKODA | Kodu hooldus: ${n === 1 ? one : `${n} asja sel kuul`}`,
         en: `SUKODA | Home upkeep: ${n === 1 ? one : `${n} things this month`}`,
         ru: `SUKODA | Уход за домом: ${n === 1 ? one : `${n} дел в этом месяце`}`,
       }, lang),
+      push: push.message({ type: 'rhythm_due', lang, title: rhythmTitle, body: rhythmBody, url: PORTAL_URL }),
       html: wrap(
         H2(core.pick({ et: 'Kodu hooldusrütm', en: 'Home upkeep', ru: 'Ритм ухода за домом' }, lang))
         + P(core.pick({
@@ -3839,7 +3888,10 @@ module.exports = function createHaldus(deps) {
       // Provider (or operator when unrouted) + operator copy
       const providerMail = providerNewRequestEmail({ order, request });
       const providerTo = providerReplyTo(provider);
-      if (providerTo) await sendEmail({ to: providerTo, ...providerMail });
+      if (providerTo) {
+        await sendEmail({ to: providerTo, ...providerMail });
+        await deliverMailPush(provider, providerMail);
+      }
       if (providerTo !== NOTIFICATION_EMAIL) await sendEmail({ to: NOTIFICATION_EMAIL, ...providerMail, subject: `${providerMail.subject}${providerTo ? '' : ' (suunamata — SUKODA käsitleb)'}` });
 
       res.status(200).json({
@@ -3908,6 +3960,7 @@ module.exports = function createHaldus(deps) {
       const providerMail = providerNewRequestEmail({ order, request });
       const providerTo = providerReplyTo(provider) || NOTIFICATION_EMAIL;
       await sendEmail({ to: providerTo, ...providerMail });
+      if (provider) await deliverMailPush(provider, providerMail);
 
       res.status(200).json({ success: true, request: { ...serializeRequest(ref.id, request), serviceName: requestName(request, lang), createdAt: new Date().toISOString() }, providerName: provider?.name || null });
     },
