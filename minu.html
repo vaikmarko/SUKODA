@@ -1487,7 +1487,7 @@
                         <span x-text="t('tabServices')"></span>
                         <span x-show="awaitingRequests.length" x-cloak class="absolute top-2 -right-5 bg-accent text-white text-[10px] rounded-full w-[18px] h-[18px] flex items-center justify-center" x-text="awaitingRequests.length"></span>
                     </button>
-                    <button @click="activeTab = 'visits'" :class="activeTab === 'visits' ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black border-b-2 border-transparent'" class="py-4 transition-colors" x-text="lang === 'et' ? 'Kalender' : 'Calendar'"></button>
+                    <button @click="activeTab = 'visits'" :class="activeTab === 'visits' ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black border-b-2 border-transparent'" class="py-4 transition-colors" x-text="t('tabCalendar')"></button>
                     <button @click="activeTab = 'home'" :class="activeTab === 'home' ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black border-b-2 border-transparent'" class="py-4 transition-colors" x-text="t('tabHome')"></button>
                 </div>
             </div>
@@ -1789,7 +1789,7 @@
                                 </div>
                                 <!-- The 24h emergency line is the developer's own number; shown only when the brand has set one -->
                                 <p x-show="brand?.emergencyPhone" x-cloak class="text-xs text-muted font-sans font-light mt-3">
-                                    <span x-text="lang === 'et' ? 'Avarii 24h ' : 'Emergency 24h '"></span>
+                                    <span x-text="t('emergency') + ' '"></span>
                                     <a :href="'tel:' + String(brand?.emergencyPhone || '').replace(/\s+/g, '')" class="text-black hover:text-accent transition-colors whitespace-nowrap" x-text="brand?.emergencyPhone"></a>
                                 </p>
                             </div>

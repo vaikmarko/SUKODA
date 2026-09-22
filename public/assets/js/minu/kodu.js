@@ -4,6 +4,7 @@
   var dict = bucket.dict = bucket.dict || {};
 Object.assign(dict, {
   tabKodu: { et: 'Kodu', en: 'Home', ru: 'Дом' },
+  tabCalendar: { et: 'Kalender', en: 'Calendar', ru: 'Календарь' },
   hello: { et: 'Tere, ', en: 'Hello, ', ru: 'Здравствуйте, ' },
   logOut: { et: 'Logi välja', en: 'Log out', ru: 'Выйти' },
   warrantyUntil: { et: 'Garantii kuni {date}', en: 'Warranty until {date}', ru: 'Гарантия до {date}' },

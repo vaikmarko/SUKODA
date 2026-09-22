@@ -2,7 +2,7 @@ import { add } from './dict.js';
 
 add({
   tabHome: { et: 'Minu kodu', en: 'My home', ru: 'Мой дом' },
-  keeperSees: { et: 'Koduhooldaja näeb sissepääsu, lemmikuid ja eelistusi igal visiidil.', en: 'The housekeeper sees access, pets and preferences on every visit.', ru: 'Домработница видит вход, животных и предпочтения на каждом визите.' },
+  keeperSees: { et: 'Koduhooldaja näeb sissepääsu, lemmikuid ja eelistusi igal visiidil.', en: 'The housekeeper sees access, pets and preferences on every visit.', ru: 'Специалист по дому видит вход, животных и предпочтения на каждом визите.' },
   edit: { et: 'Muuda', en: 'Edit', ru: 'Измените' },
   notFilled: { et: 'Täitmata: ', en: 'Not filled: ', ru: 'Не заполнено: ' },
   save: { et: 'Salvesta', en: 'Save', ru: 'Сохраните' },
@@ -17,7 +17,7 @@ add({
   agreeTime: { et: 'Lepi aeg', en: 'Agree a time', ru: 'Согласуйте время' },
   orderVerb: { et: 'Telli', en: 'Order', ru: 'Закажите' },
   doneByPrefix: { et: 'Teeb ', en: 'Done by ', ru: 'Делает ' },
-  housekeeper: { et: 'Koduhooldaja', en: 'Housekeeper', ru: 'Домработница' },
+  housekeeper: { et: 'Koduhooldaja', en: 'Housekeeper', ru: 'Специалист по дому' },
   nextPrefix: { et: 'järgmine ', en: 'next ', ru: 'следующее ' },
   iDoIt: { et: 'Teen ise', en: 'I do it', ru: 'Сделаю сам' },
   nothingYet: { et: 'Midagi pole veel kirjas.', en: 'Nothing here yet.', ru: 'Пока ничего не записано.' },
@@ -43,7 +43,7 @@ add({
   homeHouse: { et: 'Maja', en: 'House', ru: 'Дом' },
   homeCottage: { et: 'Suvila', en: 'Cottage', ru: 'Дача' },
   pfAccess: { et: 'Sissepääs', en: 'Access', ru: 'Вход' },
-  pfAccessHint: { et: 'Koduhooldaja püsiv juhis: kood, võti, kellel võti on. Garantiile ja tehnikule küsitakse iga visiidi juures eraldi.', en: 'The housekeeper’s standing note: code, key, who holds it. Warranty and the technician are asked separately, each visit.', ru: 'Постоянная заметка для домработницы: код, ключ, у кого ключ. Гарантию и техника спрашивают отдельно на каждом визите.' },
+  pfAccessHint: { et: 'Koduhooldaja püsiv juhis: kood, võti, kellel võti on. Garantiile ja tehnikule küsitakse iga visiidi juures eraldi.', en: 'The housekeeper’s standing note: code, key, who holds it. Warranty and the technician are asked separately, each visit.', ru: 'Постоянная заметка для специалиста по дому: код, ключ, у кого ключ. Гарантию и техника спрашивают отдельно на каждом визите.' },
   pfPets: { et: 'Lemmikloomad', en: 'Pets', ru: 'Животные' },
   pfPetsHint: { et: 'nt kass Luna, sõbralik', en: 'e.g. cat Luna, friendly', ru: 'напр. кошка Луна, дружелюбная' },
   pfAllergies: { et: 'Allergiad ja vahendid', en: 'Allergies & products', ru: 'Аллергии и средства' },
