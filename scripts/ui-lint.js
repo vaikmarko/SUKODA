@@ -23,7 +23,7 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 const BASELINE = path.join(__dirname, 'ui-lint.baseline.json');
-const PAGES = ['index.html', 'minu.html', 'haldus.html', 'lunasta.html', 'admin.html', 'arendajale.html', 'kingitus.html', 'success.html', 'muuk.html', 'sales.html', 'lugu.html', 'deck.html'];
+const PAGES = ['index.html', 'minu.html', 'haldus.html', 'lunasta.html', 'kaart.html', 'admin.html', 'arendajale.html', 'kingitus.html', 'success.html', 'muuk.html', 'sales.html', 'lugu.html', 'deck.html'];
 const CORE = 'functions/lib/haldus-core.js';
 
 const CHECKS = {

@@ -530,6 +530,7 @@
                                 <button type="submit" class="h-btn h-btn-primary font-sans" x-text="t('handoverTitle')"></button>
                                 <p x-show="handoverCode" class="font-serif text-3xl font-light sm:col-span-2" x-text="handoverCode"></p>
                                 <p x-show="handoverCode" class="text-sm text-muted font-sans font-light sm:col-span-2" x-text="t('handoverCode')"></p>
+                                <a x-show="handoverCard" class="h-btn h-btn-primary font-sans no-underline sm:col-span-2 w-fit" :href="handoverCard" target="_blank" rel="noopener" x-text="t('printCard')"></a>
                             </form>
                         </div>
 
@@ -1021,6 +1022,7 @@
             routeHausing: { et: 'Hausing', en: 'Hausing' },
             handoverTitle: { et: 'Anna üle', en: 'Hand over' },
             handoverCode: { et: 'Kood elanikule', en: 'Code for the resident' },
+            printCard: { et: 'Prindi kaart', en: 'Print the card' },
             saving: { et: 'Märgin…', en: 'Saving…' },
             markedDone: { et: 'Märgitud tehtuks. Elanik saab teate.', en: 'Marked done. The resident is notified.' },
             markedQuiet: { et: 'Märgitud tehtuks. Teadet ei läinud — elanikul pole e-posti.', en: 'Marked done. No notice went out — the resident has no e-mail.' },
@@ -1154,6 +1156,7 @@
             buildingForm: { name: '', warranty: 'desk', building: 'desk' },
             handoverForm: { buildingId: '', apartment: '', buyerName: '', buyerEmail: '', keysAt: '' },
             handoverCode: '',
+            handoverCard: '',
             profileForm: { name: '', businessName: '', phone: '', notifyEmail: '' }, profileSaving: false, profileSaved: false, maintenanceIntervals: [1, 2, 3, 6, 12, 24],
             signupMode: new URLSearchParams(location.search).get('alusta') != null, signupForm: { name: '', businessName: '', email: '', phone: '', services: ['cleaning'], city: '' },
             range: { from: '', to: '' },
@@ -1842,11 +1845,15 @@
                 } catch (e) { this.showToast(e.message); }
             },
             async handOver() {
+                this.handoverCard = '';
                 try {
                     const res = await this.api('/api/haldus/buildings/handover', { method: 'POST', body: JSON.stringify(this.handoverForm) });
                     const d = await res.json();
                     if (!res.ok || !d.code) throw new Error(this.t('saveFailed'));
                     this.handoverCode = d.code;
+                    const address = [this.buildingForm.name, this.handoverForm.apartment].filter(Boolean).join(', ') || d.address || '';
+                    const name = this.handoverForm.buyerName || d.name || '';
+                    this.handoverCard = '/kaart?' + new URLSearchParams({ code: d.code, address, name }).toString();
                 } catch (e) { this.showToast(e.message); }
             },
             async saveProfile() {

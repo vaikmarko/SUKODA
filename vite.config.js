@@ -5,6 +5,22 @@ import { resolve } from 'path';
 
 /* Firebase cleanUrls serves /app as public/app.html. Vite has no such alias,
    so /app fell through to the marketing index. Rewrite before the SPA fallback. */
+/** Browser pages import the QR encoder; Node tests keep the CommonJS file. */
+function qrForBrowser() {
+  return {
+    name: 'sukoda-qr-esm',
+    transform(code, id) {
+      const file = id.split('?')[0].replace(/\\/g, '/');
+      if (!file.endsWith('/functions/lib/qr.js')) return null;
+      if (!code.includes('module.exports')) return null;
+      return code.replace(
+        'module.exports = { qrMatrix, qrSvg, chooseVersion };',
+        'export { qrMatrix, qrSvg, chooseVersion };',
+      );
+    },
+  };
+}
+
 function appShellRoute(root) {
   const file = resolve(root, 'public/app.html');
   const rewrite = (req) => {
@@ -15,6 +31,7 @@ function appShellRoute(root) {
     const search = q === -1 ? '' : raw.slice(q);
     const clean = path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path;
     if (clean === '/app') req.url = '/app.html' + search;
+    if (clean === '/kaart') req.url = '/kaart.html' + search;
   };
   const attach = (server) => {
     server.middlewares.use((req, _res, next) => {
@@ -30,7 +47,7 @@ function appShellRoute(root) {
 }
 
 export default defineConfig({
-  plugins: [appShellRoute(__dirname), tailwindcss()],
+  plugins: [qrForBrowser(), appShellRoute(__dirname), tailwindcss()],
   build: {
     outDir: 'dist',
     emptyOutDir: true,
@@ -39,6 +56,7 @@ export default defineConfig({
         index: resolve(__dirname, 'index.html'),
         lugu: resolve(__dirname, 'lugu.html'),
         lunasta: resolve(__dirname, 'lunasta.html'),
+        kaart: resolve(__dirname, 'kaart.html'),
         success: resolve(__dirname, 'success.html'),
         admin: resolve(__dirname, 'admin.html'),
         privaatsus: resolve(__dirname, 'privaatsus.html'),

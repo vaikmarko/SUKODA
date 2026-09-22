@@ -3011,6 +3011,7 @@ module.exports = function createHaldus(deps) {
       if (!clash.empty) return res.status(409).json({ error: 'retry' });
       let buildingDocuments = [];
       let sponsor = null;
+      let address = draft.handover.apartment;
       let buildingId = String(req.body?.buildingId || '').slice(0, 80);
       if (buildingId) {
         const buildingSnap = await db.collection('buildings').doc(buildingId).get();
@@ -3018,6 +3019,7 @@ module.exports = function createHaldus(deps) {
         if (!building || building.providerId !== provider.id) return res.status(404).json({ error: 'building' });
         buildingDocuments = Array.isArray(building.documents) ? building.documents : [];
         sponsor = building.sponsor || null;
+        if (building.name) address = `${building.name}, ${draft.handover.apartment}`;
       }
       const orderRef = db.collection('orders').doc();
       await orderRef.set({
@@ -3041,7 +3043,13 @@ module.exports = function createHaldus(deps) {
         sponsor,
         createdAt: FieldValue.serverTimestamp(),
       });
-      res.status(200).json({ code, path: '/lunasta' });
+      res.status(200).json({
+        code,
+        path: '/lunasta',
+        url: `https://sukoda.ee/lunasta?code=${code}`,
+        address,
+        name: draft.handover.buyerName,
+      });
     },
 
     'POST /api/haldus/hausing/preview': async (req, res) => {

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUKODA</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" type="image/svg+xml" href="/assets/logo/icon-s-black.svg">
+    <link rel="preload" href="/assets/fonts/cormorant-garamond-400.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/assets/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
+    <script type="module" src="/assets/js/kaart.js"></script>
+    <style>
+        @media print {
+            .kaart-screen { display: none !important; }
+        }
+        .kaart-qr svg { width: 100%; height: auto; display: block; }
+    </style>
+</head>
+<body class="bg-paper text-black antialiased" x-data="cardApp()" x-init="$watch('lang', v => localStorage.setItem('sukoda_lang', v))">
+    <main class="min-h-screen flex flex-col items-center justify-center px-6 py-10">
+        <article class="w-full max-w-sm border border-line bg-paper px-8 py-10 text-center">
+            <p class="eyebrow">SUKODA</p>
+            <h1 class="font-serif text-3xl font-light mt-6" x-show="address" x-text="address"></h1>
+            <p class="text-sm text-muted font-sans font-light mt-2" x-show="name" x-text="name"></p>
+            <p class="font-serif text-2xl tracking-widest mt-6" x-show="code" x-text="code"></p>
+            <div class="kaart-qr mx-auto mt-8 w-48 text-black" x-show="svg" x-html="svg"></div>
+            <div class="mt-8 space-y-2" x-show="code">
+                <template x-for="line in faces" :key="line">
+                    <p class="text-sm text-muted font-sans font-light" x-text="line"></p>
+                </template>
+            </div>
+            <p class="mt-6 text-sm font-sans font-light" x-show="!code" x-text="t('missing')"></p>
+        </article>
+        <div class="kaart-screen mt-8 flex flex-col items-center gap-4">
+            <button type="button" class="p-btn" x-show="code" @click="print()" x-text="t('print')"></button>
+            <div class="flex gap-3 text-xs font-sans">
+                <button type="button" @click="lang = 'et'" :class="langClass('et')">ET</button>
+                <button type="button" @click="lang = 'en'" :class="langClass('en')">EN</button>
+                <button type="button" @click="lang = 'ru'" :class="langClass('ru')">RU</button>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
