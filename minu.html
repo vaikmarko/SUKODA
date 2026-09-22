@@ -47,7 +47,7 @@
     get profileFields() {
         const et = this.lang === 'et';
         return [
-            { key: 'access', label: et ? 'Sissepääs' : 'Access', hint: et ? 'Koodlukk, võti, kellel võti on — püsiv juhis. Iga visiidi juures saad öelda, kas kehtib see, oled kodus, või anda ajutise koodi.' : 'Code lock, key, who holds a key — the standing rule. On each visit you can keep this, be home, or give a one-time code.', long: true },
+            { key: 'access', label: et ? 'Sissepääs' : 'Access', hint: et ? 'Koduhooldaja püsiv juhis: kood, võti, kellel võti on. Garantiile ja tehnikule küsitakse iga visiidi juures eraldi.' : 'The housekeeper’s standing note: code, key, who holds it. Warranty and the technician are asked separately, each visit.', long: true },
             { key: 'pets', label: et ? 'Lemmikloomad' : 'Pets', hint: et ? 'nt kass Luna, sõbralik' : 'e.g. cat Luna, friendly' },
             { key: 'allergies', label: et ? 'Allergiad ja vahendid' : 'Allergies & products', hint: et ? 'nt looduslikud vahendid, lateksiallergia' : 'e.g. natural products, latex allergy' },
             { key: 'flowerPreference', label: et ? 'Lilled' : 'Flowers', hint: et ? 'nt valged tulbid, mitte liiliaid' : 'e.g. white tulips, no lilies' },
@@ -106,6 +106,7 @@
     extras: { catalogue: [], timeWindows: [], requests: [], provider: null, florist: null, partners: [], brand: null, maxOpenRequests: 5, away: [] },
     extrasLoaded: false,
     requestService: null,
+    addonChooser: false,
     requestDate: '',
     requestWindow: 'any',
     requestNote: '',
@@ -130,6 +131,7 @@
     maintBusy: '',
     maintError: '',
     maintShowSuggestions: false,
+    maintOpen: null,
     docAdding: false,
     docForm: { title: '', url: '', category: 'other', note: '' },
     docFile: null,
@@ -355,11 +357,13 @@
     },
     openRequest(service) {
         this.viewRequest = null;
+        this.addonChooser = false;
         this.requestService = service;
         this.requestDate = '';
         this.requestWindow = service.category === 'flowers' ? 'with-visit' : 'any';
         this.requestUrgent = false;
-        this.requestAccess = this.homeProfile.access ? 'profile' : 'home';
+        const forCleaner = service.category === 'cleaning' || service.id === 'flowers';
+        this.requestAccess = (forCleaner && this.homeProfile.access) ? 'profile' : 'home';
         this.requestAccessNote = '';
         this.requestNote = '';
         this.requestError = '';
@@ -368,6 +372,7 @@
     closeRequest() {
         this.requestService = null;
         this.requestDone = null;
+        this.addonChooser = false;
     },
     async openThread(r) {
         if (!r) return;
@@ -426,12 +431,19 @@
         if (s.pricing === 'quote') return et ? `Küsimine on tasuta. ${who} saadab hinnapakkumise kirjalikult — töö algab alles siis, kui sa selle kinnitad.` : `Asking is free. ${who} sends a written quote — work starts only once you confirm it.`;
         if (this.requestKind === 'question') return et ? 'Küsimus on tasuta. Vastus tuleb kirjalikult siia ja e-postiga.' : 'Questions are free. The answer arrives here and by e-mail.';
         if (this.requestKind === 'issue') return et ? 'Garantiiajal tasuta. Kui töö jääb garantiist välja, anname sellest enne teada — ilma sinu nõusolekuta ei tehta midagi ega esitata arvet.' : 'Free during warranty. If the work falls outside it, we tell you first — nothing is done or invoiced without your consent.';
-        if (tm?.included && tm.quota) return (et ? `${tm.quota}. Üle selle ${tm.after || 'hind kokkuleppel'}` : `${tm.quota}. After that ${tm.after || 'price on request'}`) + (tm.billedBy ? (et ? `, arve ${tm.billedBy}.` : `, billed by ${tm.billedBy}.`) : '.') + (et ? ` ${who} kinnitab lõpliku hinna vastuses — enne tööd.` : ` ${who} confirms the final price in the reply — before the work.`);
-        if (s.priceLabel?.text || s.priceHint) return et ? `See on orientiir. ${who} kinnitab lõpliku hinna vastuses — enne tööd, mitte pärast.` : `This is a guide. ${who} confirms the final price in the reply — before the work, not after.`;
-        return et ? 'Hind kinnitatakse vastuses, enne tööd.' : 'The price is confirmed in the reply, before the work.';
+        if (s.priceLabel?.included && tm?.quota) return et ? `${tm.quota}. Kui miski jääb sellest välja, kinnitab ${who} hinna vastuses — enne tööd.` : `${tm.quota}. If anything falls outside that, ${who} confirms the price in the reply — before the work.`;
+        return et ? `${who} kinnitab hinna vastuses. Arvet ei esitata enne, kui oled töö kinnitanud.` : `${who} confirms the price in the reply. Nothing is invoiced before you confirm the work.`;
+    },
+    /** Guide price for this job. A category invoice (the standing clean) is not this job's bill. */
+    get requestPriceLine() {
+        const s = this.requestService;
+        if (!s || s.priceLabel?.included) return s?.priceLabel?.text || '';
+        const label = s.priceLabel?.text || '';
+        if (/^(arve|billed by)\b/i.test(label)) return (typeof s.priceHint === 'string' ? s.priceHint : '') || '';
+        return label.replace(/\s·\s(arve|billed by)\s.+$/i, '');
     },
     askPartner(p) {
-        // "Write here" on a partner card: a written question to the builder's team, a message to the housekeeper
+        // Write here on a partner card: a written question to the builder team, a message to the housekeeper
         const prefer = { warranty: ['home-manual'], building: ['building-question'], handyman: ['small-repairs'], cleaning: ['cleaning-note'], flowers: ['flowers'] }[p.category] || ['other'];
         const cat = this.extras.catalogue || [];
         const svc = prefer.map((id) => cat.find((s) => s.id === id)).find(Boolean) || cat.find((s) => s.category === p.category);
@@ -577,6 +589,11 @@
             flowers: et ? 'Nt: valged pojengid, mitte roosid. Vaas on köögis.' : 'E.g.: white peonies, no roses. The vase is in the kitchen.',
             'extra-works': et ? 'Nt: soovin rõdu klaasida. Kas saate hinnapakkumise teha?' : 'E.g.: I would like the balcony glazed. Could you send a quote?',
             'appliance-care': et ? 'Nt pesumasina filter ja pliidikubu. Kohvimasin on kapis vasakul.' : 'E.g. the washing-machine filter and the hood. The coffee machine is in the cupboard on the left.',
+            laundry: et ? 'Nt kaks masinatäit voodipesu ja rätikud.' : 'E.g. two loads of bed linen and towels.',
+            rugs: et ? 'Nt elutoa vaip, umbes 2 × 3 m, villane.' : 'E.g. the living-room rug, about 2 × 3 m, wool.',
+            curtains: et ? 'Nt magamistoa kardinapuu ja kardinad, mis on kapis.' : 'E.g. the bedroom rail and the curtains, which are in the cupboard.',
+            lock: et ? 'Nt välisukse südamik. Uus südamik on mul olemas.' : 'E.g. the front-door cylinder. I already have the new one.',
+            'appliance-install': et ? 'Nt nõudepesumasin on esikus, vaja oma kohale ühendada.' : 'E.g. the dishwasher is in the hall and needs connecting in place.',
             'away-care': et ? 'Nt 3. kuni 12. oktoober. Taimed elutoas ja rõdul, post lauale.' : 'E.g. 3 to 12 October. Plants in the living room and on the balcony, post on the table.',
             'small-repairs': et ? 'Nt esiku lambipirn ja vannitoa äravool voolab aeglaselt.' : 'E.g. the hall bulb and the bathroom drain runs slowly.',
             'cleaning-note': et ? 'Nt: alates oktoobrist sobiks koristus reedeti. Ja palun sel korral eritähelepanu köögile.' : 'E.g.: from October, Fridays would suit better. And extra attention to the kitchen this time, please.',
@@ -587,26 +604,23 @@
     /** With-the-next-cleaning only makes sense for the housekeeper’s own extras */
     timeWindowsFor(service) {
         const all = this.extras.timeWindows || [];
-        return service && service.category === 'cleaning' || service?.id === 'flowers' ? all : all.filter((w) => w.id !== 'with-visit');
+        const ownVisit = !service || service.id === 'extra-clean' || (service.category !== 'cleaning' && service.id !== 'flowers');
+        return ownVisit ? all.filter((w) => w.id !== 'with-visit') : all;
     },
     get needGroups() {
         const et = this.lang === 'et';
         const defs = [
-            { id: 'issue', title: et ? 'Midagi on katki või ei tööta nii, nagu peaks.' : 'Something is broken or does not work as it should.', blurb: et ? 'Uue kodu garantii: praod, vuugid, uksed ja aknad, küte ja ventilatsioon. Kirjelda ja saada. Garantiimeeskond vaatab üle ja kinnitab aja. Kui pole kindel, kas see on garantii, saada ikka.' : 'The warranty of a new home: cracks, joints, doors and windows, heating and ventilation. Describe it and send. The warranty team looks it over and confirms a time. If you are not sure it is warranty, send it anyway.', ids: ['warranty-claim', 'systems-tuning', 'warranty-inspection'] },
-            { id: 'question', title: et ? 'Küsimus kodu, maja või dokumendi kohta.' : 'A question about the home, the building or a document.', blurb: et ? 'Kuidas mu kodu töötab, küsib ehitaja meeskond. Parkimine, panipaik ja ühistu on halduri teema. Mõlemad vastavad kirjalikult ja vastus jääb kodu juurde kirja.' : 'How the home works is a question for the builder team. Parking, storage and the association are the manager. Both reply in writing and the answer stays on record with the home.', ids: ['home-manual', 'building-question'] },
-            { id: 'install', title: et ? 'Paigaldus, pisitööd ja muudatused.' : 'Installation, small jobs and changes.', blurb: et ? 'Maja tehnik teab, kus seintes jooksevad torud ja juhtmed. Pilt, riiul ja teler lähevad õigesse kohta. Filtrid ja pisiremont sama käiguga. Suuremad muudatused, näiteks rõdu klaasimine, küsi hinnapakkumisena ehitajalt.' : 'The building technician knows where pipes and wires run. A picture, a shelf and a television go in the right place. Filters and small repairs on the same visit. Larger changes, such as balcony glazing, ask the builder for a quote.', ids: ['hang-mount', 'assembly', 'small-repairs', 'vent-filters', 'extra-works'] },
-            { id: 'with-visit', title: et ? 'Koos järgmise koristusega.' : 'With the next clean.', blurb: et ? 'Asjad, mida koduhooldaja teeb sama visiidi käigus: kodumasinate filtrid, külmkapp ja ahi, voodipesu, triikimine, ja kimp lauale, kui külalised tulevad.' : 'Things the housekeeper does during the same visit: appliance filters, fridge and oven, linen, ironing, and a bouquet on the table when guests are coming.', ids: ['appliance-care', 'fridge-oven', 'linens', 'ironing', 'flowers'] },
-            { id: 'season', title: et ? 'Hooaeg ja reisid.' : 'Season and travel.', blurb: et ? 'Kaks korda aastas põhjalikumalt: aknad ja rõdu, süvapuhastus. Ja kui oled ära, hoitakse kodu kastetud, tuulutatud ja kontrollitud.' : 'Twice a year, more thoroughly: windows and balcony, a deep clean. And while you are away the home is watered, aired and checked.', ids: ['deep-clean', 'windows', 'away-care'] },
-            { id: 'garden', title: et ? 'Aed ja õu' : 'Garden and outdoors', blurb: et ? 'Muru, hekk, terrass ja hooajatööd.' : 'Lawn, hedge, terrace and seasonal work.', ids: ['lawn', 'hedge', 'outdoor-wash', 'seasonal-garden'] },
-            { id: 'other', title: et ? 'Midagi muud.' : 'Something else.', blurb: et ? 'Kui sobivat kaarti ei ole, kirjelda. Suuname õigele inimesele ja vastame siia.' : 'If no card fits, describe it. We route it to the right person and reply here.', ids: ['other'] },
+            { id: 'issue', title: et ? 'Garantii' : 'Warranty', ids: ['warranty-claim', 'systems-tuning', 'warranty-inspection'] },
+            { id: 'question', title: et ? 'Küsimus' : 'Question', ids: ['home-manual', 'building-question'] },
+            { id: 'install', title: et ? 'Tehnik' : 'Technician', ids: ['hang-mount', 'curtains', 'assembly', 'appliance-install', 'lock', 'small-repairs', 'vent-filters', 'extra-works'] },
+            { id: 'with-visit', title: et ? 'Koristus' : 'Cleaning', ids: ['extra-clean', 'deep-clean', 'windows', 'appliance-care', 'fridge-oven', 'laundry', 'linens', 'ironing', 'rugs', 'away-care', 'flowers', 'cleaning-note'] },
+            { id: 'garden', title: et ? 'Aed' : 'Garden', ids: ['lawn', 'hedge', 'outdoor-wash', 'seasonal-garden'] },
+            { id: 'other', title: et ? 'Muu' : 'Other', ids: ['other'] },
         ];
         const cat = this.extras.catalogue || [];
-        const cats = this.extras.categories || [];
-        const visible = new Set(cats.map((c) => c.id));
         return defs.map((d) => {
-            const items = d.ids.map((id) => cat.find((x) => x.id === id)).filter((x) => x && visible.has(x.category));
-            const who = [...new Set(items.map((x) => x.category))].map((c) => { const k = cats.find((y) => y.id === c); return { category: c, name: k?.partnerName || '', label: k?.label || c }; });
-            return { ...d, items, who };
+            const items = d.ids.map((id) => cat.find((x) => x.id === id)).filter((x) => x && this.isOrderable(x));
+            return { ...d, items };
         }).filter((d) => d.items.length);
     },
     /** One list of what waits on the household: requests waiting on someone, upkeep due, a time pending. Confirmed visits live in the calendar. */
@@ -644,8 +658,8 @@
         if (claim) out.push({ id: 'claim', category: 'warranty', tone: 'bg-accent/10 text-accent', icon: this.serviceIcon('warranty-claim'), title: et ? 'Teata puudusest' : 'Report a defect', sub: et ? 'Praod, uksed, vuugid, tehnosüsteemid — garantii korras.' : 'Cracks, doors, seals, systems — under warranty.', who: this.shortName(this.partnerNameFor(claim)) || (et ? 'Garantiimeeskond' : 'Warranty team'), cta: et ? 'Teata' : 'Report', go: () => this.openRequest(claim) });
         const q = svc('building-question') || svc('home-manual');
         if (q) out.push({ id: 'ask', category: q.category, tone: 'bg-cream text-black', icon: this.serviceIcon('home-manual'), title: et ? 'Küsi kodu või maja kohta' : 'Ask about the home', sub: et ? 'Juhend, parkimine, ühistu, dokument — vastame kirjalikult.' : 'Manual, parking, association, a document — answered in writing.', who: this.shortName(this.partnerNameFor(q)) || 'SUKODA', cta: et ? 'Küsi' : 'Ask', go: () => this.openRequest(q) });
-        out.push({ id: 'order', category: 'handyman', tone: 'bg-cream text-black', icon: this.serviceIcon('small-repairs'), title: et ? 'Telli töö koju' : 'Order work at home', sub: et ? 'Remondimees, süvapuhastus, aknad, lilled — kõik teenused ühes kohas.' : 'Handyman, deep clean, windows, flowers — every service in one place.', who: (this.extras.categories || []).filter((c) => c.partnerName).length + (et ? ' tegijat' : ' providers'), cta: et ? 'Vali' : 'Choose', go: () => { this.activeTab = 'extras'; } });
-        if (this.visitAddons.length && this.nextCleaning) out.push({ id: 'addon', category: 'cleaning', tone: 'bg-black text-paper', icon: 'M12 6v6m0 0v6m0-6h6m-6 0H6', title: et ? 'Lisa koristusvisiidile' : 'Add to the cleaning visit', sub: (et ? 'Külmkapp, triikimine, voodipesu — ' : 'Fridge, ironing, linens — ') + this.formatDateShort(this.nextCleaning.scheduledAt) + (et ? ' visiidi käigus.' : ' during the visit.'), who: this.order?.provider?.name || '', cta: et ? 'Lisa' : 'Add', go: () => this.openWithVisit(this.visitAddons[0]) });
+        out.push({ id: 'order', category: 'handyman', tone: 'bg-cream text-black', icon: this.serviceIcon('small-repairs'), title: et ? 'Telli teenus' : 'Order a service', sub: '', who: '', cta: et ? 'Vali' : 'Choose', go: () => { this.activeTab = 'extras'; } });
+        if (this.visitAddons.length && this.nextCleaning) out.push({ id: 'addon', category: 'cleaning', tone: 'bg-black text-paper', icon: 'M12 6v6m0 0v6m0-6h6m-6 0H6', title: et ? 'Lisa koristusvisiidile' : 'Add to the cleaning visit', sub: this.visitAddons.map((s) => s.name).slice(0, 3).join(', ') + (this.visitAddons.length > 3 ? (et ? ' ja muud' : ' and more') : '') + ' — ' + this.formatDateShort(this.nextCleaning.scheduledAt) + (et ? ' visiidi käigus.' : ' during the visit.'), who: this.order?.provider?.name || '', cta: et ? 'Vali' : 'Choose', go: () => this.openAddonChooser() });
         return out.slice(0, 4);
     },
     // ---- Composition helpers (layout only; no new data) ----
@@ -663,6 +677,10 @@
     get handymanStanding() {
         const cat = (this.extras.categories || []).find((c) => c.id === 'handyman');
         return !!(cat?.terms?.included || cat?.terms?.quota);
+    },
+    get handymanQuota() {
+        const cat = (this.extras.categories || []).find((c) => c.id === 'handyman');
+        return cat?.terms?.quota || (this.lang === 'et' ? 'Kokkulepitud' : 'Agreed');
     },
     openWarrantyClaim() {
         const s = (this.extras.catalogue || []).find((x) => x.id === 'warranty-claim');
@@ -702,8 +720,15 @@
     },
     // Extras that belong to the next cleaning visit rather than to a separate appointment
     get visitAddons() {
-        const ids = ['appliance-care', 'linens', 'ironing', 'fridge-oven', 'flowers'];
+        const ids = ['appliance-care', 'linens', 'ironing', 'laundry', 'fridge-oven', 'rugs', 'flowers'];
         return (this.extras.catalogue || []).filter((s) => ids.includes(s.id) && this.isOrderable(s) && !(s.id === 'flowers' && this.extras.flowers?.auto));
+    },
+    openAddonChooser() {
+        this.viewRequest = null;
+        this.requestDone = null;
+        this.requestService = null;
+        this.addonChooser = true;
+        this.requestError = '';
     },
     openWithVisit(service) {
         this.openRequest(service);
@@ -840,7 +865,7 @@
     requestStatusLabel(status, r) {
         const et = { requested: 'Ootab vastust', confirmed: 'Kinnitatud', completed: 'Tehtud', answered: 'Vastatud', declined: 'Vajab uut aega', cancelled: 'Tühistatud' };
         const en = { requested: 'Awaiting reply', confirmed: 'Confirmed', completed: 'Done', answered: 'Answered', declined: 'Needs a new time', cancelled: 'Cancelled' };
-        // A reviewed defect report that is not under warranty is not "needs a new time"
+        // A reviewed defect report that is not under warranty is not a request for a new time
         if (status === 'declined' && r && (r.outcome === 'not_covered' || (!r.outcome && r.kind === 'issue'))) return this.lang === 'et' ? 'Vaadatud üle' : 'Reviewed';
         return (this.lang === 'et' ? et : en)[status] || status;
     },
@@ -1268,7 +1293,7 @@
     closeTopLayer() {
         if (this.rescheduleBookingId) return this.closeReschedule();
         if (this.proposeBooking) return this.closePropose();
-        if (this.requestService) return this.closeRequest();
+        if (this.requestService || this.addonChooser) return this.closeRequest();
         if (this.viewRequest) return this.closeThread();
     },
 
@@ -1386,35 +1411,10 @@
                 <div class="grid lg:grid-cols-12 items-stretch">
                     <div class="px-6 md:px-12 py-8 md:py-12 flex flex-col justify-center" :class="brand?.image ? 'lg:col-span-7' : 'lg:col-span-12'">
                         <div class="accent-line mb-4"></div>
-                        <!-- Developer white label: whose after-sales this home belongs to -->
-                        <p x-show="brand" x-cloak class="text-[11px] uppercase tracking-[0.22em] font-sans text-muted mb-3">
-                            <span class="text-black font-medium" x-text="brand?.name"></span><span x-show="brand?.project" x-text="' · ' + brand?.project"></span><span class="text-muted/70" x-text="lang === 'et' ? ' · Järelteenindus' : ' · After-sales'"></span>
+                        <h1 class="font-serif text-3xl md:text-4xl font-light" x-text="(lang === 'et' ? 'Tere, ' : 'Hello, ') + ((viewer?.name || order?.customerName || '').split(' ')[0])"></h1>
+                        <p class="text-sm text-muted font-sans font-light mt-3" x-show="(order?.customerAddress || order?.address) || brand?.warrantyUntil">
+                            <span x-text="order?.customerAddress || order?.address"></span><span x-show="brand?.warrantyUntil && (order?.customerAddress || order?.address)"> · </span><span x-show="brand?.warrantyUntil" x-text="(lang === 'et' ? 'Garantii kuni ' : 'Warranty until ') + (brand?.warrantyUntil ? window.SUKODA_TIME.formatDate(brand.warrantyUntil + 'T12:00:00', lang === 'et' ? 'et-EE' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '')"></span>
                         </p>
-                        <div class="flex flex-wrap items-end justify-between gap-4">
-                            <div>
-                                <h1 class="font-serif text-3xl md:text-4xl font-light mb-2" x-text="(lang === 'et' ? 'Tere, ' : 'Hello, ') + ((viewer?.name || order?.customerName || '').split(' ')[0])"></h1>
-                                <p class="text-muted font-sans font-light text-base max-w-xl" x-text="(lang === 'et' && brand?.tagline) || (lang === 'et' ? 'Sinu kodu — ajad, teenused ja pere teavitused ühes kohas.' : 'Your home — times, services and household notifications in one place.')"></p>
-                            </div>
-                            <p x-show="(order?.customerAddress || order?.address) && !brand" class="text-sm text-muted font-sans font-light flex items-center gap-2">
-                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                <span x-text="order?.customerAddress || order?.address"></span>
-                            </p>
-                        </div>
-                        <!-- Three facts a new owner wants to see without looking for them -->
-                        <div x-show="brand && extrasLoaded" x-cloak class="grid grid-cols-3 gap-6 mt-8 pt-6 border-t border-[#E8E3DD] max-w-xl">
-                            <div>
-                                <p class="font-serif text-xl md:text-2xl font-light leading-none whitespace-nowrap" x-text="brand?.warrantyUntil ? window.SUKODA_TIME.formatDate(brand.warrantyUntil + 'T12:00:00', lang === 'et' ? 'et-EE' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'"></p>
-                                <p class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mt-2" x-text="lang === 'et' ? 'Garantii kehtib kuni' : 'Warranty until'"></p>
-                            </div>
-                            <button type="button" @click="activeTab = 'overview'" class="text-left">
-                                <span class="block font-serif text-xl md:text-2xl font-light leading-none" x-text="partners.length"></span>
-                                <span class="block text-[10px] uppercase tracking-[0.16em] text-muted font-sans mt-2" x-text="lang === 'et' ? (partners.length === 1 ? 'Tegija kodu juures' : 'Tegijat kodu juures') : (partners.length === 1 ? 'Provider for the home' : 'Providers for the home')"></span>
-                            </button>
-                            <button type="button" @click="activeTab = 'home'; $nextTick(() => document.getElementById('dokumendid')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))" class="text-left">
-                                <span class="block font-serif text-xl md:text-2xl font-light leading-none" x-text="documents.items.length"></span>
-                                <span class="block text-[10px] uppercase tracking-[0.16em] text-muted font-sans mt-2" x-text="lang === 'et' ? (documents.items.length === 1 ? 'Dokument kaustas' : 'Dokumenti kaustas') : (documents.items.length === 1 ? 'Document in the folder' : 'Documents in the folder')"></span>
-                            </button>
-                        </div>
                     </div>
                     <!-- The home. Only with a real project picture from the developer — never a stock interior under the project's name. -->
                     <div x-show="brand?.image" x-cloak class="lg:col-span-5 relative min-h-[220px] lg:min-h-0 border-t lg:border-t-0 lg:border-l border-[#E8E3DD]">
@@ -1479,11 +1479,8 @@
                                 <button type="button" x-show="!pendingRescheduleIds.includes(upcomingBookings[0]?.id)" @click="changeTime(upcomingBookings[0])" class="p-btn shrink-0" x-text="lang === 'et' ? 'Muuda aega' : 'Reschedule'"></button>
                             </div>
                             <!-- Small extras belong to the visit, not to a separate list -->
-                            <div x-show="visitAddons.length && upcomingBookings[0]?.kind !== 'extra'" x-cloak class="px-6 md:px-8 py-4 border-t border-[#E8E3DD] bg-cream/30 flex flex-wrap items-center gap-2">
-                                <span class="text-[11px] uppercase tracking-[0.16em] text-muted font-sans mr-2" x-text="lang === 'et' ? 'Lisa sellele visiidile' : 'Add to this visit'"></span>
-                                <template x-for="s in visitAddons" :key="'ov-addon-' + s.id">
-                                    <button type="button" @click="openWithVisit(s)" class="px-3 py-1.5 bg-white border border-[#E8E3DD] hover:border-black text-xs font-sans transition-colors" x-text="s.name"></button>
-                                </template>
+                            <div x-show="visitAddons.length && upcomingBookings[0]?.kind !== 'extra'" x-cloak class="px-6 md:px-8 py-4 border-t border-[#E8E3DD]">
+                                <button type="button" @click="openAddonChooser()" class="text-[11px] uppercase tracking-[0.16em] font-sans text-muted hover:text-black" x-text="lang === 'et' ? 'Lisa sellele visiidile →' : 'Add to this visit →'"></button>
                             </div>
                             <!-- Then: the next few, as a compact strip -->
                             <div x-show="upcomingBookings.length > 1" class="border-t border-[#E8E3DD] overflow-hidden">
@@ -1538,20 +1535,11 @@
                                 <h2 class="p-h"><span class="p-num">03</span><span x-text="lang === 'et' ? 'Mida sa vajad?' : 'What do you need?'"></span></h2>
                                 <button type="button" @click="activeTab = 'extras'" class="text-[11px] uppercase tracking-[0.16em] font-sans text-accent hover:text-black transition-colors" x-text="lang === 'et' ? 'Kõik teenused →' : 'All services →'"></button>
                             </div>
-                            <div class="grid sm:grid-cols-2 -mr-px -mb-px overflow-hidden">
+                            <div class="divide-y divide-[#E8E3DD]">
                                 <template x-for="q in quickActions" :key="q.id">
-                                    <button type="button" @click="q.go()" class="group text-left border-r border-b border-[#E8E3DD] p-6 flex flex-col gap-4 hover:bg-cream/40 transition-colors min-h-[164px]">
-                                        <span class="w-11 h-11 rounded-full flex items-center justify-center shrink-0" :class="q.tone">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" :d="q.icon"></path></svg>
-                                        </span>
-                                        <span class="flex-1">
-                                            <span class="font-serif text-xl font-light block leading-tight" x-text="q.title"></span>
-                                            <span class="text-sm text-muted font-sans font-light block mt-1.5 leading-relaxed" x-text="q.sub"></span>
-                                        </span>
-                                        <span class="flex items-center justify-between gap-3">
-                                            <span class="flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] font-sans text-muted min-w-0"><span class="w-2 h-2 rounded-full shrink-0" :class="partnerDot(q.category)"></span><span class="truncate" x-text="q.who"></span></span>
-                                            <span class="p-cta" x-text="q.cta"></span>
-                                        </span>
+                                    <button type="button" @click="q.go()" class="group w-full text-left px-6 py-4 flex items-baseline justify-between gap-4 hover:bg-cream/40 transition-colors">
+                                        <span class="font-sans text-sm font-light" x-text="q.title"></span>
+                                        <span class="shrink-0 text-[11px] uppercase tracking-[0.14em] font-sans text-muted group-hover:text-black" x-text="q.cta"></span>
                                     </button>
                                 </template>
                             </div>
@@ -1561,36 +1549,25 @@
 
                         <aside class="lg:col-span-4 space-y-6 lg:space-y-8 min-w-0">
                         <!-- Home partners -->
-                        <div x-show="partners.length" x-cloak class="bg-white border border-[#E8E3DD]">
-                            <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
-                                <h2 class="p-h" x-text="lang === 'et' ? 'Kes su kodus käivad' : 'Who comes to your home'"></h2>
-                                <span class="text-[11px] font-sans text-muted" x-text="partners.length"></span>
+                        <div x-show="extrasLoaded && partners.length" x-cloak class="bg-white border border-[#E8E3DD]">
+                            <div class="px-6 py-4 border-b border-[#E8E3DD]">
+                                <h2 class="p-h" x-text="lang === 'et' ? 'Kelle poole pöörduda' : 'Who to contact'"></h2>
                             </div>
                             <!-- One entry per role: the housekeeper, the builder's warranty team, the florist … each with a way to reach them -->
                             <div class="divide-y divide-[#E8E3DD]">
                                 <template x-for="p in partners" :key="'partner-' + p.category">
-                                    <div class="p-6">
-                                        <div class="flex items-center gap-4">
-                                            <div class="w-12 h-12 rounded-full flex items-center justify-center font-serif text-xl shrink-0" :class="['cleaning', 'warranty', 'handyman'].includes(p.category) ? partnerDot(p.category) + ' text-paper' : 'bg-cream border border-[#E8E3DD]'" x-text="(p.contactName || p.name || '?').charAt(0)"></div>
-                                            <div class="min-w-0 flex-1">
-                                                <!-- A person first when the desk has one; the team name otherwise. Never the company three times. -->
-                                                <p class="font-sans text-sm font-medium truncate" x-text="p.contactName || p.name"></p>
-                                                <p class="text-sm text-muted font-sans font-light truncate"><span x-text="p.label"></span><span x-show="p.contactName" x-text="' · ' + p.name"></span><span x-show="!p.contactName && p.businessName && shortName(p.businessName) !== shortName(p.name)" x-text="' · ' + p.businessName"></span></p>
-                                            </div>
-                                        </div>
-                                        <div x-show="p.phone || p.email" class="flex flex-wrap gap-2 mt-5">
-                                            <a x-show="p.phone" :href="'tel:' + p.phone" class="flex-1 min-w-0 h-10 px-3 border border-[#E8E3DD] text-[11px] uppercase tracking-[0.12em] font-sans flex items-center justify-center gap-2 hover:border-black transition-colors">
-                                                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-                                                <span class="truncate" x-text="p.phone"></span>
-                                            </a>
-                                            <button type="button" @click="askPartner(p)" class="h-10 px-4 border border-[#E8E3DD] text-[11px] uppercase tracking-[0.12em] font-sans flex items-center justify-center hover:border-black transition-colors shrink-0" :class="p.phone ? '' : 'flex-1'" x-text="lang === 'et' ? 'Kirjuta siia' : 'Write here'"></button>
-                                        </div>
+                                    <div class="px-6 py-3 flex items-center justify-between gap-4">
+                                        <span class="min-w-0">
+                                            <span class="block font-sans text-sm truncate" x-text="p.contactName || p.name"></span>
+                                            <span class="block text-xs text-muted font-sans font-light truncate" x-text="p.label"></span>
+                                        </span>
+                                        <span class="flex items-center gap-4 shrink-0">
+                                            <a x-show="p.phone" :href="'tel:' + p.phone" class="text-[11px] uppercase tracking-[0.14em] font-sans text-muted hover:text-black" x-text="p.phone"></a>
+                                            <button type="button" @click="askPartner(p)" class="text-[11px] uppercase tracking-[0.14em] font-sans text-muted hover:text-black" x-text="lang === 'et' ? 'Kirjuta' : 'Write'"></button>
+                                        </span>
                                     </div>
                                 </template>
                             </div>
-                            <p class="px-6 py-4 border-t border-[#E8E3DD] bg-cream/30 text-xs text-muted font-sans font-light leading-relaxed" x-text="brand
-                                ? (lang === 'et' ? 'Tegijad määrab arendaja. Sina näed nimesid ja kirjutad neile siit — vestlus jääb kodu juurde, e-kiri ainult teavitab.' : 'The developer assigns who comes. You see the names and write to them here — the conversation stays with the home, e-mail only notifies.')
-                                : (lang === 'et' ? 'Kõik ajad, muudatused ja meeldetuletused jõuavad sinuni ja pere kontaktidele automaatselt — koos kalendrikutsega.' : 'Every time, change and reminder reaches you and your household contacts automatically — with a calendar invite.')"></p>
                         </div>
 
                         <!-- The home in four numbers. Developer homes already carry their facts in the header — one place each. -->
@@ -1620,11 +1597,8 @@
                         </div>
 
                         <!-- Who to talk to: the developer's after-sales team for a developer home, SUKODA otherwise. The building's 24h line only when the developer has set one. -->
-                        <p class="text-sm text-muted font-sans font-light px-1 leading-relaxed">
-                            <span x-text="lang === 'et' ? 'Küsimuste korral: ' : 'Questions: '"></span>
-                            <template x-if="warrantyPartner"><span><span class="text-black" x-text="warrantyPartner.name"></span><span x-show="warrantyPartner.phone"> · <a :href="'tel:' + warrantyPartner.phone" class="text-black hover:text-accent transition-colors" x-text="warrantyPartner.phone"></a></span></span></template>
-                            <template x-if="!warrantyPartner"><a href="mailto:tere@sukoda.ee" class="text-black hover:text-accent transition-colors">tere@sukoda.ee</a></template>
-                            <span x-show="brand?.emergencyPhone" x-cloak class="block mt-1"><span x-text="lang === 'et' ? 'Avarii 24h: ' : 'Emergency 24h: '"></span><a :href="'tel:' + (brand?.emergencyPhone || '').replace(/\s+/g, '')" class="text-black hover:text-accent transition-colors" x-text="brand?.emergencyPhone"></a></span>
+                        <p x-show="brand?.emergencyPhone" x-cloak class="text-sm text-muted font-sans font-light px-1">
+                            <span x-text="lang === 'et' ? 'Avarii 24h: ' : 'Emergency 24h: '"></span><a :href="'tel:' + (brand?.emergencyPhone || '').replace(/\s+/g, '')" class="text-black hover:text-accent transition-colors" x-text="brand?.emergencyPhone"></a>
                         </p>
                         </aside>
                     </div>
@@ -1652,7 +1626,7 @@
                             </div>
                             <div class="p-6 md:p-8">
                                 <p class="font-serif text-2xl md:text-3xl font-light leading-snug" x-text="order?.customerAddress || order?.address || (lang === 'et' ? 'Kodu' : 'Home')"></p>
-                                <p class="text-sm text-muted font-sans font-light leading-relaxed mt-3 max-w-lg" x-text="lang === 'et' ? 'See, mida koduhooldaja ja teised, kes su kodus käivad, peavad teadma — sissepääs, lemmikloomad, eelistused. Nad näevad seda igal visiidil. Kui annad korteri kellelegi teisele või oled ise kodus, ütle seda konkreetse soovi juures.' : 'What your housekeeper and anyone else who comes should know — access, pets, preferences. They see it on every visit. If someone else has the flat, or you will be in, say so on that specific request.'"></p>
+                                <p class="text-sm text-muted font-sans font-light leading-relaxed mt-3 max-w-lg" x-text="lang === 'et' ? 'Koduhooldaja näeb sissepääsu, lemmikuid ja eelistusi igal visiidil.' : 'The housekeeper sees access, pets and preferences on every visit.'"></p>
 
                                 <!-- Read mode -->
                                 <div x-show="!profileEditing" class="mt-7">
@@ -1697,52 +1671,39 @@
                         <!-- ── Hooldusrütm: what the home needs on a rhythm — split by who does it ── -->
                         <div id="hooldus" class="bg-white border border-[#E8E3DD]">
                             <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
-                                <h2 class="p-h"><span class="p-num">02</span><span x-text="lang === 'et' ? 'Kodu hooldusrütm' : 'Home upkeep rhythm'"></span></h2>
+                                <h2 class="p-h"><span class="p-num">02</span><span x-text="lang === 'et' ? 'Hooldus' : 'Upkeep'"></span></h2>
                                 <span x-show="maintenanceDue" class="inline-flex px-2.5 py-1 text-[11px] uppercase tracking-[0.12em] rounded-full bg-accent/10 text-accent" x-text="maintenanceDue + (lang === 'et' ? ' ootel' : ' due')"></span>
                             </div>
-                            <div class="p-6 md:p-8">
-                            <p class="text-sm text-muted font-sans font-light leading-relaxed max-w-lg">
-                                <span x-show="maintenance.provider" x-text="lang === 'et' ? `Filtrid, pesumasin, süvapuhastus, suitsuandur. Mida ${providerFirstName} teeb oma töö osana, on tema nime all — sa saad ühe rea teate, kui tehtud. Ülejäänu on sinu hoole all: tuletame õigel ajal meelde ja sa märgid tehtuks või tellid tegija.` : `Filters, washing machine, deep clean, smoke detector. What ${providerFirstName} does as part of the service is under their name — you get a one-line note when it is done. The rest is yours: we remind you in time and you tick it off or order someone.`"></span>
-                                <span x-show="!maintenance.provider" x-text="lang === 'et' ? 'Filtrid, pesumasin, süvapuhastus, suitsuandur — asjad, mida kodu vajab, aga mida keegi ei mäleta. Vali, mis su kodus kehtib; tuletame õigel ajal meelde ja sa märgid tehtuks või tellid tegija.' : 'Filters, washing machine, deep clean, smoke detector — what a home needs but nobody remembers. Choose what applies; we remind you in time and you tick it off or order someone.'"></span>
-                            </p>
+                            <div class="p-6 md:p-8 space-y-10">
 
-                            <!-- Sinu hoole all -->
-                            <div class="mt-7" x-show="maintHomeItems.length">
-                                <p x-show="maintenance.provider" class="text-[11px] uppercase tracking-[0.15em] text-accent font-sans mb-1" x-text="lang === 'et' ? 'Sinu hoole all' : 'Yours'"></p>
-                                <div class="divide-y divide-[#E8E3DD] border-t border-b border-[#E8E3DD]">
+                            <div x-show="maintHomeItems.length">
+                                <h3 class="font-serif text-2xl font-light mb-2" x-text="lang === 'et' ? 'Sina' : 'You'"></h3>
+                                <div>
                                     <template x-for="item in maintHomeItems" :key="item.id">
-                                        <div class="py-4">
-                                            <div class="flex items-start gap-4">
-                                                <span class="mt-2 w-2.5 h-2.5 rounded-full shrink-0" :class="item.state === 'overdue' ? 'bg-red-400' : item.state === 'due' ? 'bg-accent' : 'bg-[#D4CFC8]'"></span>
-                                                <div class="min-w-0 flex-1">
-                                                    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                                                        <p class="font-sans text-sm font-medium" x-text="item.name"></p>
-                                                        <p class="text-sm font-sans font-light" :class="item.state === 'overdue' ? 'text-red-500' : item.state === 'due' ? 'text-accent' : 'text-muted'" x-text="dueLabel(item)"></p>
-                                                        <!-- Who this lands on when it is not you: the builder's team, the handyman, the housekeeper -->
-                                                        <span x-show="item.doerName" class="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.12em] font-sans text-muted"><span class="w-2 h-2 rounded-full shrink-0" :class="partnerDot(item.doerCategory)"></span><span x-text="item.doerName"></span></span>
-                                                    </div>
-                                                    <p class="text-sm text-muted font-sans font-light mt-0.5">
-                                                        <select :value="item.intervalMonths" @change="changeInterval(item, $event.target.value)" class="bg-transparent border-b border-dotted border-[#D4CFC8] text-muted outline-none font-light cursor-pointer">
-                                                            <template x-for="m in maintenance.intervals" :key="m"><option :value="m" :selected="m === item.intervalMonths" x-text="intervalLabel(m)"></option></template>
-                                                        </select>
-                                                        <span x-show="item.lastDoneAt" x-text="' · ' + lastDoneLabel(item)"></span>
-                                                    </p>
-                                                    <p x-show="item.hint" class="text-xs text-muted/80 font-sans font-light mt-1 leading-relaxed" x-text="item.hint"></p>
-                                                    <!-- The home's own note on this item: who did it last, where the spares are -->
-                                                    <p x-show="item.note" x-cloak class="text-sm text-black/70 font-sans font-light mt-1 leading-relaxed" x-text="item.note"></p>
-                                                    <div x-show="maintDoneFor === item.id" x-cloak class="flex flex-wrap items-center gap-3 mt-3">
-                                                        <input type="date" x-model="maintDoneDate" :max="maintenance.today" class="border border-[#E8E3DD] bg-white px-3 py-2 text-sm font-sans font-light outline-none focus:border-accent">
-                                                        <button type="button" @click="markMaintenanceDone(item, maintDoneDate)" :disabled="!!maintBusy" class="p-btn p-btn-sm disabled:opacity-50" x-text="lang === 'et' ? 'Märgi' : 'Mark'"></button>
-                                                        <button type="button" @click="maintDoneFor = null" class="text-[11px] uppercase tracking-[0.15em] text-muted hover:text-black font-sans" x-text="lang === 'et' ? 'Loobu' : 'Cancel'"></button>
-                                                    </div>
-                                                    <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-[11px] uppercase tracking-[0.15em] font-sans">
-                                                        <button type="button" @click="markMaintenanceDone(item)" :disabled="!!maintBusy" class="text-black hover:text-accent transition-colors disabled:opacity-40" x-text="lang === 'et' ? 'Tehtud täna' : 'Done today'"></button>
-                                                        <button type="button" @click="maintDoneFor = maintDoneFor === item.id ? null : item.id; maintDoneDate = maintenance.today" class="text-muted hover:text-black transition-colors" x-text="lang === 'et' ? 'Muu kuupäev' : 'Other date'"></button>
-                                                        <!-- Warranty work is not ordered, a time is agreed; anything else is ordered from the named partner -->
-                                                        <button type="button" x-show="item.serviceId" @click="orderMaintenance(item)" class="text-accent hover:text-black transition-colors" x-text="!item.orderable ? (lang === 'et' ? 'Soovin tegijat' : 'Want someone') : item.doerCategory === 'warranty' ? (lang === 'et' ? 'Lepi aeg' : 'Agree a time') : (lang === 'et' ? 'Telli' : 'Order') + (item.doerName ? ': ' + shortName(item.doerName) : (lang === 'et' ? ' tegija' : ' it'))"></button>
-                                                        <button type="button" x-show="maintenance.provider && item.doer !== 'partner'" @click="assignMaintenance(item, 'provider')" :disabled="!!maintBusy" class="text-muted hover:text-black transition-colors" x-text="(lang === 'et' ? 'Teeb ' : 'Done by ') + providerFirstName"></button>
-                                                        <button type="button" @click="removeMaintenance(item)" class="text-muted/60 hover:text-black transition-colors ml-auto" x-text="lang === 'et' ? 'Eemalda' : 'Remove'"></button>
-                                                    </div>
+                                        <div class="border-b border-[#E8E3DD]">
+                                            <button type="button" @click="maintOpen = maintOpen === item.id ? null : item.id; if (maintOpen === item.id) $nextTick(() => $el.nextElementSibling && $el.nextElementSibling.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))" class="group w-full text-left py-3 flex items-baseline justify-between gap-4">
+                                                <span class="font-sans text-sm font-light" x-text="item.name"></span>
+                                                <span class="shrink-0 text-xs font-sans font-light" :class="item.state === 'overdue' ? 'text-red-500' : item.state === 'due' ? 'text-accent' : 'text-muted'" x-text="dueLabel(item)"></span>
+                                            </button>
+                                            <div x-show="maintOpen === item.id" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="pb-4">
+                                                <p x-show="item.hint" class="text-sm text-muted font-sans font-light leading-relaxed" x-text="item.hint"></p>
+                                                <p x-show="item.note" class="text-sm font-sans font-light leading-relaxed mt-1" x-text="item.note"></p>
+                                                <p class="text-sm text-muted font-sans font-light mt-3">
+                                                    <select :value="item.intervalMonths" @change="changeInterval(item, $event.target.value)" class="bg-transparent text-muted outline-none font-light cursor-pointer">
+                                                        <template x-for="m in maintenance.intervals" :key="m"><option :value="m" :selected="m === item.intervalMonths" x-text="intervalLabel(m)"></option></template>
+                                                    </select>
+                                                    <span x-show="item.lastDoneAt" x-text="' · ' + lastDoneLabel(item)"></span>
+                                                </p>
+                                                <div x-show="maintDoneFor === item.id" x-cloak class="flex flex-wrap items-center gap-3 mt-3">
+                                                    <input type="date" x-model="maintDoneDate" :max="maintenance.today" class="border border-[#E8E3DD] bg-white px-3 py-2 text-sm font-sans font-light outline-none focus:border-accent">
+                                                    <button type="button" @click="markMaintenanceDone(item, maintDoneDate)" :disabled="!!maintBusy" class="p-btn p-btn-sm disabled:opacity-50" x-text="lang === 'et' ? 'Märgi' : 'Mark'"></button>
+                                                </div>
+                                                <div class="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4 text-[11px] uppercase tracking-[0.14em] font-sans">
+                                                    <button type="button" @click="markMaintenanceDone(item)" :disabled="!!maintBusy" class="text-black hover:text-accent transition-colors disabled:opacity-40" x-text="lang === 'et' ? 'Tehtud' : 'Done'"></button>
+                                                    <button type="button" @click="maintDoneFor = maintDoneFor === item.id ? null : item.id; maintDoneDate = maintenance.today" class="text-muted hover:text-black transition-colors" x-text="lang === 'et' ? 'Muu kuupäev' : 'Other date'"></button>
+                                                    <button type="button" x-show="item.serviceId" @click="orderMaintenance(item)" class="text-accent hover:text-black transition-colors" x-text="!item.orderable ? (lang === 'et' ? 'Soovin tegijat' : 'Want someone') : item.doerCategory === 'warranty' ? (lang === 'et' ? 'Lepi aeg' : 'Agree a time') : (lang === 'et' ? 'Telli' : 'Order')"></button>
+                                                    <button type="button" x-show="maintenance.provider && item.doer !== 'partner'" @click="assignMaintenance(item, 'provider')" :disabled="!!maintBusy" class="text-muted hover:text-black transition-colors" x-text="(lang === 'et' ? 'Teeb ' : 'Done by ') + providerFirstName"></button>
+                                                    <button type="button" @click="removeMaintenance(item)" class="text-muted/60 hover:text-black transition-colors" x-text="lang === 'et' ? 'Eemalda' : 'Remove'"></button>
                                                 </div>
                                             </div>
                                         </div>
@@ -1750,42 +1711,33 @@
                                 </div>
                             </div>
 
-                            <!-- Teeb koduhooldaja: no reminders to the household, just the record -->
-                            <div class="mt-7" x-show="maintProviderItems.length" x-cloak>
-                                <p class="text-[11px] uppercase tracking-[0.15em] text-accent font-sans mb-1" x-text="(lang === 'et' ? 'Teeb ' : 'Done by ') + (maintenance.provider?.name || '')"></p>
-                                <div class="divide-y divide-[#E8E3DD] border-t border-b border-[#E8E3DD]">
+                            <div x-show="maintProviderItems.length" x-cloak>
+                                <h3 class="font-serif text-2xl font-light mb-2" x-text="providerFirstName || (lang === 'et' ? 'Koduhooldaja' : 'Housekeeper')"></h3>
+                                <div>
                                     <template x-for="item in maintProviderItems" :key="item.id">
-                                        <div class="py-4 flex items-start gap-4">
-                                            <svg class="mt-1.5 w-3.5 h-3.5 text-accent shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"></path></svg>
-                                            <div class="min-w-0 flex-1">
-                                                <p class="font-sans text-sm font-medium" x-text="item.name"></p>
-                                                <p class="text-sm text-muted font-sans font-light mt-0.5">
-                                                    <span x-text="intervalLabel(item.intervalMonths)"></span>
-                                                    <span x-show="item.lastDoneAt" x-text="' · ' + lastDoneLabel(item)"></span>
-                                                    <span x-text="' · ' + (lang === 'et' ? 'järgmine ~ ' : 'next ~ ') + nextLabel(item)"></span>
-                                                </p>
-                                            </div>
-                                            <div class="flex items-center gap-4 shrink-0 text-[11px] uppercase tracking-[0.15em] font-sans">
-                                                <button type="button" @click="assignMaintenance(item, 'home')" :disabled="!!maintBusy" class="text-muted hover:text-black transition-colors" x-text="lang === 'et' ? 'Teen ise' : 'I do it'"></button>
+                                        <div class="border-b border-[#E8E3DD]">
+                                            <button type="button" @click="maintOpen = maintOpen === item.id ? null : item.id; if (maintOpen === item.id) $nextTick(() => $el.nextElementSibling && $el.nextElementSibling.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))" class="w-full text-left py-3 flex items-baseline justify-between gap-4">
+                                                <span class="font-sans text-sm font-light" x-text="item.name"></span>
+                                                <span class="shrink-0 text-xs text-muted font-sans font-light" x-text="intervalLabel(item.intervalMonths)"></span>
+                                            </button>
+                                            <div x-show="maintOpen === item.id" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="pb-4">
+                                                <p class="text-sm text-muted font-sans font-light" x-text="(item.lastDoneAt ? lastDoneLabel(item) + ' · ' : '') + (lang === 'et' ? 'järgmine ' : 'next ') + nextLabel(item)"></p>
+                                                <button type="button" @click="assignMaintenance(item, 'home')" :disabled="!!maintBusy" class="mt-3 text-[11px] uppercase tracking-[0.14em] font-sans text-muted hover:text-black transition-colors" x-text="lang === 'et' ? 'Teen ise' : 'I do it'"></button>
                                             </div>
                                         </div>
                                     </template>
                                 </div>
                             </div>
 
-                            <p x-show="!maintenance.items.length && extrasLoaded" class="mt-6 text-sm text-muted font-sans font-light bg-cream/50 border border-[#E8E3DD] p-4" x-text="lang === 'et' ? 'Midagi pole veel kirjas. Vali allolevast, mis su kodus kehtib — kõik algab „tehtud“ märkimisest.' : 'Nothing here yet. Pick what applies to your home below — it starts with ticking something off.'"></p>
+                            <p x-show="!maintenance.items.length && extrasLoaded" class="text-sm text-muted font-sans font-light" x-text="lang === 'et' ? 'Midagi pole veel kirjas.' : 'Nothing here yet.'"></p>
 
-                            <!-- Suggestions -->
-                            <div class="mt-8" x-show="maintenance.suggestions.length">
-                                <div class="flex items-center justify-between mb-3">
-                                    <h2 class="p-h" x-text="lang === 'et' ? 'Lisa oma kodule' : 'Add to your home'"></h2>
-                                    <button type="button" @click="maintShowSuggestions = !maintShowSuggestions" x-show="maintenance.items.length" class="text-[11px] uppercase tracking-[0.15em] text-accent hover:text-black font-sans" x-text="maintShowSuggestions ? (lang === 'et' ? 'Peida' : 'Hide') : (lang === 'et' ? 'Näita soovitusi' : 'Show suggestions')"></button>
-                                </div>
-                                <div class="grid sm:grid-cols-2 gap-2" x-show="maintShowSuggestions || !maintenance.items.length">
+                            <div x-show="maintenance.suggestions.length">
+                                <button type="button" @click="maintShowSuggestions = !maintShowSuggestions" x-show="maintenance.items.length" class="text-[11px] uppercase tracking-[0.14em] font-sans text-muted hover:text-black" x-text="maintShowSuggestions ? (lang === 'et' ? 'Peida' : 'Hide') : (lang === 'et' ? 'Lisa' : 'Add')"></button>
+                                <div x-show="maintShowSuggestions || !maintenance.items.length" x-cloak>
                                     <template x-for="s in maintenance.suggestions" :key="s.id">
-                                        <button type="button" @click="addSuggestion(s)" :disabled="!!maintBusy" class="text-left border border-[#E8E3DD] bg-cream/30 hover:border-accent hover:bg-white transition-colors p-4 disabled:opacity-50">
-                                            <span class="block font-sans text-sm font-medium"><span x-text="s.name"></span> <span class="text-muted font-light" x-text="'· ' + intervalLabel(s.intervalMonths)"></span></span>
-                                            <span class="block text-xs text-muted font-sans font-light mt-1 leading-relaxed" x-text="s.hint"></span>
+                                        <button type="button" @click="addSuggestion(s)" :disabled="!!maintBusy" class="w-full text-left py-3 border-b border-[#E8E3DD] flex items-baseline justify-between gap-4 disabled:opacity-50 hover:border-black transition-colors">
+                                            <span class="font-sans text-sm font-light" x-text="s.name"></span>
+                                            <span class="text-xs text-muted font-sans font-light shrink-0" x-text="intervalLabel(s.intervalMonths)"></span>
                                         </button>
                                     </template>
                                 </div>
@@ -1808,7 +1760,7 @@
                             <p x-show="maintError" x-cloak class="text-sm text-red-500 font-sans font-light mt-3" x-text="maintError"></p>
                             <label x-show="maintHomeItems.length" class="flex items-start gap-3 mt-6 pt-5 border-t border-[#E8E3DD] text-sm font-sans font-light text-muted cursor-pointer">
                                 <input type="checkbox" :checked="maintenance.remindersEnabled !== false" @change="maintenanceAction({ action: 'reminders', enabled: $event.target.checked }, 'reminders')" class="mt-0.5 accent-black">
-                                <span x-text="lang === 'et' ? 'Tuleta sinu hoole all olevaid asju e-postiga meelde — ühe kirje kohta üks kiri, ainult siis, kui tähtaeg on kahe nädala sees.' : 'Remind me by e-mail about the items that are mine — one e-mail per item, only when it falls due within two weeks.'"></span>
+                                <span x-text="lang === 'et' ? 'Meeldetuletus e-postiga, kaks nädalat enne.' : 'An e-mail reminder, two weeks before.'"></span>
                             </label>
                             </div>
                         </div>
@@ -1824,7 +1776,7 @@
                                 <p class="text-xs text-muted font-sans font-light" x-text="(1 + contacts.length) + ' / ' + (1 + (extras.maxContacts || 6))"></p>
                             </div>
                             <div class="p-6">
-                            <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="lang === 'et' ? 'Abikaasa, elukaaslane või kes veel peaks aegadest teadma. Iga aeg, muudatus ja meeldetuletus jõuab ka temani — koos kalendrikutsega — ja ta saab sama lingiga ise sisse.' : 'Your partner or anyone else who should know the times. Every visit, change and reminder reaches them too — with a calendar invite — and they can sign in with their own link.'"></p>
+                            <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="lang === 'et' ? 'Kes veel peaks aegadest teada saama. Teade ja kalendrikutse jõuavad ka temani.' : 'Who else should know the times. The notice and the calendar invite reach them too.'"></p>
                             <div class="mt-6 space-y-3">
                                 <div class="flex items-center gap-4 text-base font-sans bg-cream/50 px-4 py-3">
                                     <div class="w-10 h-10 rounded-full bg-black text-paper flex items-center justify-center text-sm shrink-0" x-text="(order?.customerName || '?').charAt(0)"></div>
@@ -1882,19 +1834,7 @@
                         <div id="dokumendid" class="lg:col-span-12 bg-white border border-[#E8E3DD] p-have">
                             <div class="flex flex-wrap items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
                                 <h2 class="p-h"><span class="p-num">03</span><span x-text="lang === 'et' ? 'Kodu kaust' : 'Home folder'"></span></h2>
-                                <div class="flex flex-wrap items-center gap-3 sm:gap-5">
-                                    <p class="text-xs text-muted font-sans font-light" x-show="documents.items.length" x-text="documents.items.length + (lang === 'et' ? ' dokumenti' : ' documents') + (docsFromDeveloper ? ' · ' + docsFromDeveloper + (lang === 'et' ? ' arendajalt' : ' from the developer') : '')"></p>
-                                    <button type="button" @click="docAdding = !docAdding; docFile = null" class="p-btn-2 p-btn-sm" x-text="lang === 'et' ? '+ Lisa fail või link' : '+ Add file or link'"></button>
-                                </div>
-                            </div>
-
-                            <div class="px-6 py-5 border-b border-[#E8E3DD] bg-cream/30 flex flex-wrap items-center justify-between gap-4">
-                                <p class="text-sm text-muted font-sans font-light leading-relaxed max-w-2xl" x-text="brand ? (lang === 'et' ? 'Kaust avati võtmete üleandmisel: akt, garantii, plaanid, juhendid ja maja kord on juba siin. Lisa oma lepingud, kindlustus ja tehtud tööd — kodu vahetades läheb kõik uuele omanikule kaasa.' : 'The folder was opened at handover: deed, warranty, plans, manuals and house rules are already here. Add your own contracts, insurance and work done — when the home changes hands, it all goes with it.') : (lang === 'et' ? 'Lepingud, kindlustus, seadmete juhendid ja garantiid, tehtud tööd — päris failid, mitte lingid kaustadesse. Kodu vahetades läheb kõik uuele omanikule kaasa.' : 'Contracts, insurance, appliance manuals and warranties, work done — real files, not links to folders. When the home changes hands, it all goes with it.')"></p>
-                                <div class="flex items-center gap-4 text-[10px] uppercase tracking-[0.14em] font-sans text-muted shrink-0">
-                                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-accent"></span><span x-text="brand?.name || (lang === 'et' ? 'Arendaja' : 'Developer')"></span></span>
-                                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-black"></span><span x-text="lang === 'et' ? 'Sina' : 'You'"></span></span>
-                                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#D4CFC8]"></span><span x-text="lang === 'et' ? 'Partner' : 'Partner'"></span></span>
-                                </div>
+                                <button type="button" @click="docAdding = !docAdding; docFile = null" class="p-btn-2 p-btn-sm" x-text="lang === 'et' ? '+ Lisa fail' : '+ Add a file'"></button>
                             </div>
 
                             <!-- Add: a file (PDF or photo) or a link — one form -->
@@ -1921,35 +1861,23 @@
                                 </div>
                             </div>
 
-                            <!-- The folder: one row per category, files as cards -->
-                            <div class="divide-y divide-[#E8E3DD]" x-show="documents.items.length">
+                            <div x-show="documents.items.length">
                                 <template x-for="group in documentsByCategory" :key="group.id">
-                                    <div class="grid lg:grid-cols-12">
-                                        <div class="lg:col-span-3 p-6 border-b lg:border-b-0 lg:border-r border-[#E8E3DD]">
-                                            <h3 class="font-serif text-xl font-light leading-tight" x-text="group.label"></h3>
-                                            <p class="text-xs text-muted font-sans font-light mt-1" x-text="group.items.length + (lang === 'et' ? (group.items.length === 1 ? ' dokument' : ' dokumenti') : (group.items.length === 1 ? ' document' : ' documents'))"></p>
-                                        </div>
-                                        <div class="lg:col-span-9 overflow-hidden">
-                                            <div class="grid sm:grid-cols-2 xl:grid-cols-3 -mr-px -mb-px">
-                                                <template x-for="d in group.items" :key="d.id">
-                                                    <div class="group border-r border-b border-[#E8E3DD] p-5 flex flex-col hover:bg-cream/40 transition-colors">
-                                                        <div class="flex items-center justify-between gap-3">
-                                                            <span class="inline-flex items-center h-6 px-2 text-[10px] uppercase tracking-[0.14em] font-sans font-medium border" :class="d.file ? 'border-black text-black' : 'border-[#D4CFC8] text-muted'" x-text="docKind(d)"></span>
-                                                            <span class="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.12em] font-sans text-muted truncate"><span class="w-2 h-2 rounded-full shrink-0" :class="d.source === 'developer' ? 'bg-accent' : d.source === 'provider' ? 'bg-[#D4CFC8]' : 'bg-black'"></span><span class="truncate" x-text="docSourceLabel(d)"></span></span>
-                                                        </div>
-                                                        <p class="font-sans text-sm font-medium leading-snug mt-4" x-text="d.title"></p>
-                                                        <p x-show="d.note" class="text-sm text-muted font-sans font-light leading-relaxed mt-1.5 flex-1" x-text="d.note"></p>
-                                                        <div class="flex items-center justify-between gap-3 mt-5">
-                                                            <span class="text-xs text-muted font-sans font-light truncate" x-text="(d.addedAt ? formatDateLong(d.addedAt) : '') + (d.file?.size ? ' · ' + Math.max(1, Math.round(d.file.size / 1024)) + ' KB' : '')"></span>
-                                                            <span class="flex items-center gap-3 shrink-0">
-                                                                <!-- The handover folder belongs to the home's record: only the household's own additions can be removed -->
-                                                                <button type="button" x-show="d.source !== 'developer'" @click="removeDocument(d)" class="text-[10px] uppercase tracking-[0.14em] text-muted hover:text-black font-sans transition-colors" x-text="lang === 'et' ? 'Eemalda' : 'Remove'"></button>
-                                                                <a x-show="d.file || d.url" :href="d.file ? fileHref(d) : d.url" target="_blank" rel="noopener" class="p-cta" x-text="lang === 'et' ? 'Ava' : 'Open'"></a>
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </template>
-                                            </div>
+                                    <div class="border-b border-[#E8E3DD] last:border-b-0">
+                                        <p class="px-6 pt-5 pb-1 text-[10px] uppercase tracking-[0.16em] text-muted font-sans" x-text="group.label"></p>
+                                        <div class="divide-y divide-[#E8E3DD]">
+                                            <template x-for="d in group.items" :key="d.id">
+                                                <div class="px-6 py-3 flex items-center justify-between gap-4">
+                                                    <span class="min-w-0">
+                                                        <span class="block font-sans text-sm truncate" x-text="d.title"></span>
+                                                        <span x-show="d.note" class="block text-xs text-muted font-sans font-light truncate" x-text="d.note"></span>
+                                                    </span>
+                                                    <span class="flex items-center gap-4 shrink-0">
+                                                        <button type="button" x-show="d.source !== 'developer'" @click="removeDocument(d)" class="text-[10px] uppercase tracking-[0.14em] text-muted hover:text-black font-sans" x-text="lang === 'et' ? 'Eemalda' : 'Remove'"></button>
+                                                        <a x-show="d.file || d.url" :href="d.file ? fileHref(d) : d.url" target="_blank" rel="noopener" class="text-[11px] uppercase tracking-[0.14em] font-sans text-muted hover:text-black" x-text="lang === 'et' ? 'Ava' : 'Open'"></a>
+                                                    </span>
+                                                </div>
+                                            </template>
                                         </div>
                                     </div>
                                 </template>
@@ -2003,7 +1931,6 @@
                                         </div>
                                     </template>
                                 </div>
-                                <p class="px-6 py-4 border-t border-[#E8E3DD] text-xs text-muted font-sans font-light leading-relaxed" x-show="upcomingBookings.length" x-text="lang === 'et' ? 'Iga aeg on ka sinu ja pere kontaktide kalendris. Muudatused jõuavad sinna ise.' : 'Every time is in your calendar and your household contacts\' too. Changes follow by themselves.'"></p>
                             </div>
 
                             <!-- Past -->
@@ -2038,7 +1965,6 @@
                                 <div class="p-6">
                                     <p class="font-serif text-3xl font-light" x-text="getPackageName(order?.package)"></p>
                                     <p class="text-sm text-muted font-sans font-light mt-1"><span x-text="lang === 'et' ? 'Regulaarne koristus' : 'Regular cleaning'"></span><span x-show="order?.provider?.name" x-text="' · ' + order?.provider?.name"></span></p>
-                                    <p class="text-xs text-muted font-sans font-light leading-relaxed mt-5 pt-5 border-t border-[#E8E3DD]" x-text="lang === 'et' ? 'Ühe visiidi nihutamiseks vali see nimekirjast ja „Muuda aega“. Pikemaks ajaks märgi eemalolek — graafik jätab selle vahele.' : 'To move one visit, pick it from the list and ‘Reschedule’. For a longer stretch, mark an away period — the schedule skips it.'"></p>
                                 </div>
                             </div>
 
@@ -2049,7 +1975,7 @@
                                     <span x-show="awayNow" x-cloak class="inline-flex px-2.5 py-1 text-[10px] uppercase tracking-[0.15em] font-sans text-amber-700 bg-amber-50 rounded-full" x-text="lang === 'et' ? 'Praegu eemal' : 'Away now'"></span>
                                 </div>
                                 <div class="p-6">
-                                    <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="lang === 'et' ? 'Reisile või maale? Märgi periood — regulaarsed koristused sel ajal tühistame, uusi sinna ei planeerita ja koduhooldaja saab kohe teada. Kokkulepitud eraldi visiite (nt garantii) see ei puuduta.' : 'Travelling? Mark the period — regular cleaning visits in that window are cancelled, none are planned into it, and your housekeeper is told right away. Separately agreed visits (e.g. warranty) are not affected.'"></p>
+                                    <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="lang === 'et' ? 'Märgi periood. Regulaarne koristus jääb vahele ja koduhooldaja saab teada.' : 'Mark the period. Regular cleaning is skipped and the housekeeper is told.'"></p>
 
                                     <!-- Saved periods -->
                                     <div x-show="extras.away?.length" x-cloak class="mt-5 border border-[#E8E3DD] divide-y divide-[#E8E3DD]">
@@ -2145,47 +2071,20 @@
                 <!-- ─────────────────────────────────── -->
                 <div x-show="activeTab === 'extras'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
 
-                    <p x-show="brand?.emergencyPhone" x-cloak class="text-base text-muted font-sans font-light leading-relaxed mb-8">
-                        <span x-text="lang === 'et' ? ('Leke, elektririke, uks ei avane. Helista kohe halduri avariinumbrile ' + brand.emergencyPhone + '. Portaal ei ole avariikanal.') : ('A leak, an electrical fault, the door will not open. Call the manager emergency number ' + brand.emergencyPhone + ' now. The portal is not an emergency channel.')"></span>
-                    </p>
-
-                    <!-- Head: what this page is for, in one breath -->
-                    <div class="grid lg:grid-cols-12 gap-6 lg:gap-12 items-end mb-8 md:mb-10">
-                        <div class="lg:col-span-7">
-                            <div class="accent-line mb-4"></div>
-                            <span class="text-[11px] uppercase tracking-[0.2em] text-muted font-sans block mb-3" x-text="lang === 'et' ? 'Teenused' : 'Services'"></span>
-                            <h2 class="font-serif text-3xl md:text-4xl font-light" x-text="lang === 'et' ? 'Mida su kodu vajab?' : 'What does your home need?'"></h2>
-                        </div>
-                        <p class="lg:col-span-5 text-base text-muted font-sans font-light leading-relaxed" x-text="lang === 'et' ? 'Vali allpool. Õige inimene saab teate, kinnitab aja või vastab kirjalikult, ja kõik jääb siia kodu juurde kirja. Garantii ja küsimused on tasuta. Töö hinna kinnitab tegija enne tööd.' : 'Pick below. The right person is notified, confirms a time or answers in writing, and it all stays on record with the home. Warranty and questions are free. The person doing the work confirms the price before the work.'"></p>
-                    </div>
-
-                    <!-- Open requests: status first, so nobody wonders -->
+                    <!-- Open requests -->
                     <div x-show="openRequests.length" x-cloak class="mb-10 md:mb-12">
                         <div class="flex items-center justify-between gap-4 mb-3">
                             <h2 class="p-h"><span x-text="lang === 'et' ? 'Sinu pöördumised' : 'Your requests'"></span><span class="p-num" x-text="openRequests.length"></span></h2>
                             <button type="button" x-show="pastRequests.length" @click="$nextTick(() => document.getElementById('ajalugu')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))" class="text-[11px] uppercase tracking-[0.16em] font-sans text-muted hover:text-black transition-colors" x-text="lang === 'et' ? 'Varasemad →' : 'Earlier →'"></button>
                         </div>
-                        <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
-                                            <template x-for="r in openRequests" :key="r.id">
-                                <button type="button" @click="openThread(r)" class="bg-white border border-[#E8E3DD] p-5 flex items-start gap-4 text-left w-full hover:bg-cream/40 transition-colors group">
-                                    <span class="mt-1.5 w-2 h-2 rounded-full shrink-0" :class="partnerDot(r.category)"></span>
-                                    <span class="block min-w-0 flex-1">
-                                        <span class="flex items-baseline justify-between gap-3">
-                                            <span class="block font-sans text-sm font-medium truncate" x-text="r.serviceName"></span>
-                                            <span class="text-[10px] uppercase tracking-[0.16em] font-sans shrink-0" :class="r.status === 'confirmed' ? 'text-green-600' : r.status === 'declined' ? 'text-red-500' : 'text-amber-600'" x-text="requestStatusLabel(r.status, r)"></span>
-                                        </span>
-                                        <span x-show="r.providerName" class="block text-[10px] uppercase tracking-[0.14em] font-sans text-muted mt-0.5" x-text="(r.status === 'confirmed' ? (lang === 'et' ? 'Kinnitanud: ' : 'Confirmed by: ') : (lang === 'et' ? 'Vaatab: ' : 'With: ')) + shortName(r.providerName)"></span>
-                                        <span x-show="r.note" class="block text-sm font-sans font-light mt-2 leading-snug line-clamp-2" x-text="r.note"></span>
-                                        <span class="block text-sm text-muted font-sans font-light mt-1.5" x-show="r.status === 'requested'">
-                                            <span x-text="r.kind === 'question' ? (lang === 'et' ? 'Vastus tuleb kirjalikult' : 'Answered in writing') : (r.preferredDate ? formatDateShort(r.preferredDate) : (lang === 'et' ? 'Esimesel võimalusel' : 'As soon as possible'))"></span><span x-show="r.timeWindowLabel && r.kind !== 'question'" x-text="' · ' + r.timeWindowLabel"></span>
-                                        </span>
-                                        <span class="block text-sm font-sans mt-1.5" x-show="r.status === 'confirmed' && r.scheduledAt">
-                                            <span class="capitalize" x-text="formatDateShort(r.scheduledAt)"></span> · <span x-text="formatTime(r.scheduledAt)"></span><span x-show="r.price" x-text="' · ' + r.price"></span>
-                                        </span>
-                                        <span x-show="r.status === 'declined'" class="block text-sm text-red-500 font-sans font-light mt-1.5" x-text="isNotCovered(r) ? (lang === 'et' ? 'Ei kuulu garantiisse — vaata vastust' : 'Not under warranty — see the reply') : (lang === 'et' ? 'Vajab uut aega — paku päev' : 'Needs a new time — suggest a day')"></span>
-                                        <span x-show="r.providerMessage" class="block text-xs text-muted font-sans font-light mt-1.5 leading-relaxed line-clamp-2" x-text="r.providerMessage"></span>
-                                        <span class="block mt-3 text-[11px] uppercase tracking-[0.15em] font-sans text-accent group-hover:text-black transition-colors" x-text="lang === 'et' ? 'Ava vestlus →' : 'Open thread →'"></span>
+                        <div class="bg-white border border-[#E8E3DD] divide-y divide-[#E8E3DD]">
+                            <template x-for="r in openRequests" :key="r.id">
+                                <button type="button" @click="openThread(r)" class="group w-full text-left px-5 py-3.5 flex items-baseline justify-between gap-4 hover:bg-cream/40 transition-colors">
+                                    <span class="min-w-0">
+                                        <span class="block font-sans text-sm font-light truncate" x-text="r.serviceName"></span>
+                                        <span class="block text-xs text-muted font-sans font-light truncate" x-text="r.note || ''"></span>
                                     </span>
+                                    <span class="shrink-0 text-[11px] uppercase tracking-[0.14em] font-sans text-muted" x-text="requestStatusLabel(r.status, r)"></span>
                                 </button>
                             </template>
                         </div>
@@ -2193,120 +2092,50 @@
 
                     <!-- Standing services, above the catalogue, in one place -->
                     <div class="mb-12 md:mb-16">
-                        <div class="flex flex-wrap items-end justify-between gap-4 mb-4">
-                            <h2 class="p-h"><span x-text="lang === 'et' ? 'Sinu kodus juba käib' : 'Already part of your home'"></span></h2>
-                            <span class="inline-flex items-center px-3 py-1 text-[11px] uppercase tracking-[0.12em] font-sans font-medium rounded-full" :class="getStatusColor(order?.status)" x-text="getStatusLabel(order?.status)"></span>
-                        </div>
-                        <p class="text-base text-muted font-sans font-light leading-relaxed mb-4" x-text="lang === 'et' ? 'See on osa su kodust: koristus kaks korda kuus, lilled igal visiidil, tehniku tunnid halduslepingus ja ehitaja garantii. Kõik allpool tuleb sellele lisaks, ja igal kaardil on kirjas, kes teeb ja mis maksab.' : 'This is part of your home: cleaning twice a month, flowers on every visit, technician hours in the management contract and the builder warranty. Everything below is on top of that, and every card says who does it and what it costs.'"></p>
-                        <div class="bg-white border border-[#E8E3DD] p-have overflow-hidden">
-                            <div class="grid -mr-px -mb-px md:grid-cols-2">
-                                <div class="border-r border-b border-[#E8E3DD] p-6 md:p-8">
-                                    <div class="flex items-start justify-between gap-4">
-                                        <div class="w-11 h-11 rounded-full bg-cream flex items-center justify-center shrink-0">
-                                            <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                                        </div>
-                                        <span class="text-[10px] uppercase tracking-[0.16em] font-sans text-muted" x-text="lang === 'et' ? 'Püsiteenus' : 'Recurring'"></span>
-                                    </div>
-                                    <p class="font-serif text-2xl font-light mt-5" x-text="lang === 'et' ? 'Regulaarne koristus' : 'Regular cleaning'"></p>
-                                    <dl class="grid grid-cols-2 gap-x-6 gap-y-4 mt-5 pt-5 border-t border-[#E8E3DD]">
-                                        <div>
-                                            <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Rütm' : 'Rhythm'"></dt>
-                                            <dd class="font-sans text-sm" x-text="getPackageName(order?.package)"></dd>
-                                        </div>
-                                        <div>
-                                            <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Järgmine' : 'Next'"></dt>
-                                            <dd class="font-sans text-sm" x-text="nextCleaning ? formatDateShort(nextCleaning.scheduledAt) + ' · ' + formatTime(nextCleaning.scheduledAt) : '—'"></dd>
-                                        </div>
-                                    </dl>
-                                    <button type="button" @click="activeTab = 'visits'" class="mt-6 text-[11px] uppercase tracking-[0.16em] font-sans text-accent hover:text-black transition-colors" x-text="lang === 'et' ? 'Kõik ajad →' : 'All times →'"></button>
-                                </div>
-                                <div x-show="extras.flowers?.auto" x-cloak class="border-r border-b border-[#E8E3DD] p-6 md:p-8">
-                                    <div class="flex items-start justify-between gap-4">
-                                        <div class="w-11 h-11 rounded-full bg-cream flex items-center justify-center shrink-0">
-                                            <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" :d="serviceIcon('flowers')"></path></svg>
-                                        </div>
-                                        <span class="text-[10px] uppercase tracking-[0.16em] font-sans text-muted" x-text="lang === 'et' ? 'Igal visiidil' : 'Every visit'"></span>
-                                    </div>
-                                    <p class="font-serif text-2xl font-light mt-5" x-text="lang === 'et' ? 'Värsked lilled igal visiidil' : 'Fresh flowers on every visit'"></p>
-                                    <dl class="grid grid-cols-2 gap-x-6 gap-y-4 mt-5 pt-5 border-t border-[#E8E3DD]">
-                                        <div>
-                                            <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Toob' : 'Brought by'"></dt>
-                                            <dd class="font-sans text-sm truncate" x-text="order?.provider?.name || ''"></dd>
-                                        </div>
-                                        <div>
-                                            <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="lang === 'et' ? 'Lillepood' : 'Florist'"></dt>
-                                            <dd class="font-sans text-sm truncate" x-text="extras.flowers?.floristBusiness || extras.flowers?.floristName || '—'"></dd>
-                                        </div>
-                                    </dl>
-                                </div>
-                                <div x-show="handymanStanding" x-cloak class="border-r border-b border-[#E8E3DD] p-6 md:p-8">
-                                    <div class="flex items-start justify-between gap-4">
-                                        <div class="w-11 h-11 rounded-full bg-cream flex items-center justify-center shrink-0">
-                                            <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" :d="serviceIcon('small-repairs')"></path></svg>
-                                        </div>
-                                        <span class="text-[10px] uppercase tracking-[0.16em] font-sans text-muted" x-text="lang === 'et' ? 'Püsiteenus' : 'Recurring'"></span>
-                                    </div>
-                                    <p class="font-serif text-2xl font-light mt-5" x-text="lang === 'et' ? 'Tehnik 2 h kuus' : 'Technician 2 h a month'"></p>
-                                </div>
-                                <button type="button" x-show="warrantyUntilLabel()" x-cloak @click="openWarrantyClaim()" class="border-r border-b border-[#E8E3DD] p-6 md:p-8 text-left hover:bg-cream/40 transition-colors">
-                                    <div class="flex items-start justify-between gap-4">
-                                        <div class="w-11 h-11 rounded-full bg-cream flex items-center justify-center shrink-0">
-                                            <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" :d="serviceIcon('warranty-claim')"></path></svg>
-                                        </div>
-                                        <span class="text-[10px] uppercase tracking-[0.16em] font-sans text-muted" x-text="lang === 'et' ? 'Püsiteenus' : 'Recurring'"></span>
-                                    </div>
-                                    <p class="font-serif text-2xl font-light mt-5" x-text="(lang === 'et' ? 'Garantii kuni ' : 'Warranty until ') + warrantyUntilLabel()"></p>
-                                    <span class="mt-6 inline-block text-[11px] uppercase tracking-[0.16em] font-sans text-accent" x-text="lang === 'et' ? 'Teata →' : 'Report →'"></span>
-                                </button>
+                        <h2 class="p-h mb-4"><span x-text="lang === 'et' ? 'Kokkulepitud' : 'Already agreed'"></span></h2>
+                        <div class="bg-white border border-[#E8E3DD] divide-y divide-[#E8E3DD]">
+                            <div class="px-5 py-3 flex items-center justify-between gap-4">
+                                <span class="min-w-0">
+                                    <span class="block font-sans text-sm" x-text="lang === 'et' ? 'Regulaarne koristus' : 'Regular cleaning'"></span>
+                                    <span class="block text-xs text-muted font-sans font-light" x-text="getPackageName(order?.package) + (nextCleaning ? ' · ' + formatDateShort(nextCleaning.scheduledAt) : '')"></span>
+                                </span>
+                                <button type="button" @click="activeTab = 'visits'" class="text-[11px] uppercase tracking-[0.14em] font-sans text-muted hover:text-black shrink-0" x-text="lang === 'et' ? 'Ajad' : 'Times'"></button>
                             </div>
+                            <div x-show="extras.flowers?.auto" x-cloak class="px-5 py-3">
+                                <span class="block font-sans text-sm" x-text="lang === 'et' ? 'Värsked lilled igal visiidil' : 'Fresh flowers on every visit'"></span>
+                                <span class="block text-xs text-muted font-sans font-light" x-text="extras.flowers?.floristBusiness || extras.flowers?.floristName || ''"></span>
+                            </div>
+                            <div x-show="handymanStanding" x-cloak class="px-5 py-3">
+                                <span class="block font-sans text-sm" x-text="lang === 'et' ? 'Remondimees' : 'Handyman'"></span>
+                                <span class="block text-xs text-muted font-sans font-light" x-text="handymanQuota"></span>
+                            </div>
+                            <button type="button" x-show="warrantyUntilLabel()" x-cloak @click="openWarrantyClaim()" class="w-full px-5 py-3 flex items-center justify-between gap-4 text-left hover:bg-cream/40">
+                                <span class="min-w-0">
+                                    <span class="block font-sans text-sm" x-text="(lang === 'et' ? 'Garantii kuni ' : 'Warranty until ') + warrantyUntilLabel()"></span>
+                                </span>
+                                <span class="text-[11px] uppercase tracking-[0.14em] font-sans text-muted shrink-0" x-text="lang === 'et' ? 'Teata' : 'Report'"></span>
+                            </button>
                         </div>
                     </div>
 
                     <!-- 01 · By need. Each row: what you need on the left, the concrete options on the right, who answers on every card. -->
                     <div class="flex flex-wrap items-end justify-between gap-4 mb-4">
                         <h2 class="p-h"><span class="p-num">01</span><span x-text="lang === 'et' ? 'Telli või küsi' : 'Order or ask'"></span></h2>
-                        <p class="text-xs text-muted font-sans font-light" x-text="lang === 'et' ? 'Garantii ja küsimused on tasuta. Töö hinna kinnitab tegija vastuses — enne tööd, mitte pärast.' : 'Warranty and questions are free. The provider confirms the price in the reply — before the work, not after.'"></p>
                     </div>
-                    <div class="border border-[#E8E3DD] bg-white divide-y divide-[#E8E3DD]">
+                    <div class="space-y-10 md:space-y-12">
                         <template x-for="g in needGroups" :key="g.id">
-                            <div class="grid lg:grid-cols-12">
-                                <div class="lg:col-span-3 p-6 md:p-8 border-b lg:border-b-0 lg:border-r border-[#E8E3DD] bg-cream/30 flex flex-col">
-                                    <h3 class="font-serif text-2xl font-light leading-tight" x-text="g.title"></h3>
-                                    <p class="text-sm text-muted font-sans font-light leading-relaxed mt-2" x-text="g.blurb"></p>
-                                    <div class="mt-6 lg:mt-auto lg:pt-6 space-y-2">
-                                        <template x-for="w in g.who" :key="g.id + '-' + w.category">
-                                            <div class="flex items-center gap-3">
-                                                <span class="w-7 h-7 rounded-full text-paper flex items-center justify-center font-serif text-xs shrink-0" :class="w.name ? partnerDot(w.category) : 'bg-[#E8E3DD] text-muted'" x-text="(w.name || '?').charAt(0)"></span>
-                                                <span class="min-w-0">
-                                                    <span class="font-sans text-sm block truncate" x-text="w.name || (lang === 'et' ? 'Tegijat veel pole' : 'No provider yet')"></span>
-                                                    <span class="text-[10px] uppercase tracking-[0.14em] text-muted font-sans block" x-text="w.label"></span>
-                                                </span>
-                                            </div>
-                                        </template>
-                                    </div>
+                            <section>
+                                <h3 class="font-serif text-2xl font-light mb-2" x-text="g.title"></h3>
+                                <div class="grid sm:grid-cols-2 sm:gap-x-16">
+                                    <template x-for="s in g.items" :key="s.id">
+                                        <button type="button" @click="openRequest(s)" class="group w-full text-left py-3 border-b border-[#E8E3DD] flex items-baseline justify-between gap-4 hover:border-black transition-colors">
+                                            <span class="font-sans text-sm font-light min-w-0" :class="isOrderable(s) ? 'text-black' : 'text-muted'" x-text="s.name"></span>
+                                            <span x-show="isOrderable(s)" class="shrink-0 text-muted/40 group-hover:text-black transition-colors" aria-hidden="true">→</span>
+                                            <span x-show="!isOrderable(s)" class="shrink-0 text-[11px] uppercase tracking-[0.14em] font-sans text-muted" x-text="(extras.interests || []).includes(s.id) ? (lang === 'et' ? 'Soov kirjas' : 'Noted') : (lang === 'et' ? 'Anna teada' : 'Register interest')"></span>
+                                        </button>
+                                    </template>
                                 </div>
-                                <div class="lg:col-span-9 overflow-hidden">
-                                    <div class="grid sm:grid-cols-2 xl:grid-cols-3 -mr-px -mb-px h-full">
-                                        <template x-for="s in g.items" :key="s.id">
-                                            <button type="button" @click="openRequest(s)" class="group text-left border-r border-b border-[#E8E3DD] p-5 md:p-6 flex flex-col transition-colors duration-300 hover:bg-cream/40" :class="s.id === 'other' ? 'sm:col-span-2 xl:col-span-3 sm:flex-row sm:items-center sm:gap-6' : ''">
-                                                <span class="flex items-start justify-between gap-3 sm:shrink-0">
-                                                    <svg class="w-5 h-5 shrink-0 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.3" :d="serviceIcon(s.id)"></path></svg>
-                                                    <!-- Card shows the short form only; the full sentence lives in the modal's price block -->
-                                                    <span x-show="cardPriceLabel(s) && isOrderable(s) && s.id !== 'other'" class="text-[10px] uppercase tracking-[0.12em] font-sans text-muted text-right leading-snug min-w-0" x-text="cardPriceLabel(s)"></span>
-                                                </span>
-                                                <span class="block flex-1 min-w-0" :class="s.id === 'other' ? 'mt-4 sm:mt-0' : 'mt-5'">
-                                                    <span class="block font-sans text-sm font-medium leading-snug" :class="isOrderable(s) ? '' : 'text-muted'" x-text="s.name"></span>
-                                                    <span class="block text-sm text-muted font-sans font-light leading-relaxed mt-1.5" x-text="s.description"></span>
-                                                </span>
-                                                <span class="flex items-center justify-between gap-3 shrink-0" :class="s.id === 'other' ? 'mt-4 sm:mt-0' : 'mt-5'">
-                                                    <span class="flex items-center gap-2 text-[10px] uppercase tracking-[0.12em] font-sans text-muted min-w-0"><span class="w-2 h-2 rounded-full shrink-0" :class="partnerDot(s.category)"></span><span class="truncate" x-text="shortName(partnerNameFor(s)) || (lang === 'et' ? 'Otsime tegijat' : 'Looking for someone')"></span></span>
-                                                    <span :class="isOrderable(s) ? 'p-cta' : 'text-[10px] uppercase tracking-[0.14em] font-sans text-muted group-hover:text-black transition-colors'" x-text="isOrderable(s) ? ctaLabel(s) : ((extras.interests || []).includes(s.id) ? (lang === 'et' ? 'Soov kirjas' : 'Noted') : (lang === 'et' ? 'Anna huvist teada' : 'Register interest'))"></span>
-                                                </span>
-                                            </button>
-                                        </template>
-                                    </div>
-                                </div>
-                            </div>
+                            </section>
                         </template>
                     </div>
 
@@ -2333,7 +2162,7 @@
             </main>
 
             <!-- Request form: three shapes — a visit (needs a time), an issue (describe first, time optional), a question (answered in writing) -->
-            <div x-show="requestService" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4 bg-black/40" role="dialog" aria-modal="true" aria-labelledby="request-modal-title" @click.self="closeRequest()" @keydown.escape.window="if (!viewRequest && !proposeBooking && !rescheduleBookingId) closeRequest()">
+            <div x-show="requestService || addonChooser" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4 bg-black/40" role="dialog" aria-modal="true" aria-labelledby="request-modal-title" @click.self="closeRequest()" @keydown.escape.window="if (!viewRequest && !proposeBooking && !rescheduleBookingId) closeRequest()">
                 <div class="bg-paper w-full sm:max-w-lg max-h-[92vh] overflow-y-auto border border-[#E8E3DD] p-6 md:p-8 shadow-lg" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
 
                     <!-- Success -->
@@ -2360,7 +2189,27 @@
                     </div>
 
                     <!-- Form -->
-                    <div x-show="!requestDone">
+                    <div x-show="addonChooser && !requestService && !requestDone">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="min-w-0">
+                                <p class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Järgmise koristusega' : 'With the next clean'"></p>
+                                <h3 class="font-serif text-2xl font-light leading-tight" x-text="lang === 'et' ? 'Lisa koristusvisiidile' : 'Add to the cleaning visit'"></h3>
+                            </div>
+                            <button type="button" @click="closeRequest()" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full transition-colors shrink-0 -mr-2 -mt-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+                        <p class="text-sm text-muted font-sans font-light mb-6 leading-relaxed" x-text="(nextCleaning ? formatDateShort(nextCleaning.scheduledAt) + ' · ' + formatTime(nextCleaning.scheduledAt) + '. ' : '') + (lang === 'et' ? 'Vali üks. Midagi ei ole veel valitud ja arvet ei tule enne, kui töö on kinnitatud.' : 'Choose one. Nothing is selected yet, and nothing is invoiced before the work is confirmed.')"></p>
+                        <div class="border border-[#E8E3DD] divide-y divide-[#E8E3DD]">
+                            <template x-for="s in visitAddons" :key="'pick-' + s.id">
+                                <button type="button" @click="openWithVisit(s)" class="w-full text-left px-4 py-3.5 hover:bg-cream/40 transition-colors">
+                                    <span class="block font-sans text-sm" x-text="s.name"></span>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div x-show="requestService && !requestDone">
                         <div class="flex justify-between items-start mb-6">
                             <div class="min-w-0">
                                 <p class="flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-2">
@@ -2375,9 +2224,9 @@
                             </button>
                         </div>
                         <p class="text-sm text-muted font-sans font-light mb-7 leading-relaxed" x-text="requestService?.description"></p>
-                        <div x-show="requestService?.id !== 'other' && requestService?.id !== 'cleaning-note' && (requestService?.priceLabel?.text || requestService?.priceHint)" class="mb-7 bg-cream/40 border border-[#E8E3DD] p-4">
-                            <p class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans" x-text="lang === 'et' ? 'Hind ja arve' : 'Price and invoice'"></p>
-                            <p class="font-sans text-sm mt-1.5" x-text="requestService?.priceLabel?.text || requestService?.priceHint"></p>
+                        <div x-show="requestService?.id !== 'other' && requestService?.id !== 'cleaning-note' && (requestPriceLine || requestPriceBlurb)" class="mb-7 bg-cream/40 border border-[#E8E3DD] p-4">
+                            <p class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans" x-text="lang === 'et' ? 'Hind' : 'Price'"></p>
+                            <p x-show="requestPriceLine" class="font-sans text-sm mt-1.5" x-text="requestPriceLine"></p>
                             <p class="text-xs text-muted font-sans font-light mt-2 leading-relaxed" x-text="requestPriceBlurb"></p>
                         </div>
 
@@ -2398,8 +2247,8 @@
                                     <button type="button" @click="requestUrgent = true" :class="requestUrgent ? 'bg-black text-paper border-black' : 'border-[#E8E3DD] hover:border-accent bg-white'" class="py-3 px-3 border text-center text-xs font-sans transition-colors" x-text="lang === 'et' ? 'Kiire — segab igapäevaelu' : 'Urgent — disrupts daily life'"></button>
                                 </div>
                                 <!-- The 24h emergency line is the developer's own number; shown only when the brand has set one -->
-                                <p x-show="brand?.emergencyPhone" x-cloak class="text-xs text-muted font-sans font-light mt-3 leading-relaxed">
-                                    <span x-text="lang === 'et' ? 'Leke, elektririke või muu avarii — ära oota vastust, helista kohe avariinumbrile: ' : 'A leak, electrical fault or other emergency — do not wait, call the 24h line now: '"></span>
+                                <p x-show="brand?.emergencyPhone" x-cloak class="text-xs text-muted font-sans font-light mt-3">
+                                    <span x-text="lang === 'et' ? 'Avarii 24h ' : 'Emergency 24h '"></span>
                                     <a :href="'tel:' + String(brand?.emergencyPhone || '').replace(/\s+/g, '')" class="text-black hover:text-accent transition-colors whitespace-nowrap" x-text="brand?.emergencyPhone"></a>
                                 </p>
                             </div>
@@ -2407,8 +2256,12 @@
                             <!-- Time: required for a visit, optional for an issue, absent for a question -->
                             <div x-show="requestKind !== 'question' && isOrderable(requestService)">
                                 <label class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans block mb-2" x-text="requestKind === 'issue' ? (lang === 'et' ? 'Millal sobib ülevaatus?' : 'When suits an inspection?') : (lang === 'et' ? 'Millal sobib?' : 'When suits you?')"></label>
-                                <input type="date" x-model="requestDate" :min="minRequestDate" class="w-full bg-white border border-[#E8E3DD] focus:border-accent outline-none px-4 py-3 font-sans font-light text-sm">
-                                <p class="text-xs text-muted/70 font-sans font-light mt-1.5" x-text="lang === 'et' ? 'Jäta tühjaks, kui sobib esimesel võimalusel.' : 'Leave empty for the earliest available.'"></p>
+                                <div x-show="requestKind === 'issue'" class="grid grid-cols-2 gap-2">
+                                    <button type="button" @click="requestDate = ''" :class="!requestDate ? 'bg-black text-paper border-black' : 'border-[#E8E3DD] hover:border-accent bg-white'" class="py-3 px-3 border text-center text-xs font-sans transition-colors" x-text="lang === 'et' ? 'Esimesel võimalusel' : 'Earliest available'"></button>
+                                    <button type="button" @click="if (!requestDate) requestDate = minRequestDate" :class="requestDate ? 'bg-black text-paper border-black' : 'border-[#E8E3DD] hover:border-accent bg-white'" class="py-3 px-3 border text-center text-xs font-sans transition-colors" x-text="lang === 'et' ? 'Valin päeva' : 'I will pick a day'"></button>
+                                </div>
+                                <input x-show="requestKind !== 'issue' || requestDate" type="date" x-model="requestDate" :min="minRequestDate" class="w-full bg-white border border-[#E8E3DD] focus:border-accent outline-none px-4 py-3 font-sans font-light text-sm" :class="requestKind === 'issue' ? 'mt-2' : ''">
+                                <p x-show="requestKind !== 'issue'" class="text-xs text-muted/70 font-sans font-light mt-1.5" x-text="lang === 'et' ? 'Jäta tühjaks, kui sobib esimesel võimalusel.' : 'Leave empty for the earliest available.'"></p>
                             </div>
                             <div x-show="requestKind !== 'question' && isOrderable(requestService)">
                                 <label class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans block mb-3" x-text="lang === 'et' ? 'Kellaaeg' : 'Time of day'"></label>
@@ -2430,14 +2283,14 @@
                                 <label class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans block mb-3" x-text="lang === 'et' ? 'Kuidas sel korral sisse saab?' : 'How do they get in this time?'"></label>
                                 <div class="grid gap-2">
                                     <button type="button" x-show="homeProfile.access" @click="requestAccess = 'profile'" :class="requestAccess === 'profile' ? 'bg-black text-paper border-black' : 'border-[#E8E3DD] hover:border-accent bg-white'" class="py-3 px-4 border text-left text-xs font-sans transition-colors">
-                                        <span class="block" x-text="lang === 'et' ? 'Kasuta kodu sissepääsu juhist' : 'Use the home access note'"></span>
+                                        <span class="block" x-text="lang === 'et' ? 'Koduhooldaja juhis' : 'The housekeeper’s note'"></span>
                                         <span class="block mt-1 opacity-70 font-light leading-relaxed" x-text="homeProfile.access"></span>
                                     </button>
                                     <button type="button" @click="requestAccess = 'home'" :class="requestAccess === 'home' ? 'bg-black text-paper border-black' : 'border-[#E8E3DD] hover:border-accent bg-white'" class="py-3 px-4 border text-left text-xs font-sans transition-colors" x-text="lang === 'et' ? 'Olen sel ajal kodus' : 'I will be home'"></button>
                                     <button type="button" @click="requestAccess = 'note'" :class="requestAccess === 'note' ? 'bg-black text-paper border-black' : 'border-[#E8E3DD] hover:border-accent bg-white'" class="py-3 px-4 border text-left text-xs font-sans transition-colors" x-text="lang === 'et' ? 'Annan selleks korraks teise juhise' : 'A different note for this visit'"></button>
                                 </div>
                                 <textarea x-show="requestAccess === 'note'" x-model="requestAccessNote" rows="2" maxlength="400" :placeholder="lang === 'et' ? 'Nt: uksekood 8821# kuni reedeni. Võtit ei jäta.' : 'E.g.: door code 8821# until Friday. No key left.'" class="w-full mt-2 bg-white border border-[#E8E3DD] focus:border-accent outline-none p-3 font-sans font-light text-sm transition-colors placeholder:text-[#B8B2AA] resize-none"></textarea>
-                                <p class="text-xs text-muted font-sans font-light mt-2 leading-relaxed" x-text="lang === 'et' ? 'Püsiv juhis elab „Minu kodu“ all. Siin muudad ainult seda korda — näiteks kui annad korteri kellelegi teisele või oled ise kodus.' : 'The standing rule lives under My home. Here you change only this visit — if someone else has the flat, or you will be in.'"></p>
+                                <p class="text-xs text-muted font-sans font-light mt-2 leading-relaxed" x-text="requestService?.category === 'cleaning' || requestService?.id === 'flowers' ? (lang === 'et' ? 'See juhis on koduhooldajale. Kui oled ise kodus või kood on teine, vali allolev.' : 'This note is for the housekeeper. If you will be home, or the code is different, choose below.') : (lang === 'et' ? 'Koduhooldaja võti ei lähe automaatselt kaasa. Ütle, kas oled ise kohal või anna sellele visiidile oma juhis.' : 'The housekeeper’s key is not sent along automatically. Say if you will be there, or give a note for this visit.')"></p>
                             </div>
 
                             <p x-show="requestError" x-cloak class="text-sm text-red-500 font-sans font-light" x-text="requestError"></p>
@@ -2491,7 +2344,6 @@
                             <dd class="font-light leading-relaxed" x-text="viewRequest?.access"></dd>
                         </div>
                     </dl>
-                    <p class="text-xs text-muted font-sans font-light leading-relaxed mb-5" x-text="lang === 'et' ? 'Vestlus elab siin. E-kiri ainult teavitab — ära vasta kirjale, kirjuta siia, siis jääb kõik kodu juurde.' : 'The conversation lives here. E-mail only notifies — do not reply to the e-mail, write here so it stays with the home.'"></p>
                     <div class="space-y-4">
                         <template x-for="m in threadMessages" :key="m.id">
                             <div>

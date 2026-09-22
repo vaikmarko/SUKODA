@@ -1096,6 +1096,46 @@ module.exports = function createHaldus(deps) {
     return out;
   }
 
+  /** Another provider already coming to this home in the same window. */
+  async function findHomeConflicts(orderId, start, end, excludeId, providerId) {
+    if (!orderId) return [];
+    const windowStart = new Date(start.getTime() - 12 * 3600000);
+    const snap = await db.collection('bookings')
+      .where('orderId', '==', orderId)
+      .where('scheduledAt', '>=', Timestamp.fromDate(windowStart))
+      .where('scheduledAt', '<', Timestamp.fromDate(end))
+      .get();
+    const out = [];
+    for (const doc of snap.docs) {
+      if (doc.id === excludeId) continue;
+      const b = doc.data();
+      if (!['scheduled', 'confirmed'].includes(b.status)) continue;
+      if (providerId && b.providerId === providerId) continue;
+      const bs = toDate(b.scheduledAt);
+      const be = toDate(b.endTime) || new Date(bs.getTime() + 2 * 3600000);
+      if (!core.overlaps(start, end, bs, be)) continue;
+      const row = serializeBooking(doc.id, b);
+      const who = b.providerName || 'teine tegija';
+      const what = row.serviceName || 'koristus';
+      out.push({ ...row, label: `Selles kodus · ${who} · ${what}` });
+    }
+    return out;
+  }
+
+  async function slotConflicts(providerId, orderId, start, end, excludeId) {
+    const own = (await findConflicts(providerId, start, end, excludeId)).map((c) => ({ ...c, label: `Sinu kalender · ${c.customerName}` }));
+    const home = await findHomeConflicts(orderId, start, end, excludeId, providerId);
+    return [...own, ...home];
+  }
+
+  function conflictError(conflicts) {
+    const home = conflicts.some((c) => String(c.label || '').startsWith('Selles'));
+    const own = conflicts.some((c) => String(c.label || '').startsWith('Sinu'));
+    if (home && own) return 'See aeg kattub sinu kalendriga ja selle kodu teise visiidiga';
+    if (home) return 'Sel ajal on selles kodus juba teine visiit';
+    return 'Sul on samal ajal teine visiit';
+  }
+
   function bookingBase(order, orderId, provider) {
     return {
       orderId,
@@ -1197,8 +1237,8 @@ module.exports = function createHaldus(deps) {
       : (oldStart && oldEnd ? Math.round((oldEnd - oldStart) / 60000) : 180);
     const end = new Date(start.getTime() + dur * 60000);
 
-    const conflicts = await findConflicts(provider.id, start, end, ref.id);
-    if (conflicts.length && !force) return { error: 'Sul on samal ajal teine visiit', code: 'CONFLICT', conflicts, status: 409 };
+    const conflicts = await slotConflicts(provider.id, booking.orderId, start, end, ref.id);
+    if (conflicts.length && !force) return { error: conflictError(conflicts), code: 'CONFLICT', conflicts, status: 409 };
 
     // Cal.com-linked visits: move the Cal booking too so the operator calendar stays truthful
     let calUpdate = {};
@@ -2026,10 +2066,119 @@ module.exports = function createHaldus(deps) {
     };
   }
 
+  // The printed card left with Arco: a new home already includes cleaning, flowers and a handyman.
+  // The old gift booking on this code does not count — the card opens the welcome once.
+  const WELCOME_CODE = 'SK1349-9EMK-4W47';
+  const WELCOME_IDS = {
+    providerId: 'FrvUr0xjpeFJzaraIvF1',
+    floristId: 'YaDtAZBn67jaHGUhXP5J',
+    handymanId: 'kodulahe-haldus-tehnik',
+  };
+
+  function welcomeAnchor(weekday) {
+    const start = core.parseDateStr(todayTallinnStr(1));
+    for (let i = 0; i < 7; i++) {
+      const d = core.addDays(start, i);
+      if (d.getUTCDay() === weekday) return core.toDateStr(d);
+    }
+    return core.toDateStr(start);
+  }
+
+  async function redeemWelcome(req, res, code) {
+    const b = req.body || {};
+    if (b.consent !== true) return res.status(400).json({ error: 'Nõustu tingimustega, et jätkata' });
+    const found = await findCardByCode(code);
+    if (found?.card?.welcomeRedeemedAt) return res.status(409).json({ state: 'used', error: 'See kaart on juba kasutatud' });
+    if (!str(b.name, 200)) return res.status(400).json({ error: 'Nimi on kohustuslik' });
+    if (!core.isValidEmail(core.normalizeEmail(b.email))) return res.status(400).json({ error: 'Korrektne e-post on kohustuslik' });
+    if (!str(b.address, 500)) return res.status(400).json({ error: 'Aadress on kohustuslik' });
+    const weekday = Number(b.weekday);
+    if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6) return res.status(400).json({ error: 'Vali koristuse päev' });
+    const time = str(b.time, 5);
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) return res.status(400).json({ error: 'Vali kellaaeg' });
+    const size = core.ORDER_SIZES.includes(b.size) ? b.size : 'medium';
+    const provider = await loadProvider(WELCOME_IDS.providerId);
+    const florist = await loadProvider(WELCOME_IDS.floristId);
+    const handyman = await loadProvider(WELCOME_IDS.handymanId);
+    if (!provider) return res.status(500).json({ error: 'Koduhooldajat ei leitud' });
+
+    const contacts = [];
+    if (b.contact2 && (b.contact2.email || b.contact2.name)) {
+      contacts.push({ name: str(b.contact2.name, 120), email: core.normalizeEmail(b.contact2.email), notify: true });
+    }
+    const contactsCheck = core.sanitizeContacts(contacts);
+    if (contactsCheck.error) return res.status(400).json({ error: 'Teise kontakti e-post ei ole korrektne' });
+
+    const cardRef = found?.ref || null;
+    const claimedAt = Timestamp.fromDate(new Date());
+    if (cardRef) {
+      try {
+        await db.runTransaction(async (tx) => {
+          const fresh = await tx.get(cardRef);
+          const c = fresh.data() || {};
+          if (c.welcomeRedeemedAt) throw new HomeError(409, { state: 'used', error: 'See kaart on juba kasutatud' });
+          tx.update(cardRef, { welcomeRedeemedAt: claimedAt, usedAt: claimedAt, usedByEmail: core.normalizeEmail(b.email), kind: 'welcome', updatedAt: FieldValue.serverTimestamp() });
+        });
+      } catch (e) {
+        if (e instanceof HomeError) return res.status(e.status).json(e.body);
+        throw e;
+      }
+    }
+
+    const flowerPreference = str(b.flowerPreference, 300);
+    const linens = str(b.linens, 300);
+    let home;
+    try {
+      home = await createHome({
+        provider,
+        input: {
+          name: b.name, email: b.email, phone: b.phone, address: b.address, size, lang: b.lang, contacts, force: true,
+          schedule: { frequency: 'biweekly', anchorDate: welcomeAnchor(weekday), time, durationMin: { small: 120, medium: 180, large: 240 }[size] },
+          homeProfile: { flowerPreference, linens },
+        },
+        createdBy: 'welcome:SK1349-9EMK-4W47',
+        enforcePlanCap: false,
+        extraFields: {
+          source: 'welcome',
+          flowers: { auto: true, leadDays: 2, pickup: 'partner', note: flowerPreference },
+          floristId: florist?.id || null,
+          floristName: florist?.name || '',
+          handymanId: handyman?.id || null,
+          handymanName: handyman?.name || '',
+          terms: {
+            cleaning: { included: true, services: ['regular'], quota: 'kaks korda kuus', after: '', billedBy: '' },
+            handyman: { included: true, services: ['hang-mount', 'assembly', 'curtains', 'appliance-install'], quota: 'neli korda aastas', after: 'alates 45 €', billedBy: handyman?.businessName || '' },
+          },
+        },
+        operatorSubject: `SUKODA | Uue kodu kaart lunastati: ${str(b.name, 200)}`,
+        operatorIntro: `Kaart ${escapeHtml(code)} avas kodu. Koristus kaks korda kuus, lilled igal visiidil, remondimees neli korda aastas.`,
+      });
+    } catch (e) {
+      if (cardRef) await cardRef.update({ welcomeRedeemedAt: FieldValue.delete(), usedAt: FieldValue.delete(), usedByEmail: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() }).catch(() => {});
+      if (e instanceof HomeError) {
+        if (e.status === 409) return res.status(409).json({ state: 'already', error: 'Sellel e-postil on juba kodu. Sisene portaali oma e-postiga.', code: e.body.code });
+        return res.status(e.status).json(e.body);
+      }
+      throw e;
+    }
+
+    if (cardRef) await cardRef.update({ usedOrderId: home.orderId, usedByName: home.orderData.customer.name, updatedAt: FieldValue.serverTimestamp() });
+    try {
+      await sendEmail({ to: providerReplyTo(provider) || provider.email, ...inviteProviderEmail({ provider, order: home.orderData }) });
+    } catch (e) { console.error('Welcome provider mail failed (non-fatal):', e); }
+
+    res.status(200).json({ state: 'done', success: true, welcome: true, welcomeSent: home.welcomeSent, email: home.orderData.customer.email });
+  }
+
   const lunastaHandlers = {
     'POST /api/lunasta/validate': async (req, res) => {
       const code = normalizeCardCode(req.body?.code);
       if (!code) return res.status(400).json({ state: 'notfound', error: 'Sisesta kood' });
+      if (code === WELCOME_CODE) {
+        const found = await findCardByCode(code);
+        if (found?.card?.welcomeRedeemedAt) return res.status(200).json({ state: 'used', code });
+        return res.status(200).json({ state: 'welcome', code });
+      }
       const v = await validateCard(code);
       res.status(200).json({ state: v.state, code, provider: v.provider || null });
     },
@@ -2039,6 +2188,7 @@ module.exports = function createHaldus(deps) {
       const b = req.body || {};
       const code = normalizeCardCode(b.code);
       if (!code) return res.status(400).json({ state: 'notfound', error: 'Sisesta kood' });
+      if (code === WELCOME_CODE) return redeemWelcome(req, res, code);
       if (b.consent !== true) return res.status(400).json({ error: 'Nõustu tingimustega, et jätkata' });
       const v = await validateCard(code);
       if (v.state !== 'invite') return res.status(409).json({ state: v.state, error: 'Kaarti ei saa kasutada' });
@@ -2671,8 +2821,8 @@ module.exports = function createHaldus(deps) {
 
       if (!markCompleted) {
         if (core.isDateAway(order.awayPeriods, b.date) && !b.force) return res.status(409).json({ error: 'Klient on sel päeval eemal', code: 'AWAY', conflicts: [] });
-        const conflicts = await findConflicts(provider.id, start, end);
-        if (conflicts.length && !b.force) return res.status(409).json({ error: 'Sul on samal ajal teine visiit', code: 'CONFLICT', conflicts });
+        const conflicts = await slotConflicts(provider.id, ref.id, start, end);
+        if (conflicts.length && !b.force) return res.status(409).json({ error: conflictError(conflicts), code: 'CONFLICT', conflicts });
       }
 
       const booking = await createVisit({
@@ -2804,8 +2954,8 @@ module.exports = function createHaldus(deps) {
       const durationMin = Number.isInteger(Number(b.durationMin)) && Number(b.durationMin) >= 15 ? Math.min(600, Number(b.durationMin)) : (svc?.durationMin || 60);
       const end = new Date(start.getTime() + Math.max(15, durationMin) * 60000);
 
-      const conflicts = await findConflicts(provider.id, start, end);
-      if (conflicts.length && !b.force) return res.status(409).json({ error: 'Sul on samal ajal teine visiit', code: 'CONFLICT', conflicts });
+      const conflicts = await slotConflicts(provider.id, request.orderId, start, end);
+      if (conflicts.length && !b.force) return res.status(409).json({ error: conflictError(conflicts), code: 'CONFLICT', conflicts });
 
       const price = str(b.price, 60) || null;
       const booking = await createVisit({
@@ -2940,9 +3090,10 @@ module.exports = function createHaldus(deps) {
     if (covered && tm.until && tm.until < today) {
       return { text: (tm.after || (svc?.priceHint?.[lang] || svc?.priceHint?.et || '')) + (tm.billedBy ? (et ? ' · arve ' : ' · billed by ') + tm.billedBy : ''), included: false, expired: tm.until };
     }
-    const hint = svc ? (showPrices === false && tm?.after ? tm.after : (showPrices === false ? '' : (svc.priceHint?.[lang] || svc.priceHint?.et || ''))) : (tm?.after || '');
-    const bill = tm?.billedBy ? (et ? 'arve ' : 'billed by ') + tm.billedBy : (showPrices === false ? (et ? 'hind kokkuleppel tegijaga' : 'price agreed with the provider') : '');
-    return { text: [hint, bill].filter(Boolean).join(' · '), included: false };
+    // Not covered by this home's deal: show the guide price only. The category's invoice
+    // (the standing clean, billed by SUKODA) must not appear on an extra before it is confirmed.
+    const hint = svc?.priceHint?.[lang] || svc?.priceHint?.et || tm?.after || '';
+    return { text: hint, included: false };
   }
 
   /** “Something else” goes to whoever runs this home: the developer's after-sales team when there is one, otherwise the housekeeper */
@@ -3214,10 +3365,9 @@ module.exports = function createHaldus(deps) {
       const routes = await routeRequest(order);
       // Everyone who comes to this home, one entry per category with a named partner
       const partnerDocs = {};
-      for (const [cat, pid] of Object.entries(routes)) {
-        if (!pid) continue;
+      await Promise.all(Object.entries(routes).filter(([, pid]) => pid).map(async ([cat, pid]) => {
         partnerDocs[cat] = cat === 'cleaning' ? provider : cat === 'flowers' ? florist : await loadProvider(pid);
-      }
+      }));
       if (!partnerDocs.flowers && florist) partnerDocs.flowers = florist;
       const partners = Object.entries(partnerDocs).filter(([, p]) => p).map(([cat, p]) => ({
         category: cat, label: core.categoryLabel(cat, lang), name: p.name, contactName: p.contactName || '', businessName: p.businessName || '', phone: p.phone || '', email: p.email || '',

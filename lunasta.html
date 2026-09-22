@@ -89,8 +89,73 @@
                     </div>
                 </div>
 
+                <!-- 2a. New-home card: services are already included, the person sets the rhythm -->
+                <div x-show="state === 'welcome' || (state === 'sending' && welcome)" x-cloak>
+                    <div class="text-center mb-10">
+                        <p class="text-[10px] uppercase tracking-[0.3em] text-accent font-sans mb-8" x-text="lang === 'et' ? 'Uus kodu' : 'A new home'">Uus kodu</p>
+                        <div class="accent-line mx-auto mb-8"></div>
+                        <h1 class="font-serif text-4xl md:text-5xl font-light mb-6 leading-tight">
+                            <span x-show="lang === 'et'">Kodu on<br>juba hoitud.</span>
+                            <span x-show="lang === 'en'" x-cloak>The home is<br>already looked after.</span>
+                        </h1>
+                    </div>
+                    <div class="bg-white border border-[#E8E3DD] divide-y divide-[#E8E3DD] mb-10 text-left">
+                        <div class="px-5 py-4 flex items-baseline justify-between gap-4"><span class="font-sans text-sm" x-text="lang === 'et' ? 'Koristus' : 'Cleaning'"></span><span class="text-xs text-muted font-sans font-light" x-text="lang === 'et' ? 'kaks korda kuus' : 'twice a month'"></span></div>
+                        <div class="px-5 py-4 flex items-baseline justify-between gap-4"><span class="font-sans text-sm" x-text="lang === 'et' ? 'Lilled' : 'Flowers'"></span><span class="text-xs text-muted font-sans font-light" x-text="lang === 'et' ? 'igal visiidil' : 'on every visit'"></span></div>
+                        <div class="px-5 py-4 flex items-baseline justify-between gap-4"><span class="font-sans text-sm" x-text="lang === 'et' ? 'Remondimees' : 'Handyman'"></span><span class="text-xs text-muted font-sans font-light" x-text="lang === 'et' ? 'neli korda aastas' : 'four times a year'"></span></div>
+                    </div>
+
+                    <form @submit.prevent="redeem()" class="bg-white border border-[#E8E3DD] p-6 md:p-8 font-sans">
+                        <p class="text-[11px] uppercase tracking-[0.18em] text-accent mb-6" x-text="lang === 'et' ? 'Sinu kodu' : 'Your home'"></p>
+                        <div class="grid sm:grid-cols-2 gap-5">
+                            <div><label class="l-label" x-text="lang === 'et' ? 'Nimi *' : 'Name *'"></label><input type="text" x-model="form.name" required autocomplete="name" class="l-input"></div>
+                            <div><label class="l-label" x-text="lang === 'et' ? 'E-post *' : 'E-mail *'"></label><input type="email" x-model="form.email" required autocomplete="email" class="l-input"></div>
+                            <div><label class="l-label" x-text="lang === 'et' ? 'Telefon' : 'Phone'"></label><input type="tel" x-model="form.phone" autocomplete="tel" class="l-input"></div>
+                            <div><label class="l-label" x-text="lang === 'et' ? 'Kodu suurus' : 'Home size'"></label>
+                                <select x-model="form.size" class="l-input bg-transparent">
+                                    <option value="small" x-text="lang === 'et' ? '1–2 tuba' : '1–2 rooms'"></option>
+                                    <option value="medium" x-text="lang === 'et' ? '3 tuba' : '3 rooms'"></option>
+                                    <option value="large" x-text="lang === 'et' ? '4+ tuba või maja' : '4+ rooms or a house'"></option>
+                                </select>
+                            </div>
+                            <div class="sm:col-span-2"><label class="l-label" x-text="lang === 'et' ? 'Aadress *' : 'Address *'"></label><input type="text" x-model="form.address" required autocomplete="street-address" class="l-input"></div>
+                            <div><label class="l-label" x-text="lang === 'et' ? 'Koristuse päev *' : 'Cleaning day *'"></label>
+                                <select x-model.number="form.weekday" class="l-input bg-transparent" required>
+                                    <option value="1" x-text="lang === 'et' ? 'Esmaspäev' : 'Monday'"></option>
+                                    <option value="2" x-text="lang === 'et' ? 'Teisipäev' : 'Tuesday'"></option>
+                                    <option value="3" x-text="lang === 'et' ? 'Kolmapäev' : 'Wednesday'"></option>
+                                    <option value="4" x-text="lang === 'et' ? 'Neljapäev' : 'Thursday'"></option>
+                                    <option value="5" x-text="lang === 'et' ? 'Reede' : 'Friday'"></option>
+                                    <option value="6" x-text="lang === 'et' ? 'Laupäev' : 'Saturday'"></option>
+                                    <option value="0" x-text="lang === 'et' ? 'Pühapäev' : 'Sunday'"></option>
+                                </select>
+                            </div>
+                            <div><label class="l-label" x-text="lang === 'et' ? 'Kell *' : 'Time *'"></label>
+                                <select x-model="form.time" class="l-input bg-transparent" required>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="12:00">12:00</option>
+                                    <option value="14:00">14:00</option>
+                                    <option value="16:00">16:00</option>
+                                </select>
+                            </div>
+                            <div class="sm:col-span-2"><label class="l-label" x-text="lang === 'et' ? 'Lillede värvid' : 'Flower colours'"></label><input type="text" x-model="form.flowerPreference" class="l-input" :placeholder="lang === 'et' ? 'Heledad toonid, mitte liiliad' : 'Pale tones, no lilies'"></div>
+                            <div class="sm:col-span-2"><label class="l-label" x-text="lang === 'et' ? 'Kus on voodipesu' : 'Where the linen is'"></label><input type="text" x-model="form.linens" class="l-input" :placeholder="lang === 'et' ? 'Magamistoa kummut, ülemine sahtel' : 'Bedroom chest, top drawer'"></div>
+                        </div>
+                        <label class="flex items-start gap-3 mt-10 text-sm text-muted font-light leading-relaxed cursor-pointer">
+                            <input type="checkbox" x-model="form.consent" required class="mt-1 accent-black">
+                            <span>
+                                <span x-show="lang === 'et'">Nõustun <a href="/tingimused" target="_blank" class="text-black border-b border-accent hover:text-accent">tingimuste</a> ja <a href="/privaatsus" target="_blank" class="text-black border-b border-accent hover:text-accent">privaatsuspoliitikaga</a>.</span>
+                                <span x-show="lang === 'en'" x-cloak>I agree to the <a href="/tingimused" target="_blank" class="text-black border-b border-accent hover:text-accent">terms</a> and the <a href="/privaatsus" target="_blank" class="text-black border-b border-accent hover:text-accent">privacy policy</a>.</span>
+                            </span>
+                        </label>
+                        <p x-show="error" x-cloak class="text-sm text-red-500 font-light mt-6" x-text="error"></p>
+                        <button type="submit" :disabled="state === 'sending'" class="w-full mt-8 bg-black text-paper px-8 py-4 text-[11px] uppercase tracking-[0.2em] hover:bg-accent transition-colors duration-500 disabled:opacity-50" x-text="state === 'sending' ? '…' : (lang === 'et' ? 'Ava minu kodu' : 'Open my home')"></button>
+                    </form>
+                </div>
+
                 <!-- 2. Invitation + form -->
-                <div x-show="state === 'invite' || state === 'sending'" x-cloak>
+                <div x-show="(state === 'invite' || state === 'sending') && !welcome" x-cloak>
                     <div class="text-center mb-12">
                         <p class="text-[10px] uppercase tracking-[0.3em] text-accent font-sans mb-8" x-text="lang === 'et' ? 'Kutse' : 'Invitation'">Kutse</p>
                         <div class="accent-line mx-auto mb-8"></div>
@@ -212,11 +277,12 @@
     <script>
     function lunastaApp() {
         return {
-            state: 'input', // input | checking | invite | sending | done | used | unassigned | legacy | notfound | already
+            state: 'input', // input | checking | invite | welcome | sending | done | used | unassigned | legacy | notfound | already
             code: '',
             error: '',
+            welcome: false,
             provider: { firstName: '', name: '', businessName: '' },
-            form: { name: '', email: '', phone: '', address: '', size: 'medium', contact2: { name: '', email: '' }, consent: false },
+            form: { name: '', email: '', phone: '', address: '', size: 'medium', weekday: 2, time: '10:00', flowerPreference: '', linens: '', contact2: { name: '', email: '' }, consent: false },
             doneEmail: '',
 
             init() {
@@ -242,7 +308,8 @@
                     if (r.status === 429) throw new Error(this.lang === 'et' ? 'Liiga palju katseid. Proovi mõne minuti pärast.' : 'Too many attempts. Try again in a few minutes.');
                     if (!r.ok && !r.data.state) throw new Error(r.data.error || 'Viga');
                     this.code = r.data.code || code;
-                    if (r.data.state === 'invite') { this.provider = r.data.provider; this.state = 'invite'; }
+                    if (r.data.state === 'welcome') { this.welcome = true; this.state = 'welcome'; }
+                    else if (r.data.state === 'invite') { this.provider = r.data.provider; this.state = 'invite'; }
                     else this.state = r.data.state;
                 } catch (e) {
                     this.error = e.message || (this.lang === 'et' ? 'Ühenduse viga. Proovi uuesti.' : 'Connection error. Try again.');
@@ -256,17 +323,17 @@
                 try {
                     const r = await this.post('/api/lunasta/redeem', { code: this.code, lang: this.lang, ...this.form });
                     if (r.status === 429) throw new Error(this.lang === 'et' ? 'Liiga palju katseid. Proovi mõne minuti pärast.' : 'Too many attempts. Try again in a few minutes.');
-                    if (r.ok) { this.doneEmail = r.data.email || this.form.email; this.state = 'done'; return; }
-                    if (r.data.state && r.data.state !== 'invite') { this.state = r.data.state; return; }
+                    if (r.ok) { this.doneEmail = r.data.email || this.form.email; this.welcome = !!r.data.welcome || this.welcome; this.state = 'done'; return; }
+                    if (r.data.state && r.data.state !== 'invite' && r.data.state !== 'welcome') { this.state = r.data.state; return; }
                     throw new Error(r.data.error || 'Viga');
                 } catch (e) {
                     this.error = e.message || (this.lang === 'et' ? 'Ühenduse viga. Proovi uuesti.' : 'Connection error. Try again.');
-                    this.state = 'invite';
+                    this.state = this.welcome ? 'welcome' : 'invite';
                 }
             },
 
             reset() {
-                this.state = 'input'; this.code = ''; this.error = '';
+                this.state = 'input'; this.code = ''; this.error = ''; this.welcome = false;
                 history.replaceState({}, '', '/lunasta');
             },
 
@@ -275,7 +342,9 @@
                 const login = { href: '/minu', cta: et ? 'Sisene portaali' : 'Log in to the portal' };
                 const mail = { href: 'mailto:tere@sukoda.ee?subject=SUKODA%20kaart%20' + encodeURIComponent(this.code), cta: et ? 'Kirjuta: tere@sukoda.ee' : 'Write: tere@sukoda.ee' };
                 switch (this.state) {
-                    case 'done': return { kicker: et ? 'Tere tulemast' : 'Welcome', title: et ? 'Sinu kodu<br>on portaalis.' : 'Your home<br>is in the portal.', text: et ? `Saatsime aadressile ${this.doneEmail} kirja portaali lingiga — parooli pole. ${this.provider.firstName} sai teate ja lisab graafiku; ajad tulevad kalendrikutsetena.` : `We sent a mail with your portal link to ${this.doneEmail} — no password. ${this.provider.firstName} has been told and will add the schedule; times arrive as calendar invites.`, ...login };
+                    case 'done': return this.welcome
+                        ? { kicker: et ? 'Tere tulemast' : 'Welcome', title: et ? 'Sinu kodu<br>on valmis.' : 'Your home<br>is ready.', text: et ? `Saatsime aadressile ${this.doneEmail} portaali lingi. Koristus on kaks korda kuus valitud päeval, lilled tulevad iga visiidiga ja remondimees on neli korda aastas.` : `We sent the portal link to ${this.doneEmail}. Cleaning is twice a month on the day you chose, flowers come with every visit, and the handyman is there four times a year.`, ...login }
+                        : { kicker: et ? 'Tere tulemast' : 'Welcome', title: et ? 'Sinu kodu<br>on portaalis.' : 'Your home<br>is in the portal.', text: et ? `Saatsime aadressile ${this.doneEmail} kirja portaali lingiga — parooli pole. ${this.provider.firstName} sai teate ja lisab graafiku; ajad tulevad kalendrikutsetena.` : `We sent a mail with your portal link to ${this.doneEmail} — no password. ${this.provider.firstName} has been told and will add the schedule; times arrive as calendar invites.`, ...login };
                     case 'used': return { kicker: et ? 'Kutsekaart' : 'Invitation card', title: et ? 'See kaart on<br>juba kasutatud.' : 'This card has<br>already been used.', text: et ? 'Kui kodu on juba portaalis, sisene oma e-postiga — saadame sisenemislingi.' : 'If the home is already in the portal, log in with your e-mail — we send a login link.', ...login };
                     case 'already': return { kicker: et ? 'Juba portaalis' : 'Already in the portal', title: et ? 'Sinu kodu<br>on juba siin.' : 'Your home<br>is already here.', text: et ? `Sellel e-postil on juba kodu ${this.provider.firstName || 'selle koduhooldaja'} juures. Kaart jäi kasutamata — sisene portaali oma e-postiga.` : `This e-mail already has a home with ${this.provider.firstName || 'this housekeeper'}. The card stays unused — log in to the portal with your e-mail.`, ...login };
                     case 'unassigned': return { kicker: et ? 'Kutsekaart' : 'Invitation card', title: et ? 'See kaart pole<br>veel aktiveeritud.' : 'This card is not<br>active yet.', text: et ? 'Kaart saab jõu siis, kui koduhooldaja on selle enda nimele võtnud. Küsi oma koduhooldajalt või kirjuta tere@sukoda.ee.' : 'The card works once a housekeeper has taken it under their name. Ask your housekeeper, or write to tere@sukoda.ee.', ...mail };

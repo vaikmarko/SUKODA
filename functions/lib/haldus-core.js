@@ -37,6 +37,17 @@ function categoryLabel(category, lang) {
 
 const SERVICE_CATALOGUE = [
   {
+    id: 'extra-clean',
+    category: 'cleaning',
+    name: { et: 'Koristus', en: 'Cleaning' },
+    description: {
+      et: 'Eraldi visiit lisaks korduvale graafikule.',
+      en: 'A separate visit, in addition to the standing schedule.',
+    },
+    priceHint: { et: 'hind kokkuleppel', en: 'price on request' },
+    durationMin: 180,
+  },
+  {
     id: 'deep-clean',
     category: 'cleaning',
     name: { et: 'Süvapuhastus', en: 'Deep clean' },
@@ -78,6 +89,28 @@ const SERVICE_CATALOGUE = [
       en: 'Ironing during a visit or at a separate time. Priced per hour.',
     },
     priceHint: { et: '25 €/h', en: '€25/h' },
+    durationMin: 60,
+  },
+  {
+    id: 'laundry',
+    category: 'cleaning',
+    name: { et: 'Pesu', en: 'Laundry' },
+    description: {
+      et: 'Pesumasin, kuivati ja voltimine. Koos koristusega või eraldi.',
+      en: 'Washing, drying and folding. With a clean or on its own.',
+    },
+    priceHint: { et: '25 €/h', en: '€25/h' },
+    durationMin: 60,
+  },
+  {
+    id: 'rugs',
+    category: 'cleaning',
+    name: { et: 'Vaibad', en: 'Rugs' },
+    description: {
+      et: 'Vaiba puhastus. Suurus ja materjal lepime vastuses.',
+      en: 'Rug cleaning. Size and material are agreed in the reply.',
+    },
+    priceHint: { et: 'hind kokkuleppel', en: 'price on request' },
     durationMin: 60,
   },
   {
@@ -241,6 +274,39 @@ const SERVICE_CATALOGUE = [
     },
     priceHint: { et: 'alates 45 €/h', en: 'from €45/h' },
     durationMin: 120,
+  },
+  {
+    id: 'curtains',
+    category: 'handyman',
+    name: { et: 'Kardinad', en: 'Curtains' },
+    description: {
+      et: 'Kardinapuu seina ja kardinad üles. Mõõdud võtame kohapeal.',
+      en: 'A curtain rail on the wall and the curtains hung. We measure on site.',
+    },
+    priceHint: { et: 'alates 45 €', en: 'from €45' },
+    durationMin: 90,
+  },
+  {
+    id: 'lock',
+    category: 'handyman',
+    name: { et: 'Lukuvahetus', en: 'Lock change' },
+    description: {
+      et: 'Välisukse südamiku vahetus. Südamiku võid tuua ise.',
+      en: 'A new cylinder in the front door. You can bring the cylinder yourself.',
+    },
+    priceHint: { et: 'alates 45 €', en: 'from €45' },
+    durationMin: 45,
+  },
+  {
+    id: 'appliance-install',
+    category: 'handyman',
+    name: { et: 'Kodumasina paigaldus', en: 'Appliance installation' },
+    description: {
+      et: 'Pesumasin, nõudepesumasin, pliit või õhupuhasti oma kohale ja ühendatud.',
+      en: 'A washing machine, dishwasher, hob or hood set in place and connected.',
+    },
+    priceHint: { et: 'alates 45 €', en: 'from €45' },
+    durationMin: 90,
   },
   // — Aed & õu —
   {

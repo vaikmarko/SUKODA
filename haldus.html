@@ -104,7 +104,7 @@
                         <p class="text-muted font-sans font-light text-sm">Kui kirja pole, kontrolli rämpsposti või küsi ligipääsu: <a href="mailto:tere@sukoda.ee" class="text-black">tere@sukoda.ee</a></p>
                     </div>
                     <div class="border-t border-[#E8E3DD] pt-8 mt-8">
-                        <p class="text-muted font-sans font-light text-sm leading-relaxed">SUKODA Töölaud on koduhooldaja, järelteeninduse meeskonna, floristi, remondimehe ja aedniku tööriist: kodud, pöördumised, ajad ja teavitused ühes kohas. Klient saab oma koduportaali.</p>
+                        <p class="text-muted font-sans font-light text-sm">Töölaud kodudele, pöördumistele ja aegadele.</p>
                         <button type="button" x-show="!loginSent" @click="signupMode = !signupMode; loginError = ''" class="mt-4 text-[11px] uppercase tracking-[0.18em] text-accent hover:text-black font-sans" x-text="signupMode ? 'Mul on juba ligipääs — logi sisse' : 'Uus partner? Ava oma töölaud'"></button>
                     </div>
                 </div>
@@ -209,7 +209,7 @@
 
                         <div>
                             <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans mb-4">Järgmised 14 päeva</p>
-                            <div x-show="upcomingGrouped.length === 0" class="bg-cream/40 border border-[#E8E3DD] p-8 text-center text-sm text-muted font-sans font-light">Eelseisvaid visiite pole. Lisa kliendile graafik või üksik visiit.</div>
+                            <div x-show="upcomingGrouped.length === 0" class="bg-cream/40 border border-[#E8E3DD] p-8 text-center text-sm text-muted font-sans font-light">Eelseisvaid visiite pole.</div>
                             <div class="space-y-6">
                                 <template x-for="g in upcomingGrouped" :key="g.date">
                                     <div>
@@ -273,37 +273,26 @@
                 <div x-show="activeTab === 'customers'">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                         <input type="text" x-model="customerSearch" placeholder="Otsi nime või aadressi…" class="h-input font-sans sm:max-w-xs">
-                        <button type="button" @click="openCustomerModal()" class="h-btn h-btn-primary font-sans">+ Lisa klient</button>
+                        <button type="button" x-show="isCleaningProvider" @click="openCustomerModal()" class="h-btn h-btn-primary font-sans">+ Lisa klient</button>
                     </div>
                     <div x-show="filteredCustomers.length === 0" class="bg-cream/40 border border-[#E8E3DD] p-10 text-center">
                         <p class="font-serif text-xl font-light mb-2">Kliente veel pole</p>
-                        <p class="text-sm text-muted font-sans font-light mb-6">Lisa oma esimene klient — sisesta nimi, e-post, aadress ja graafik. Klient saab kohe e-kirja portaali lingiga ja kõik ajad kalendrisse.</p>
-                        <button type="button" @click="openCustomerModal()" class="h-btn h-btn-primary font-sans">+ Lisa klient</button>
+                        <p class="text-sm text-muted font-sans font-light mb-6" x-show="isCleaningProvider">Lisa nimi, e-post ja aadress. Klient saab portaali lingi.</p>
+                        <p class="text-sm text-muted font-sans font-light" x-show="!isCleaningProvider">Kodud, mis sulle on määratud, ilmuvad siia.</p>
+                        <button type="button" x-show="isCleaningProvider" @click="openCustomerModal()" class="h-btn h-btn-primary font-sans mt-6">+ Lisa klient</button>
                     </div>
                     <div class="grid md:grid-cols-2 gap-3">
                         <template x-for="c in filteredCustomers" :key="c.id">
-                            <div @click="openCustomerDetail(c)" class="bg-white border border-[#E8E3DD] p-5 cursor-pointer hover:border-accent/60 transition-colors">
-                                <div class="flex items-start justify-between gap-3 mb-2">
-                                    <div class="min-w-0">
-                                        <p class="font-serif text-lg font-light truncate" x-text="c.name"></p>
-                                        <p class="text-xs text-muted font-sans font-light truncate" x-text="c.address"></p>
-                                    </div>
-                                    <div class="flex flex-col items-end gap-1 shrink-0">
-                                        <span x-show="c.status !== 'paid'" class="h-chip bg-gray-100 text-gray-500 font-sans">Arhiveeritud</span>
-                                        <span x-show="c.status === 'paid' && c.pausedAt" class="h-chip bg-amber-50 text-amber-600 font-sans">Pausil</span>
-                                        <span x-show="c.status === 'paid' && awayLabel(c)" class="h-chip bg-amber-50 text-amber-600 font-sans" x-text="awayLabel(c)"></span>
-                                        <span x-show="c.source !== 'manual'" class="h-chip bg-accent/10 text-accent font-sans">SUKODA klient</span>
-                                        <span x-show="c.role === 'flowers'" class="h-chip bg-pink-50 text-pink-500 font-sans">Lilled</span>
-                                        <span x-show="c.role === 'warranty'" class="h-chip bg-sky-50 text-sky-600 font-sans">Garantii</span>
-                                        <span x-show="c.role === 'handyman'" class="h-chip bg-stone-100 text-stone-600 font-sans">Remondimees</span>
-                                        <span x-show="c.role === 'garden'" class="h-chip bg-green-50 text-green-600 font-sans">Aed</span>
-                                        <span x-show="c.role === 'building'" class="h-chip bg-stone-100 text-stone-600 font-sans">Haldur</span>
-                                    </div>
-                                </div>
-                                <div class="flex items-center justify-between text-xs font-sans font-light text-muted mt-3">
-                                    <span x-text="scheduleLabel(c.schedule)"></span>
-                                    <span x-show="nextVisitFor(c.id)" x-text="'Järgmine: ' + fmtDateShort(nextVisitFor(c.id)?.scheduledAt)"></span>
-                                </div>
+                            <div @click="openCustomerDetail(c)" class="bg-white border border-[#E8E3DD] p-5 cursor-pointer hover:bg-cream/40 transition-colors">
+                                <p class="font-serif text-lg font-light truncate" x-text="c.name"></p>
+                                <p class="text-sm text-muted font-sans font-light truncate" x-text="c.address"></p>
+                                <p class="text-xs text-muted font-sans font-light mt-2">
+                                    <span x-show="c.role && c.role !== 'cleaning'" x-text="roleLabel(c.role)"></span>
+                                    <span x-show="c.role === 'cleaning'" x-text="c.schedule && c.schedule.active !== false ? scheduleLabel(c.schedule) : ''"></span>
+                                    <span x-show="nextVisitFor(c.id)" x-text="((c.role && c.role !== 'cleaning') || (c.role === 'cleaning' && c.schedule && c.schedule.active !== false) ? ' · ' : '') + 'Järgmine ' + fmtDateShort(nextVisitFor(c.id)?.scheduledAt)"></span>
+                                    <span x-show="c.status !== 'paid'"> · Arhiveeritud</span>
+                                    <span x-show="awayLabel(c)" x-text="' · ' + awayLabel(c)"></span>
+                                </p>
                             </div>
                         </template>
                     </div>
@@ -314,32 +303,23 @@
                     <div class="max-w-3xl space-y-10">
                         <div>
                             <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans mb-4">Ootab vastust</p>
-                            <div x-show="pendingRequests.length === 0" class="bg-cream/40 border border-[#E8E3DD] p-8 text-center text-sm text-muted font-sans font-light">Praegu ei oota miski vastust. Kui klient saadab portaalist pöördumise, küsimuse või soovi, ilmub see siia ja sinu e-postile.</div>
+                            <div x-show="pendingRequests.length === 0" class="bg-cream/40 border border-[#E8E3DD] p-8 text-center text-sm text-muted font-sans font-light">Praegu ei oota miski vastust.</div>
                             <div class="space-y-3">
                                 <template x-for="r in pendingRequests" :key="r.id">
-                                    <div class="bg-white border border-accent/40 p-5">
-                                        <div class="flex items-start justify-between gap-3 mb-3">
-                                            <div>
-                                                <p class="text-[11px] uppercase tracking-[0.16em] text-accent font-sans mb-1" x-text="requestKindLabel(r)"></p>
+                                    <div class="bg-white border border-[#E8E3DD] p-5">
+                                        <div class="flex items-start justify-between gap-3">
+                                            <div class="min-w-0">
                                                 <p class="font-serif text-lg font-light" x-text="r.serviceName"></p>
-                                                <p class="text-sm font-sans font-light" x-text="r.customerName"></p>
-                                                <p class="text-xs text-muted font-sans font-light" x-text="r.address"></p>
+                                                <p class="text-sm font-sans font-light text-muted truncate"><span x-text="r.customerName"></span><span x-show="r.address" x-text="' · ' + r.address"></span></p>
                                             </div>
-                                            <p class="text-[11px] text-muted font-sans shrink-0" x-text="fmtDateShort(r.createdAt)"></p>
+                                            <p class="text-xs text-muted font-sans shrink-0" x-text="fmtDateShort(r.createdAt)"></p>
                                         </div>
-                                        <div class="text-sm font-sans font-light space-y-1 mb-4">
-                                            <p x-show="r.targetScheduledAt"><span class="text-muted">Praegune aeg:</span> <span x-text="fmtDateShort(r.targetScheduledAt) + ' ' + fmtTime(r.targetScheduledAt)"></span></p>
-                                            <p x-show="r.kind !== 'question'"><span class="text-muted">Soovitud:</span> <span x-text="r.preferredDate ? fmtDateLong(r.preferredDate) : 'esimesel võimalusel'"></span><span x-show="r.timeWindow" x-text="' · ' + timeWindowLabel(r.timeWindow)"></span></p>
-                                            <p x-show="r.urgent" class="text-accent">Kiire — segab igapäevaelu</p>
-                                            <p x-show="termsLine(r)" class="text-xs"><span class="text-muted">Kliendile:</span> <span x-text="termsLine(r)"></span></p>
-                                            <p x-show="r.access" class="text-xs"><span class="text-muted">Sissepääs:</span> <span x-text="r.access"></span></p>
-                                            <div x-show="threadMessages(r).length" class="bg-cream/60 p-3 space-y-2">
-                                                <template x-for="m in threadMessages(r)" :key="m.id">
-                                                    <p class="text-xs leading-relaxed"><span class="text-muted" x-text="(m.by === 'client' ? (m.name || r.customerName) : (m.name || 'Sina')) + ': '"></span><span x-text="m.text"></span><span x-show="m.at" class="text-muted/70 ml-2 whitespace-nowrap" x-text="fmtStamp(m.at)"></span></p>
-                                                </template>
-                                            </div>
-                                        </div>
-                                        <div class="flex flex-wrap gap-3">
+                                        <p class="text-sm font-sans font-light mt-3 leading-relaxed" x-text="lastThreadText(r)"></p>
+                                        <p class="text-xs text-muted font-sans font-light mt-2" x-show="r.kind !== 'question'">
+                                            <span x-text="r.preferredDate ? fmtDateLong(r.preferredDate) : 'Esimesel võimalusel'"></span><span x-show="r.urgent"> · Kiire</span>
+                                        </p>
+                                        <p x-show="r.access" class="text-xs text-muted font-sans font-light mt-1" x-text="r.access"></p>
+                                        <div class="flex flex-wrap gap-3 mt-4">
                                             <button type="button" x-show="r.kind !== 'question'" @click="openConfirmRequest(r)" class="h-btn h-btn-primary font-sans">Kinnita aeg</button>
                                             <button type="button" @click="replyRequest(r)" class="h-btn font-sans" :class="r.kind === 'question' ? 'h-btn-primary' : 'h-btn-ghost'">Vasta kirjalikult</button>
                                             <button type="button" x-show="r.kind !== 'question'" @click="declineRequest(r)" class="h-btn h-btn-ghost font-sans" x-text="r.kind === 'issue' ? 'Ei kuulu garantiisse' : 'Vajame uut aega'"></button>
@@ -385,7 +365,6 @@
                             <h2 class="font-serif text-2xl font-light" x-text="monthLabel(summaryMonth)"></h2>
                             <button type="button" @click="summaryShift(1)" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"/></svg></button>
                         </div>
-                        <p class="text-sm text-muted font-sans font-light mb-6">Kuu kokkuvõte arve tegemiseks. „Tehtud“ on sinu märgitud visiidid; „märkimata“ on möödunud ajad, mida pole veel tehtuks märgitud.</p>
                         <div class="bg-white border border-[#E8E3DD]">
                             <div class="grid grid-cols-12 px-5 py-3 text-[11px] uppercase tracking-[0.16em] text-muted font-sans border-b border-[#E8E3DD]">
                                 <div class="col-span-6">Klient</div><div class="col-span-2 text-right">Tehtud</div><div class="col-span-2 text-right">Märkimata</div><div class="col-span-2 text-right">Lisateen.</div>
@@ -417,7 +396,6 @@
                         <div x-show="isEnterprise" x-cloak>
                             <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans mb-1">Koostöö</p>
                             <p class="font-serif text-2xl font-light"><span x-text="provider?.businessName || provider?.name"></span> <span class="text-muted text-lg" x-text="'· ' + plural(billing.homes, 'kodu', 'kodu')"></span></p>
-                            <p class="text-sm text-muted font-sans font-light leading-relaxed mt-3 max-w-2xl">Töölaud on osa partnerlepingust — kodude arvule piiri ei ole ja arveldus käib lepingu järgi. Küsimustes kirjuta <a href="mailto:partner@sukoda.ee" class="text-black border-b border-accent hover:text-accent">partner@sukoda.ee</a>.</p>
                         </div>
 
                         <!-- Plan: what it costs, stated plainly, and what you are on -->
@@ -429,7 +407,6 @@
                                 </div>
                                 <p class="text-sm text-muted font-sans font-light" x-show="billing.hasSubscription && billing.periodEnd" x-text="(billing.cancelAtPeriodEnd ? 'Lõpeb ' : 'Uueneb ') + fmtDateShort(billing.periodEnd) + (billing.status === 'past_due' ? ' · makse ebaõnnestus, proovime uuesti' : '')"></p>
                             </div>
-                            <p class="text-sm text-muted font-sans font-light leading-relaxed mb-6 max-w-2xl">Hind sõltub ainult sellest, mitu kodu sul töölaual on. Kuu kaupa, tühistatav igal ajal — muutus jõustub perioodi lõpus. Klient ei maksa SUKODA-le kunagi midagi; sinu hinnad ja arved klientidele on sinu enda asi nagu seni.</p>
 
                             <div class="grid sm:grid-cols-3 gap-3">
                                 <template x-for="p in billing.plans" :key="p.id">
@@ -471,7 +448,7 @@
                                 <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans">Kutsekaardid</p>
                                 <p class="text-sm text-muted font-sans font-light" x-show="inviteCards.length"><span class="font-serif text-lg text-black" x-text="inviteCards.filter((c) => c.status === 'free').length"></span> vaba · <span x-text="inviteCards.filter((c) => c.status === 'used').length"></span> kasutatud</p>
                             </div>
-                            <p class="text-sm text-muted font-sans font-light leading-relaxed mb-4 max-w-2xl">Jäta kaart kliendi kööki. Kui ta koodi sisestab aadressil <span class="text-black">sukoda.ee/lunasta</span>, tuleb ta kodu sinu töölauale ja saab kohe portaali — sina saad teate ja lisad graafiku. Kaardil ei ole rahalist väärtust; liitunud kodu loeb paketi kodude hulka nagu iga teine.</p>
+                            <p class="text-sm text-muted font-sans font-light mb-4">Klient sisestab koodi aadressil sukoda.ee/lunasta.</p>
                             <div class="bg-white border border-[#E8E3DD] divide-y divide-[#E8E3DD]" x-show="inviteCards.length">
                                 <template x-for="c in inviteCards" :key="c.code">
                                     <div class="flex items-center justify-between gap-4 px-5 py-3 text-sm font-sans">
@@ -550,8 +527,8 @@
                         </div>
 
                         <div x-show="visitModal.conflicts.length" x-cloak class="bg-amber-50 border border-amber-200 p-4 text-sm">
-                            <p class="text-amber-700 font-medium mb-2">Sul on samal ajal teine visiit:</p>
-                            <template x-for="c in visitModal.conflicts" :key="c.id"><p class="text-amber-700 font-light" x-text="fmtTime(c.scheduledAt) + '–' + fmtTime(c.endTime) + ' · ' + c.customerName"></p></template>
+                            <p class="text-amber-700 font-medium mb-2">See aeg kattub.</p>
+                            <template x-for="c in visitModal.conflicts" :key="c.id"><p class="text-amber-700 font-light" x-text="c.label || (fmtTime(c.scheduledAt) + '–' + fmtTime(c.endTime) + ' · ' + c.customerName)"></p></template>
                             <label class="flex items-center gap-2 mt-3 text-amber-800"><input type="checkbox" x-model="visitModal.force"> Salvesta siiski</label>
                         </div>
                         <p x-show="visitModal.error" x-cloak class="text-sm text-red-500 font-light" x-text="visitModal.error"></p>
@@ -685,7 +662,6 @@
                                     </div>
                                     <p class="sm:col-span-2 text-xs text-muted font-light" x-text="schedulePreview(detail.scheduleForm)"></p>
                                 </div>
-                                <p class="text-xs text-muted font-light">Graafiku muutmisel tühistame veel toimumata automaatsed ajad ja loome uued. Klient ja pere kontaktid saavad ühe kokkuvõtva kirja kõigi eelseisvate aegadega.</p>
                                 <p x-show="detail.error" x-cloak class="text-sm text-red-500 font-light" x-text="detail.error"></p>
                                 <div class="flex gap-3">
                                     <button type="button" @click="detail.editSchedule = false" class="h-btn h-btn-outline">Loobu</button>
@@ -718,7 +694,6 @@
                                     <div><label class="h-label">Kimp poele</label><input type="text" x-model="detail.flowersForm.budget" placeholder="nt keskmine, ~35 €" class="h-input"></div>
                                     <div><label class="h-label">Märkus poele</label><input type="text" x-model="detail.flowersForm.note" placeholder="nt vaas on 30 cm" class="h-input"></div>
                                 </div>
-                                <p class="text-xs text-muted font-light">Pood saab ühe kirja kõigi sama päeva kimpudega: igal on silt kliendi ja sinu nimega, aeg, milleks valmis (hommikuks, kui visiit on pärastlõunal), kliendi eelistus<span x-show="detail.customer?.homeProfile?.flowerPreference"> („<span x-text="detail.customer?.homeProfile?.flowerPreference"></span>“)</span> ja kimbu suurus. Sina saad ühe meeldetuletuse, klient koopia. Arveldus poega jääb nagu teil kokku lepitud.</p>
                                 <p x-show="detail.error" x-cloak class="text-sm text-red-500 font-light" x-text="detail.error"></p>
                                 <div class="flex gap-3">
                                     <button type="button" @click="detail.editFlowers = false" class="h-btn h-btn-outline">Loobu</button>
@@ -733,7 +708,6 @@
                                 <label class="h-label mb-0">Hooldusrütm</label>
                                 <button type="button" @click="detail.maintAdding = !detail.maintAdding; detail.error = ''" class="text-[11px] uppercase tracking-[0.15em] text-accent" x-text="detail.maintAdding ? 'Sulge' : '+ Lisa'"></button>
                             </div>
-                            <p class="text-xs text-muted font-light mb-4">Süvapuhastus, kubu filter, pesumasin — mida teed selles kodus ise, märgi siia. Sina saad meeldetuletuse, kui aeg käes; kui märgid tehtuks, saab klient ühe rea teate. Klient ei pea midagi meeles pidama.</p>
 
                             <div x-show="!detail.customer?.maintenance?.length && !detail.maintAdding" class="text-sm text-muted font-light">Midagi pole veel kirjas. Lisa see, mida sa siin kodus perioodiliselt teed.</div>
                             <div class="divide-y divide-[#E8E3DD]" x-show="detail.customer?.maintenance?.length">
@@ -766,7 +740,6 @@
                                     <select x-model.number="detail.maintForm.intervalMonths" class="h-select col-span-3"><template x-for="m in maintenanceIntervals" :key="m"><option :value="m" x-text="maintIntervalLabel(m)"></option></template></select>
                                     <button type="button" @click="maintAction({ action: 'add', name: detail.maintForm.name, intervalMonths: detail.maintForm.intervalMonths }); detail.maintForm.name = ''" :disabled="detail.saving || !detail.maintForm.name" class="h-btn h-btn-primary col-span-3">Lisa</button>
                                 </div>
-                                <p class="text-xs text-muted font-light">Mustaga raamitud on need, mida koduhooldajad enamasti ise teevad. Lisatud kirje algab „tehtud“ märkimisest — siis hakkab rütm jooksma.</p>
                             </div>
                             <p x-show="detail.error && (detail.maintAdding || detail.customer?.maintenance?.length)" x-cloak class="text-sm text-red-500 font-light mt-2" x-text="detail.error"></p>
                         </div>
@@ -777,7 +750,7 @@
                                 <label class="h-label mb-0">Klient eemal</label>
                                 <button type="button" x-show="!detail.editAway" @click="detail.editAway = true; detail.awayForm = { from: '', to: '', note: '' }; detail.error = ''" class="text-[11px] uppercase tracking-[0.15em] text-accent">+ Lisa periood</button>
                             </div>
-                            <div x-show="!detail.customer?.awayPeriods?.length && !detail.editAway" class="text-sm text-muted font-light">Eemalolekuid pole. Klient saab need ise portaalis märkida; sina saad siit lisada, kui ta ütles telefoni teel.</div>
+                            <div x-show="!detail.customer?.awayPeriods?.length && !detail.editAway" class="text-sm text-muted font-light">Eemalolekuid pole.</div>
                             <div class="space-y-2" x-show="detail.customer?.awayPeriods?.length">
                                 <template x-for="p in (detail.customer?.awayPeriods || [])" :key="p.id">
                                     <div class="flex items-center justify-between gap-3 bg-cream/50 px-3 py-2">
@@ -795,7 +768,7 @@
                                     <div><label class="h-label">Kuni</label><input type="date" x-model="detail.awayForm.to" :min="detail.awayForm.from" class="h-input"></div>
                                 </div>
                                 <input type="text" x-model="detail.awayForm.note" placeholder="Märkus (valikuline)" class="h-input">
-                                <p class="text-xs text-muted font-light">Vahemikku jäävad visiidid tühistame ja graafik jätab need päevad vahele. Klient ja pere kontaktid saavad ühe teate.</p>
+                                <p class="text-xs text-muted font-light">Selle aja visiidid tühistame. Klient saab teate.</p>
                                 <p x-show="detail.error" x-cloak class="text-sm text-red-500 font-light" x-text="detail.error"></p>
                                 <div class="flex gap-3">
                                     <button type="button" @click="detail.editAway = false" class="h-btn h-btn-outline">Loobu</button>
@@ -874,12 +847,11 @@
                         </div>
                         <div><label class="h-label">Sõnum kliendile (valikuline)</label><input type="text" x-model="confirmModal.message" class="h-input" :placeholder="isCleaningProvider ? 'Nt toon lilled koristusega kaasa' : 'Nt tuleme kahekesi, võtab umbes tunni'"></div>
                         <div x-show="confirmModal.conflicts.length" x-cloak class="bg-amber-50 border border-amber-200 p-4 text-sm">
-                            <p class="text-amber-700 font-medium mb-2">Sul on samal ajal teine visiit:</p>
-                            <template x-for="c in confirmModal.conflicts" :key="c.id"><p class="text-amber-700 font-light" x-text="fmtTime(c.scheduledAt) + '–' + fmtTime(c.endTime) + ' · ' + c.customerName"></p></template>
+                            <p class="text-amber-700 font-medium mb-2">See aeg kattub.</p>
+                            <template x-for="c in confirmModal.conflicts" :key="c.id"><p class="text-amber-700 font-light" x-text="c.label || (fmtTime(c.scheduledAt) + '–' + fmtTime(c.endTime) + ' · ' + c.customerName)"></p></template>
                             <label class="flex items-center gap-2 mt-3 text-amber-800"><input type="checkbox" x-model="confirmModal.force"> Kinnita siiski</label>
                         </div>
                         <p x-show="confirmModal.error" x-cloak class="text-sm text-red-500 font-light" x-text="confirmModal.error"></p>
-                        <p class="text-xs text-muted font-light">Klient ja pere kontaktid saavad kohe kinnituse koos kalendrikutsega.</p>
                         <div class="flex gap-3 pt-2">
                             <button type="button" @click="confirmModal.open = false" class="h-btn h-btn-outline">Loobu</button>
                             <button type="submit" :disabled="confirmModal.saving" class="h-btn h-btn-primary flex-1" x-text="confirmModal.saving ? 'Kinnitan…' : 'Kinnita ja teavita'"></button>
@@ -949,7 +921,7 @@
             activeTab: 'overview',
             tabs: [
                 { id: 'overview', label: 'Ülevaade' }, { id: 'calendar', label: 'Kalender' }, { id: 'customers', label: 'Kliendid' },
-                { id: 'requests', label: 'Soovid' }, { id: 'summary', label: 'Kokkuvõte' }, { id: 'account', label: 'Konto' },
+                { id: 'requests', label: 'Pöördumised' }, { id: 'summary', label: 'Kokkuvõte' }, { id: 'account', label: 'Konto' },
             ],
             customerSearch: '',
             calMonth: '', selectedDay: '',
@@ -1202,7 +1174,8 @@
             fmtDateFull(v) { if (!v) return ''; const iso = v.length === 10 ? v + 'T12:00:00' : v; return T().formatDate(iso, 'et-EE', { day: 'numeric', month: 'long', year: 'numeric' }); },
             get isEnterprise() { return this.billing?.enterprise === true || this.billing?.plan === 'enterprise'; },
             get isCleaningProvider() { return (this.provider?.services || ['cleaning']).includes('cleaning'); },
-            get visibleHomeProfileFields() { const role = this.detail.customer?.role || 'cleaning'; return role === 'cleaning' ? this.homeProfileFields : this.homeProfileFields.filter((f) => ['access', 'pets', 'allergies', 'specialRequests'].includes(f.key)); },
+            get visibleHomeProfileFields() { const role = this.detail.customer?.role || 'cleaning'; return role === 'cleaning' ? this.homeProfileFields : this.homeProfileFields.filter((f) => ['pets', 'allergies', 'specialRequests'].includes(f.key)); },
+            roleLabel(role) { return { warranty: 'Garantii', handyman: 'Tehnik', building: 'Haldur', flowers: 'Lilled', garden: 'Aed', cleaning: 'Koristus' }[role] || ''; },
 
             visitCard(b, { compact = false } = {}) {
                 const now = new Date().toISOString();
@@ -1212,8 +1185,7 @@
                     : b.status === 'cancelled' ? '<span class="h-chip bg-gray-100 text-gray-500">Tühistatud</span>'
                     : past ? '<span class="h-chip bg-amber-50 text-amber-600">Märkimata</span>' : '';
                 const kind = b.kind === 'extra' ? `<span class="h-chip bg-pink-50 text-pink-600">${esc(b.serviceName || 'Lisateenus')}</span>` : '';
-                const src = b.hasCal ? '<span class="h-chip bg-accent/10 text-accent">SUKODA</span>' : '';
-                const flowers = b.flowersOrdered && b.status !== 'cancelled' ? '<span class="h-chip bg-pink-50 text-pink-600" title="Lilled on poest tellitud — võta teel kaasa">Lilled tellitud</span>' : '';
+                const flowers = b.flowersOrdered && b.status !== 'cancelled' ? '<span class="text-[11px] uppercase tracking-[0.12em] text-muted">Lilled</span>' : '';
                 const actions = live ? `
                     <div class="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-[11px] uppercase tracking-[0.15em] font-medium">
                         ${past ? '<button type="button" data-act="complete" class="text-green-700 hover:text-black">Tehtud</button>' : ''}
@@ -1229,7 +1201,7 @@
                             ${b.note ? `<p class="text-xs font-sans font-light mt-1 text-black/70">✎ ${esc(b.note)}</p>` : ''}
                             ${b.customerNote ? `<p class="text-xs font-sans font-light mt-1 text-muted">Kliendile: ${esc(b.customerNote)}</p>` : ''}
                         </div>
-                        <div class="flex flex-col items-end gap-1 shrink-0">${kind}${src}${flowers}${status}${b.price ? `<span class="text-xs font-sans text-muted">${esc(b.price)}</span>` : ''}</div>
+                        <div class="flex flex-col items-end gap-1 shrink-0">${kind}${flowers}${status}${b.price ? `<span class="text-xs font-sans text-muted">${esc(b.price)}</span>` : ''}</div>
                     </div>${actions}</div>`;
             },
             handleCardClick(e, b) {

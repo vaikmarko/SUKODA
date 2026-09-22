@@ -313,7 +313,7 @@ async function main() {
   await setDoc('serviceRequests', rid('req-done'), {
     ...base, serviceId: 'systems-tuning', preferredDate: '2026-09-08', timeWindow: 'morning',
     note: 'Ventilatsioon tundub õhtuti liiga tugev ja põrandaküte elutoas ei lähe soojaks.',
-    access: 'Välisukse kood 1408#. Võti on Kristil.',
+    access: 'Olen sel ajal kodus.',
     status: 'completed', scheduledAt: doneAt, price: null,
     providerMessage: 'Ventilatsioon seadistatud režiimile 2 (öösel 1), termostaadid 21 °C. Filtrid vahetatud, järgmine märtsis.',
     messages: [
@@ -351,7 +351,7 @@ async function main() {
   await setDoc('serviceRequests', rid('req-open'), {
     ...base, serviceId: 'warranty-claim', preferredDate: null, timeWindow: 'any',
     note: 'Elutoa suure akna tihend vilistab tugeva tuulega ja alumises servas tekib hommikuti kondensaat.',
-    access: 'Välisukse kood 1408#. Võti on Kristil.',
+    access: 'Olen sel ajal kodus.',
     messages: [
       { id: 'm1', by: 'client', name: customerName, text: 'Elutoa suure akna tihend vilistab tugeva tuulega ja alumises servas tekib hommikuti kondensaat.', at: openCreated },
     ],
