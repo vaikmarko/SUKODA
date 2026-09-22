@@ -51,8 +51,10 @@ test('message keeps the e-mail sentence, and deliver without a key does not thro
   assert.deepEqual(push.tokensFrom({ pushSubscriptions: [{ token: 'a' }, 'b', { fcmToken: 'c' }] }), ['a', 'b', 'c']);
   const prev = process.env.FCM_SERVER_KEY;
   const prevNamed = process.env.SUKODA_FCM_KEY;
+  const prevVapid = process.env.VAPID_PRIVATE_KEY;
   delete process.env.FCM_SERVER_KEY;
   delete process.env.SUKODA_FCM_KEY;
+  delete process.env.VAPID_PRIVATE_KEY;
   const lines = [];
   const orig = console.error;
   console.error = (...args) => lines.push(args.map(String).join(' '));
@@ -64,14 +66,17 @@ test('message keeps the e-mail sentence, and deliver without a key does not thro
     console.error = orig;
     if (prev != null) process.env.FCM_SERVER_KEY = prev;
     if (prevNamed != null) process.env.SUKODA_FCM_KEY = prevNamed;
+    if (prevVapid != null) process.env.VAPID_PRIVATE_KEY = prevVapid;
   }
 });
 
 test('send without an FCM key logs and does not throw', async () => {
   const prev = process.env.FCM_SERVER_KEY;
   const prevNamed = process.env.SUKODA_FCM_KEY;
+  const prevVapid = process.env.VAPID_PRIVATE_KEY;
   delete process.env.FCM_SERVER_KEY;
   delete process.env.SUKODA_FCM_KEY;
+  delete process.env.VAPID_PRIVATE_KEY;
   const lines = [];
   const orig = console.error;
   console.error = (...args) => lines.push(args.map(String).join(' '));
@@ -86,6 +91,7 @@ test('send without an FCM key logs and does not throw', async () => {
     console.error = orig;
     if (prev != null) process.env.FCM_SERVER_KEY = prev;
     if (prevNamed != null) process.env.SUKODA_FCM_KEY = prevNamed;
+    if (prevVapid != null) process.env.VAPID_PRIVATE_KEY = prevVapid;
   }
 });
 
@@ -111,9 +117,17 @@ test('send with a key delivers the e-mail sentence and does not call messaging w
 });
 
 test('a key without an injected client does not call FCM', async () => {
-  const prev = global.fetch;
+  const prevFetch = global.fetch;
+  const saved = {
+    FCM_SERVER_KEY: process.env.FCM_SERVER_KEY,
+    SUKODA_FCM_KEY: process.env.SUKODA_FCM_KEY,
+    VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY,
+  };
   let called = false;
   global.fetch = () => { called = true; throw new Error('network'); };
+  delete process.env.FCM_SERVER_KEY;
+  delete process.env.SUKODA_FCM_KEY;
+  process.env.VAPID_PRIVATE_KEY = 'vapid-test';
   try {
     const result = await push.deliver(push.message({
       type: 'morning', lang: 'et', title: 'Tänane päev', body: 'Täna 1 kodu.',
@@ -121,15 +135,15 @@ test('a key without an injected client does not call FCM', async () => {
     assert.equal(result.sent, false);
     assert.equal(result.reason, 'no-client');
     assert.equal(called, false);
-    const vapid = await push.send('morning', {
-      serverKey: undefined,
-      lang: 'et',
-      tokens: ['tok'],
-      vars: { count: 1 },
-    });
-    assert.equal(vapid.sent, false);
+    const vapid = await push.send('morning', { lang: 'et', tokens: ['tok'], vars: { count: 1 } });
+    assert.equal(vapid.reason, 'no-client');
+    assert.equal(called, false);
   } finally {
-    global.fetch = prev;
+    global.fetch = prevFetch;
+    for (const [key, value] of Object.entries(saved)) {
+      if (value == null) delete process.env[key];
+      else process.env[key] = value;
+    }
   }
 });
 
