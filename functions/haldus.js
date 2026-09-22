@@ -465,16 +465,12 @@ module.exports = function createHaldus(deps) {
     return out;
   }
 
-  /** One { et, en, ru } string or function. */
-  function tr(lang, text) {
-    return core.pick(text, lang);
-  }
-
-  /** Estonian and English dates stay on formatDate. Russian uses the same Tallinn calendar. */
+  /** Estonian and English dates stay on the shared formatter. Russian uses the same Tallinn calendar. */
+  const dateInEtEn = formatDate;
   function formatWhen(date, lang) {
-    if (lang !== 'ru') return formatDate(date, lang);
+    if (lang !== 'ru') return dateInEtEn(date, lang);
     const d = date instanceof Date ? date : (date && typeof date.toDate === 'function' ? date.toDate() : null);
-    if (!d || Number.isNaN(d.getTime())) return formatDate(date, 'et');
+    if (!d || Number.isNaN(d.getTime())) return dateInEtEn(date, 'et');
     const s = new Intl.DateTimeFormat('ru-RU', {
       weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Tallinn',
     }).format(d);
@@ -518,6 +514,19 @@ module.exports = function createHaldus(deps) {
     </div>`;
   }
 
+  /** index.js footer knows only et/en; Russian letters must not end on an Estonian line. */
+  function emailFooterRu() {
+    return `
+    <div style="padding: 36px 40px 28px; text-align: center; border-top: 1px solid #E8E3DD;">
+      <p style="color: #2C2824; font-size: 18px; margin: 0 0 6px 0; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; letter-spacing: 3px;">SUKODA</p>
+      <div style="width: 24px; height: 1px; background: #B8976A; margin: 0 auto 18px;"></div>
+      <p style="color: #8A8578; font-size: 12px; margin: 0 0 6px 0;">Если есть вопросы: <a href="mailto:tere@sukoda.ee" style="color: #2C2824; text-decoration: none; border-bottom: 1px solid #B8976A;">tere@sukoda.ee</a></p>
+      <p style="color: #B8976A; font-size: 10px; margin: 14px 0 0 0; letter-spacing: 2px;">
+        <a href="https://sukoda.ee" style="color: #B8976A; text-decoration: none;">sukoda.ee</a>
+      </p>
+    </div>`;
+  }
+
   /** `brand` = brandOf(order) or omitted */
   function wrap(inner, lang, brand) {
     const b = brand && brand.name ? brand : null;
@@ -526,7 +535,7 @@ module.exports = function createHaldus(deps) {
   <div style="max-width:600px;margin:0 auto;background:#F5F0EB;">
     ${b ? brandHeader(b, lang) : emailHeader()}
     <div style="padding:36px 24px;">${inner}</div>
-    ${b ? brandFooter(b, lang) : emailFooter(lang)}
+    ${b ? brandFooter(b, lang) : (lang === 'ru' ? emailFooterRu() : emailFooter(lang))}
   </div>
 </body></html>`;
   }
@@ -542,7 +551,7 @@ module.exports = function createHaldus(deps) {
     return `
       <div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border-left:2px solid #B8976A;">
         ${LABEL(label)}
-        <p style="margin:0 0 4px 0;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(formatDate(start, lang))}</p>
+        <p style="margin:0 0 4px 0;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(formatWhen(start, lang))}</p>
         <p style="margin:0;color:#8A8578;font-size:16px;">${tt.at} ${escapeHtml(formatTime(start))}${dur ? ` <span style="color:#B8976A;">· ${dur} ${tt.minutes}</span>` : ''}</p>
         ${address ? ROW(tt.address, escapeHtml(address)) : ''}
         ${extraRows}
@@ -632,7 +641,7 @@ module.exports = function createHaldus(deps) {
       heading = tt.rescheduledTitle;
       intro = tt.rescheduledIntro(providerName);
       const old = toDate(oldStart);
-      body = (old ? `<p style="margin:0 0 6px 0;color:#8A8578;font-size:13px;">${tt.oldTime}: <s>${escapeHtml(formatDate(old, lang))}, ${escapeHtml(formatTime(old))}</s></p>` : '')
+      body = (old ? `<p style="margin:0 0 6px 0;color:#8A8578;font-size:13px;">${tt.oldTime}: <s>${escapeHtml(formatWhen(old, lang))}, ${escapeHtml(formatTime(old))}</s></p>` : '')
         + timeBox({ label: tt.newTime, start, end, address: booking.address, lang, extraRows })
         + calendarLinks({ title, start, end, address: booking.address, description: calDesc, lang });
     } else if (kind === 'cancelled') {
@@ -668,7 +677,7 @@ module.exports = function createHaldus(deps) {
       const ics = new URLSearchParams({ title: tt.calTitle, start: start.toISOString(), end: end.toISOString(), location: b.address || '' });
       const link = 'color:#2C2824;text-decoration:none;border-bottom:1px solid #B8976A;font-size:12px;margin-left:10px;';
       return `<tr>
-        <td style="padding:14px 0;border-bottom:1px solid #E8E3DD;color:#2C2824;font-family:Georgia,'Times New Roman',serif;font-size:17px;font-weight:300;">${escapeHtml(formatDate(start, lang))}<span style="color:#8A8578;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:14px;"> · ${tt.at} ${escapeHtml(formatTime(start))}</span></td>
+        <td style="padding:14px 0;border-bottom:1px solid #E8E3DD;color:#2C2824;font-family:Georgia,'Times New Roman',serif;font-size:17px;font-weight:300;">${escapeHtml(formatWhen(start, lang))}<span style="color:#8A8578;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:14px;"> · ${tt.at} ${escapeHtml(formatTime(start))}</span></td>
         <td style="padding:14px 0;border-bottom:1px solid #E8E3DD;text-align:right;white-space:nowrap;"><a href="https://calendar.google.com/calendar/render?${g}" style="${link}">Google</a><a href="${SITE}/api/calendar?${ics}" style="${link}">Apple / Outlook</a></td>
       </tr>`;
     }).join('');
@@ -706,8 +715,8 @@ module.exports = function createHaldus(deps) {
   }
   function periodLabel(period, lang) {
     return period.from === period.to
-      ? formatDate(dateOnly(period.from), lang)
-      : `${formatDate(dateOnly(period.from), lang)} – ${formatDate(dateOnly(period.to), lang)}`;
+      ? formatWhen(dateOnly(period.from), lang)
+      : `${formatWhen(dateOnly(period.from), lang)} – ${formatWhen(dateOnly(period.to), lang)}`;
   }
 
   /** Household: away period saved (+ which visits were cancelled) */
@@ -716,7 +725,7 @@ module.exports = function createHaldus(deps) {
     const name = firstName(primaryName(order));
     const rows = (cancelled || []).map((b) => {
       const s = toDate(b.scheduledAt);
-      return `<p style="margin:8px 0 0 0;color:#8A8578;font-size:14px;text-decoration:line-through;">${escapeHtml(formatDate(s, lang))} · ${tt.at} ${escapeHtml(formatTime(s))}</p>`;
+      return `<p style="margin:8px 0 0 0;color:#8A8578;font-size:14px;text-decoration:line-through;">${escapeHtml(formatWhen(s, lang))} · ${tt.at} ${escapeHtml(formatTime(s))}</p>`;
     }).join('');
     const html = wrap(
       H2(tt.awayTitle) + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(tt.awayIntro(providerName, by))}`) + providerLine(providerName, lang)
@@ -737,7 +746,7 @@ module.exports = function createHaldus(deps) {
     const who = primaryName(order) || 'Klient';
     const rows = (cancelled || []).map((b) => {
       const s = toDate(b.scheduledAt);
-      return `<li style="padding:8px 0;border-bottom:1px solid #E8E3DD;color:#8A8578;font-size:14px;">${escapeHtml(formatDate(s, 'et'))} · kell ${escapeHtml(formatTime(s))}</li>`;
+      return `<li style="padding:8px 0;border-bottom:1px solid #E8E3DD;color:#8A8578;font-size:14px;">${escapeHtml(formatWhen(s, 'et'))} · kell ${escapeHtml(formatTime(s))}</li>`;
     }).join('');
     if (removed) {
       return {
@@ -780,7 +789,7 @@ module.exports = function createHaldus(deps) {
     const title = kind === 'question' ? tt.questionSentTitle : kind === 'issue' ? tt.issueSentTitle : tt.requestReceivedTitle;
     const intro = kind === 'question' ? tt.questionSentIntro(providerName) : kind === 'issue' ? tt.issueSentIntro(providerName) : tt.requestReceivedIntro(providerName);
     const subject = kind === 'question' ? tt.subjQuestionSent(svc) : kind === 'issue' ? tt.subjIssueSent(svc) : tt.subjRequestReceived(svc);
-    const when = request.preferredDate ? formatDate(core.parseDateStr(request.preferredDate), lang) : tt.asap;
+    const when = request.preferredDate ? formatWhen(core.parseDateStr(request.preferredDate), lang) : tt.asap;
     const target = toDate(request.targetScheduledAt);
     // The access note (door code, key holder) stays in the portal — never echoed into plain e-mail
     const html = wrap(
@@ -788,7 +797,7 @@ module.exports = function createHaldus(deps) {
       + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border-left:2px solid #B8976A;">
           ${LABEL(kindLabel)}
           <p style="margin:0;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
-          ${target ? ROW(tt.oldTime, `${escapeHtml(formatDate(target, lang))}, ${escapeHtml(formatTime(target))}`) : ''}
+          ${target ? ROW(tt.oldTime, `${escapeHtml(formatWhen(target, lang))}, ${escapeHtml(formatTime(target))}`) : ''}
           ${kind !== 'question' ? ROW(tt.preferredDate, escapeHtml(when)) : ''}
           ${kind !== 'question' && request.timeWindow ? ROW(tt.preferredTime, escapeHtml(core.timeWindowLabel(request.timeWindow, lang))) : ''}
           ${request.note ? ROW(noteLabel, escapeHtml(request.note)) : ''}
@@ -903,9 +912,9 @@ module.exports = function createHaldus(deps) {
    */
   function flowerReadyBy(start) {
     const hour = Number(formatTime(start).slice(0, 2));
-    if (hour >= 12) return `${formatDate(start, 'et')} hommikul`;
+    if (hour >= 12) return `${formatWhen(start, 'et')} hommikul`;
     const prev = new Date(start.getTime() - 86400000);
-    return `${formatDate(prev, 'et')} õhtul`;
+    return `${formatWhen(prev, 'et')} õhtul`;
   }
 
   /** What goes on the tag so three bouquets on the same counter don't all read "Cristelle" */
@@ -931,7 +940,7 @@ module.exports = function createHaldus(deps) {
           ${LABEL('Sildile')}
           <p style="margin:0 0 14px;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(flowerLabel(order, provider))}</p>
           ${ROW('Valmis', `<span style="text-transform:capitalize;">${escapeHtml(flowerReadyBy(start))}</span>`)}
-          ${ROW('Visiit', `<span style="text-transform:capitalize;">${escapeHtml(formatDate(start, 'et'))}</span>, ${escapeHtml(formatTime(start))}`)}
+          ${ROW('Visiit', `<span style="text-transform:capitalize;">${escapeHtml(formatWhen(start, 'et'))}</span>, ${escapeHtml(formatTime(start))}`)}
           ${settings.preference ? ROW('Lilled', escapeHtml(settings.preference)) : ROW('Lilled', 'Poe valik, hooajaline')}
           ${settings.budget ? ROW('Kimp', escapeHtml(settings.budget)) : ''}
           ${settings.note ? ROW('Märkus', escapeHtml(settings.note)) : ''}
@@ -959,7 +968,7 @@ module.exports = function createHaldus(deps) {
     for (const it of items) { const k = it.florist.id; (byShop[k] = byShop[k] || { florist: it.florist, items: [] }).items.push(it); }
     const body = Object.values(byShop).map(({ florist, items: list }) => `<div style="background:#FFFFFF;padding:20px 24px;margin-bottom:14px;border-left:2px solid #B8976A;">
         ${LABEL(escapeHtml(florist.businessName || florist.name))}
-        ${list.map(({ order, booking, settings }) => `<p style="margin:8px 0 0;font-size:14px;color:#2C2824;font-weight:300;"><strong style="font-weight:400;">${escapeHtml(primaryName(order))}</strong> — <span style="text-transform:capitalize;">${escapeHtml(formatDate(toDate(booking.scheduledAt), 'et'))}</span>, ${escapeHtml(formatTime(toDate(booking.scheduledAt)))}${settings.preference ? ' · ' + escapeHtml(settings.preference) : ''}</p>`).join('')}
+        ${list.map(({ order, booking, settings }) => `<p style="margin:8px 0 0;font-size:14px;color:#2C2824;font-weight:300;"><strong style="font-weight:400;">${escapeHtml(primaryName(order))}</strong> — <span style="text-transform:capitalize;">${escapeHtml(formatWhen(toDate(booking.scheduledAt), 'et'))}</span>, ${escapeHtml(formatTime(toDate(booking.scheduledAt)))}${settings.preference ? ' · ' + escapeHtml(settings.preference) : ''}</p>`).join('')}
       </div>`).join('');
     const dates = [...new Set(items.map((i) => tallinnDateStr(toDate(i.booking.scheduledAt))))].sort();
     const when = periodShort({ from: dates[0], to: dates[dates.length - 1] });
@@ -972,7 +981,7 @@ module.exports = function createHaldus(deps) {
   function floristCancelEmail({ order, booking }) {
     const start = toDate(booking.scheduledAt);
     const name = primaryName(order) || primaryEmail(order);
-    const when = `${formatDate(start, 'et')}, ${formatTime(start)}`;
+    const when = `${formatWhen(start, 'et')}, ${formatTime(start)}`;
     return {
       subject: `SUKODA | Lilletellimus tühistatud — ${name}, ${periodShort({ from: tallinnDateStr(start), to: tallinnDateStr(start) })}`,
       html: wrap(H2('Lilletellimus tühistatud') + P(`${escapeHtml(name)} visiit <strong style="color:#2C2824;font-weight:400;text-transform:capitalize;">${escapeHtml(when)}</strong> jääb ära, seega kimpu selleks ajaks ei ole vaja. Vabandame lühikese ette teatamise pärast.`), 'et'),
@@ -983,7 +992,7 @@ module.exports = function createHaldus(deps) {
   function flowersOrderedEmail({ order, booking, florist, settings }) {
     const lang = langOf(order);
     const start = toDate(booking.scheduledAt);
-    const when = `${formatDate(start, lang)}, ${formatTime(start)}`;
+    const when = `${formatWhen(start, lang)}, ${formatTime(start)}`;
     const shop = florist?.businessName || florist?.name || '';
     const day = periodShort({ from: tallinnDateStr(start), to: tallinnDateStr(start) });
     const pref = settings.preference
@@ -1115,7 +1124,7 @@ module.exports = function createHaldus(deps) {
 
   function providerNewRequestEmail({ order, request }) {
     const svc = requestName(request, 'et');
-    const when = request.preferredDate ? formatDate(core.parseDateStr(request.preferredDate), 'et') : 'Esimesel võimalusel';
+    const when = request.preferredDate ? formatWhen(core.parseDateStr(request.preferredDate), 'et') : 'Esimesel võimalusel';
     const target = toDate(request.targetScheduledAt);
     const isReschedule = request.type === 'reschedule';
     const kind = isReschedule ? 'visit' : core.serviceKind(request.serviceId);
@@ -1136,7 +1145,7 @@ module.exports = function createHaldus(deps) {
         `<div style="background:#FFFFFF;padding:28px;border-left:2px solid #B8976A;">
           ${LABEL(isReschedule ? 'Visiit' : kind === 'question' ? 'Teema' : 'Teenus')}
           <p style="margin:0;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
-          ${target ? ROW('Praegune aeg', `${escapeHtml(formatDate(target, 'et'))}, ${escapeHtml(formatTime(target))}`) : ''}
+          ${target ? ROW('Praegune aeg', `${escapeHtml(formatWhen(target, 'et'))}, ${escapeHtml(formatTime(target))}`) : ''}
           ${kind !== 'question' ? ROW('Soovitud päev', escapeHtml(when)) : ''}
           ${kind !== 'question' && request.timeWindow ? ROW('Soovitud aeg', escapeHtml(core.timeWindowLabel(request.timeWindow, 'et'))) : ''}
           ${request.urgent ? ROW('Kiirus', 'Kiire — segab igapäevaelu') : ''}
@@ -1163,9 +1172,12 @@ module.exports = function createHaldus(deps) {
   // ============================================================
 
   async function notifyOrder(order, { subject, html }, { replyTo } = {}) {
+    const lang = core.langOf(order);
+    const subj = subject && typeof subject === 'object' ? core.pick(subject, lang) : subject;
+    const body = html && typeof html === 'object' ? core.pick(html, lang) : html;
     const recipients = core.resolveRecipients(order);
     for (const r of recipients) {
-      await sendEmail({ to: r.email, subject: brandSubject(order, subject), html, replyTo, from: brandFrom(order) });
+      await sendEmail({ to: r.email, subject: brandSubject(order, subj), html: body, replyTo, from: brandFrom(order) });
     }
     return recipients.length;
   }
@@ -3364,7 +3376,7 @@ module.exports = function createHaldus(deps) {
     const nextLabel = next.toLocaleDateString(locale, { month: 'long', year: 'numeric', timeZone: 'UTC' });
     const who = escapeHtml(provider.name);
     const safeName = escapeHtml(name);
-    const safeWhen = escapeHtml(formatDate(when, lang));
+    const safeWhen = escapeHtml(formatWhen(when, lang));
     return {
       subject: core.pick({ et: `SUKODA | Tehtud: ${name}`, en: `SUKODA | Done: ${name}`, ru: `SUKODA | Сделано: ${name}` }, lang),
       html: wrap(
@@ -3387,20 +3399,30 @@ module.exports = function createHaldus(deps) {
 
   /** To the provider: what is due at her clients' homes in the next two weeks, one mail, one line per item */
   function providerMaintenanceReminderEmail({ provider, entries }) {
+    const lang = core.langOf(provider);
     const rows = entries.map(({ order, item }) => `<div style="padding:14px 0;border-top:1px solid #E8E3DD;">
-        <p style="margin:0 0 2px 0;color:#2C2824;font-size:16px;font-family:Georgia,'Times New Roman',serif;font-weight:300;">${escapeHtml(core.maintenanceName(item, 'et'))} <span style="color:#B8976A;font-size:13px;font-family:Helvetica,Arial,sans-serif;">· ${escapeHtml(formatDate(core.parseDateStr(item.nextDueAt), 'et'))}</span></p>
+        <p style="margin:0 0 2px 0;color:#2C2824;font-size:16px;font-family:Georgia,'Times New Roman',serif;font-weight:300;">${escapeHtml(core.maintenanceName(item, lang))} <span style="color:#B8976A;font-size:13px;font-family:Helvetica,Arial,sans-serif;">· ${escapeHtml(formatWhen(core.parseDateStr(item.nextDueAt), lang))}</span></p>
         <p style="margin:0;color:#8A8578;font-size:13px;">${escapeHtml(primaryName(order) || '')} · ${escapeHtml(primaryAddress(order) || '')}</p>
       </div>`).join('');
     const n = entries.length;
+    const one = n === 1 ? `${core.maintenanceName(entries[0].item, lang)} · ${primaryName(entries[0].order)}` : '';
     return {
-      subject: `SUKODA | Hooldus ees: ${n === 1 ? `${core.maintenanceName(entries[0].item, 'et')} · ${primaryName(entries[0].order)}` : `${n} asja su klientide kodudes`}`,
+      subject: core.pick({
+        et: `SUKODA | Hooldus ees: ${n === 1 ? one : `${n} asja su klientide kodudes`}`,
+        en: `SUKODA | Upkeep due: ${n === 1 ? one : `${n} things in your clients' homes`}`,
+        ru: `SUKODA | Срок ухода: ${n === 1 ? one : `${n} дел в домах клиентов`}`,
+      }, lang),
       html: wrap(
-        H2('Hooldusrütm su klientide kodudes')
-        + P(`${escapeHtml(provider.name)}, need asjad, mille oled võtnud enda peale, on järgmise kahe nädala jooksul aeg teha. Kui tehtud, märgi töölaual — klient saab sellest ühe rea teate.`)
+        H2(core.pick({ et: 'Hooldusrütm su klientide kodudes', en: 'Upkeep at your clients\' homes', ru: 'Ритм ухода в домах клиентов' }, lang))
+        + P(core.pick({
+          et: `${escapeHtml(provider.name)}, need asjad, mille oled võtnud enda peale, on järgmise kahe nädala jooksul aeg teha. Kui tehtud, märgi töölaual — klient saab sellest ühe rea teate.`,
+          en: `${escapeHtml(provider.name)}, these are the things you took on, due within two weeks. When done, tick them on the desk — the client gets one line.`,
+          ru: `${escapeHtml(provider.name)}, эти дела, которые вы взяли на себя, нужно сделать в ближайшие две недели. Когда сделаете, отметьте на рабочем столе — клиент получит одну строку.`,
+        }, lang))
         + `<div style="background:#FFFFFF;padding:8px 28px 12px;margin-bottom:28px;border-left:2px solid #B8976A;">${rows}</div>`
-        + `<div style="text-align:center;margin:32px 0;"><a href="${HALDUS_URL}?tab=customers" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">Ava töölaud</a></div>`
-        + P('Iga kirje kohta üks meeldetuletus.', 'font-size:12px;'),
-        'et',
+        + `<div style="text-align:center;margin:32px 0;"><a href="${HALDUS_URL}?tab=customers" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">${core.pick({ et: 'Ava töölaud', en: 'Open the desk', ru: 'Открыть стол' }, lang)}</a></div>`
+        + P(core.pick({ et: 'Iga kirje kohta üks meeldetuletus.', en: 'One reminder per item.', ru: 'Одно напоминание на каждую запись.' }, lang), 'font-size:12px;'),
+        lang,
       ),
     };
   }
@@ -3448,7 +3470,7 @@ module.exports = function createHaldus(deps) {
       const cat = it.catalogId ? core.MAINTENANCE_CATALOGUE.find((m) => m.id === it.catalogId) : null;
       const hint = cat ? core.pick(cat.hint, lang) : (it.note || '');
       return `<div style="padding:16px 0;border-top:1px solid #E8E3DD;">
-        <p style="margin:0 0 4px 0;color:#2C2824;font-size:16px;font-family:Georgia,'Times New Roman',serif;font-weight:300;">${escapeHtml(name)} <span style="color:#B8976A;font-size:13px;font-family:Helvetica,Arial,sans-serif;">· ${escapeHtml(formatDate(due, lang))}</span></p>
+        <p style="margin:0 0 4px 0;color:#2C2824;font-size:16px;font-family:Georgia,'Times New Roman',serif;font-weight:300;">${escapeHtml(name)} <span style="color:#B8976A;font-size:13px;font-family:Helvetica,Arial,sans-serif;">· ${escapeHtml(formatWhen(due, lang))}</span></p>
         ${hint ? `<p style="margin:0;color:#8A8578;font-size:13px;line-height:1.6;">${escapeHtml(hint)}</p>` : ''}
       </div>`;
     }).join('');
