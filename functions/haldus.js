@@ -4243,7 +4243,19 @@ module.exports = function createHaldus(deps) {
     'GET /api/me/documents/export': async (req, res) => {
       const auth = await authenticateClient(req);
       if (!auth) return res.status(401).json({ error: 'Unauthorized' });
-      const zip = homePass.exportZip({ id: auth.orderId, ...auth.order });
+      const [bookingsSnap, requestsSnap] = await Promise.all([
+        db.collection('bookings').where('orderId', '==', auth.orderId).limit(200).get(),
+        db.collection('serviceRequests').where('orderId', '==', auth.orderId).limit(200).get(),
+      ]);
+      const visits = bookingsSnap.docs.map((doc) => {
+        const row = doc.data() || {};
+        return { id: doc.id, status: row.status, at: tsToIso(row.scheduledAt), serviceId: row.serviceId || null, note: row.completedNote || row.note || '' };
+      });
+      const wishes = requestsSnap.docs.map((doc) => {
+        const row = doc.data() || {};
+        return { id: doc.id, status: row.status, at: tsToIso(row.createdAt), serviceId: row.serviceId || null, note: row.note || '' };
+      });
+      const zip = homePass.exportZip({ id: auth.orderId, ...auth.order, history: { visits, wishes } });
       res.setHeader('Content-Type', 'application/zip');
       res.setHeader('Content-Disposition', 'attachment; filename="kodu.zip"');
       res.status(200).send(zip);

@@ -99,9 +99,45 @@ function zipStore(files) {
   return Buffer.concat(parts.concat(centralBuf, end));
 }
 
-function exportZip(home) {
-  const manifest = {
+function text(value, max) {
+  return String(value || '').trim().slice(0, max);
+}
+
+/** Home fields a resident may take with them. Door codes, payments and sessions stay out. */
+function homeRecord(home) {
+  const hp = home?.homeProfile || {};
+  const handover = home?.handover || {};
+  const person = home?.type === 'gift' ? (home?.recipient || {}) : (home?.customer || {});
+  return {
     id: home?.id || null,
+    name: text(person.name || handover.buyerName, 120),
+    email: text(person.email || handover.buyerEmail, 160),
+    address: text(person.address || home?.customer?.address, 200),
+    apartment: text(handover.apartment, 40),
+    size: home?.size || null,
+    homeType: hp.homeType || null,
+    pets: text(hp.pets, 300),
+    allergies: text(hp.allergies, 300),
+    flowerPreference: text(hp.flowerPreference, 300),
+    linens: text(hp.linens, 300),
+    towels: text(hp.towels, 300),
+    specialRequests: text(hp.specialRequests, 500),
+  };
+}
+
+function historyRows(list) {
+  return (Array.isArray(list) ? list : []).slice(0, 200).map((row) => ({
+    id: row?.id || null,
+    status: text(row?.status, 40),
+    at: row?.at || null,
+    serviceId: row?.serviceId || null,
+    note: text(row?.note || row?.completedNote, 500),
+  }));
+}
+
+function exportZip(home) {
+  const kodu = {
+    ...homeRecord(home),
     facts: (home?.facts || []).filter((f) => f && f.status === 'approved').map((f) => ({
       key: f.key, value: f.value, page: f.page || null, sourceDocId: f.sourceDocId || null,
     })),
@@ -109,7 +145,14 @@ function exportZip(home) {
       id: d.id, title: d.title, source: d.source || 'upload', scope: d.scope,
     })),
   };
-  return zipStore([{ name: 'kodu.json', data: JSON.stringify(manifest, null, 2) }]);
+  const ajalugu = {
+    visits: historyRows(home?.history?.visits),
+    wishes: historyRows(home?.history?.wishes),
+  };
+  return zipStore([
+    { name: 'kodu.json', data: JSON.stringify(kodu, null, 2) },
+    { name: 'ajalugu.json', data: JSON.stringify(ajalugu, null, 2) },
+  ]);
 }
 
 module.exports = { documentsForHome, askHome, zipStore, exportZip };

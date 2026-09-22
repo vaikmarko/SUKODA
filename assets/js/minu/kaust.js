@@ -29,6 +29,11 @@ add({
   askPerson: { et: 'Saada inimesele', en: 'Send to a person', ru: 'Отправьте человеку' },
   askSent: { et: 'Saadetud. Vastus tuleb siia.', en: 'Sent. The answer comes here.', ru: 'Отправлено. Ответ придёт сюда.' },
   exportHome: { et: 'Laadi kodu alla', en: 'Download this home', ru: 'Скачайте дом' },
+  exportPdfWaits: {
+    et: 'Passi PDF tuleb hiljem. Alla tuleb kodu, kinnitatud faktid ja ajalugu.',
+    en: 'The pass PDF comes later. This file is the home, the confirmed facts and the history.',
+    ru: 'PDF паспорта будет позже. Сейчас в файле дом, подтверждённые факты и история.',
+  },
 });
 
 export const kaustHtml = `<div id="dokumendid" class="lg:col-span-12 bg-white border border-line p-have">
@@ -50,7 +55,8 @@ export const kaustHtml = `<div id="dokumendid" class="lg:col-span-12 bg-white bo
                                     <button type="button" x-show="askCard && askCard.action === 'tech'" class="p-btn mt-4" @click="orderTechnician()" x-text="t('askTechBtn')"></button>
                                     <button type="button" x-show="askCard && askCard.action === 'person'" class="p-btn mt-4" @click="sendAskToPerson()" x-text="t('askPerson')"></button>
                                 </div>
-                                <button type="button" class="text-sm font-sans mt-3 underline underline-offset-4" @click="downloadHome()" x-text="t('exportHome')"></button>
+                                <button type="button" class="text-sm font-sans mt-4 underline underline-offset-4" @click="downloadHome()" x-text="t('exportHome')"></button>
+                                <p class="text-sm text-muted font-sans font-light mt-2" x-text="t('exportPdfWaits')"></p>
                             </form>
 
                             <!-- Add: a file (PDF or photo) or a link — one form -->

@@ -85,14 +85,31 @@ test('ask finds an approved fact and a building document, and flags heating', ()
   assert.equal(inherited[0].scope, 'building');
 });
 
-test('export zip contains the home pass and is a zip file', () => {
+test('export zip contains the home, approved facts and history, and leaves secrets out', () => {
   const zip = pass.exportZip({
     id: 'home-1',
-    facts: [{ key: 'filter', value: 'F7', status: 'approved', page: 14 }],
+    customer: { name: 'Mari', address: 'Iili 8', email: 'mari@kodu.ee' },
+    homeProfile: { pets: 'kass', access: 'door-1234', homeType: 'apartment' },
+    stripeCustomerId: 'cus_secret',
+    facts: [{ key: 'filter', value: 'F7', status: 'approved', page: 14 }, { key: 'draft', value: 'secret-draft', status: 'draft' }],
     buildingDocuments: [{ id: 'd1', title: 'Juhend', source: 'upload' }],
     documents: [],
+    history: {
+      visits: [{ id: 'b1', status: 'completed', at: '2026-03-12', serviceId: 'extra-clean', note: 'ok', access: 'visit-9999' }],
+      wishes: [{ id: 'r1', status: 'requested', serviceId: 'home-manual', at: '2026-03-01', note: 'filter', access: 'wish-door' }],
+    },
   });
+  const text = zip.toString('utf8');
   assert.equal(zip.readUInt32LE(0), 0x04034b50);
-  assert.ok(zip.includes(Buffer.from('kodu.json')));
-  assert.ok(zip.includes(Buffer.from('F7')));
+  assert.ok(text.includes('kodu.json'));
+  assert.ok(text.includes('ajalugu.json'));
+  assert.ok(text.includes('F7'));
+  assert.ok(text.includes('Mari'));
+  assert.ok(text.includes('kass'));
+  assert.ok(text.includes('extra-clean'));
+  assert.equal(text.includes('door-1234'), false);
+  assert.equal(text.includes('cus_secret'), false);
+  assert.equal(text.includes('visit-9999'), false);
+  assert.equal(text.includes('wish-door'), false);
+  assert.equal(text.includes('secret-draft'), false);
 });
