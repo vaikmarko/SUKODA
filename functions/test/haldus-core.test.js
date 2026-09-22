@@ -59,6 +59,33 @@ test('maintenance catalogue: et+en, valid interval, serviceId exists in the serv
   }
 });
 
+test('langOf keeps et, en and ru; anything else is Estonian', () => {
+  assert.equal(core.langOf({ lang: 'et' }), 'et');
+  assert.equal(core.langOf({ lang: 'en' }), 'en');
+  assert.equal(core.langOf({ lang: 'ru' }), 'ru');
+  assert.equal(core.langOf({ lang: 'de' }), 'et');
+  assert.equal(core.langOf({ lang: '' }), 'et');
+  assert.equal(core.langOf({}), 'et');
+  assert.equal(core.langOf(null), 'et');
+  assert.equal(core.langOf('ru'), 'ru');
+  assert.equal(core.langOf('EN'), 'et', 'codes are lowercase');
+});
+
+test('pick returns the asked language and falls back to et', () => {
+  const text = { et: 'Tere', en: 'Hello', ru: 'Здравствуйте' };
+  assert.equal(core.pick(text, 'et'), 'Tere');
+  assert.equal(core.pick(text, 'en'), 'Hello');
+  assert.equal(core.pick(text, 'ru'), 'Здравствуйте');
+  assert.equal(core.pick(text, 'fr'), 'Tere');
+  assert.equal(core.pick(text, null), 'Tere');
+  assert.equal(core.pick({ et: 'Tere', en: 'Hello', ru: '  ' }, 'ru'), 'Tere', 'blank ru must not hide et');
+  assert.equal(core.pick({ et: 'Tere', en: 'Hello' }, 'ru'), 'Tere');
+  assert.equal(core.pick({ et: '', en: '', ru: '' }, 'ru'), '');
+  const fns = { et: (n) => `et ${n}`, en: (n) => `en ${n}`, ru: (n) => `ru ${n}` };
+  assert.equal(core.pick(fns, 'ru')('Mari'), 'ru Mari');
+  assert.equal(core.pick(null, 'en'), null);
+});
+
 test('serviceKind defaults to visit; question/issue kinds are explicit', () => {
   assert.equal(core.serviceKind('extra-clean'), 'visit');
   assert.equal(core.serviceKind('home-manual'), 'question');

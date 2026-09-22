@@ -98,7 +98,7 @@ module.exports = function createHaldus(deps) {
   }
 
   function langOf(order) {
-    return order?.lang === 'en' ? 'en' : 'et';
+    return core.langOf(order);
   }
 
   function primaryName(order) {

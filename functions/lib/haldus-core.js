@@ -7,6 +7,35 @@
 
 const TALLINN_TIME_ZONE = 'Europe/Tallinn';
 
+/** Resident and desk languages. Unknown codes fall back to Estonian. */
+const LANGS = ['et', 'en', 'ru'];
+
+/**
+ * Language carried on an order (`order.lang`) or a raw code.
+ * Missing, empty and anything outside et/en/ru → et.
+ */
+function langOf(source) {
+  const lang = source && typeof source === 'object' ? source.lang : source;
+  return lang === 'en' || lang === 'ru' ? lang : 'et';
+}
+
+/**
+ * One value from `{ et, en, ru }`. A missing key or a blank string falls back to `et`,
+ * so an empty `ru` cannot hide the Estonian text. Functions and other non-strings
+ * are returned as stored when the chosen language has one.
+ */
+function pick(obj, lang) {
+  if (obj == null || typeof obj !== 'object') return obj;
+  const l = lang === 'en' || lang === 'ru' ? lang : 'et';
+  const v = obj[l];
+  if (typeof v === 'string') {
+    if (v.trim()) return v;
+  } else if (v != null) {
+    return v;
+  }
+  return obj.et;
+}
+
 // ------------------------------------------------------------
 // Service catalogue (lisateenused) shown in /minu
 // ------------------------------------------------------------
@@ -32,7 +61,7 @@ const SERVICE_CATEGORIES = {
 function categoryLabel(category, lang) {
   const c = SERVICE_CATEGORIES[category];
   if (!c) return category || '';
-  return c[lang] || c.et;
+  return pick(c, lang);
 }
 
 const SERVICE_CATALOGUE = [
@@ -393,7 +422,7 @@ function serviceKind(serviceId) {
 function serviceName(serviceId, lang) {
   const s = getService(serviceId);
   if (!s) return serviceId || '';
-  return s.name[lang] || s.name.et;
+  return pick(s.name, lang);
 }
 
 // Preferred time windows a customer can pick when requesting a service
@@ -407,7 +436,7 @@ const TIME_WINDOWS = {
 function timeWindowLabel(key, lang) {
   const w = TIME_WINDOWS[key];
   if (!w) return '';
-  return w[lang] || w.et;
+  return pick(w, lang);
 }
 
 // ------------------------------------------------------------
@@ -801,7 +830,7 @@ function completeMaintenanceItem(item, dateStr, todayStr) {
 
 function maintenanceName(item, lang) {
   const cat = item.catalogId ? MAINTENANCE_BY_ID[item.catalogId] : null;
-  return cat ? (cat.name[lang] || cat.name.et) : (item.name || '');
+  return cat ? pick(cat.name, lang) : (item.name || '');
 }
 
 /** 'overdue' | 'due' (within 14 days) | 'ok' */
@@ -878,6 +907,9 @@ function planByLookupKey(key) {
 }
 
 module.exports = {
+  LANGS,
+  langOf,
+  pick,
   PROVIDER_PLANS,
   PLAN_ACTIVE_STATUSES,
   SELF_SERVE_PLANS,
