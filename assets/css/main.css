@@ -98,6 +98,16 @@ body {
   white-space: nowrap;
 }
 .p-btn:hover { background: var(--color-accent); border-color: var(--color-accent); color: #fff; }
+/* A long label on a narrow screen stays inside the button. */
+.p-btn.p-btn-wrap {
+  height: auto;
+  min-height: 2.75rem;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.4;
+  padding-top: 0.7rem;
+  padding-bottom: 0.7rem;
+}
 /* Secondary action: outlined */
 .p-btn-2 {
   display: inline-flex; align-items: center; justify-content: center;

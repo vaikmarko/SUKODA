@@ -128,7 +128,7 @@ export const telliHtml = `<div x-show="activeTab === 'extras'" x-transition:ente
                         </div>
                         <p x-show="telliError" x-cloak class="text-sm text-muted font-sans font-light mt-4" x-text="telliError"></p>
                         <p x-show="telliDone" x-cloak class="text-sm font-sans font-light mt-4" x-text="telliDone"></p>
-                        <button type="button" class="p-btn w-full mt-6 disabled:opacity-40" :disabled="telliBusy || !telliDate" @click="submitTelli()" x-text="telliBusy ? t('telliSending') : telliButtonLabel"></button>
+                        <button type="button" class="p-btn p-btn-wrap w-full mt-6 disabled:opacity-40" :disabled="telliBusy || !telliDate" @click="submitTelli()" x-text="telliBusy ? t('telliSending') : telliButtonLabel"></button>
                     </section>
 
                     <div class="mb-12">
