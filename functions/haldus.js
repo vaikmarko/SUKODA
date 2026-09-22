@@ -153,7 +153,7 @@ module.exports = function createHaldus(deps) {
   }
 
   // ============================================================
-  // Email copy (customer-facing: ET/EN; provider-facing: ET)
+  // Email copy (customer-facing: ET/EN/RU via pick; provider-facing: ET)
   // ============================================================
 
   const T = {
@@ -356,9 +356,130 @@ module.exports = function createHaldus(deps) {
       awayRemovedTitle: 'Away period removed',
       awayRemovedIntro: (p) => (p ? `${p} knows you are home after all. Restored and upcoming times are below.` : 'Restored and upcoming times are below.'),
     },
+    ru: {
+      hello: (n) => (n ? `Здравствуйте, ${n}.` : 'Здравствуйте.'),
+      yourCleaner: (p) => (p ? `Ваш специалист по дому: ${p}` : ''),
+      yourContact: (p) => (p ? `Ваш контакт: ${p}` : ''),
+      time: 'Время',
+      at: 'в',
+      address: 'Адрес',
+      duration: 'Длительность',
+      minutes: 'мин',
+      service: 'Услуга',
+      price: 'Цена',
+      note: 'Примечание',
+      addToCalendar: 'Добавить в календарь',
+      google: 'Google Calendar',
+      apple: 'Apple / Outlook',
+      portalNote: 'Все время, обращения и документы находятся в портале вашего дома. Если время не подходит или вы хотите что-то добавить, сделайте это там — так всё останется при доме.',
+      portalBtn: 'ОТКРЫТЬ ПОРТАЛ',
+      calTitle: 'Уборка SUKODA',
+      calTitleService: (s, brand) => `${brand || 'SUKODA'} · ${s}`,
+
+      subjConfirmed: 'SUKODA | Ваше время подтверждено',
+      confirmedTitle: 'Ваше время подтверждено',
+      confirmedIntro: (p) => (p ? `${p} придёт к вам домой в указанное ниже время.` : 'Время ухода за домом подтверждено.'),
+      confirmedServiceIntro: (p, s) => (p ? `${p} подтверждает вашу заявку «${s}».` : `Ваша заявка «${s}» подтверждена.`),
+
+      subjRescheduled: 'SUKODA | Время визита изменено',
+      rescheduledTitle: 'Время визита изменено',
+      rescheduledIntro: (p) => (p ? `${p} меняет время вашего визита.` : 'Время вашего визита изменено.'),
+      oldTime: 'Прежнее время',
+      newTime: 'Новое время',
+
+      subjCancelled: 'SUKODA | Ваш визит отменён',
+      cancelledTitle: 'Визит отменён',
+      cancelledIntro: (p) => (p ? `${p} отменяет указанный ниже визит.` : 'Указанный ниже визит отменён.'),
+      reason: 'Причина',
+
+      subjReminder: 'SUKODA | Завтра уборка',
+      reminderTitle: 'Завтра уборка',
+      subjReminderWarranty: 'SUKODA | Завтра гарантийный визит',
+      reminderTitleWarranty: 'Завтра гарантийный визит',
+      subjReminderOther: (p) => (p ? `SUKODA | Завтра придёт ${p}` : 'SUKODA | Завтра визит'),
+      reminderTitleOther: (p) => (p ? `Завтра придёт ${p}` : 'Завтра визит'),
+      reminderIntro: (p) => (p ? `Напоминание: ${p} придёт завтра.` : 'Напоминание о завтрашнем визите.'),
+      reminderAccess: 'Оставьте, пожалуйста, доступ в дом. Если время не подходит, измените его в портале или напишите в обращении.',
+
+      subjSchedule: 'SUKODA | Ваши ближайшие уборки',
+      scheduleTitle: 'Ваши ближайшие уборки',
+      scheduleIntro: (p) => (p ? `${p} назначает следующие визиты. Контакты семьи могут добавить их в календарь одним нажатием.` : 'Следующие визиты назначены.'),
+      scheduleNote: 'Если время не подходит, измените его в портале или напишите там своему специалисту по дому.',
+
+      subjWelcome: 'SUKODA | Портал вашего дома открыт',
+      welcomeTitle: 'Добро пожаловать в SUKODA',
+      welcomeIntro: (p) => (p ? `${p} добавляет вас в клиенты SUKODA. Здесь вы видите время уборок, можете добавить членов семьи для уведомлений и заказать дополнительные услуги.` : 'Портал вашего дома готов.'),
+      welcomeIntroPartner: (p) => (p ? `${p} добавляет ваш дом на свой рабочий стол. В портале видны обращения, время и документы.` : 'Портал вашего дома готов.'),
+      welcomeBtn: 'ОТКРЫТЬ МОЙ SUKODA',
+      welcomeContacts: 'Совет: добавьте электронную почту члена семьи в разделе «Мой дом» — тогда все визиты дойдут и до него.',
+
+      subjRequestReceived: (s) => `SUKODA | Заявка принята: ${s}`,
+      subjQuestionSent: (s) => `SUKODA | Вопрос отправлен: ${s}`,
+      subjIssueSent: (s) => `SUKODA | Обращение отправлено: ${s}`,
+      requestReceivedTitle: 'Заявка принята',
+      questionSentTitle: 'Вопрос отправлен',
+      issueSentTitle: 'Обращение отправлено',
+      requestReceivedIntro: (p) => (p ? `Мы передали вашу заявку партнёру ${p}. Обычно время подтверждают в тот же день.` : 'Мы передали вашу заявку. Обычно время подтверждаем в тот же день.'),
+      questionSentIntro: (p) => (p ? `Ваш вопрос теперь у команды ${p}. Ответ придёт письменно, обычно в тот же рабочий день.` : 'Ваш вопрос принят. Ответ придёт письменно, обычно в тот же рабочий день.'),
+      issueSentIntro: (p) => `Мы передали ваше обращение партнёру ${p || 'Партнёр'}. Гарантийная команда обычно подтверждает время осмотра в течение 2 рабочих дней.`,
+      preferredDate: 'Желаемый день',
+      preferredTime: 'Желаемое время',
+      asap: 'При первой возможности',
+      requestReceivedNote: 'Это письмо — уведомление. Если хотите что-то добавить или уточнить, напишите в портале у обращения — так весь разговор останется при доме.',
+
+      subjRequestDeclined: (s) => `SUKODA | «${s}» нужно новое время`,
+      requestDeclinedTitle: 'Нужно новое время',
+      requestDeclinedIntro: (p) => (p ? `К сожалению, ${p} не может в желаемое время. Откройте обращение в портале и предложите новое время — так разговор останется при доме.` : 'К сожалению, желаемое время не подходит. Откройте обращение в портале и предложите новое время.'),
+      subjIssueReviewed: (s) => `SUKODA | Обращение рассмотрено: ${s}`,
+      issueReviewedTitle: 'Обращение рассмотрено',
+      issueReviewedIntro: (p) => (p ? `Ваше обращение рассмотрено (${p}). Описанный недостаток, к сожалению, не входит в гарантию — пояснение ниже.` : 'Мы рассмотрели ваше обращение. Описанный недостаток, к сожалению, не входит в гарантию — пояснение ниже.'),
+      issueReviewedNote: 'Если хотите, закажем работу платно.',
+      message: 'Сообщение',
+      explanation: 'Пояснение',
+
+      subjCompleted: (s) => `SUKODA | Сделано: ${s}`,
+      completedTitle: 'Сделано',
+      completedIntro: (p, s) => (p ? `${p} отмечает работу «${s}» выполненной.` : `Работа «${s}» выполнена.`),
+      completedNote: 'Если что-то осталось, напишите у обращения.',
+
+      subjRequestCancelled: 'SUKODA | Заявка отменена',
+
+      subjAway: 'SUKODA | Отсутствие записано',
+      awayTitle: 'Отсутствие записано',
+      awayIntro: (p, by) => (by === 'provider' && p ? `${p} отмечает, что вас не будет дома. В это время визитов не будет.` : (p ? `Мы сообщили партнёру ${p}, что вас не будет дома. В это время визитов не будет.` : 'В это время визитов не будет.')),
+      awayPeriod: 'Отсутствие',
+      awayCancelled: 'Отменённые визиты',
+      awayNone: 'В этот период визитов не было.',
+      awayResume: 'После возвращения визиты продолжатся как обычно. Если планы изменятся, отсутствие можно убрать в портале.',
+      subjAwayRemoved: 'SUKODA | Отсутствие снято',
+      awayRemovedTitle: 'Отсутствие снято',
+      awayRemovedIntro: (p) => (p ? `${p} знает, что вы всё же дома. Восстановленное и предстоящее время ниже.` : 'Восстановленное и предстоящее время ниже.'),
+    },
   };
 
-  const t = (lang) => T[lang] || T.et;
+  /** Customer-facing copy. Each key is picked from { et, en, ru }; a blank falls back to et. */
+  function t(lang) {
+    const l = core.langOf({ lang });
+    const out = {};
+    for (const key of Object.keys(T.et)) out[key] = core.pick({ et: T.et[key], en: T.en[key], ru: T.ru[key] }, l);
+    return out;
+  }
+
+  /** One { et, en, ru } string or function. */
+  function tr(lang, text) {
+    return core.pick(text, lang);
+  }
+
+  /** Estonian and English dates stay on formatDate. Russian uses the same Tallinn calendar. */
+  function formatWhen(date, lang) {
+    if (lang !== 'ru') return formatDate(date, lang);
+    const d = date instanceof Date ? date : (date && typeof date.toDate === 'function' ? date.toDate() : null);
+    if (!d || Number.isNaN(d.getTime())) return formatDate(date, 'et');
+    const s = new Intl.DateTimeFormat('ru-RU', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Tallinn',
+    }).format(d);
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
 
   // ---- White label: a developer's after-sales portal carries the developer's name; SUKODA stays in the small print ----
   function brandOf(order) {
@@ -374,24 +495,26 @@ module.exports = function createHaldus(deps) {
   function brandFrom(order) {
     const b = brandOf(order);
     if (!b) return undefined;
-    return `${b.name} ${langOf(order) === 'en' ? 'after-sales' : 'järelteenindus'} <tere@sukoda.ee>`;
+    const role = core.pick({ et: 'järelteenindus', en: 'after-sales', ru: 'послепродажный сервис' }, langOf(order));
+    return `${b.name} ${role} <tere@sukoda.ee>`;
   }
-  function brandHeader(brand) {
+  function brandHeader(brand, lang) {
     const line = brand.project ? `${brand.name} · ${brand.project}` : brand.name;
+    const by = core.pick({ et: 'portaali pakub SUKODA', en: 'portaali pakub SUKODA', ru: 'портал предоставляет SUKODA' }, lang);
     return `
     <div style="padding:44px 40px 36px;text-align:center;border-bottom:1px solid #E8E3DD;">
       <h1 style="color:#2C2824;font-size:24px;margin:0 0 8px 0;font-family:Georgia,'Times New Roman',serif;font-weight:300;letter-spacing:1px;">${escapeHtml(line)}</h1>
-      <p style="margin:0 0 12px 0;color:#8A8578;font-size:12px;letter-spacing:1px;">portaali pakub SUKODA</p>
+      <p style="margin:0 0 12px 0;color:#8A8578;font-size:12px;letter-spacing:1px;">${by}</p>
       <div style="width:40px;height:1px;background:#B8976A;margin:0 auto;"></div>
     </div>`;
   }
   function brandFooter(brand, lang) {
-    const et = lang !== 'en';
+    const by = core.pick({ et: 'PORTAALI PAKUB', en: 'PORTAL BY', ru: 'ПОРТАЛ ПРЕДОСТАВЛЯЕТ' }, lang);
     return `
     <div style="padding:32px 40px 28px;text-align:center;border-top:1px solid #E8E3DD;">
       <p style="color:#2C2824;font-size:16px;margin:0 0 6px 0;font-family:Georgia,'Times New Roman',serif;font-weight:300;letter-spacing:2px;">${escapeHtml(brand.name)}</p>
       <div style="width:24px;height:1px;background:#B8976A;margin:0 auto 16px;"></div>
-      <p style="color:#B8976A;font-size:10px;margin:0;letter-spacing:2px;">${et ? 'PORTAALI PAKUB' : 'PORTAL BY'} <a href="https://sukoda.ee" style="color:#B8976A;text-decoration:none;">SUKODA</a></p>
+      <p style="color:#B8976A;font-size:10px;margin:0;letter-spacing:2px;">${by} <a href="https://sukoda.ee" style="color:#B8976A;text-decoration:none;">SUKODA</a></p>
     </div>`;
   }
 
@@ -401,7 +524,7 @@ module.exports = function createHaldus(deps) {
     return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
 <body style="margin:0;padding:24px 12px;background:#FAF8F5;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
   <div style="max-width:600px;margin:0 auto;background:#F5F0EB;">
-    ${b ? brandHeader(b) : emailHeader()}
+    ${b ? brandHeader(b, lang) : emailHeader()}
     <div style="padding:36px 24px;">${inner}</div>
     ${b ? brandFooter(b, lang) : emailFooter(lang)}
   </div>
@@ -641,10 +764,19 @@ module.exports = function createHaldus(deps) {
 
   function requestReceivedEmail({ order, request, requestId, providerName, lang }) {
     const tt = t(lang);
-    const et = lang !== 'en';
     const name = firstName(primaryName(order));
     const svc = requestName(request, lang);
     const kind = requestKind(request);
+    const kindLabel = kind === 'question'
+      ? core.pick({ et: 'Küsimus', en: 'Question', ru: 'Вопрос' }, lang)
+      : kind === 'issue'
+        ? core.pick({ et: 'Pöördumine', en: 'Report', ru: 'Обращение' }, lang)
+        : tt.service;
+    const noteLabel = kind === 'question'
+      ? core.pick({ et: 'Sinu küsimus', en: 'Your question', ru: 'Ваш вопрос' }, lang)
+      : kind === 'issue'
+        ? core.pick({ et: 'Kirjeldus', en: 'Description', ru: 'Описание' }, lang)
+        : tt.note;
     const title = kind === 'question' ? tt.questionSentTitle : kind === 'issue' ? tt.issueSentTitle : tt.requestReceivedTitle;
     const intro = kind === 'question' ? tt.questionSentIntro(providerName) : kind === 'issue' ? tt.issueSentIntro(providerName) : tt.requestReceivedIntro(providerName);
     const subject = kind === 'question' ? tt.subjQuestionSent(svc) : kind === 'issue' ? tt.subjIssueSent(svc) : tt.subjRequestReceived(svc);
@@ -654,12 +786,12 @@ module.exports = function createHaldus(deps) {
     const html = wrap(
       H2(title) + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(intro)}`)
       + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border-left:2px solid #B8976A;">
-          ${LABEL(kind === 'question' ? (et ? 'Küsimus' : 'Question') : kind === 'issue' ? (et ? 'Pöördumine' : 'Report') : tt.service)}
+          ${LABEL(kindLabel)}
           <p style="margin:0;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
           ${target ? ROW(tt.oldTime, `${escapeHtml(formatDate(target, lang))}, ${escapeHtml(formatTime(target))}`) : ''}
           ${kind !== 'question' ? ROW(tt.preferredDate, escapeHtml(when)) : ''}
           ${kind !== 'question' && request.timeWindow ? ROW(tt.preferredTime, escapeHtml(core.timeWindowLabel(request.timeWindow, lang))) : ''}
-          ${request.note ? ROW(kind === 'question' ? (et ? 'Sinu küsimus' : 'Your question') : kind === 'issue' ? (et ? 'Kirjeldus' : 'Description') : tt.note, escapeHtml(request.note)) : ''}
+          ${request.note ? ROW(noteLabel, escapeHtml(request.note)) : ''}
         </div>`
       + P(tt.requestReceivedNote) + portalBlock(lang, requestUrl(requestId)),
       lang, brandOf(order),
@@ -690,27 +822,33 @@ module.exports = function createHaldus(deps) {
 
   function requestAnsweredEmail({ order, request, requestId, providerName, message, lang }) {
     const tt = t(lang);
-    const et = lang !== 'en';
     const name = firstName(primaryName(order));
     const svc = requestName(request, lang);
     const kind = requestKind(request);
     const who = providerName || request.providerName || 'Partner';
-    const title = kind === 'question' ? (et ? 'Vastus sinu küsimusele' : 'An answer to your question') : (et ? 'Vastus sinu pöördumisele' : 'A reply to your report');
-    const yours = kind === 'question' ? (et ? 'Sinu küsimus' : 'Your question') : kind === 'issue' ? (et ? 'Sinu pöördumine' : 'Your report') : (et ? 'Sinu soov' : 'Your request');
+    const title = kind === 'question'
+      ? core.pick({ et: 'Vastus sinu küsimusele', en: 'An answer to your question', ru: 'Ответ на ваш вопрос' }, lang)
+      : core.pick({ et: 'Vastus sinu pöördumisele', en: 'A reply to your report', ru: 'Ответ на ваше обращение' }, lang);
+    const yours = kind === 'question'
+      ? core.pick({ et: 'Sinu küsimus', en: 'Your question', ru: 'Ваш вопрос' }, lang)
+      : kind === 'issue'
+        ? core.pick({ et: 'Sinu pöördumine', en: 'Your report', ru: 'Ваше обращение' }, lang)
+        : core.pick({ et: 'Sinu soov', en: 'Your request', ru: 'Ваша заявка' }, lang);
     const asked = lastClientText(request);
+    const replied = core.pick({ et: `${who} vastas.`, en: `${who} replied.`, ru: `Ответ от ${who}.` }, lang);
     const html = wrap(
-      H2(title) + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(et ? `${who} vastas.` : `${who} replied.`)}`)
+      H2(title) + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(replied)}`)
       + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border-left:2px solid #B8976A;">
           ${LABEL(tt.service)}
           <p style="margin:0 0 16px;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
           ${asked ? ROW(yours, escapeHtml(asked).replace(/\n/g, '<br>')) : ''}
-          ${ROW(et ? 'Vastus' : 'Answer', escapeHtml(message).replace(/\n/g, '<br>'))}
+          ${ROW(core.pick({ et: 'Vastus', en: 'Answer', ru: 'Ответ' }, lang), escapeHtml(message).replace(/\n/g, '<br>'))}
         </div>`
-      + P(et ? 'Ära vasta sellele kirjale. Kirjuta portaalis.' : 'Do not reply to this e-mail. Write in the portal.', 'font-size:13px;color:#6B6560;')
+      + P(core.pick({ et: 'Ära vasta sellele kirjale. Kirjuta portaalis.', en: 'Do not reply to this e-mail. Write in the portal.', ru: 'Не отвечайте на это письмо. Напишите в портале.' }, lang), 'font-size:13px;color:#6B6560;')
       + portalBlock(lang, requestUrl(requestId)),
       lang, brandOf(order),
     );
-    return { subject: brandSubject(order, et ? `SUKODA | Vastus: ${svc}` : `SUKODA | Answer: ${svc}`), html };
+    return { subject: brandSubject(order, core.pick({ et: `SUKODA | Vastus: ${svc}`, en: `SUKODA | Answer: ${svc}`, ru: `SUKODA | Ответ: ${svc}` }, lang)), html };
   }
 
   /** The partner marked the visit behind a request as done */
@@ -724,7 +862,7 @@ module.exports = function createHaldus(deps) {
       + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border-left:2px solid #B8976A;">
           ${LABEL(tt.service)}
           <p style="margin:0;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
-          ${title ? ROW(lang === 'en' ? 'Your request' : 'Sinu pöördumine', escapeHtml(title)) : ''}
+          ${title ? ROW(core.pick({ et: 'Sinu pöördumine', en: 'Your request', ru: 'Ваше обращение' }, lang), escapeHtml(title)) : ''}
           ${note ? ROW(tt.note, escapeHtml(note).replace(/\n/g, '<br>')) : ''}
         </div>`
       + P(tt.completedNote) + portalBlock(lang, requestUrl(requestId)),
@@ -739,9 +877,9 @@ module.exports = function createHaldus(deps) {
   // ============================================================
   const FLOWER_LEAD_DAYS = [1, 2, 3];
   const FLOWER_PICKUP = {
-    partner: { et: 'Koduhooldaja võtab teel kaasa', en: 'Housekeeper picks up on the way' },
-    customer: { et: 'Tellija võtab ise', en: 'Customer picks up' },
-    delivery: { et: 'Pood toob koju enne visiiti', en: 'Shop delivers before the visit' },
+    partner: { et: 'Koduhooldaja võtab teel kaasa', en: 'Housekeeper picks up on the way', ru: 'Специалист по дому заберёт по пути' },
+    customer: { et: 'Tellija võtab ise', en: 'Customer picks up', ru: 'Вы заберёте сами' },
+    delivery: { et: 'Pood toob koju enne visiiti', en: 'Shop delivers before the visit', ru: 'Магазин привезёт домой до визита' },
   };
 
   function flowerSettings(order, florist) {
@@ -847,14 +985,33 @@ module.exports = function createHaldus(deps) {
     const start = toDate(booking.scheduledAt);
     const when = `${formatDate(start, lang)}, ${formatTime(start)}`;
     const shop = florist?.businessName || florist?.name || '';
-    const et = lang === 'et';
+    const day = periodShort({ from: tallinnDateStr(start), to: tallinnDateStr(start) });
+    const pref = settings.preference
+      ? core.pick({
+        et: ` Eelistus: ${escapeHtml(settings.preference)}.`,
+        en: ` Preference: ${escapeHtml(settings.preference)}.`,
+        ru: ` Предпочтение: ${escapeHtml(settings.preference)}.`,
+      }, lang)
+      : '';
+    const pickup = escapeHtml(core.pick(FLOWER_PICKUP[settings.pickup] || {}, lang) || '');
     return {
-      subject: et ? `SUKODA | Lilled tellitud — ${periodShort({ from: tallinnDateStr(start), to: tallinnDateStr(start) })}` : `SUKODA | Flowers ordered — ${periodShort({ from: tallinnDateStr(start), to: tallinnDateStr(start) })}`,
+      subject: core.pick({
+        et: `SUKODA | Lilled tellitud — ${day}`,
+        en: `SUKODA | Flowers ordered — ${day}`,
+        ru: `SUKODA | Цветы заказаны — ${day}`,
+      }, lang),
       html: wrap(
-        H2(et ? 'Lilled on tellitud' : 'Flowers are ordered')
-        + P(et ? `Saatsime poele ${escapeHtml(shop)} tellimuse visiidiks <span style="text-transform:capitalize;">${escapeHtml(when)}</span>.${settings.preference ? ' Eelistus: ' + escapeHtml(settings.preference) + '.' : ''} ${escapeHtml(FLOWER_PICKUP[settings.pickup]?.et || '')}.`
-          : `We sent ${escapeHtml(shop)} the order for the visit on <span style="text-transform:capitalize;">${escapeHtml(when)}</span>.${settings.preference ? ' Preference: ' + escapeHtml(settings.preference) + '.' : ''} ${escapeHtml(FLOWER_PICKUP[settings.pickup]?.en || '')}.`)
-        + P(et ? 'Lillede eelistust saad muuta portaalis Minu kodu → Lillede eelistus.' : 'Change your flower preference in the portal under My home → Flower preference.', 'font-size:12px;')
+        H2(core.pick({ et: 'Lilled on tellitud', en: 'Flowers are ordered', ru: 'Цветы заказаны' }, lang))
+        + P(core.pick({
+          et: `Saatsime poele ${escapeHtml(shop)} tellimuse visiidiks <span style="text-transform:capitalize;">${escapeHtml(when)}</span>.${pref} ${pickup}.`,
+          en: `We sent ${escapeHtml(shop)} the order for the visit on <span style="text-transform:capitalize;">${escapeHtml(when)}</span>.${pref} ${pickup}.`,
+          ru: `Мы отправили магазину ${escapeHtml(shop)} заказ к визиту <span style="text-transform:capitalize;">${escapeHtml(when)}</span>.${pref} ${pickup}.`,
+        }, lang))
+        + P(core.pick({
+          et: 'Lillede eelistust saad muuta portaalis Minu kodu → Lillede eelistus.',
+          en: 'Change your flower preference in the portal under My home → Flower preference.',
+          ru: 'Предпочтение по цветам можно изменить в портале: Мой дом → Предпочтение по цветам.',
+        }, lang), 'font-size:12px;')
         + portalBlock(lang),
         lang,
       ),
@@ -1562,7 +1719,7 @@ module.exports = function createHaldus(deps) {
 
   /** Display name for a request: catalogue service or the special "reschedule" type */
   function requestName(r, lang) {
-    if (r.type === 'reschedule') return lang === 'en' ? 'Reschedule visit' : 'Aja muutmine';
+    if (r.type === 'reschedule') return core.pick({ et: 'Aja muutmine', en: 'Reschedule visit', ru: 'Перенос визита' }, lang);
     return core.serviceName(r.serviceId, lang);
   }
 
@@ -1615,9 +1772,8 @@ module.exports = function createHaldus(deps) {
   }
 
   function requestMessageEmail({ toSide, order, request, requestId, fromName, text, lang }) {
-    const et = lang !== 'en';
     const svc = requestName(request, lang);
-    const title = et ? `Uus sõnum: ${svc}` : `New message: ${svc}`;
+    const title = core.pick({ et: `Uus sõnum: ${svc}`, en: `New message: ${svc}`, ru: `Новое сообщение: ${svc}` }, lang);
     if (toSide === 'provider') {
       return {
         subject: `SUKODA | Sõnum: ${requestName(request, 'et')} — ${primaryName(order) || primaryEmail(order)}`,
@@ -1627,20 +1783,25 @@ module.exports = function createHaldus(deps) {
       };
     }
     const tt = t(lang);
-    const who = fromName || (et ? 'Meeskond' : 'The team');
+    const who = fromName || core.pick({ et: 'Meeskond', en: 'The team', ru: 'Команда' }, lang);
+    const wrote = core.pick({
+      et: `${who} kirjutas sinu pöördumisele.`,
+      en: `${who} wrote on your request.`,
+      ru: `${who} пишет по вашему обращению.`,
+    }, lang);
     const html = wrap(
-      H2(title) + P(`${tt.hello(escapeHtml(firstName(primaryName(order))))} ${escapeHtml(et ? `${who} kirjutas sinu pöördumisele.` : `${who} wrote on your request.`)}`)
+      H2(title) + P(`${tt.hello(escapeHtml(firstName(primaryName(order))))} ${escapeHtml(wrote)}`)
       + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border-left:2px solid #B8976A;">
           ${LABEL(tt.service)}
           <p style="margin:0 0 16px;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
           <p style="margin:0;font-size:14px;line-height:1.6;color:#2C2824;">${escapeHtml(text).replace(/\n/g, '<br>')}</p>
         </div>`
-      + P(et ? 'Ära vasta sellele kirjale. Kirjuta portaalis.' : 'Do not reply to this e-mail. Write in the portal.', 'font-size:13px;color:#6B6560;')
+      + P(core.pick({ et: 'Ära vasta sellele kirjale. Kirjuta portaalis.', en: 'Do not reply to this e-mail. Write in the portal.', ru: 'Не отвечайте на это письмо. Напишите в портале.' }, lang), 'font-size:13px;color:#6B6560;')
       + portalBlock(lang, requestUrl(requestId)),
       lang,
       brandOf(order),
     );
-    return { subject: et ? `SUKODA | Sõnum: ${svc}` : `SUKODA | Message: ${svc}`, html };
+    return { subject: core.pick({ et: `SUKODA | Sõnum: ${svc}`, en: `SUKODA | Message: ${svc}`, ru: `SUKODA | Сообщение: ${svc}` }, lang), html };
   }
 
   // ============================================================
@@ -3196,18 +3357,29 @@ module.exports = function createHaldus(deps) {
 
   /** To the household, when the housekeeper ticks something off: no reminder needed, just "done" */
   function maintenanceDoneEmail({ order, item, provider, lang }) {
-    const et = lang !== 'en';
     const name = core.maintenanceName(item, lang);
     const when = core.parseDateStr(item.lastDoneAt);
     const next = core.parseDateStr(item.nextDueAt);
-    const nextLabel = next.toLocaleDateString(et ? 'et-EE' : 'en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+    const locale = core.pick({ et: 'et-EE', en: 'en-GB', ru: 'ru-RU' }, lang);
+    const nextLabel = next.toLocaleDateString(locale, { month: 'long', year: 'numeric', timeZone: 'UTC' });
+    const who = escapeHtml(provider.name);
+    const safeName = escapeHtml(name);
+    const safeWhen = escapeHtml(formatDate(when, lang));
     return {
-      subject: et ? `SUKODA | Tehtud: ${name}` : `SUKODA | Done: ${name}`,
+      subject: core.pick({ et: `SUKODA | Tehtud: ${name}`, en: `SUKODA | Done: ${name}`, ru: `SUKODA | Сделано: ${name}` }, lang),
       html: wrap(
-        H2(et ? 'Tehtud' : 'Done')
-        + P(et ? `${escapeHtml(provider.name)} märkis tehtuks: <strong style="color:#2C2824;font-weight:normal;">${escapeHtml(name)}</strong> · ${escapeHtml(formatDate(when, lang))}.` : `${escapeHtml(provider.name)} marked as done: <strong style="color:#2C2824;font-weight:normal;">${escapeHtml(name)}</strong> · ${escapeHtml(formatDate(when, lang))}.`)
-        + P(et ? `Järgmine kord umbes ${escapeHtml(nextLabel)}. Sina ei pea midagi tegema — see on kirjas sinu kodu hooldusrütmis.` : `Next time around ${escapeHtml(nextLabel)}. Nothing for you to do — it is recorded in your home's upkeep rhythm.`)
-        + `<div style="text-align:center;margin:32px 0;"><a href="${PORTAL_URL}" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">${et ? 'Ava minu kodu' : 'Open my home'}</a></div>`,
+        H2(core.pick({ et: 'Tehtud', en: 'Done', ru: 'Сделано' }, lang))
+        + P(core.pick({
+          et: `${who} märkis tehtuks: <strong style="color:#2C2824;font-weight:normal;">${safeName}</strong> · ${safeWhen}.`,
+          en: `${who} marked as done: <strong style="color:#2C2824;font-weight:normal;">${safeName}</strong> · ${safeWhen}.`,
+          ru: `${who} отмечает выполненным: <strong style="color:#2C2824;font-weight:normal;">${safeName}</strong> · ${safeWhen}.`,
+        }, lang))
+        + P(core.pick({
+          et: `Järgmine kord umbes ${escapeHtml(nextLabel)}. Sina ei pea midagi tegema — see on kirjas sinu kodu hooldusrütmis.`,
+          en: `Next time around ${escapeHtml(nextLabel)}. Nothing for you to do — it is recorded in your home's upkeep rhythm.`,
+          ru: `Следующий раз примерно ${escapeHtml(nextLabel)}. Вам ничего делать не нужно — это записано в ритме ухода за домом.`,
+        }, lang))
+        + `<div style="text-align:center;margin:32px 0;"><a href="${PORTAL_URL}" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">${core.pick({ et: 'Ava minu kodu', en: 'Open my home', ru: 'Открыть мой дом' }, lang)}</a></div>`,
         lang,
       ),
     };
@@ -3270,26 +3442,38 @@ module.exports = function createHaldus(deps) {
 
   /** To the household: what is coming up, one line per item, with a way to get it done from the portal */
   function maintenanceReminderEmail({ order, items, lang }) {
-    const et = lang !== 'en';
     const rows = items.map((it) => {
       const name = core.maintenanceName(it, lang);
       const due = core.parseDateStr(it.nextDueAt);
       const cat = it.catalogId ? core.MAINTENANCE_CATALOGUE.find((m) => m.id === it.catalogId) : null;
-      const hint = cat ? (cat.hint[lang] || cat.hint.et) : (it.note || '');
+      const hint = cat ? core.pick(cat.hint, lang) : (it.note || '');
       return `<div style="padding:16px 0;border-top:1px solid #E8E3DD;">
         <p style="margin:0 0 4px 0;color:#2C2824;font-size:16px;font-family:Georgia,'Times New Roman',serif;font-weight:300;">${escapeHtml(name)} <span style="color:#B8976A;font-size:13px;font-family:Helvetica,Arial,sans-serif;">· ${escapeHtml(formatDate(due, lang))}</span></p>
         ${hint ? `<p style="margin:0;color:#8A8578;font-size:13px;line-height:1.6;">${escapeHtml(hint)}</p>` : ''}
       </div>`;
     }).join('');
     const n = items.length;
+    const one = core.maintenanceName(items[0], lang);
     return {
-      subject: et ? `SUKODA | Kodu hooldus: ${n === 1 ? core.maintenanceName(items[0], lang) : `${n} asja sel kuul`}` : `SUKODA | Home upkeep: ${n === 1 ? core.maintenanceName(items[0], lang) : `${n} things this month`}`,
+      subject: core.pick({
+        et: `SUKODA | Kodu hooldus: ${n === 1 ? one : `${n} asja sel kuul`}`,
+        en: `SUKODA | Home upkeep: ${n === 1 ? one : `${n} things this month`}`,
+        ru: `SUKODA | Уход за домом: ${n === 1 ? one : `${n} дел в этом месяце`}`,
+      }, lang),
       html: wrap(
-        H2(et ? 'Kodu hooldusrütm' : 'Home upkeep')
-        + P(et ? `${escapeHtml(primaryAddress(order) || 'Sinu kodu')} — need asjad on järgmise kahe nädala jooksul aeg üle vaadata. Tee ise ja märgi portaalis tehtuks, või telli tegija sealt samast.` : `${escapeHtml(primaryAddress(order) || 'Your home')} — these are due within the next two weeks. Do them yourself and tick them off in the portal, or order someone from the same place.`)
+        H2(core.pick({ et: 'Kodu hooldusrütm', en: 'Home upkeep', ru: 'Ритм ухода за домом' }, lang))
+        + P(core.pick({
+          et: `${escapeHtml(primaryAddress(order) || 'Sinu kodu')} — need asjad on järgmise kahe nädala jooksul aeg üle vaadata. Tee ise ja märgi portaalis tehtuks, või telli tegija sealt samast.`,
+          en: `${escapeHtml(primaryAddress(order) || 'Your home')} — these are due within the next two weeks. Do them yourself and tick them off in the portal, or order someone from the same place.`,
+          ru: `${escapeHtml(primaryAddress(order) || 'Ваш дом')} — эти дела нужно проверить в ближайшие две недели. Сделайте сами и отметьте в портале, или закажите исполнителя там же.`,
+        }, lang))
         + `<div style="background:#FFFFFF;padding:8px 28px 12px;margin-bottom:28px;border-left:2px solid #B8976A;">${rows}</div>`
-        + `<div style="text-align:center;margin:32px 0;"><a href="${PORTAL_URL}" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">${et ? 'Ava minu kodu' : 'Open my home'}</a></div>`
-        + P(et ? 'Meeldetuletus tuleb iga kirje kohta üks kord. Sageduse saad portaalis muuta või kirje eemaldada.' : 'One reminder per item. Change the interval or remove the item in the portal.', 'font-size:12px;'),
+        + `<div style="text-align:center;margin:32px 0;"><a href="${PORTAL_URL}" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">${core.pick({ et: 'Ava minu kodu', en: 'Open my home', ru: 'Открыть мой дом' }, lang)}</a></div>`
+        + P(core.pick({
+          et: 'Meeldetuletus tuleb iga kirje kohta üks kord. Sageduse saad portaalis muuta või kirje eemaldada.',
+          en: 'One reminder per item. Change the interval or remove the item in the portal.',
+          ru: 'Напоминание по каждой записи приходит один раз. Интервал можно изменить или запись убрать в портале.',
+        }, lang), 'font-size:12px;'),
         lang,
       ),
     };
