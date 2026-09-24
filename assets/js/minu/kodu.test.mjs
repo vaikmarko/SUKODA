@@ -29,6 +29,7 @@ function portal(over) {
     formatTime: () => '14:00',
     formatDateShort: (v) => v,
     visitLabel: () => 'Koristus',
+    showProvider: true,
     isNotCovered: (r) => r.outcome === 'not_covered',
     ...over,
   };
@@ -115,4 +116,44 @@ test('away is the card only when nothing else is waiting', () => {
   const card = pickNextThing(portal({ extras: { requests: [], away: [{ from: '2026-04-01', to: '2026-04-12' }] } }));
   assert.equal(card.kind, 'away');
   assert.equal(card.action, 'Muuda eemalolekut');
+});
+
+test('a standing gift is the first card, with a time to pick', () => {
+  const card = pickNextThing(portal({ arcoCleanLine: 'Arco kingib esimese koristuse' }));
+  assert.equal(card.kind, 'welcome');
+  assert.equal(card.title, 'Vali esimene koristus');
+  assert.equal(card.body, 'Arco kingib esimese koristuse.');
+  assert.equal(card.action, 'Vali aeg');
+  assert.equal(dict.welcomeTitle.en, 'Pick the first clean');
+  assert.equal(dict.welcomeTitle.ru, 'Выберите первую уборку');
+  assert.equal(dict.welcomeBody.en, 'Arco gives the first clean.');
+  assert.equal(dict.welcomeBody.ru, 'Arco дарит первую уборку.');
+  assert.equal(dict.welcomeAction.et, 'Vali aeg');
+  assert.equal(dict.welcomeAction.en, 'Pick a time');
+  assert.equal(dict.welcomeAction.ru, 'Выберите время');
+  assert.doesNotMatch(`${card.title} ${card.body} ${dict.welcomeTitle.en} ${dict.welcomeBody.en}`, /õnne|kaks tundi|congratulat|two hours/i);
+});
+
+test('an unpaid order stays ahead of the gift', () => {
+  const card = pickNextThing(portal({
+    arcoCleanLine: 'Arco kingib esimese koristuse',
+    order: { status: 'pending', subscriptionStatus: null },
+  }));
+  assert.equal(card.kind, 'unpaid');
+});
+
+test('a visit replaces the gift card', () => {
+  const card = pickNextThing(portal({
+    arcoCleanLine: 'Arco kingib esimese koristuse',
+    upcomingBookings: [visit],
+  }));
+  assert.equal(card.kind, 'visit');
+});
+
+test('an open clean is not the gift card', () => {
+  const card = pickNextThing(portal({
+    arcoCleanLine: 'Arco kingib esimese koristuse',
+    extras: { requests: [{ id: 'c1', status: 'requested', serviceId: 'extra-clean', kind: 'visit', serviceName: 'Koristus' }], away: [] },
+  }));
+  assert.notEqual(card.kind, 'welcome');
 });

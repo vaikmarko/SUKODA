@@ -1,6 +1,6 @@
-/* /app — kest.
-   Sessiooniga: tegija võti → /haldus, muul juhul → /minu.
-   Ilma sessioonita: e-post → 6-kohaline kood siin, mitte avaleht.
+/* /app on elaniku kest, /too on töölaua kest.
+   Kumbki loeb ainult oma võtit ega kustuta teist, et mõlemad mahuksid ühte telefoni.
+   Ilma sessioonita: e-post → 6-kohaline kood siin.
    Install-vihje üks kord, ja ainult siis, kui sessioon on olemas. */
 (function () {
   'use strict';
@@ -9,6 +9,7 @@
   var ORDER = 'sukoda_portal_token';
   var DESK = 'sukoda_haldus_token';
   var LANG_KEY = 'sukoda_lang';
+  var PENDING = 'sukoda_login_email';
   var LANGS = ['et', 'en', 'ru'];
 
   var T = {
@@ -26,6 +27,11 @@
       et: 'Siis avaneb SUKODA ikoonist.',
       en: 'SUKODA then opens from the icon.',
       ru: 'Тогда SUKODA откроется с иконки.',
+    },
+    thenDesk: {
+      et: 'Siis avaneb Töölaud ikoonist.',
+      en: 'Töölaud then opens from the icon.',
+      ru: 'Тогда Töölaud откроется с иконки.',
     },
     manual: {
       et: 'Ava see leht telefonis ja lisa avaekraanile.',
@@ -46,13 +52,23 @@
       en: 'Enter your e-mail. We send a six-digit code.',
       ru: 'Укажите эл. почту. Мы отправим шестизначный код.',
     },
+    signReady: {
+      et: 'Saadame kuuekohalise koodi aadressile {email}.',
+      en: 'We send a six-digit code to {email}.',
+      ru: 'Мы отправим шестизначный код на {email}.',
+    },
     emailLabel: { et: 'E-post', en: 'E-mail', ru: 'Эл. почта' },
     sendCode: { et: 'Saada kood', en: 'Send the code', ru: 'Отправить код' },
-    codeTitle: { et: 'Kood on kirjas', en: 'The code is in your e-mail', ru: 'Код в письме' },
-    codeLead: {
-      et: 'Kirjuta kuus numbrit siia.',
-      en: 'Enter the six digits here.',
-      ru: 'Введите шесть цифр сюда.',
+    codeTitle: { et: 'Kirjuta kood', en: 'Enter the code', ru: 'Введите код' },
+    codeWhere: {
+      et: 'Saatsime kuus numbrit aadressile {email}.',
+      en: 'We sent six digits to {email}.',
+      ru: 'Мы отправили шесть цифр на {email}.',
+    },
+    newCode: {
+      et: 'Saada uus kood',
+      en: 'Send a new code',
+      ru: 'Отправить новый код',
     },
     codeLabel: { et: 'Kood', en: 'Code', ru: 'Код' },
     enter: { et: 'Sisene', en: 'Sign in', ru: 'Войти' },
@@ -123,19 +139,32 @@
       || (window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1);
   }
 
+  function isDesk() {
+    return document.documentElement.getAttribute('data-app') === 'desk';
+  }
+
+  function hintKey() {
+    return isDesk() ? 'sukoda_install_hint_desk' : HINT;
+  }
+
   function hasSession() {
-    return !!(token(ORDER) || token(DESK));
+    return isDesk() ? !!token(DESK) : !!token(ORDER);
   }
 
   function destination() {
-    if (token(DESK) && !token(ORDER)) return '/haldus';
-    return '/minu';
+    return isDesk() ? '/haldus' : '/minu';
+  }
+
+  function onPhone() {
+    var ua = window.navigator.userAgent || '';
+    return onIos() || /Android/i.test(ua);
   }
 
   function showHint() {
     if (!hasSession()) return false;
+    if (!onPhone()) return false;
     if (installed()) return false;
-    if (storeGet(HINT) === '1') return false;
+    if (storeGet(hintKey()) === '1') return false;
     return true;
   }
 
@@ -146,7 +175,7 @@
   }
 
   function dismiss() {
-    storeSet(HINT, '1');
+    storeSet(hintKey(), '1');
     leave(destination());
   }
 
@@ -209,7 +238,7 @@ function render() {
         primary.textContent = t('ok');
         later.hidden = true;
       } else {
-        lead.textContent = t('thenApp');
+        lead.textContent = isDesk() ? t('thenDesk') : t('thenApp');
         primary.textContent = t('install');
         later.hidden = false;
         later.textContent = t('later');
@@ -223,7 +252,7 @@ function render() {
     document.getElementById('card-line').hidden = mode !== 'email';
     if (mode === 'email') {
       title.textContent = t('signTitle');
-      lead.textContent = t('signLead');
+      lead.textContent = email ? t('signReady').replace('{email}', email) : t('signLead');
       document.getElementById('field-label').textContent = t('emailLabel');
       field.type = 'email';
       field.inputMode = 'email';
@@ -233,7 +262,9 @@ function render() {
       return;
     }
     title.textContent = t('codeTitle');
-    lead.textContent = t('codeLead');
+    lead.textContent = t('codeWhere').replace('{email}', email);
+    later.hidden = false;
+    later.textContent = t('newCode');
     document.getElementById('field-label').textContent = t('codeLabel');
     field.type = 'text';
     field.inputMode = 'numeric';
@@ -282,6 +313,7 @@ function render() {
           return;
         }
         mode = 'code';
+        storeSet(PENDING, email);
         field.value = '';
         render();
         field.focus();
@@ -299,17 +331,15 @@ function render() {
     }
     busy = true;
     render();
-    postJson('/api/haldus/login/verify', { email: email, code: value }).then(function (res) {
+    postJson('/api/haldus/login/verify', { email: email, code: value, app: isDesk() ? 'desk' : 'home' }).then(function (res) {
       busy = false;
       if (!res.ok || !res.data || !res.data.token) {
         showError(errorText(res.data, t('codeFail')));
         render();
         return;
       }
-      storeSet(res.data.desk ? DESK : ORDER, res.data.token);
-      if (res.data.desk) {
-        try { localStorage.removeItem(ORDER); } catch (e) {}
-      }
+      storeSet(isDesk() ? DESK : ORDER, res.data.token);
+      try { localStorage.removeItem(PENDING); } catch (e) {}
       mode = 'hint';
       if (!showHint()) {
         registerWorker();
@@ -352,7 +382,18 @@ function render() {
         onLogin();
       }
     });
-    document.getElementById('later').addEventListener('click', dismiss);
+    document.getElementById('later').addEventListener('click', function () {
+      if (mode === 'code') {
+        mode = 'email';
+        showError('');
+        reveal();
+        var field = document.getElementById('field');
+        field.value = email;
+        field.focus();
+        return;
+      }
+      dismiss();
+    });
     Array.prototype.forEach.call(document.querySelectorAll('[data-lang]'), function (button) {
       button.addEventListener('click', function () {
         var next = button.getAttribute('data-lang');
@@ -370,10 +411,27 @@ function render() {
     window.addEventListener('appinstalled', dismiss);
 
     registerWorker();
-    if (!hasSession()) {
-      mode = 'email';
+    var fromLink = '';
+    try { fromLink = new URLSearchParams(location.search).get('email') || ''; } catch (e) {}
+    var sent = '';
+    try { sent = new URLSearchParams(location.search).get('sent') || ''; } catch (e) {}
+    if (fromLink) {
+      email = fromLink;
+      mode = sent === '1' ? 'code' : 'email';
       reveal();
-      document.getElementById('field').focus();
+      var linked = document.getElementById('field');
+      if (mode === 'email') linked.value = email;
+      linked.focus();
+      return;
+    }
+    if (!hasSession()) {
+      var pending = storeGet(PENDING) || '';
+      email = pending;
+      mode = email ? 'code' : 'email';
+      reveal();
+      var field = document.getElementById('field');
+      if (mode === 'email' && email) field.value = email;
+      field.focus();
       return;
     }
     if (!showHint()) {

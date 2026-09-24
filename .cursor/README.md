@@ -41,7 +41,7 @@ One agent = one screen or one layer. `minu.html`, `haldus.html`, `functions/hald
 Prompt template (Estonian, paste into a fresh chat):
 
 ```
-Loe PLATVORMIPLAAN_2026.md: peatükk „Standard“, §0 põhimõtted, §3.8 tehniline hügieen ja sprint 1 rida §5 tabelis.
+Loe PLATVORMIPLAAN_2026.md: peatükk „Standard“, §0 põhimõtted, §3.8 tehniline hügieen ja sprint 1 rida §4 tabelis („Ehitamise järjekord“). §5 on Arco pakkumine, mitte sprint.
 Sinu lõik: <ÜKS asi sprint 1 reast>.
 Failid, mida tohid puutuda: <loetelu>. Muid faile ei puutu — kui midagi on vaja mujal, kirjuta see kokkuvõttesse ettepanekuna.
 Tee kõigepealt plaan: mis ekraan/handler, mis Firestore väljad, mis on „selle pärast ei pea X enam Y-t tegema“, kuidas kontrollid (test haldus-core.js loogikale, /verify käitumisele). Näita plaan enne ehitamist.

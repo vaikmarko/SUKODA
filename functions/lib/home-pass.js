@@ -11,28 +11,92 @@ function documentsForHome(buildingDocs, homeDocs) {
   return fromBuilding.concat(fromHome);
 }
 
+function foldAsk(text) {
+  return String(text || '').toLowerCase()
+    .replace(/filtr[a-zõäöüšž]*/g, 'filter')
+    .replace(/filter[a-zõäöüšž]*/g, 'filter')
+    .replace(/mõõ[a-zõäöüšž]*/g, 'mõõt')
+    .replace(/moot[a-zõäöüšž]*/g, 'mõõt')
+    .replace(/suurus[a-zõäöüšž]*/g, 'mõõt');
+}
+
+const ASK_STOP = new Set(['mis', 'on', 'ja', 'kui', 'kus', 'kust', 'see', 'seda', 'kuidas', 'palun', 'the', 'and', 'what', 'where', 'how', 'from']);
+
+function askWords(question) {
+  return foldAsk(question).split(/\s+/).filter((word) => word.length > 3 && !ASK_STOP.has(word));
+}
+
+function askScore(text, words) {
+  const blob = foldAsk(text);
+  return words.reduce((score, word) => score + (blob.includes(word) || (word.length >= 5 && blob.includes(word.slice(0, 5))) ? word.length : 0), 0);
+}
+
+function bestByScore(list, words, textOf) {
+  let best = null;
+  let bestScore = 0;
+  for (const item of list) {
+    const score = askScore(textOf(item), words);
+    if (score > bestScore) { bestScore = score; best = item; }
+  }
+  return best;
+}
+
+function sentencesOf(text) {
+  return String(text || '').split(/\n+|(?<=[.!?])\s+/).map((part) => part.trim()).filter((part) => part.length > 12);
+}
+
+function wordsHit(text, words) {
+  const blob = foldAsk(text);
+  return words.filter((word) => blob.includes(word) || (word.length >= 5 && blob.includes(word.slice(0, 5))));
+}
+
+/** The sentence that carries the words the prepared fact does not already say. */
+function sentenceHit(text, words) {
+  let best = '';
+  let bestCover = 0;
+  let bestScore = 0;
+  for (const part of sentencesOf(text)) {
+    const cover = wordsHit(part, words).length;
+    const score = askScore(part, words);
+    if (cover > bestCover || (cover === bestCover && score > bestScore)) {
+      best = part;
+      bestCover = cover;
+      bestScore = score;
+    }
+  }
+  return best ? String(best).slice(0, 500) : '';
+}
+
 function askHome({ question, facts, documents }) {
-  const q = String(question || '').trim().toLowerCase();
-  const words = q.split(/\s+/).filter((w) => w.length > 2);
+  const q = foldAsk(question).trim();
+  const words = askWords(question);
   const sensitive = SENSITIVE.some((w) => q.includes(w));
   if (!q) return { found: false, fact: null, document: null, sensitive, suggestTechnician: sensitive };
   const approved = (facts || []).filter((f) => f && f.status === 'approved');
-  const fact = approved.find((f) => {
-    const blob = `${f.key || ''} ${f.value || ''}`.toLowerCase();
-    return words.some((w) => blob.includes(w));
-  }) || null;
+  const fact = bestByScore(approved, words, (f) => `${f.key || ''} ${f.value || ''}`);
+  const factScore = fact ? askScore(`${fact.key || ''} ${fact.value || ''}`, words) : 0;
   const docs = documentsForHome(documents?.building, documents?.home);
+  const titled = bestByScore(docs, words, (d) => `${d.title || ''} ${d.note || ''} ${d.text || ''} ${d.category || ''}`);
+  const factHits = fact ? wordsHit(`${fact.key || ''} ${fact.value || ''}`, words) : [];
+  const extra = titled ? wordsHit(`${titled.title || ''} ${titled.note || ''} ${titled.text || ''}`, words).filter((word) => !factHits.includes(word)) : [];
+  const snippetWords = extra.length ? extra : words;
+  const snippet = titled ? sentenceHit(`${titled.text || ''}\n${titled.note || ''}`, snippetWords) : '';
+  const snippetScore = snippet ? askScore(snippet, words) : 0;
   const linked = fact?.sourceDocId ? docs.find((d) => d.id === fact.sourceDocId) : null;
-  const titled = docs.find((d) => {
-    const blob = `${d.title || ''} ${d.category || ''}`.toLowerCase();
-    return words.some((w) => blob.includes(w));
-  }) || null;
-  const document = linked || titled;
+  const document = (extra.length || snippetScore > factScore ? titled : null) || linked || titled;
   const page = document?.page || fact?.page || null;
   const url = /^https:\/\//.test(String(document?.url || '')) ? String(document.url).slice(0, 500) : '';
+  const fromPdf = snippet && (extra.length || snippetScore > factScore) ? snippet : '';
+  const note = !fact && !fromPdf && document && words.length && askScore(document.note || '', words) > 0
+    ? String(document.note).slice(0, 500)
+    : '';
   return {
     found: !!(fact || document),
-    fact: fact ? { key: fact.key, value: fact.value, page: fact.page || null, sourceDocId: fact.sourceDocId || null } : null,
+    fact: fromPdf
+      ? { key: 'text', value: fromPdf, page: document.page || null, sourceDocId: document.id || null }
+      : fact
+      ? { key: fact.key, value: fact.value, page: fact.page || null, sourceDocId: fact.sourceDocId || null }
+      : (note ? { key: 'note', value: note, page: document.page || null, sourceDocId: document.id || null } : null),
     document: document ? {
       id: document.id,
       title: document.title,

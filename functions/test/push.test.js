@@ -150,6 +150,57 @@ test('a key without an injected client does not call FCM', async () => {
   }
 });
 
+test('a web subscription sends the e-mail sentence and ignores a token string', async () => {
+  const seen = [];
+  const sub = { endpoint: 'https://push.example/abc', keys: { p256dh: 'p256', auth: 'authkey' } };
+  const saved = {
+    VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY,
+    VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY,
+  };
+  delete process.env.VAPID_PUBLIC_KEY;
+  delete process.env.VAPID_PRIVATE_KEY;
+  try {
+    const missing = await push.deliver(push.message({
+      type: 'new_request', lang: 'et', title: 'Uus soov', body: 'Anna soovib teenust.', audience: 'provider',
+    }), { subscriptions: [sub], webPush: async () => { throw new Error('should not send'); } });
+    assert.equal(missing.reason, 'no-key');
+    const result = await push.deliver(push.message({
+      type: 'new_request',
+      lang: 'et',
+      title: 'Uus soov',
+      body: 'Anna soovib teenust.',
+      url: 'https://sukoda.ee/haldus?tab=requests',
+      audience: 'provider',
+    }), {
+      subscriptions: [sub, 'tok', { endpoint: 'http://insecure.example', keys: { p256dh: 'p', auth: 'a' } }],
+      publicKey: 'pub',
+      privateKey: 'priv',
+      webPush: async (item, body) => { seen.push({ item, body }); },
+    });
+    assert.equal(result.sent, true);
+    assert.equal(result.count, 1);
+    const parsed = JSON.parse(seen[0].body);
+    assert.equal(parsed.title, 'Uus soov');
+    assert.equal(parsed.body, 'Anna soovib teenust.');
+    assert.equal(parsed.icon, '/icons/desk-192.png');
+    assert.equal(parsed.url, 'https://sukoda.ee/haldus?tab=requests');
+    assert.equal(seen[0].item.endpoint, sub.endpoint);
+    assert.deepEqual(
+      push.mergeSubscriptions(
+        [{ endpoint: 'https://push.example/old', keys: { p256dh: 'p', auth: 'a' } }, sub],
+        sub,
+      ).map((s) => s.endpoint),
+      ['https://push.example/old', sub.endpoint],
+    );
+    assert.equal(push.subscriptionOf({ endpoint: 'not-a-url', keys: { p256dh: 'p', auth: 'a' } }), null);
+  } finally {
+    for (const [key, value] of Object.entries(saved)) {
+      if (value == null) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+});
+
 test('a messaging error does not throw, so the cron can still send e-mail', async () => {
   const result = await push.send('morning', {
     serverKey: 'test-key',

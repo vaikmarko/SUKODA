@@ -1102,8 +1102,8 @@ function isFirestoreAlreadyExistsError(error) {
  * Handle successful checkout
  */
 async function handleCheckoutComplete(session) {
-  // Provider plan (desk subscription) — nothing to do with a household order
   if (session.metadata?.kind === 'provider_plan') return haldus.billing.onCheckoutComplete(session);
+  if (session.metadata?.kind === 'home_service') return haldus.completeHomePayment(session);
   const orderId = session.metadata?.order_id;
 
   if (!orderId) {
@@ -5868,7 +5868,7 @@ async function authenticateClient(req) {
   const expiresAt = order.sessionTokenExpiresAt?.toDate?.();
   if (expiresAt && expiresAt < new Date()) return null;
 
-  return { orderId: orderDoc.id, order, viewer: { email: order.customer?.email || null, name: order.customer?.name || '', primary: true } };
+  return { orderId: orderDoc.id, order, viewer: { email: order.customer?.email || null, name: order.customer?.name || '', primary: true, role: 'owner' } };
 }
 
 /**
@@ -5889,7 +5889,8 @@ async function resolvePortalSession(tokenHash) {
   if (!stillMember || !['paid', 'cancelling'].includes(order.status)) return null;
   const newExpiry = haldusCore.sessionExpiresAt(new Date());
   await doc.ref.update({ expiresAt: admin.firestore.Timestamp.fromDate(newExpiry), lastSeenAt: admin.firestore.FieldValue.serverTimestamp() });
-  return { orderId: orderDoc.id, order, viewer: { email: s.email, name: s.name || '', primary: false } };
+  const role = haldusCore.viewerRole(order, s.email);
+  return { orderId: orderDoc.id, order, viewer: { email: s.email, name: s.name || '', primary: false, role } };
 }
 
 // --- POST /api/auth/validate ---
@@ -5947,7 +5948,7 @@ exports.validatePortalToken = functions
           token,
           orderId: orderDoc.id,
           name: order.customer?.name || '',
-          viewer: { email: order.customer?.email || null, name: order.customer?.name || '', primary: true },
+          viewer: { email: order.customer?.email || null, name: order.customer?.name || '', primary: true, role: 'owner' },
         });
       } catch (error) {
         console.error('Token validation error:', error);

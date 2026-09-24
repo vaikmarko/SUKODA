@@ -72,6 +72,78 @@ test('ask finds an approved fact and a building document, and flags heating', ()
   const onlyDoc = pass.askHome({ question: 'juhend', facts, documents });
   assert.equal(onlyDoc.fact, null);
   assert.equal(onlyDoc.document.title, 'Ventilatsiooni juhend');
+  const fromFact = pass.askHome({
+    question: 'filtri mõõt',
+    facts: [{ key: 'filter', value: 'F7 280×220', status: 'approved', page: 14, sourceDocId: 'doc-1' }],
+    documents: { building: [], home: [] },
+  });
+  assert.equal(fromFact.fact.value, 'F7 280×220');
+  const notWarranty = pass.askHome({
+    question: 'Mis on filtrite mõõt ja kust tellin',
+    facts: [{ key: 'filter', value: 'Ventilatsioonifilter: sissepuhe F7 280×220 mm. Tellimine käib siit.', status: 'approved', sourceDocId: 'doc-vent' }],
+    documents: {
+      home: [
+        { id: 'doc-garantii', title: 'Ehitusgarantii tingimused', note: '2-aastane garantii. Pöördumised siit portaalist — jõuavad otse garantiimeeskonnale.' },
+        { id: 'doc-vent', title: 'Ventilatsiooniseadme kasutusjuhend', note: 'Ventilatsioonifilter: sissepuhe F7 280×220 mm.' },
+      ],
+    },
+  });
+  assert.match(notWarranty.fact.value, /280×220/);
+  assert.equal(notWarranty.document.title, 'Ventilatsiooniseadme kasutusjuhend');
+  const fromPdf = pass.askHome({
+    question: 'kas katusel on päikesepaneelid',
+    facts: [{ key: 'filter', value: 'Ventilatsioonifilter F7.', status: 'approved', sourceDocId: 'doc-vent' }],
+    documents: {
+      home: [
+        { id: 'doc-vent', title: 'Ventilatsioon', note: 'Filtrid.', text: 'Filtrid vahetada iga kuue kuu tagant.' },
+        { id: 'doc-energia', title: 'Energiamärgis', note: 'Klass A.', text: 'Taastuvenergia: päikesepaneelid katusel 42 kWp, üldelekter.' },
+      ],
+    },
+  });
+  assert.match(fromPdf.fact.value, /päikesepaneelid/);
+  assert.equal(fromPdf.document.title, 'Energiamärgis');
+  const meter = pass.askHome({
+    question: 'mis on elektri arvesti number',
+    facts: [{ key: 'filter', value: 'Ventilatsioonifilter F7.', status: 'approved', sourceDocId: 'doc-vent' }],
+    documents: {
+      home: [
+        { id: 'doc-garantii', title: 'Ehitusgarantii', note: 'Pöördumised portaalis.', text: 'Avariiline puudus, leke või elektririke: helista 24h avariinumbrile.' },
+        { id: 'doc-akt', title: 'Üleandmise akt', note: 'Näidud üleandmisel.', text: 'Elektri arvesti number on EE-77410825, näit üleandmisel 12 kWh.' },
+      ],
+    },
+  });
+  assert.match(meter.fact.value, /EE-77410825/);
+  assert.equal(meter.document.title, 'Üleandmise akt');
+  const model = pass.askHome({
+    question: 'mis mudel on ventilatsiooniseade',
+    facts: [{ key: 'filter', value: 'Ventilatsioonifilter: sissepuhe F7 280×220 mm.', status: 'approved', sourceDocId: 'doc-vent' }],
+    documents: { home: [{ id: 'doc-vent', title: 'Ventilatsiooniseade', note: 'Filtrid.', text: 'Ventilatsiooniseade.\nMudel on VHR-250. Paigaldatud 02.2026.' }] },
+  });
+  assert.match(model.fact.value, /VHR-250/);
+  assert.equal(model.document.title, 'Ventilatsiooniseade');
+  const fromNote = pass.askHome({
+    question: 'mis on filtri mõõt',
+    facts: [],
+    documents: { building: [], home: [{ id: 'doc-vent', title: 'Ventilatsiooniseadme kasutusjuhend', note: 'Ventilatsioonifilter: sissepuhe F7 280×220 mm, väljatõmme M5 280×220 mm.' }] },
+  });
+  assert.equal(fromNote.found, true);
+  assert.match(fromNote.fact.value, /280×220/);
+  assert.equal(fromNote.document.title, 'Ventilatsiooniseadme kasutusjuhend');
+  const homeFacts = [
+    { key: 'avarii', value: 'Avarii 24h: +372 600 0000.', status: 'approved', sourceDocId: 'doc-haldur' },
+    { key: 'prügi', value: 'Prügimaja kood on 2580.', status: 'approved', sourceDocId: 'doc-ky' },
+  ];
+  const docs = {
+    building: [],
+    home: [
+      { id: 'doc-haldur', title: 'Maja haldur ja avariinumber' },
+      { id: 'doc-ky', title: 'Kodukord' },
+    ],
+  };
+  const emergency = pass.askHome({ question: 'mis on avariinumber', facts: homeFacts, documents: docs });
+  assert.match(emergency.fact.value, /600 0000/);
+  const trash = pass.askHome({ question: 'prügikood', facts: homeFacts, documents: docs });
+  assert.match(trash.fact.value, /2580/);
   const linked = pass.askHome({
     question: 'mis filter on',
     facts,

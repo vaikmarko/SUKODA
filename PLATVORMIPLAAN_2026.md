@@ -99,15 +99,9 @@ Tegija teavitused: 07:00 hommikune päev („3 kodu, kaasa lilled Iili 8“), uu
 
 Töölaud jääb ka arvutis kasutatavaks (samad lehed, laiem paigutus). Kokkuvõte-sakk liigub Konto alla „Teenitud“ plokina.
 
-### 2.3 Arco (veebivaade töölaual, `haldus.html` arendaja-režiimis, ei ole PWA-kriitiline)
+### 2.3 Arco
 
-- **Majad** → **Kodud**: Iili 6/8/10, Spordi 3a/3b; iga kodu staatus (loodud / kood saadetud / aktiveeritud / esimene tellimus).
-- **Anna üle** (üleandmine): korter, ostja nimi, e-post, võtmete kuupäev → kood + prinditav kaart (QR). Garantii lõpp arvutub võtmete kuupäevast. Üks minut.
-- **Kingitused**: maja või kodu peale N visiiti või € eelarve, kehtivus (nt 6 kuud). Arve Arcole kuu lõpus.
-- **Dokumendid**: SharePointi ühenduse seis, passi ülevaatuse järjekord (järelteenindus kinnitab faktid enne, kui elanik neid näeb).
-- **Aruanne**: aktiveeritud kodud, küsimused (vastatud passist / inimeselt), rikked Hausingusse, tellimused. Kuuaruanne e-kirjaga.
-
-Arco garantii- ja majaküsimused liiguvad maja **suunamistabeli** järgi (vt 3.5): Hausingusse, e-kirjaga järelteenindusele või SUKODA töölauale. Arco ei saa teist piletilauda — see oli nende endi tingimus.
+**Otsus 24.09:** Arco ei saa tootes vaadet, arvet ega aruannet. Tingimuste kokkuleppel teeb Marko arve käsitsi ja laeb kodud ning dokumendid käsitsi. Diili järel läheb elaniku rike SUKODA-st otse Hausingusse. Kuni võtmeid ei ole, jääb sama pöördumine töölaua kaardile, et toode töötaks. Arco ei saa teist piletilauda. Majade ekraani, kuuaruannet ja e-arvet ei ehitata.
 
 ### 2.4 Operaator (admin, Marko)
 
@@ -146,11 +140,11 @@ flowchart LR
 
 ### 3.1 PWA ja sisenemine
 
-- **Üks rakendus, üks manifest** (`/manifest.webmanifest`, `start_url: /app`, `scope: /`). `/app` suunab salvestatud sessiooni järgi `/minu` või `/haldus`. Sisselogimisekraan on üks: *Sisesta kood või e-post*. Kood (Arco kaart, Cristelle’i kutse, kinkekaart) määrab rolli. Alternatiiv (kaks eraldi installi eri ikooniga) jääb tagavaraks, kui rollide segunemine tekitab segadust.
+- **Kaks ikooni, üks server.** Elanik: `SUKODA`, `/app` → `/minu`. Tegija: `Töölaud`, `/too` → `/haldus`. Eri manifesti `id`, sama päritolu. Kumbki sisselogimine ei kustuta teist, nii et mõlemad mahuvad ühte telefoni. Sisselogimine on ikka e-post → 6-kohaline kood. Kood (Arco kaart, Cristelle’i kutse, kinkekaart) määrab rolli; vale ikoon ütleb, kumba avada.
 - **Sisenemine koodiga rakenduse sees, mitte lingiga.** iOS-il avaneb e-kirja link Safaris, mitte installitud rakenduses, ja nende localStorage on eraldi — täna toimiv magic-link jätaks installitud rakenduse tühjaks. Sama probleem on Google’i/Apple’i popup-sisselogimisel, ja Google nõuaks lisaks, et elaniku e-post oleks Google’i konto. Lahendus: e-post → 6-kohaline kood → sisestad rakenduses → pikk sessioon (90 p, pikeneb kasutamisel; auditi punkt 3 lahendatud samaga). Magic-link jääb brauseri jaoks alles.
 - **Teisest korrast Face ID.** Pärast esimest sisenemist pakub rakendus ühe korra passkey’d (WebAuthn): edaspidi avaneb rakendus ühe Face ID / sõrmejälje puutega, võti sünkroonitakse iCloud Keychainis või Google Password Manageris. Google/Apple sisselogimine lisanupuna hiljem, kui keegi küsib; ukse põhi neist ei sõltu.
 - **Service worker** (Workbox): app shell + tänane päev offline (tegija Täna-kaardid, kood, nimekiri, plaan); *Tehtud* ja märkus järjekorras, kui levi kaob trepikojas.
-- **Push** FCM Web Push (VAPID) sama SW-s. iOS 16.4+ toetab installitud PWA-s. Luba küsitakse õigel hetkel (pärast esimest kinnitatud aega), mitte esimesel avamisel. E-kiri jääb alati paralleelseks kanaliks.
+- **Push** Web Push (VAPID) samas service workeris. iOS 16.4+ toetab installitud PWA-s. Luba küsitakse elanikul pärast esimest kinnitatud visiiti ja tegijal töölaua avamisel, mitte sisenemisekraanil. E-kiri jääb alati paralleelseks kanaliks. Võtmed on `functions/.env` (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`), mitte repos.
 - **Install-vihje** ilmub pärast koodi sisestamist üks kord („Lisa avaekraanile“ + iOS-i juhis), mitte bänneriga igal avamisel.
 - **Keel:** elaniku pool **ET + EN + RU** (Arco kodudes on kõik kolm tavalised, ilma RU-ta jääb osa elanikke ukse taha). Töölaud ET + EN, RU kui mõni tegija seda vajab. Tehniline muster: praegune `lang === 'et' ? … : …` on kahene ja kolmele keelele ei laiene — uued laused käivad lehe sõnastiku `T = { võti: { et, en, ru } }` ja `t('võti')` kaudu; vanad 724 ternaari on lintis külmutatud (arv tohib ainult langeda) ja migreeritakse ekraani kaupa sama sprindi sees, kui ekraani puututakse. Kirjad ja push: `{ et, en, ru }` objektid ja üks `pick(obj, lang)`, `order.lang` kannab elaniku valikut. Kataloogi 141 kaht keelt kandvat rida saavad `ru` sprindis 1 (üks tõlkepäev, mitte arendus).
 
@@ -173,13 +167,13 @@ flowchart LR
 
 | Tee | Kes maksab | Komisjon | Stripe kulu | Väljamakse |
 |---|---|---|---|---|
-| Cristelle’i oma klient (tema kutsega) | Kliendilt Cristelle’ile nagu seni, või soovi korral rakenduse kaudu | 0 % | Kui rakenduse kaudu: Stripe kulu läheb hinnast, SUKODA ei võta | — (või Connect, kui tahab) |
+| Cristelle’i oma klient (tema kutsega) | Cristelle arveldab kliendiga ise. SUKODA raha ei liiguta ega näita maksenuppu | 0 % | — | — |
 | SUKODA saadetud klient (Arco kood, avaleht) | Elanik rakenduses; Arco kingitus katab põhirea | 30 % SUKODA-le, Stripe kulu (~1,5 % + 0,25 €) SUKODA osast | Stripe | Connect Express, kord nädalas |
-| Arco | 9 € avamine + 5 €/kodu/kuu × 24; kingituste pakid | — | Stripe Invoicing, kuuarve | — |
+| Arco | 9 € avamine + 5 €/kodu/kuu × 24; kingituste pakid. Arvet ja vaadet tootes ei ole: Marko teeb arve käsitsi, kui tingimused on koos | — | — | — |
 
 - **Stripe Payment Element** Apple Pay / Google Pay’ga (domeenikinnitus sukoda.ee). Lilled ja lisad ühe maksena visiidiga. Rütmi puhul kaart salvestatakse (SetupIntent), makse võetakse visiidi kinnitamisel, mitte kuu ette — elanik näeb alati, mille eest.
-- **Kingituse loogika:** tellimusel arvutatakse `sponsorCents` (kingituse rida) ja `residentCents` (ülejäänu). Kui kingitus katab kõik, ei küsi me kaarti üldse. Arcole kuu lõpus arve kasutatud kingituste eest (mitte ette — nii ei jää tal kasutamata raha kinni).
-- **KM ja raamatupidamine:** hinnad km-ga (24 %). Kui Cristelle on FIE ilma km-kohustuseta, on jaotus teine kui OÜ-ga — enne Connecti live’i otsus raamatupidajaga. Stripe Tax vajadusel.
+- **Kingituse loogika:** tellimusel arvutatakse `sponsorCents` (kingituse rida) ja `residentCents` (ülejäänu). Kui kingitus katab kõik, ei küsi me kaarti üldse. Kasutatud kingitused lähevad samale käsitsi arvele, mida Marko Arcile saadab. Toode arvet ei koosta.
+- **KM ja raamatupidamine (otsus 24.09):** Cristelle on OÜ ja ei ole käibemaksukohustuslane. Oma klientide arve on tema ja kliendi vahel. Elaniku hinnad, mida SUKODA vahendab, on km-ga (24 %). Stripe Tax ei ole Cristelle’i oma klientide tee.
 - **Tegija plaanid** jäävad: 0 € kuni 3 kodu, 19 € kuni 20, 39 € piiramatult — ainult tema enda kutsutud kodud loevad. Arco ja SUKODA saadetud kodud plaani ei lähe.
 
 ### 3.4 Dokumendid ja kodupass
@@ -355,7 +349,7 @@ Oma juturobot persoonaga; Arco veateadete töölaud; App Store / Play; CRM ja m�
 
 1. Üks install rolliga koodist (soovitus) või kaks eraldi rakendust (Elanik / Töölaud)?
 2. Komisjon SUKODA saadetud tööl: 30 % (eilne) — kinnita või muuda.
-3. Cristelle: OÜ või FIE, km-kohustus? Määrab Connecti jaotuse.
-4. Arco garantii tee vaikimisi: Hausing (kui järelteenindus seal töötab) või e-kiri + töölaud?
-5. Üleandmise kingituse sisu, mida pakkumisse kirjutame (soovitus: 2 koristust + 1 remondimehe visiit, 6 kuud).
+3. ~~Cristelle: OÜ või FIE, km-kohustus?~~ — otsustatud 24.09: OÜ, käibemaksukohustuseta. Oma kliendid arveldab ise, SUKODA raha ei liiguta.
+4. ~~Arco garantii tee ja arve tootes?~~ — otsustatud 24.09: Arcole ei näidata midagi. Arve ja andmed teeb Marko käsitsi. Diili järel läheb rike otse Hausingusse.
+5. ~~Üleandmise kingituse sisu lepingusse?~~ — otsustatud 24.09: diili ei ole. Müük käib kinkekaardiga `SK1349-9EMK-4W47` aadressil `/lunasta`. See üks kood avab ettevalmistatud Kodulahe kodu ilma nime ja e-posti vormita. Teised kaardid on kas kutse või vana ostetud kinkekaart.
 6. ~~RU keel piloodis või hiljem?~~ — otsustatud 22.09: elaniku pool ET/EN/RU piloodist alates, töölaud ET/EN.

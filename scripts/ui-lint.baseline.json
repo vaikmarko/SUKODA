@@ -1,9 +1,9 @@
 {
   "hex": {
     "index.html": 63,
-    "minu.html": 67,
-    "haldus.html": 52,
-    "lunasta.html": 12,
+    "minu.html": 54,
+    "haldus.html": 50,
+    "lunasta.html": 11,
     "admin.html": 74,
     "arendajale.html": 15,
     "kingitus.html": 31,
@@ -15,9 +15,9 @@
   },
   "px": {
     "index.html": 77,
-    "minu.html": 39,
-    "haldus.html": 35,
-    "lunasta.html": 20,
+    "minu.html": 32,
+    "haldus.html": 34,
+    "lunasta.html": 18,
     "admin.html": 113,
     "arendajale.html": 31,
     "kingitus.html": 53,
@@ -28,9 +28,9 @@
   },
   "eyebrow": {
     "index.html": 67,
-    "minu.html": 37,
-    "haldus.html": 31,
-    "lunasta.html": 19,
+    "minu.html": 31,
+    "haldus.html": 30,
+    "lunasta.html": 17,
     "admin.html": 86,
     "arendajale.html": 25,
     "kingitus.html": 49,
@@ -42,8 +42,8 @@
   "emptyEn": {},
   "ternary": {
     "index.html": 175,
-    "minu.html": 158,
-    "lunasta.html": 75,
+    "minu.html": 138,
+    "lunasta.html": 44,
     "kingitus.html": 103,
     "success.html": 54,
     "lugu.html": 23

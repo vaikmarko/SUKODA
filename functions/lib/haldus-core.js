@@ -84,7 +84,7 @@ const SERVICE_CATALOGUE = [
       et: 'Eraldi visiit lisaks korduvale graafikule.',
       en: 'A separate visit, in addition to the standing schedule.', ru: 'Отдельный визит помимо постоянного графика.',
     },
-    priceHint: { et: 'hind kokkuleppel', en: 'price on request', ru: 'цена по договорённости' },
+    priceHint: { et: '140 €', en: '140 €', ru: '140 €' },
     durationMin: 180,
   },
   {
@@ -450,6 +450,27 @@ function timeWindowLabel(key, lang) {
   return pick(w, lang);
 }
 
+/** Clock we place on the calendar when the resident picks a window. Empty when the window has no hour. */
+function windowStartTime(key) {
+  const w = TIME_WINDOWS[key];
+  return (w && w.from) || '';
+}
+
+/**
+ * The resident sees the person who brought them. A developer or SUKODA home
+ * stays one service; we do not replace the provider the household already has.
+ */
+function providerBroughtHome(order) {
+  if (!order || typeof order !== 'object') return false;
+  const kind = order.ownerKind;
+  if (kind === 'provider-invited') return true;
+  if (kind === 'sukoda' || kind === 'developer') return false;
+  const by = String(order.createdBy || '');
+  if (by.startsWith('provider:') || by.startsWith('invite:') || order.inviteCardId) return true;
+  if ((order.brand && order.brand.name) || order.source === 'welcome' || by.startsWith('welcome:')) return false;
+  return order.billing === 'provider' && (order.source === 'manual' || order.source === 'provider');
+}
+
 // ------------------------------------------------------------
 // Contacts + notification recipients
 // ------------------------------------------------------------
@@ -491,6 +512,7 @@ function sanitizeContacts(input) {
       email,
       phone,
       notify: raw.notify !== false,
+      role: raw.role === 'tenant' ? 'tenant' : 'household',
     });
   }
   return { contacts };
@@ -498,6 +520,69 @@ function sanitizeContacts(input) {
 
 function randomId() {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+}
+
+/** Owner of the home, a tenant on it, or another household contact. */
+function viewerRole(order, email) {
+  const e = normalizeEmail(email);
+  if (!e) return 'owner';
+  if (normalizeEmail(order?.customer?.email) === e) return 'owner';
+  const hit = (order?.contacts || []).find((c) => normalizeEmail(c?.email) === e);
+  return hit?.role === 'tenant' ? 'tenant' : 'member';
+}
+
+/** A tenant sees the rhythm and the folder, not ownership papers. */
+function withoutOwnership(order) {
+  const drop = (list) => (Array.isArray(list) ? list.filter((d) => d && d.category !== 'ownership') : []);
+  return { ...(order || {}), documents: drop(order?.documents), buildingDocuments: drop(order?.buildingDocuments) };
+}
+
+/**
+ * Paid homes this e-mail can open. Same address book, one row per home.
+ * rows: [{ id, status, type, customer, contacts, contactEmails }]
+ */
+function homesForEmail(rows, email) {
+  const e = normalizeEmail(email);
+  if (!e) return [];
+  const out = [];
+  const seen = new Set();
+  for (const row of rows || []) {
+    if (!row || seen.has(row.id)) continue;
+    if (!['paid', 'cancelling'].includes(row.status)) continue;
+    if ((row.type || 'subscription') === 'gift') continue;
+    const owner = normalizeEmail(row.customer?.email) === e;
+    const contact = (row.contacts || []).find((c) => normalizeEmail(c?.email) === e);
+    const listed = owner || contact || (row.contactEmails || []).includes(e);
+    if (!listed) continue;
+    seen.add(row.id);
+    const role = owner ? 'owner' : (contact?.role === 'tenant' ? 'tenant' : 'member');
+    out.push({
+      id: row.id,
+      address: String(row.customer?.address || row.address || '').trim(),
+      role,
+    });
+  }
+  return out;
+}
+
+/**
+ * Hand the same home to a new owner. Documents, rhythm and visit history stay.
+ * Contacts and the door note go. Payment ids stay on the order; this does not call Stripe.
+ */
+function saleCustomer(order, input) {
+  const name = String(input?.name || '').trim().slice(0, 120);
+  const email = normalizeEmail(input?.email);
+  if (name.length < 2) return { error: 'name' };
+  if (!isValidEmail(email)) return { error: 'email' };
+  const prev = order?.customer && typeof order.customer === 'object' ? order.customer : {};
+  const homeProfile = { ...(order?.homeProfile || {}) };
+  if (Object.prototype.hasOwnProperty.call(homeProfile, 'access')) homeProfile.access = '';
+  return {
+    customer: { ...prev, name, email, phone: '' },
+    contacts: [],
+    contactEmails: [],
+    homeProfile,
+  };
 }
 
 /**
@@ -697,6 +782,37 @@ function holidayName(dateStr) {
   return holidayCache[year][dateStr] || null;
 }
 
+const LIVE_VISIT = new Set(['scheduled', 'confirmed']);
+
+/**
+ * One morning push per provider who has a live visit on `today` (YYYY-MM-DD).
+ * `count` is distinct homes. A visit without an order still counts as its own
+ * home. The result is only provider id and count — no access note, no address.
+ */
+function morningRecipients(visits, today) {
+  const day = String(today || '');
+  const homes = new Map();
+  let loose = 0;
+  for (const v of Array.isArray(visits) ? visits : []) {
+    if (!v || !LIVE_VISIT.has(v.status)) continue;
+    const providerId = String(v.providerId || '').trim();
+    if (!providerId || v.date !== day) continue;
+    const orderId = String(v.orderId || '').trim();
+    const id = String(v.id || '').trim();
+    let home = orderId;
+    if (!home && id) home = `visit:${id}`;
+    if (!home) {
+      loose += 1;
+      home = `visit:#${loose}`;
+    }
+    if (!homes.has(providerId)) homes.set(providerId, new Set());
+    homes.get(providerId).add(home);
+  }
+  return [...homes.entries()]
+    .map(([providerId, set]) => ({ providerId, count: set.size }))
+    .sort((a, b) => (a.providerId < b.providerId ? -1 : a.providerId > b.providerId ? 1 : 0));
+}
+
 // ------------------------------------------------------------
 // Misc
 // ------------------------------------------------------------
@@ -751,6 +867,41 @@ function liveAwayPeriods(awayPeriods, todayStr) {
   return (awayPeriods || []).filter((p) => p.to >= todayStr).sort((a, b) => (a.from < b.from ? -1 : 1));
 }
 
+/**
+ * Move live visits that fall inside an away window to the first day after it.
+ * Same clock time. Two homes at the same time land on different days.
+ * visits: [{ id, orderId, date, time, status }]
+ */
+function postponeVisits(visits, from, to) {
+  const end = parseDateStr(to);
+  const start = parseDateStr(from);
+  if (!start || !end || to < from) return [];
+  const firstBack = toDateStr(addDays(end, 1));
+  const taken = new Set();
+  const inside = (visits || [])
+    .filter((v) => v && v.date >= from && v.date <= to && ['scheduled', 'confirmed'].includes(v.status || 'scheduled'))
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : String(a.time || '').localeCompare(String(b.time || ''))));
+  const moves = [];
+  for (const v of inside) {
+    const time = String(v.time || '');
+    let date = firstBack;
+    let guard = 0;
+    while (taken.has(`${date}|${time}`) && guard < 30) {
+      date = toDateStr(addDays(parseDateStr(date), 1));
+      guard += 1;
+    }
+    taken.add(`${date}|${time}`);
+    moves.push({
+      id: String(v.id || ''),
+      orderId: String(v.orderId || ''),
+      from: v.date,
+      to: date,
+      time,
+    });
+  }
+  return moves;
+}
+
 // ============================================================
 // Kodu hooldusrütm — recurring upkeep the household should not have to remember
 // ============================================================
@@ -796,6 +947,8 @@ function addMonths(d, n) {
  * Build a maintenance item from user input. Either `catalogId` (suggestion) or a custom `name`.
  * `lastDoneAt` is optional: with it the next due date rolls forward by the interval; without a known
  * last date the item is due today, so the household ticks it off once and the rhythm starts clean.
+ * `startsAt` (YYYY-MM-DD, today or later) sets the first due date when nothing has been done yet —
+ * used when a housekeeper adds a service at the moment she brings a home on, so it does not land as overdue.
  * Returns { item } or { error }.
  */
 function sanitizeMaintenanceItem(input, todayStr) {
@@ -813,7 +966,15 @@ function sanitizeMaintenanceItem(input, todayStr) {
     if (input.lastDoneAt > todayStr) return { error: 'Kuupäev ei saa olla tulevikus' };
     lastDoneAt = input.lastDoneAt;
   }
-  const nextDueAt = lastDoneAt ? toDateStr(addMonths(parseDateStr(lastDoneAt), intervalMonths)) : todayStr;
+  let nextDueAt = todayStr;
+  if (lastDoneAt) {
+    nextDueAt = toDateStr(addMonths(parseDateStr(lastDoneAt), intervalMonths));
+  } else if (input.startsAt) {
+    const start = parseDateStr(input.startsAt);
+    if (!start) return { error: 'Vigane kuupäev' };
+    if (input.startsAt < todayStr) return { error: 'Algus ei saa olla minevikus' };
+    nextDueAt = input.startsAt;
+  }
   return {
     item: {
       id: randomId(),
@@ -1014,6 +1175,13 @@ function earnedCents(rows) {
   return (rows || []).reduce((sum, row) => sum + Math.max(0, Math.round(Number(row?.providerCents) || 0)), 0);
 }
 
+const RESIDENT_RHYTHMS = new Set(['once', 'weekly', 'biweekly', 'monthly']);
+
+/** A standing clean the resident asked for. Anything else is not a rhythm. */
+function residentRhythm(value) {
+  return RESIDENT_RHYTHMS.has(value) ? value : null;
+}
+
 function earliestBookableDate(todayStr, leadDays) {
   const n = Number(leadDays);
   const days = Number.isInteger(n) && n >= 0 && n <= 60 ? n : 14;
@@ -1057,6 +1225,34 @@ function warrantyUntilDate(handoverAt, months = 24) {
   const n = Number(months);
   const span = Number.isInteger(n) && n > 0 && n <= 60 ? n : 24;
   return toDateStr(addMonths(start, span));
+}
+
+const HANDYMAN_GIFT_IDS = ['small-repairs', 'hang-mount', 'assembly', 'curtains', 'appliance-install'];
+
+/** The spoken gift is one clean and one handyman visit. A later wish of the same kind is not covered. */
+function giftSpent(serviceId, usedIds) {
+  const used = new Set(Array.isArray(usedIds) ? usedIds.map(String) : []);
+  const id = String(serviceId || '');
+  if (id === 'extra-clean' || id === 'regular') return used.has('extra-clean') || used.has('regular');
+  if (HANDYMAN_GIFT_IDS.includes(id)) return HANDYMAN_GIFT_IDS.some((key) => used.has(key));
+  return false;
+}
+
+/** A priced visit is written, and the cleaner is told, only after the card charge has succeeded. */
+function chargeBeforeDispatch({ ownClient, kind, unpriced, cardRequired, residentCents }) {
+  if (ownClient) return false;
+  if (kind !== 'visit') return false;
+  if (unpriced) return false;
+  return cardRequired === true && Math.round(Number(residentCents) || 0) >= 50;
+}
+
+/** Money is in hand: Stripe says paid, in euros, for the full amount. A hold or a later capture does not count. */
+function homePaymentReady(session, payment) {
+  if (!session || session.payment_status !== 'paid') return false;
+  if (String(session.currency || '').toLowerCase() !== 'eur') return false;
+  const due = Math.round(Number(payment?.residentCents) || 0);
+  const paid = Math.round(Number(session.amount_total));
+  return due >= 50 && Number.isFinite(paid) && paid >= due;
 }
 
 /** "alates 89 €" → 8900. A sentence without a number, or "kokkuleppel", has no guide price. */
@@ -1146,10 +1342,11 @@ function telliAddons(ids) {
  * Price a cleaning wish before anyone confirms it. Never charges.
  * A line without a number (price on request) marks the quote unpriced.
  */
-function orderQuote({ serviceId, addonIds, sponsorCentsAvailable, ownerKind, today, leadDays, lang }) {
+function orderQuote({ serviceId, addonIds, sponsorCentsAvailable, ownerKind, today, leadDays, lang, coveredIds }) {
   const extras = telliAddons(addonIds);
   const main = getService(serviceId) ? String(serviceId) : 'extra-clean';
   const ids = [main].concat(extras.filter((id) => id !== main));
+  const covered = new Set(Array.isArray(coveredIds) ? coveredIds.map(String) : []);
   const lines = [];
   let total = 0;
   let unpriced = false;
@@ -1157,10 +1354,14 @@ function orderQuote({ serviceId, addonIds, sponsorCentsAvailable, ownerKind, tod
     const svc = getService(id);
     if (!svc) continue;
     const hint = pick(svc.priceHint, lang || 'et');
+    if (covered.has(id)) {
+      lines.push({ id, cents: 0, hint: '', covered: true });
+      continue;
+    }
     const cents = guidePriceCents(hint);
     if (cents == null) unpriced = true;
     else total += cents;
-    lines.push({ id, cents, hint });
+    lines.push({ id, cents, hint, covered: false });
   }
   const split = splitVisitPayment({
     priceCents: total,
@@ -1203,10 +1404,15 @@ module.exports = {
   sponsorRemainingCents,
   splitVisitPayment,
   earnedCents,
+  RESIDENT_RHYTHMS,
+  residentRhythm,
   earliestBookableDate,
   sanitizeAvailability,
   visitWindowOpen,
   warrantyUntilDate,
+  giftSpent,
+  chargeBeforeDispatch,
+  homePaymentReady,
   guidePriceCents,
   TELLI_ADDONS,
   telliAddons,
@@ -1233,6 +1439,7 @@ module.exports = {
   sanitizeAwayPeriod,
   isDateAway,
   liveAwayPeriods,
+  postponeVisits,
   SERVICE_CATALOGUE,
   SERVICE_CATEGORIES,
   categoryLabel,
@@ -1241,11 +1448,17 @@ module.exports = {
   serviceName,
   TIME_WINDOWS,
   timeWindowLabel,
+  windowStartTime,
+  providerBroughtHome,
   MAX_CONTACTS,
   normalizeEmail,
   isValidEmail,
   sanitizeContacts,
   resolveRecipients,
+  viewerRole,
+  withoutOwnership,
+  homesForEmail,
+  saleCustomer,
   FREQUENCIES,
   FREQUENCY_TO_PACKAGE,
   parseDateStr,
@@ -1256,6 +1469,7 @@ module.exports = {
   nthWeekdayOfMonth,
   estonianHolidays,
   holidayName,
+  morningRecipients,
   ORDER_SIZES,
   SIZE_DEFAULT_DURATION,
   overlaps,

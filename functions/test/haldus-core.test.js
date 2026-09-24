@@ -126,6 +126,19 @@ test('serviceKind defaults to visit; question/issue kinds are explicit', () => {
   assert.equal(core.serviceName('flowers', 'xx'), 'Värsked lilled', 'unknown lang falls back to et');
   assert.equal(core.categoryLabel('cleaning', 'ru'), 'Уборка');
   assert.equal(core.timeWindowLabel('morning', 'ru'), 'Утро (9–12)');
+  assert.equal(core.windowStartTime('morning'), '09:00');
+  assert.equal(core.windowStartTime('afternoon'), '12:00');
+  assert.equal(core.windowStartTime('any'), '09:00');
+  assert.equal(core.windowStartTime('with-visit'), '');
+  assert.equal(core.providerBroughtHome({ createdBy: 'provider:kristi' }), true);
+  assert.equal(core.providerBroughtHome({ createdBy: 'invite:card1' }), true);
+  assert.equal(core.providerBroughtHome({ inviteCardId: 'card1' }), true);
+  assert.equal(core.providerBroughtHome({ ownerKind: 'provider-invited', brand: { name: 'Arco Vara' } }), true);
+  assert.equal(core.providerBroughtHome({ ownerKind: 'developer', createdBy: 'provider:kristi' }), false);
+  assert.equal(core.providerBroughtHome({ createdBy: 'welcome:SK', brand: { name: 'Arco Vara' } }), false);
+  assert.equal(core.providerBroughtHome({ billing: 'provider', source: 'manual' }), true);
+  assert.equal(core.providerBroughtHome({ source: 'stripe', providerName: 'Kristi Kask' }), false);
+  assert.equal(core.providerBroughtHome(null), false);
 });
 
 // ------------------------------------------------------------
@@ -207,6 +220,43 @@ test('Estonian holidays 2026 include fixed and moving days', () => {
   assert.equal(core.holidayName('2026-09-22'), null);
 });
 
+test('morning push is one line per provider, counting homes, with no access note', () => {
+  const today = '2026-09-24';
+  const visits = [
+    { id: 'a', providerId: 'cristelle', orderId: 'home-1', status: 'scheduled', date: today, access: '1234#' },
+    { id: 'b', providerId: 'cristelle', orderId: 'home-2', status: 'confirmed', date: today },
+    { id: 'c', providerId: 'cristelle', orderId: 'home-1', status: 'scheduled', date: today },
+    { id: 'd', providerId: 'kalle', orderId: 'home-3', status: 'scheduled', date: today },
+    { id: 'e', providerId: 'cristelle', orderId: 'home-9', status: 'cancelled', date: today },
+    { id: 'f', providerId: 'cristelle', orderId: 'home-8', status: 'completed', date: today },
+    { id: 'g', providerId: 'cristelle', orderId: 'home-7', status: 'scheduled', date: '2026-09-25' },
+    { id: 'h', providerId: '', orderId: 'home-4', status: 'scheduled', date: today },
+    { id: 'i', providerId: 'kalle', status: 'scheduled', date: today },
+  ];
+  const rows = core.morningRecipients(visits, today);
+  assert.deepEqual(rows, [
+    { providerId: 'cristelle', count: 2 },
+    { providerId: 'kalle', count: 2 },
+  ]);
+  assert.equal(JSON.stringify(rows).includes('1234'), false);
+  assert.equal(Object.keys(rows[0]).join(','), 'providerId,count');
+  assert.deepEqual(core.morningRecipients(null, today), []);
+});
+
+test('07:00 cron sends morning push to the provider and does not put a door code in it', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const src = fs.readFileSync(path.join(__dirname, '../haldus.js'), 'utf8');
+  const start = src.indexOf('async function sendMorningPushes');
+  const end = src.indexOf('const sendFlowerOrdersJob');
+  assert.ok(start > 0 && end > start);
+  const job = src.slice(start, end);
+  assert.equal(job.split("push.send('morning'").length - 1, 1);
+  assert.match(job, /sendMorningPushes\(providerCache\)/);
+  assert.match(job, /audience: 'provider'/);
+  assert.doesNotMatch(job, /access|uksekood|homeProfile/i);
+});
+
 // ------------------------------------------------------------
 // Away periods
 // ------------------------------------------------------------
@@ -237,6 +287,19 @@ test('isDateAway and liveAwayPeriods', () => {
   assert.deepEqual(core.liveAwayPeriods(periods, TODAY).map((p) => p.from), ['2026-10-01']);
 });
 
+test('a provider away moves visits to the day after, and two homes at one time do not share it', () => {
+  const moves = core.postponeVisits([
+    { id: 'a', orderId: 'h1', date: '2026-10-02', time: '10:00', status: 'scheduled' },
+    { id: 'b', orderId: 'h2', date: '2026-10-03', time: '10:00', status: 'confirmed' },
+    { id: 'c', orderId: 'h1', date: '2026-10-09', time: '14:00', status: 'scheduled' },
+    { id: 'd', orderId: 'h3', date: '2026-10-02', time: '10:00', status: 'completed' },
+  ], '2026-10-01', '2026-10-03');
+  assert.deepEqual(moves.map((m) => [m.id, m.to, m.time]), [
+    ['a', '2026-10-04', '10:00'],
+    ['b', '2026-10-05', '10:00'],
+  ]);
+});
+
 // ------------------------------------------------------------
 // Kodu rütm — maintenance
 // ------------------------------------------------------------
@@ -251,10 +314,31 @@ test('sanitizeMaintenanceItem from catalogue rolls the due date forward from las
   assert.equal(r.item.name, null, 'catalogue items carry no custom name');
 });
 
+test('residentRhythm keeps weekly, every other week, monthly and once', () => {
+  assert.equal(core.residentRhythm('weekly'), 'weekly');
+  assert.equal(core.residentRhythm('biweekly'), 'biweekly');
+  assert.equal(core.residentRhythm('monthly'), 'monthly');
+  assert.equal(core.residentRhythm('once'), 'once');
+  assert.equal(core.residentRhythm('daily'), null);
+  assert.equal(core.residentRhythm(''), null);
+});
+
 test('sanitizeMaintenanceItem without lastDoneAt is due today so the rhythm starts clean', () => {
   const r = core.sanitizeMaintenanceItem({ catalogId: 'vent-filters' }, TODAY);
   assert.equal(r.item.nextDueAt, TODAY);
   assert.equal(r.item.doneBy, 'home');
+});
+
+test('sanitizeMaintenanceItem startsAt sets the first due date without claiming it was done', () => {
+  const r = core.sanitizeMaintenanceItem({ catalogId: 'windows', startsAt: '2027-03-22', doneBy: 'provider' }, TODAY);
+  assert.equal(r.error, undefined);
+  assert.equal(r.item.nextDueAt, '2027-03-22');
+  assert.equal(r.item.lastDoneAt, null);
+  assert.equal(r.item.doneBy, 'provider');
+  const past = core.sanitizeMaintenanceItem({ catalogId: 'windows', startsAt: '2026-01-01' }, TODAY);
+  assert.ok(past.error);
+  const rolled = core.sanitizeMaintenanceItem({ catalogId: 'windows', lastDoneAt: '2026-08-31', startsAt: '2027-03-22' }, TODAY);
+  assert.equal(rolled.item.nextDueAt, '2027-02-28', 'a known last date wins over startsAt');
 });
 
 test('sanitizeMaintenanceItem validation', () => {
@@ -309,6 +393,54 @@ test('sanitizeContacts normalises, dedupes and caps', () => {
   assert.ok(core.sanitizeContacts([{ name: 'B', email: 'not-an-email' }]).error);
   assert.ok(core.sanitizeContacts(Array.from({ length: 7 }, (_, i) => ({ name: `C${i}` }))).error);
   assert.deepEqual(core.sanitizeContacts(null), { contacts: [] });
+  assert.equal(core.sanitizeContacts([{ name: 'Mari', email: 'mari@kodu.ee', role: 'tenant' }]).contacts[0].role, 'tenant');
+  assert.equal(core.sanitizeContacts([{ name: 'Mari', email: 'mari@kodu.ee', role: 'owner' }]).contacts[0].role, 'household');
+});
+
+test('a tenant does not see ownership documents; other roles do', () => {
+  const order = {
+    customer: { email: 'omanik@kodu.ee', address: 'Iili 8-14' },
+    contacts: [{ email: 'uur@kodu.ee', role: 'tenant' }, { email: 'pere@kodu.ee', role: 'household' }],
+    documents: [{ id: 'a', category: 'ownership', title: 'Müügileping' }, { id: 'b', category: 'appliances', title: 'Pliit' }],
+    buildingDocuments: [{ id: 'c', category: 'ownership', title: 'Maa' }],
+  };
+  assert.equal(core.viewerRole(order, 'omanik@kodu.ee'), 'owner');
+  assert.equal(core.viewerRole(order, 'uur@kodu.ee'), 'tenant');
+  assert.equal(core.viewerRole(order, 'pere@kodu.ee'), 'member');
+  const hidden = core.withoutOwnership(order);
+  assert.deepEqual(hidden.documents.map((d) => d.id), ['b']);
+  assert.deepEqual(hidden.buildingDocuments, []);
+  assert.equal(order.documents.length, 2);
+});
+
+test('one e-mail lists each paid home it can open', () => {
+  const rows = [
+    { id: 'h1', status: 'paid', type: 'subscription', customer: { email: 'anna@kodu.ee', address: 'Iili 8-14' } },
+    { id: 'h2', status: 'paid', type: 'subscription', customer: { email: 'muu@kodu.ee', address: 'Spordi 3' }, contacts: [{ email: 'anna@kodu.ee', role: 'tenant' }] },
+    { id: 'h3', status: 'paid', type: 'gift', customer: { email: 'anna@kodu.ee' } },
+    { id: 'h4', status: 'cancelled', customer: { email: 'anna@kodu.ee', address: 'Vana' } },
+  ];
+  assert.deepEqual(core.homesForEmail(rows, 'Anna@kodu.ee'), [
+    { id: 'h1', address: 'Iili 8-14', role: 'owner' },
+    { id: 'h2', address: 'Spordi 3', role: 'tenant' },
+  ]);
+});
+
+test('selling a home keeps the address and drops the door note and contacts', () => {
+  const sale = core.saleCustomer({
+    customer: { name: 'Vana', email: 'vana@kodu.ee', address: 'Iili 8-14', phone: '555' },
+    homeProfile: { access: '1408#', pets: 'Ei' },
+    contacts: [{ email: 'pere@kodu.ee' }],
+    documents: [{ id: 'b' }],
+  }, { name: ' Uus Omanik ', email: 'Uus@Kodu.ee' });
+  assert.equal(sale.customer.email, 'uus@kodu.ee');
+  assert.equal(sale.customer.address, 'Iili 8-14');
+  assert.equal(sale.customer.phone, '');
+  assert.equal(sale.homeProfile.access, '');
+  assert.equal(sale.homeProfile.pets, 'Ei');
+  assert.deepEqual(sale.contacts, []);
+  assert.equal(core.saleCustomer({ customer: {} }, { name: 'A', email: 'uus@kodu.ee' }).error, 'name');
+  assert.equal(core.saleCustomer({ customer: {} }, { name: 'Uus', email: 'ei' }).error, 'email');
 });
 
 test('resolveRecipients: primary customer or gift recipient plus notifying contacts, deduped', () => {
@@ -446,11 +578,52 @@ test('visit split never charges and keeps sponsor, resident and provider in bala
     lang: 'et',
   });
   assert.deepEqual(wish.lines.map((l) => l.id), ['extra-clean', 'flowers', 'linens']);
-  assert.equal(wish.unpriced, true);
+  assert.equal(wish.unpriced, false);
   assert.equal(wish.charged, false);
   assert.equal(wish.payLater, true);
   assert.equal(wish.earliest, '2026-10-07');
+  assert.equal(wish.lines.find((l) => l.id === 'extra-clean').cents, 14000);
   assert.equal(wish.lines.find((l) => l.id === 'flowers').cents, 3500);
+  assert.equal(wish.residentCents, 19500);
+  const once = core.orderQuote({
+    serviceId: 'extra-clean', addonIds: [], sponsorCentsAvailable: 0, ownerKind: 'developer',
+    today: '2026-09-23', leadDays: 14, lang: 'et',
+  });
+  assert.equal(once.unpriced, false);
+  assert.equal(once.cardRequired, true);
+  assert.equal(once.residentCents, 14000);
+  const gifted = core.orderQuote({
+    serviceId: 'extra-clean',
+    addonIds: ['flowers'],
+    coveredIds: ['extra-clean'],
+    sponsorCentsAvailable: 0,
+    ownerKind: 'developer',
+    today: '2026-09-23',
+    leadDays: 14,
+    lang: 'et',
+  });
+  assert.equal(gifted.unpriced, false);
+  assert.equal(gifted.cardRequired, true);
+  assert.equal(gifted.residentCents, 3500);
+  assert.equal(gifted.lines.find((l) => l.id === 'extra-clean').covered, true);
+  assert.equal(core.giftSpent('extra-clean', []), false);
+  assert.equal(core.giftSpent('extra-clean', ['extra-clean']), true);
+  assert.equal(core.giftSpent('regular', ['extra-clean']), true);
+  assert.equal(core.giftSpent('windows', ['extra-clean']), false);
+  assert.equal(core.giftSpent('small-repairs', []), false);
+  assert.equal(core.giftSpent('small-repairs', ['hang-mount']), true);
+  assert.equal(core.giftSpent('flowers', ['extra-clean']), false);
+  assert.equal(core.chargeBeforeDispatch({ ownClient: false, kind: 'visit', unpriced: false, cardRequired: true, residentCents: 3500 }), true);
+  assert.equal(core.chargeBeforeDispatch({ ownClient: false, kind: 'visit', unpriced: false, cardRequired: false, residentCents: 0 }), false);
+  assert.equal(core.chargeBeforeDispatch({ ownClient: true, kind: 'visit', unpriced: false, cardRequired: true, residentCents: 3500 }), false);
+  assert.equal(core.chargeBeforeDispatch({ ownClient: false, kind: 'issue', unpriced: true, cardRequired: false, residentCents: 0 }), false);
+  assert.equal(core.chargeBeforeDispatch({ ownClient: false, kind: 'visit', unpriced: true, cardRequired: true, residentCents: 3500 }), false);
+  assert.equal(core.homePaymentReady({ payment_status: 'paid', currency: 'eur', amount_total: 3500 }, { residentCents: 3500 }), true);
+  assert.equal(core.homePaymentReady({ payment_status: 'unpaid', currency: 'eur', amount_total: 3500 }, { residentCents: 3500 }), false);
+  assert.equal(core.homePaymentReady({ payment_status: 'no_payment_required', currency: 'eur', amount_total: 0 }, { residentCents: 3500 }), false);
+  assert.equal(core.homePaymentReady({ payment_status: 'paid', currency: 'eur', amount_total: 1000 }, { residentCents: 3500 }), false);
+  assert.equal(core.homePaymentReady({ currency: 'eur', amount_total: 3500 }, { residentCents: 3500 }), false);
+  assert.equal(core.homePaymentReady({ payment_status: 'paid', currency: 'usd', amount_total: 3500 }, { residentCents: 3500 }), false);
   const covered = core.orderQuote({
     serviceId: 'windows',
     addonIds: [],
@@ -493,4 +666,32 @@ test('122 home previews stay balanced and uncharged', () => {
     assert.ok(split.providerCents >= 0);
     assert.ok(split.providerCents <= split.priceCents);
   }
+});
+
+test('a priced visit tells the cleaner only after Stripe has taken the money', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const src = fs.readFileSync(path.join(__dirname, '../haldus.js'), 'utf8');
+  const chargeAt = src.indexOf('if (charge) {');
+  const freeFinish = src.indexOf('await finishRequest({ order, orderId, provider, svc, kind, ref, request, lang, price: null })');
+  assert.ok(chargeAt > 0 && freeFinish > chargeAt);
+  const chargeBlock = src.slice(chargeAt, freeFinish);
+  assert.match(chargeBlock, /capture_method: 'automatic'/);
+  assert.match(chargeBlock, /checkoutUrl: session\.url/);
+  assert.doesNotMatch(chargeBlock, /finishRequest|createVisit|sendEmail/);
+  const pay = src.slice(src.indexOf('async function completeHomePayment'), src.indexOf('const portalHandlers'));
+  assert.match(pay, /homePaymentReady/);
+  assert.match(pay, /finishRequest/);
+  assert.doesNotMatch(pay, /no_payment_required/);
+  const copy = fs.readFileSync(path.join(__dirname, '../../assets/js/minu/telli.js'), 'utf8');
+  for (const key of ['confirmPay', 'paidBack', 'payCancelled', 'noPrice']) {
+    const at = copy.indexOf(`${key}:`);
+    assert.ok(at > 0, key);
+    const block = copy.slice(at, at + 420);
+    assert.match(block, /et:/);
+    assert.match(block, /en:/);
+    assert.match(block, /ru:/);
+  }
+  assert.equal(copy.includes('cardLater'), false);
+  assert.doesNotMatch(copy, /praegu raha ei liigu|kaart ühendatakse|kaardilt kohe|charge later/i);
 });

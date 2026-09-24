@@ -2,9 +2,9 @@
  * Five push notifications. Title and body are the same sentences as the
  * resident or desk e-mail for that event. Missing language falls back to et.
  *
- * Without an FCM or VAPID key the send logs and returns; it does not throw.
- * A key does not call Google. The caller passes a messaging client; this file
- * never opens fcm.googleapis.com. The 07:00 cron can later call send('morning').
+ * Web Push subscriptions go out with VAPID. FCM string tokens still need an
+ * injected messaging client. Without a key the send logs and returns; it does
+ * not throw. The 07:00 cron calls send('morning') once per provider with visits today.
  */
 
 const core = require('./lib/haldus-core');
@@ -318,11 +318,100 @@ function tokensFrom(order) {
   return tokensOf(order && (order.pushSubscriptions || order.pushTokens));
 }
 
+function subscriptionOf(item) {
+  if (!item || typeof item !== 'object') return null;
+  const endpoint = typeof item.endpoint === 'string' ? item.endpoint.trim() : '';
+  const p256dh = item.keys && typeof item.keys.p256dh === 'string' ? item.keys.p256dh.trim() : '';
+  const auth = item.keys && typeof item.keys.auth === 'string' ? item.keys.auth.trim() : '';
+  if (!endpoint || !p256dh || !auth) return null;
+  if (!/^https:\/\//.test(endpoint)) return null;
+  if (endpoint.length > 500 || p256dh.length > 200 || auth.length > 100) return null;
+  return { endpoint, keys: { p256dh, auth } };
+}
+
+function subscriptionsOf(list) {
+  if (!Array.isArray(list)) return [];
+  const out = [];
+  for (const item of list) {
+    const sub = subscriptionOf(item);
+    if (sub) out.push(sub);
+  }
+  return out;
+}
+
+function subscriptionsFrom(record) {
+  return subscriptionsOf(record && record.pushSubscriptions);
+}
+
+function mergeSubscriptions(existing, sub, max = 8) {
+  const clean = subscriptionOf(sub);
+  if (!clean) return subscriptionsFrom({ pushSubscriptions: existing });
+  const next = subscriptionsFrom({ pushSubscriptions: existing }).filter((s) => s.endpoint !== clean.endpoint);
+  next.push(clean);
+  const cap = Number.isInteger(max) && max > 0 ? max : 8;
+  return next.slice(-cap);
+}
+
+function vapidPair(options = {}) {
+  const pub = String(options.publicKey != null ? options.publicKey : (process.env.VAPID_PUBLIC_KEY || '')).trim();
+  const priv = String(options.privateKey != null ? options.privateKey : (process.env.VAPID_PRIVATE_KEY || '')).trim();
+  if (!pub || !priv) return null;
+  return { publicKey: pub, privateKey: priv };
+}
+
+function pushBody(payload) {
+  const audience = payload && payload.audience;
+  return JSON.stringify({
+    title: (payload && payload.title) || '',
+    body: (payload && payload.body) || '',
+    url: (payload && payload.url) || '/',
+    icon: audience === 'provider' ? '/icons/desk-192.png' : '/icons/icon-192.png',
+  });
+}
+
+async function sendWeb(subs, payload, pair, webPush) {
+  const body = pushBody(payload);
+  const sendOne = webPush || (async (sub, json) => {
+    const lib = require('web-push');
+    lib.setVapidDetails('mailto:tere@sukoda.ee', pair.publicKey, pair.privateKey);
+    await lib.sendNotification(sub, json);
+  });
+  let sent = 0;
+  const gone = [];
+  for (const sub of subs) {
+    try {
+      await sendOne(sub, body);
+      sent += 1;
+    } catch (err) {
+      const code = err && (err.statusCode || err.status);
+      if (code === 404 || code === 410) gone.push(sub.endpoint);
+      else console.error('push: web push failed', err && err.message);
+    }
+  }
+  if (!sent) return { sent: false, reason: gone.length ? 'gone' : 'error', gone, count: 0 };
+  return { sent: true, count: sent, gone };
+}
+
+async function deliverWeb(payload, options, subs) {
+  const pair = vapidPair(options);
+  if (!pair) {
+    console.error('push: VAPID key missing, skipped', payload && payload.type);
+    return { sent: false, reason: 'no-key' };
+  }
+  if (!payload || !payload.title) {
+    console.error('push: unknown type', payload && payload.type);
+    return { sent: false, reason: 'unknown-type' };
+  }
+  return sendWeb(subs, payload, pair, options.webPush);
+}
+
 /**
  * Send a payload from message(). No FCM key → log and return. Never throws,
  * so a cron that already sent the e-mail keeps going.
  */
 async function deliver(payload, options = {}) {
+  const subs = subscriptionsOf(options.subscriptions);
+  if (subs.length) return deliverWeb(payload, options, subs);
   const type = payload && payload.type;
   const key = fcmKey(options.serverKey);
   if (!key) {
@@ -358,6 +447,17 @@ async function deliver(payload, options = {}) {
  * A messaging error is logged and returned; it does not throw.
  */
 async function send(type, options = {}) {
+  const subs = subscriptionsOf(options.subscriptions);
+  if (subs.length) {
+    const note = text(type, options.lang, options.vars);
+    return deliverWeb({
+      type,
+      title: note && note.title,
+      body: note && note.body,
+      url: (options.data && options.data.url) || '',
+      audience: options.audience || '',
+    }, options, subs);
+  }
   const key = fcmKey(options.serverKey);
   if (!key) {
     console.error('push: FCM key missing, skipped', type);
@@ -388,4 +488,6 @@ async function send(type, options = {}) {
   return { sent: true, count: tokens.length };
 }
 
-module.exports = { TYPES, text, message, tokensFrom, deliver, send };
+module.exports = {
+  TYPES, text, message, tokensFrom, subscriptionsFrom, subscriptionOf, mergeSubscriptions, deliver, send,
+};

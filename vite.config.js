@@ -31,6 +31,7 @@ function appShellRoute(root) {
     const search = q === -1 ? '' : raw.slice(q);
     const clean = path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path;
     if (clean === '/app') req.url = '/app.html' + search;
+    if (clean === '/too') req.url = '/too.html' + search;
     if (clean === '/kaart') req.url = '/kaart.html' + search;
   };
   const attach = (server) => {
@@ -48,6 +49,11 @@ function appShellRoute(root) {
 
 export default defineConfig({
   plugins: [qrForBrowser(), appShellRoute(__dirname), tailwindcss()],
+  server: {
+    proxy: {
+      '/api': { target: 'https://sukoda.ee', changeOrigin: true, secure: true },
+    },
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: true,

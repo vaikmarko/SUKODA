@@ -8,10 +8,35 @@
     <title>SUKODA | Minu portaal</title>
     <meta name="robots" content="noindex, nofollow">
     <link rel="icon" type="image/svg+xml" href="assets/logo/icon-s-black.svg">
-    <link rel="apple-touch-icon" href="assets/logo/icon-square.svg">
+    <link rel="apple-touch-icon" href="/icons/icon-180.png">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="SUKODA">
     <link rel="preload" href="/assets/fonts/cormorant-garamond-400.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/assets/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
-    <script src="/assets/js/minu/kodu.js"></script>
+    <script>
+    (function () {
+      var bucket = window.SUKODA_MINU = window.SUKODA_MINU || {};
+      var dict = bucket.dict = bucket.dict || {};
+      var tabs = {
+        tabKodu: { et: 'Kodu', en: 'Home', ru: 'Дом' },
+        tabServices: { et: 'Teenused', en: 'Services', ru: 'Услуги' },
+        tabFolder: { et: 'Kaust', en: 'Folder', ru: 'Папка' },
+        tabMine: { et: 'Minu', en: 'Profile', ru: 'Профиль' }
+      };
+      Object.keys(tabs).forEach(function (key) { if (!dict[key]) dict[key] = tabs[key]; });
+      if (!('serviceWorker' in navigator)) return;
+      var once = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (once) return;
+        once = true;
+        window.location.reload();
+      });
+      navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' }).catch(function () {});
+    })();
+    </script>
+    <script src="/push.js"></script>
+    <script src="/assets/js/minu/kodu.js?v=13"></script>
     <script type="module" src="/assets/js/minu/mount.js"></script>
     <script type="module" src="/assets/js/main.js"></script>
 </head>
@@ -47,10 +72,13 @@
         const pick = window.SUKODA_MINU && window.SUKODA_MINU.pickNextThing;
         return pick ? pick(this) : { kind: 'loading', eyebrow: '', title: '', body: '', action: '', thenLine: '', refId: '', pending: false };
     },
-    runNext() {
+    runNext(kind) {
         const n = this.nextThing;
-        if (!n || n.kind === 'loading') return;
-        if (n.kind === 'unpaid') { this.loadProfile(); return; }
+        const use = kind || (n && n.kind);
+        if (!n || use === 'loading') return;
+        if (use === 'welcome') { this.activeTab = 'extras'; this.openTelli('clean'); return; }
+        if (use === 'welcome-fix') { this.activeTab = 'extras'; this.openTelli('fix'); return; }
+        if (use === 'unpaid') { this.loadProfile(); return; }
         if (n.kind === 'request') {
             const r = (this.extras.requests || []).find((x) => x.id === n.refId);
             if (r) this.openThread(r);
@@ -63,7 +91,7 @@
             return;
         }
         if (n.kind === 'away') { this.activeTab = 'visits'; return; }
-        if (n.kind === 'profile') { this.activeTab = 'home'; this.profileEditing = true; return; }
+        if (n.kind === 'profile') { this.activeTab = 'mine'; this.profileEditing = true; return; }
         if (n.kind === 'calm') {
             const s = (this.extras.catalogue || []).find((x) => x.id === 'warranty-claim');
             if (s) this.openRequest(s);
@@ -130,6 +158,8 @@
     contacts: [],
     contactsSaving: false,
     contactsSaved: false,
+    homes: [],
+    handover: { name: '', email: '', busy: false, error: '', sent: false },
     contactsError: '',
 
     // Away periods (oleme eemal)
@@ -155,15 +185,25 @@
     requestProcessing: false,
     requestError: '',
     requestDone: null,
-    telliRhythm: 'once',
-    telliAddons: { flowers: false, linens: false, windows: false, appliances: false },
+    telliPanel: 'clean',
+    telliWindow: 'morning',
+    telliNote: '',
+    telliPhotoName: '',
+    showPastOrders: false,
+    upkeepOpen: false,
+    docPreview: null,
+    telliAddons: { flowers: false, windows: false },
+    telliOpen: '',
+    telliPay: false,
+    flowerMode: 'season',
+    flowerTone: '',
     telliAddonRows: [
         { id: 'flowers', label: 'addonFlowers', serviceId: 'flowers' },
-        { id: 'linens', label: 'addonLinens', serviceId: 'linens' },
         { id: 'windows', label: 'addonWindows', serviceId: 'windows' },
-        { id: 'appliances', label: 'addonAppliances', serviceId: 'appliance-care' },
     ],
     telliDate: '',
+    telliCursor: '',
+    telliRhythm: 'once',
     telliQuote: null,
     telliBusy: false,
     telliError: '',
@@ -195,8 +235,13 @@
     async init() {
         const urlParams = new URLSearchParams(window.location.search);
         const urlToken = urlParams.get('token');
+        if (!urlToken && !this.token) {
+            window.location.replace('/app');
+            return;
+        }
         // Deep link to a tab (e-mails: /minu?tab=home)
-        if (['overview', 'extras', 'visits', 'home'].includes(urlParams.get('tab'))) this.activeTab = urlParams.get('tab');
+        const tabAlias = { overview: 'overview', extras: 'extras', visits: 'visits', home: 'folder', folder: 'folder', mine: 'mine' };
+        if (tabAlias[urlParams.get('tab')]) this.activeTab = tabAlias[urlParams.get('tab')];
 
         // Warm the profile/extras functions in parallel with token validation so the
         // real calls below don't each pay a Cloud Functions cold start in sequence.
@@ -231,6 +276,14 @@
 
         if (this.token) {
             await this.loadProfile();
+            if (!this.authenticated) return;
+            const paid = urlParams.get('makstud');
+            if (paid === '1' || paid === '0') {
+                this.activeTab = 'extras';
+                if (paid === '1') this.telliDone = this.t('paidBack');
+                else this.telliError = this.t('payCancelled');
+                window.history.replaceState({}, '', '/minu');
+            }
             // Deep link from an e-mail: /minu?request=<id> opens that request's thread
             const reqId = urlParams.get('request');
             if (reqId && this.authenticated) {
@@ -265,6 +318,8 @@
             } else {
                 localStorage.removeItem('sukoda_portal_token');
                 this.token = '';
+                window.location.replace('/app');
+                return;
             }
         } catch (e) {
             console.error('Failed to load profile:', e);
@@ -278,10 +333,11 @@
                 const data = await res.json();
                 this.extras = { ...this.extras, ...data };
                 this.extrasLoaded = true;
-                if (!this.telliDate) this.telliDate = this.telliDateMin;
+                if (window.SUKODA_PUSH) window.SUKODA_PUSH.offer({ audience: 'home', token: this.token, lang: this.lang, when: (this.upcomingBookings || []).length > 0 });
                 this.refreshTelliQuote();
+                this.loadHomes();
                 // White label: the tab reads as the developer's portal
-                if (this.brand?.name) document.title = `${this.brand.name} | ${this.t('tabHome')}`;
+                if (this.brand?.name) document.title = `${this.brand.name} | ${this.t('tabKodu')}`;
             }
         } catch (e) {
             console.error('Failed to load extras:', e);
@@ -296,6 +352,53 @@
     },
     removeContact(i) {
         this.contacts.splice(i, 1);
+    },
+    async loadHomes() {
+        try {
+            const res = await fetch('/api/me/homes', { headers: { 'Authorization': 'Bearer ' + this.token } });
+            if (!res.ok) return;
+            const data = await res.json();
+            this.homes = Array.isArray(data.homes) ? data.homes : [];
+        } catch (e) { console.error(e); }
+    },
+    async openHome(id) {
+        const res = await fetch('/api/me/homes/open', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
+            body: JSON.stringify({ orderId: id }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.token) return;
+        localStorage.setItem('sukoda_portal_token', data.token);
+        this.token = data.token;
+        location.reload();
+    },
+    async handOverHome() {
+        if (this.handover.busy || !this.viewer?.primary) return;
+        this.handover.busy = true;
+        this.handover.error = '';
+        this.handover.sent = false;
+        try {
+            const res = await fetch('/api/me/handover', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
+                body: JSON.stringify({ name: this.handover.name, email: this.handover.email, confirm: true }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || 'failed');
+            if (!data.mailed) {
+                this.handover.error = this.t('handoverFail');
+                return;
+            }
+            this.handover.sent = true;
+            localStorage.removeItem('sukoda_portal_token');
+            this.token = '';
+            this.authenticated = false;
+        } catch (e) {
+            this.handover.error = this.t('handoverFail');
+        } finally {
+            this.handover.busy = false;
+        }
     },
     async saveContacts() {
         if (this.contactsSaving) return;
@@ -475,25 +578,221 @@
             return line.hint ? name + ' · ' + line.hint : name;
         }).filter(Boolean);
     },
-    get telliSumLine() {
+    get cleanShelfPrice() {
+        const row = this.serviceById('extra-clean');
+        return this.plainMoney((row && row.priceHint) || '');
+    },
+    get cleanRowPrice() {
+        if (this.telliOpen === 'clean' && !this.telliPay) return '';
+        if (this.showProvider || this.quoteHasFloor) return this.cleanShelfPrice;
+        if (this.telliOpen === 'clean' && this.telliSumAmount) return this.telliSumAmount;
+        return this.cleanShelfPrice;
+    },
+    get telliSumAmount() {
         const q = this.telliQuote;
-        if (!q || q.unpriced) return '';
-        if (!q.cardRequired) return this.t('giftCovers');
-        if (q.residentCents) return this.t('payBefore', { amount: this.euro(q.residentCents) });
-        return '';
+        if (!q || q.unpriced || !q.residentCents) return '';
+        return this.euro(q.residentCents);
+    },
+    isFloorPrice(text) {
+        return /^(alates|from|от)\b/i.test(String(text || '').trim());
+    },
+    get quoteHasFloor() {
+        const lines = (this.telliQuote && this.telliQuote.lines) || [];
+        return lines.some((line) => line && !line.covered && this.isFloorPrice(line.hint));
     },
     get telliButtonLabel() {
-        const q = this.telliQuote;
-        if (q && !q.payLater && !q.unpriced) return this.t('sendWish');
-        return this.t('sendWishCard');
+        if (this.telliOpen === 'warranty' || this.telliPanel === 'warranty') return this.t('sendWarranty');
+        if (this.showProvider || this.quoteHasFloor) return this.t('confirmOrder');
+        if (this.telliSumAmount && this.telliQuote && this.telliQuote.cardRequired) {
+            return this.t('confirmPay', { amount: this.telliSumAmount });
+        }
+        return this.t('confirmOrder');
+    },
+    setTelliPanel(id) {
+        this.setTelliOpen(id);
+    },
+    openTelli(id) {
+        if (id === 'clean') this.telliPay = false;
+        if (this.telliOpen === id) {
+            if (id === 'clean') this.refreshTelliQuote();
+            return;
+        }
+        this.setTelliOpen(id);
+    },
+    openPaidClean() {
+        this.telliPay = true;
+        this.telliRhythm = 'once';
+        if (this.telliOpen !== 'clean') this.setTelliOpen('clean');
+        else this.refreshTelliQuote();
+    },
+    setTelliOpen(id) {
+        this.telliOpen = this.telliOpen === id ? '' : id;
+        this.telliPanel = this.telliOpen || 'clean';
+        this.telliDone = '';
+        this.telliError = '';
+        if (!this.flowerTone) this.flowerTone = (this.homeProfile && this.homeProfile.flowerPreference) || '';
+        if (this.telliOpen === 'clean' && (this.arcoCleanLine || this.telliPay)) this.telliRhythm = 'once';
+        if (this.telliOpen && this.telliOpen !== 'warranty') this.refreshTelliQuote();
+        if (this.telliOpen) {
+            const base = this.telliDate || ((this.telliOpen === 'clean' || this.telliOpen === 'windows') ? this.telliDateMin : this.minRequestDate);
+            if (!this.telliCursor) this.telliCursor = String(base || '').slice(0, 7);
+        }
+    },
+    addonName(id) {
+        const row = this.serviceById(id);
+        if (row && row.name) return row.name;
+        if (id === 'flowers') return this.t('addonFlowers');
+        if (id === 'windows') return this.t('addonWindows');
+        return this.t('orderClean');
+    },
+    addonText(id) {
+        const row = this.serviceById(id);
+        return (row && row.description) || '';
+    },
+    plainMoney(text) {
+        return String(text || '').trim();
+    },
+    addonPrice(id) {
+        const row = this.serviceById(id);
+        const raw = (row && (row.priceLabel && row.priceLabel.text || row.priceHint)) || '';
+        return this.plainMoney(raw);
+    },
+    flowerChoice() {
+        if (this.flowerMode === 'tone') return (this.flowerTone || '').trim();
+        return this.t('addonSeason');
+    },
+    get nextCleanDay() {
+        const visit = this.nextCleanVisit;
+        return visit && visit.scheduledAt ? String(visit.scheduledAt).slice(0, 10) : '';
+    },
+    get canUseNextClean() {
+        if (!this.nextCleanDay) return false;
+        if (this.telliOpen === 'windows' || this.telliOpen === 'clean') return this.nextCleanDay >= this.telliDateMin;
+        return true;
+    },
+    useNextCleanDay() {
+        if (this.nextCleanDay) this.telliDate = this.nextCleanDay;
+    },
+    get telliWeekdays() {
+        return this.t('weekDays').split(' ');
+    },
+    get telliMonthLabel() {
+        const [y, m] = this.telliCursorParts();
+        const label = new Intl.DateTimeFormat(this.locale(), { month: 'long', year: 'numeric' }).format(new Date(y, m - 1, 1));
+        return label.charAt(0).toUpperCase() + label.slice(1);
+    },
+    telliCursorParts() {
+        const raw = this.telliCursor || this.telliDate || this.minRequestDate || '2026-09';
+        const bits = String(raw).slice(0, 7).split('-');
+        return [Number(bits[0]) || 2026, Number(bits[1]) || 1];
+    },
+    shiftTelliMonth(delta) {
+        const [y, m] = this.telliCursorParts();
+        const d = new Date(y, m - 1 + delta, 1);
+        this.telliCursor = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    },
+    get telliMonthCells() {
+        const [y, m] = this.telliCursorParts();
+        const pad = (new Date(y, m - 1, 1).getDay() + 6) % 7;
+        const days = new Date(y, m, 0).getDate();
+        const min = (this.telliOpen === 'clean' || this.telliOpen === 'windows') ? this.telliDateMin : this.minRequestDate;
+        const cells = [];
+        for (let i = 0; i < pad; i++) cells.push({ key: 'pad-' + i, label: '', iso: '', disabled: true, pad: true });
+        for (let day = 1; day <= days; day++) {
+            const iso = y + '-' + String(m).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+            cells.push({ key: iso, label: String(day), iso, disabled: !!(min && iso < min), pad: false });
+        }
+        return cells;
+    },
+    pickTelliDay(cell) {
+        if (!cell || !cell.iso || cell.disabled) return;
+        this.telliDate = cell.iso;
+    },
+    get serviceRows() {
+        const rows = [];
+        const visit = this.nextCleanVisit;
+        if (visit) {
+            const time = this.formatTime(visit.scheduledAt);
+            rows.push({
+                id: 'visit-' + visit.id,
+                name: this.visitLabel(visit) || this.t('orderClean'),
+                meta: [this.formatDate(visit.scheduledAt), time, this.t('includedShort')].filter(Boolean).join(' · '),
+                status: this.t('statusConfirmed'),
+                open: '',
+            });
+        } else if (this.arcoCleanLine) {
+            rows.push({
+                id: 'gift-clean',
+                name: this.t('giftRow'),
+                meta: this.t('giftCleanMeta'),
+                status: this.t('giftStatus'),
+                open: 'clean',
+                pick: 'giftPickClean',
+            });
+        }
+        (this.upcomingBookings || []).forEach((booking) => {
+            if (booking.kind !== 'extra') return;
+            if (visit && booking.id === visit.id) return;
+            rows.push({
+                id: 'visit-' + booking.id,
+                name: this.visitLabel(booking),
+                meta: [this.formatDate(booking.scheduledAt), this.formatTime(booking.scheduledAt)].filter(Boolean).join(' · '),
+                status: this.t('statusConfirmed'),
+                open: '',
+            });
+        });
+        (this.extras.requests || []).forEach((request) => {
+            if (!['requested', 'confirmed', 'declined'].includes(request.status)) return;
+            const day = request.preferredDate ? this.formatDateShort(String(request.preferredDate).slice(0, 10) + 'T12:00:00') : '';
+            rows.push({
+                id: 'req-' + request.id,
+                name: request.serviceName || '',
+                meta: day,
+                status: this.requestStatusLabel(request.status, request),
+                open: 'thread',
+                requestId: request.id,
+            });
+        });
+        return rows;
+    },
+    openServiceRow(row) {
+        const request = (this.extras.requests || []).find((item) => item.id === row.requestId);
+        if (request) this.openThread(request);
+    },
+    get arcoCleanLine() {
+        const row = (this.extras.categories || []).find((c) => c.id === 'cleaning');
+        const quota = row && row.terms && row.terms.quota;
+        return quota ? String(quota) : '';
+    },
+    onTelliPhoto(e) {
+        const file = e.target.files && e.target.files[0];
+        this.telliPhotoName = file ? file.name : '';
+        e.target.value = '';
+    },
+    get nextCleanVisit() {
+        return (this.upcomingBookings || []).find((b) => b.kind !== 'extra') || null;
+    },
+    openDoc(d) {
+        const href = this.docHref(d);
+        if (!href) return;
+        this.docPreview = { title: d.title || '', href };
+    },
+    openHref(title, href) {
+        if (!href) return;
+        this.docPreview = { title: title || '', href };
+    },
+    closeDoc() {
+        this.docPreview = null;
     },
     async refreshTelliQuote() {
         if (!this.token) return;
+        const panel = this.telliOpen || this.telliPanel;
+        const serviceId = { warranty: 'warranty-claim', fix: 'small-repairs', flowers: 'flowers', windows: 'windows' }[panel] || 'extra-clean';
         try {
             const res = await fetch('/api/me/requests/quote', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + this.token },
-                body: JSON.stringify({ serviceId: 'extra-clean', addonIds: this.telliAddonIds() }),
+                body: JSON.stringify({ serviceId, addonIds: panel === 'clean' ? this.telliAddonIds() : [], pay: panel === 'clean' && this.telliPay }),
             });
             const data = await res.json();
             if (res.ok) this.telliQuote = data;
@@ -501,39 +800,63 @@
     },
     async submitTelli() {
         if (this.telliBusy || !this.telliDate) return;
+        const panel = this.telliOpen || this.telliPanel;
+        const words = (this.telliNote || '').trim();
+        if ((panel === 'fix' || panel === 'warranty') && words.length < 5 && !(panel === 'warranty' && this.telliPhotoName)) return;
+        if (panel === 'flowers' && this.flowerMode === 'tone' && this.flowerChoice().length < 2) return;
         this.telliBusy = true;
         this.telliError = '';
         this.telliDone = '';
-        const ids = this.telliAddonIds();
+        let payRedirect = false;
+        const ids = panel === 'clean' ? this.telliAddonIds() : [];
         const names = ids.map((id) => this.serviceById(id)?.name).filter(Boolean);
-        const note = [
-            this.t(this.telliRhythm === 'rhythm' ? 'telliNoteRhythm' : 'telliNoteOnce'),
-            names.length ? this.t('telliNoteExtras', { list: names.join(', ') }) : '',
-        ].filter(Boolean).join(' ');
+        const flowerBit = (panel === 'flowers' || (panel === 'clean' && this.telliAddons.flowers)) ? this.t('flowerLine', { choice: this.flowerChoice() }) : '';
+        const rhythmName = { weekly: 'rhythmWeek', biweekly: 'rhythmTwo', monthly: 'rhythmMonth' }[this.telliRhythm];
+        const rhythmBit = panel === 'clean' && rhythmName ? this.t('rhythmNote', { rhythm: this.t(rhythmName).toLowerCase() }) : '';
+        const cleanCovered = panel === 'clean' && this.telliQuote && (this.telliQuote.lines || []).some((line) => line.id === 'extra-clean' && line.covered);
+        const giftBit = cleanCovered && !rhythmName ? this.t('giftNote') : '';
+        const note = panel === 'clean'
+            ? [giftBit, rhythmBit, this.t('telliNoteOnce'), names.length ? this.t('telliNoteExtras', { list: names.join(', ') }) : '', flowerBit].filter(Boolean).join(' ')
+            : panel === 'flowers'
+                ? flowerBit
+                : [giftBit, words, panel === 'warranty' && this.telliPhotoName ? this.t('photoAttached') : ''].filter(Boolean).join(' ');
+        const serviceId = { warranty: 'warranty-claim', fix: 'small-repairs', flowers: 'flowers', windows: 'windows' }[panel] || 'extra-clean';
         try {
             const res = await fetch('/api/me/requests', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + this.token },
                 body: JSON.stringify({
-                    serviceId: 'extra-clean',
+                    serviceId,
                     preferredDate: this.telliDate,
-                    timeWindow: 'any',
+                    timeWindow: this.telliWindow || 'any',
                     note,
                     access: (this.homeProfile.access || '').trim() || this.t('telliHome'),
                     urgent: false,
                     addonIds: ids,
-                    rhythm: this.telliRhythm === 'rhythm' ? 'biweekly' : 'once',
+                    ...(panel === 'clean' && !this.telliPay && this.telliRhythm && this.telliRhythm !== 'once' ? { rhythm: this.telliRhythm } : {}),
+                    ...(panel === 'clean' && this.telliPay ? { pay: true } : {}),
                 }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'failed');
-            this.telliDone = data.interest ? this.t('noted') : this.t('telliSent');
-            this.telliAddons = { flowers: false, linens: false, windows: false, appliances: false };
+            if (data.checkoutUrl) {
+                payRedirect = true;
+                window.location.assign(data.checkoutUrl);
+                return;
+            }
+            this.telliDone = data.interest
+                ? this.t('noted')
+                : (panel === 'warranty'
+                    ? this.t('orderWarrantySent')
+                    : (this.showProvider && this.providerFace ? this.t('telliSentNamed', { name: this.providerFace }) : this.t('telliSent')));
+            this.telliAddons = { flowers: false, windows: false };
+            this.telliNote = '';
+            this.telliPhotoName = '';
             await this.loadExtras();
         } catch (e) {
             this.telliError = e.message && e.message !== 'failed' ? e.message : this.t('telliFailed');
         } finally {
-            this.telliBusy = false;
+            if (!payRedirect) this.telliBusy = false;
         }
     },
     closeRequest() {
@@ -594,12 +917,11 @@
         if (!s) return '';
         const cat = (this.extras.categories || []).find((c) => c.id === s.category);
         const tm = cat?.terms;
-        const who = this.shortName(cat?.partnerName) || (et ? 'tegija' : 'the provider');
-        if (s.pricing === 'quote') return et ? `Küsimine on tasuta. ${who} saadab hinnapakkumise kirjalikult — töö algab alles siis, kui sa selle kinnitad.` : `Asking is free. ${who} sends a written quote — work starts only once you confirm it.`;
-        if (this.requestKind === 'question') return et ? 'Küsimus on tasuta. Vastus tuleb kirjalikult siia ja e-postiga.' : 'Questions are free. The answer arrives here and by e-mail.';
-        if (this.requestKind === 'issue') return et ? 'Garantiiajal tasuta. Kui töö jääb garantiist välja, anname sellest enne teada — ilma sinu nõusolekuta ei tehta midagi ega esitata arvet.' : 'Free during warranty. If the work falls outside it, we tell you first — nothing is done or invoiced without your consent.';
-        if (s.priceLabel?.included && tm?.quota) return et ? `${tm.quota}. Kui miski jääb sellest välja, kinnitab ${who} hinna vastuses — enne tööd.` : `${tm.quota}. If anything falls outside that, ${who} confirms the price in the reply — before the work.`;
-        return et ? `${who} kinnitab hinna vastuses. Arvet ei esitata enne, kui oled töö kinnitanud.` : `${who} confirms the price in the reply. Nothing is invoiced before you confirm the work.`;
+        if (s.pricing === 'quote') return et ? 'Küsimine on tasuta. Hinnapakkumine tuleb kirjalikult — töö algab alles siis, kui sa selle kinnitad.' : 'Asking is free. The quote comes in writing — work starts only once you confirm it.';
+        if (this.requestKind === 'question') return et ? 'Küsimus on tasuta. Vastus tuleb siia.' : 'Questions are free. The answer comes here.';
+        if (this.requestKind === 'issue') return et ? 'Garantiiajal tasuta. Kui töö jääb garantiist välja, ütleme enne.' : 'Free during warranty. If the work falls outside it, we say so first.';
+        if (s.priceLabel?.included && tm?.quota) return et ? `${tm.quota} Kui miski jääb sellest välja, ütleme hinna enne tööd.` : `${tm.quota} If anything falls outside that, we say the price before the work.`;
+        return et ? 'Hinna ütleme enne tööd. Arvet ei esitata enne, kui oled töö kinnitanud.' : 'We say the price before the work. Nothing is invoiced before you confirm it.';
     },
     /** Guide price for this job. A category invoice (the standing clean) is not this job's bill. */
     get requestPriceLine() {
@@ -651,7 +973,24 @@
     get maintenanceDue() { return this.maintenance.items.filter((i) => i.state !== 'ok' && i.doneBy !== 'provider').length; },
     get maintHomeItems() { return this.maintenance.items.filter((i) => i.doneBy !== 'provider'); },
     get maintProviderItems() { return this.maintenance.items.filter((i) => i.doneBy === 'provider'); },
+    get showProvider() { return this.extras?.showProvider === true; },
+    get providerFace() { return this.shortName(this.extras?.provider?.name || this.order?.provider?.name || ''); },
     get providerFirstName() { return (this.maintenance.provider?.name || this.extras.provider?.name || '').split(' ')[0]; },
+    get requestDoneBody() {
+        const name = this.showProvider ? (this.shortName(this.requestDone?.providerName) || this.providerFace) : '';
+        if (this.requestDone?.interest) return this.t('notedOpen');
+        if (this.requestKind === 'question') return name ? this.t('questionNamed', { name }) : this.t('questionIn');
+        if (this.requestKind === 'issue') return name ? this.t('issueNamed', { name }) : this.t('issueIn');
+        return name ? this.t('visitNamed', { name }) : this.t('visitIn');
+    },
+    get proposeSentBody() {
+        const name = this.showProvider ? (this.shortName(this.proposeBooking?.providerName) || this.providerFace) : '';
+        return name ? this.t('proposeNamed', { name }) : this.t('proposeQuiet');
+    },
+    get proposeHintText() {
+        const name = this.showProvider ? (this.shortName(this.proposeBooking?.providerName) || this.providerFace) : '';
+        return name ? this.t('proposeHintNamed', { name }) : this.t('proposeHint');
+    },
     nextLabel(item) {
         const d = new Date(item.nextDueAt + 'T12:00:00');
         return d.toLocaleDateString(this.locale(), { month: 'long', year: 'numeric' });
@@ -795,7 +1134,7 @@
     get attention() {
         const out = [];
         for (const r of this.awaitingRequests) {
-            const who = r.providerName ? ' · ' + (r.status === 'declined' ? r.providerName : this.shortName(r.providerName)) : '';
+            const who = (this.showProvider && r.providerName) ? (' · ' + (r.status === 'declined' ? r.providerName : this.shortName(r.providerName))) : '';
             out.push({
                 key: 'req-' + r.id,
                 title: r.serviceName + (r.note ? ' — ' + r.note : ''),
@@ -823,7 +1162,7 @@
                 title: it.name,
                 sub: this.dueLabel(it) + (it.doerName ? ' · ' + this.t('orderDoer', { name: it.doerName }) : ''),
                 chip: it.state === 'overdue' ? this.t('overdue') : this.t('dueSoon'),
-                go: () => { this.activeTab = 'home'; this.$nextTick(() => document.getElementById('hooldus')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); },
+                go: () => { this.activeTab = 'mine'; this.$nextTick(() => document.getElementById('hooldus')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); },
             });
         }
         return out.slice(0, 6);
@@ -937,7 +1276,105 @@
     monthShort(iso) { return iso ? window.SUKODA_TIME.formatDate(iso, this.locale(), { month: 'short' }).replace('.', '') : ''; },
 
     // ---- Dokumendid ----
-    get documents() { return this.extras.documents || { items: [], categories: [] }; },
+    get documents() { return this.extras.documents || { items: [], categories: [], facts: [] }; },
+    get folderFacts() {
+        const label = {
+            küte: 'factHeat', kütte: 'factHeat', heating: 'factHeat', 'floor-heating': 'factHeat',
+            filter: 'factFilter', 'filter-size': 'factFilter',
+            vesi: 'factWater', water: 'factWater', 'water-main': 'factWater',
+            elekter: 'factPower', electric: 'factPower', electricity: 'factPower', breaker: 'factPower',
+            garantii: 'factWarranty', 'warranty-end': 'factWarranty', 'garantii-lopp': 'factWarranty',
+        };
+        const order = ['factHeat', 'factFilter', 'factWater', 'factPower', 'factWarranty'];
+        const items = this.documents.items || [];
+        const rows = [];
+        (this.documents.facts || []).forEach((fact) => {
+            if (!fact || !String(fact.value || '').trim()) return;
+            if (fact.status && fact.status !== 'approved') return;
+            const labelKey = label[String(fact.key || '').trim().toLowerCase()];
+            if (!labelKey) return;
+            const docId = fact.sourceDocId && items.some((item) => item.id === fact.sourceDocId) ? fact.sourceDocId : '';
+            rows.push({
+                id: String(fact.key || labelKey) + '-' + rows.length,
+                labelKey,
+                value: String(fact.value).trim(),
+                docId,
+                page: fact.page || null,
+            });
+        });
+        rows.sort((a, b) => order.indexOf(a.labelKey) - order.indexOf(b.labelKey));
+        return rows;
+    },
+    foldAsk(value) {
+        return String(value || '').toLowerCase()
+            .replace(/filtr[a-zõäöüšž]*/g, 'filter')
+            .replace(/filter[a-zõäöüšž]*/g, 'filter')
+            .replace(/mõõ[a-zõäöüšž]*/g, 'mõõt')
+            .replace(/moot[a-zõäöüšž]*/g, 'mõõt')
+            .replace(/suurus[a-zõäöüšž]*/g, 'mõõt');
+    },
+    askWords(question) {
+        const stop = { mis: 1, on: 1, ja: 1, kui: 1, kus: 1, kust: 1, see: 1, seda: 1, kuidas: 1, palun: 1, the: 1, and: 1, what: 1, where: 1, how: 1, from: 1 };
+        return this.foldAsk(question).split(/\s+/).filter((word) => word.length > 3 && !stop[word]);
+    },
+    askScore(text, words) {
+        const blob = this.foldAsk(text);
+        return words.reduce((score, word) => score + (blob.includes(word) || (word.length >= 5 && blob.includes(word.slice(0, 5))) ? word.length : 0), 0);
+    },
+    get passLines() {
+        const facts = (this.documents.facts || []).filter((fact) => fact && fact.value);
+        if (facts.length) {
+            return facts.map((fact) => {
+                const doc = (this.documents.items || []).find((item) => item.id === fact.sourceDocId);
+                return { id: fact.key || fact.value, text: fact.value, docId: fact.sourceDocId || '', page: fact.page || null, title: (doc && doc.title) || '' };
+            });
+        }
+        return (this.documents.items || []).filter((doc) => doc.note && /filtr|filter|×|kood|garantii|peakraan|avarii/i.test(doc.note)).slice(0, 8).map((doc) => ({
+            id: doc.id, text: doc.note, docId: doc.id, page: doc.page || null, title: doc.title || '',
+        }));
+    },
+    askSentence(text, words) {
+        const parts = String(text || '').split(/\n+|(?<=[.!?])\s+/).map((part) => part.trim()).filter((part) => part.length > 12);
+        let best = '';
+        let bestScore = 0;
+        parts.forEach((part) => {
+            const score = this.askScore(part, words);
+            if (score > bestScore) { bestScore = score; best = part; }
+        });
+        return best.slice(0, 500);
+    },
+    localAsk(question) {
+        const words = this.askWords(question);
+        if (!words.length) return null;
+        let best = null;
+        let bestScore = 0;
+        const take = (text, title, doc, score) => {
+            if (score > bestScore) { bestScore = score; best = { text, title, doc }; }
+        };
+        this.passLines.forEach((item) => {
+            const doc = (this.documents.items || []).find((row) => row.id === item.docId);
+            take(item.text, item.title, doc, this.askScore(`${item.text} ${item.title}`, words));
+        });
+        (this.documents.items || []).forEach((item) => {
+            const score = this.askScore(`${item.title || ''} ${item.note || ''} ${item.text || ''}`, words);
+            if (score <= bestScore) return;
+            const sentence = this.askSentence(`${item.text || ''}\n${item.note || ''}`, words) || item.note || item.title;
+            bestScore = score;
+            best = { text: sentence, title: item.title, doc: item };
+        });
+        if (!best) return null;
+        const text = best.text;
+        const doc = best.doc;
+        if (!text) return null;
+        const href = doc ? this.docHref(doc) : '';
+        return { fact: text, place: (doc && doc.title) || '', action: href ? 'open' : '', href };
+    },
+    openPassLine(line) {
+        const doc = (this.documents.items || []).find((item) => item.id === line.docId);
+        if (!doc) return;
+        const href = this.docHref({ ...doc, page: line.page || doc.page });
+        this.openHref(line.title || doc.title, href);
+    },
     get documentsByCategory() {
         const out = [];
         for (const c of this.documents.categories) {
@@ -985,13 +1422,22 @@
     },
     askCardFrom(data) {
         const fact = data && data.fact && data.fact.value ? data.fact : null;
+        const docOnly = data && data.document;
+        if (!fact && docOnly) {
+            const href = this.askDocHref(docOnly);
+            return { fact: docOnly.title || '', place: '', action: href ? 'open' : 'person', href };
+        }
         if (!fact) return { fact: '', place: '', action: 'person', href: '' };
         const doc = data.document || null;
         const pageNo = fact.page || (doc && doc.page) || null;
         const page = pageNo ? this.t('askPage', { page: pageNo }) : '';
         const title = doc && doc.title ? doc.title : '';
         const place = [title, page].filter(Boolean).join(' · ');
-        if (data.suggestTechnician) return { fact: fact.value, place, action: 'tech', href: '' };
+        if (data.suggestTechnician) {
+            const href = this.askDocHref(doc);
+            if (href) return { fact: fact.value, place, action: 'open', href, also: 'tech' };
+            return { fact: fact.value, place, action: 'tech', href: '', also: '' };
+        }
         const href = this.askDocHref(doc);
         if (href) return { fact: fact.value, place, action: 'open', href };
         return { fact: fact.value, place, action: 'person', href: '' };
@@ -1003,8 +1449,10 @@
         try {
             const res = await fetch('/api/me/documents/ask', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + this.token }, body: JSON.stringify({ question }) });
             const data = await res.json();
-            this.askCard = res.ok ? this.askCardFrom(data) : { fact: '', place: '', action: 'person', href: '' };
-        } catch (e) { this.askCard = { fact: '', place: '', action: 'person', href: '' }; }
+            if (res.ok) { this.askCard = this.askCardFrom(data); return; }
+        } catch (e) { /* the phone keeps the answer it can read offline */ }
+        const local = this.localAsk(question);
+        this.askCard = local && local.fact ? local : { fact: '', place: '', action: 'person', href: '' };
     },
     orderTechnician() {
         const svc = this.serviceById('systems-tuning');
@@ -1637,37 +2085,35 @@
         <!-- ═══════════════════════════════════════════════ -->
         <!-- STATE 2: LOGGED IN                              -->
         <!-- ═══════════════════════════════════════════════ -->
-        <div x-show="!loading && authenticated" x-cloak>
+        <div x-show="!loading && authenticated" x-cloak class="min-w-0 overflow-x-clip">
 
             <!-- Navigation -->
             <nav class="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm grid-line-b" aria-label="Main navigation">
-                <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12">
-                    <a href="index.html" class="font-serif text-2xl md:text-3xl tracking-[0.08em] font-light">SUKODA</a>
-                    <div class="flex items-center gap-4 md:gap-6">
-                        <div class="flex text-[11px] uppercase tracking-[0.16em] font-sans font-medium gap-2">
-                            <button type="button" @click="lang = 'et'; localStorage.setItem('sukoda_lang', 'et')" :class="lang === 'et' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">ET</button>
-                            <span class="text-[#D4CFC8]">/</span>
-                            <button type="button" @click="lang = 'en'; localStorage.setItem('sukoda_lang', 'en')" :class="lang === 'en' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">EN</button>
+                <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12 gap-3 min-w-0">
+                    <a href="index.html" class="font-serif text-xl md:text-3xl tracking-[0.08em] font-light shrink-0">SUKODA</a>
+                    <div class="flex items-center gap-3 md:gap-5 min-w-0">
+                        <div class="flex text-[11px] uppercase tracking-[0.14em] font-sans gap-1.5 text-muted">
+                            <button type="button" @click="lang = 'et'; localStorage.setItem('sukoda_lang', 'et')" :class="lang === 'et' ? 'text-black' : 'hover:text-black'" class="transition-colors">ET</button>
                             <span class="text-muted-light">/</span>
-                            <button type="button" @click="lang = 'ru'; localStorage.setItem('sukoda_lang', 'ru')" :class="lang === 'ru' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">RU</button>
+                            <button type="button" @click="lang = 'en'; localStorage.setItem('sukoda_lang', 'en')" :class="lang === 'en' ? 'text-black' : 'hover:text-black'" class="transition-colors">EN</button>
+                            <span class="text-muted-light">/</span>
+                            <button type="button" @click="lang = 'ru'; localStorage.setItem('sukoda_lang', 'ru')" :class="lang === 'ru' ? 'text-black' : 'hover:text-black'" class="transition-colors">RU</button>
                         </div>
-                        <button type="button" @click="logout()" class="text-xs uppercase tracking-[0.16em] font-sans font-medium text-muted hover:text-black transition-colors" x-text="t('logOut')"></button>
+                        <button type="button" @click="logout()" class="text-sm font-sans font-light text-muted hover:text-black transition-colors shrink-0" x-text="t('logOut')"></button>
                     </div>
                 </div>
             </nav>
 
             <!-- Welcome header: the home itself, first — for developer homes with the project picture and the three facts that matter -->
-            <div class="grid-line-b">
-                <div class="grid lg:grid-cols-12 items-stretch">
-                    <div class="px-6 md:px-12 py-8 md:py-12 flex flex-col justify-center" :class="brand?.image ? 'lg:col-span-7' : 'lg:col-span-12'">
+            <div class="grid-line-b overflow-hidden" x-show="nextThing.kind !== 'welcome' && nextThing.kind !== 'loading'" x-cloak>
+                <div class="grid grid-cols-1 lg:grid-cols-12 items-stretch min-w-0">
+                    <div class="px-6 md:px-12 py-8 md:py-12 flex flex-col justify-center min-w-0" :class="brand?.image ? 'lg:col-span-7' : 'lg:col-span-12'">
                         <div class="accent-line mb-4"></div>
-                        <h1 class="font-serif text-3xl md:text-4xl font-light" x-text="t('hello') + ((viewer?.name || order?.customerName || '').split(' ')[0])"></h1>
-                        <p class="text-sm text-muted font-sans font-light mt-3" x-show="(order?.customerAddress || order?.address) || brand?.warrantyUntil">
-                            <span x-text="order?.customerAddress || order?.address"></span><span x-show="brand?.warrantyUntil && (order?.customerAddress || order?.address)"> · </span><span x-show="brand?.warrantyUntil" x-text="brand?.warrantyUntil ? t('warrantyUntil', { date: window.SUKODA_TIME.formatDate(brand.warrantyUntil + 'T12:00:00', locale(), { day: 'numeric', month: 'long', year: 'numeric' }) }) : ''"></span>
-                        </p>
+                        <h1 class="font-serif text-3xl md:text-4xl font-light break-words" x-text="t('hello') + ((viewer?.name || order?.customerName || '').split(' ')[0])"></h1>
+                        <p class="text-sm text-muted font-sans font-light mt-3 break-words" x-show="order?.customerAddress || order?.address" x-text="order?.customerAddress || order?.address"></p>
                     </div>
                     <!-- The home. Only with a real project picture from the developer — never a stock interior under the project's name. -->
-                    <div x-show="brand?.image" x-cloak class="lg:col-span-5 relative min-h-[220px] lg:min-h-0 border-t lg:border-t-0 lg:border-l border-[#E8E3DD]">
+                    <div x-show="brand?.image" x-cloak class="lg:col-span-5 relative min-h-[220px] lg:min-h-0 overflow-hidden border-t lg:border-t-0 lg:border-l border-line">
                         <img :src="brand?.image || ''" alt="" class="absolute inset-0 w-full h-full object-cover" loading="eager">
                         <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-6 py-4 flex items-end justify-between gap-4">
                             <p class="text-paper font-sans text-sm" x-text="order?.customerAddress || order?.address"></p>
@@ -1679,18 +2125,26 @@
 
             <!-- Tab navigation: the home portal — cleaning is one service among several -->
             <div class="px-6 md:px-12 grid-line-b overflow-x-auto">
-                <div class="flex gap-8 md:gap-12 text-[13px] md:text-sm uppercase tracking-[0.14em] font-sans font-medium whitespace-nowrap">
-                    <button @click="activeTab = 'overview'" :class="activeTab === 'overview' ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black border-b-2 border-transparent'" class="py-4 transition-colors" x-text="t('tabKodu')"></button>
-                    <button @click="activeTab = 'extras'" :class="activeTab === 'extras' ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black border-b-2 border-transparent'" class="py-4 transition-colors relative">
+                <div class="flex gap-8 md:gap-12 text-sm uppercase tracking-[0.14em] font-sans font-medium whitespace-nowrap">
+                    <button type="button" @click="activeTab = 'overview'" :class="activeTab === 'overview' || activeTab === 'visits' ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black border-b-2 border-transparent'" class="py-4 transition-colors" x-text="t('tabKodu')"></button>
+                    <button type="button" @click="activeTab = 'extras'" :class="activeTab === 'extras' ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black border-b-2 border-transparent'" class="py-4 transition-colors relative">
                         <span x-text="t('tabServices')"></span>
                         <span x-show="awaitingRequests.length" x-cloak class="absolute top-2 -right-5 bg-accent text-white text-[10px] rounded-full w-[18px] h-[18px] flex items-center justify-center" x-text="awaitingRequests.length"></span>
                     </button>
-                    <button @click="activeTab = 'visits'" :class="activeTab === 'visits' ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black border-b-2 border-transparent'" class="py-4 transition-colors" x-text="t('tabCalendar')"></button>
-                    <button @click="activeTab = 'home'" :class="activeTab === 'home' ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black border-b-2 border-transparent'" class="py-4 transition-colors" x-text="t('tabHome')"></button>
+                    <button type="button" @click="activeTab = 'folder'" :class="activeTab === 'folder' ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black border-b-2 border-transparent'" class="py-4 transition-colors" x-text="t('tabFolder')"></button>
+                    <button type="button" @click="activeTab = 'mine'" :class="activeTab === 'mine' ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black border-b-2 border-transparent'" class="py-4 transition-colors" x-text="t('tabMine')"></button>
                 </div>
             </div>
 
-            <main id="main-content" class="px-6 md:px-12 py-8 md:py-12">
+            <main id="main-content" class="px-6 md:px-12 py-8 md:py-12 min-w-0">
+                <section id="push-offer" hidden class="border border-line bg-paper p-4 mb-6 max-w-xl" x-show="nextThing.kind !== 'welcome'">
+                    <p class="eyebrow" data-push-label></p>
+                    <p class="text-sm text-muted font-sans font-light mt-2" data-push-lead></p>
+                    <div class="flex gap-3 mt-4">
+                        <button type="button" class="p-btn" data-push-allow></button>
+                        <button type="button" class="p-btn-2" data-push-later></button>
+                    </div>
+                </section>
 
                 <div x-show="activeTab === 'overview'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
   <div class="max-w-xl">
@@ -1700,11 +2154,29 @@
       </div>
       <div class="p-next-bd">
         <h2 class="font-serif text-2xl md:text-3xl font-light" x-text="nextThing.title"></h2>
+        <p class="text-sm font-sans font-light mt-3" x-show="nextThing.kind === 'welcome'" x-text="order?.customerAddress || order?.address"></p>
         <p class="text-sm text-muted font-sans font-light mt-3 max-w-lg" x-text="nextThing.body"></p>
         <p x-show="nextThing.thenLine" x-cloak class="text-sm text-muted font-sans font-light mt-4" x-text="nextThing.thenLine"></p>
         <button type="button" class="p-btn mt-8 w-full sm:w-auto" x-show="nextThing.action" @click="runNext()" x-text="nextThing.action"></button>
+        <button type="button" class="text-sm font-sans mt-4 underline underline-offset-4" x-show="nextThing.action2" x-cloak @click="runNext(nextThing.kind2)" x-text="nextThing.action2"></button>
       </div>
     </article>
+    <button type="button" class="text-sm font-sans mt-6 underline underline-offset-4" x-show="nextThing.kind !== 'welcome' && nextThing.kind !== 'away' && !(nextThing.kind === 'visit' && nextThing.pending) && (upcomingBookings.length || pastBookings.length)" x-cloak @click="activeTab = 'visits'" x-text="t('seeCalendar')"></button>
+    <form class="mt-10 border-t border-line pt-8" x-show="nextThing.kind !== 'welcome'" x-cloak @submit.prevent="askFolder()">
+        <label class="eyebrow" for="ask-home" x-text="t('askHomeLead')"></label>
+        <div class="flex flex-col sm:flex-row gap-3 mt-2">
+            <input id="ask-home" type="text" x-model="askText" maxlength="200" :placeholder="t('askPh')" class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-line-strong">
+            <button type="submit" class="p-btn shrink-0" x-text="t('askLabel')"></button>
+        </div>
+        <div x-show="askCard" x-cloak class="mt-4 border border-line p-4 text-left">
+            <p class="font-serif text-2xl font-light leading-snug" x-show="askCard && askCard.fact" x-text="askCard && askCard.fact"></p>
+            <p class="eyebrow mt-4" x-show="askCard && askCard.place" x-text="t('askIn')"></p>
+            <p class="text-sm font-sans font-light mt-1" x-show="askCard && askCard.place" x-text="askCard && askCard.place"></p>
+            <p class="text-sm font-sans font-light" x-show="askCard && !askCard.fact" x-text="t('askEmpty')"></p>
+            <button type="button" x-show="askCard && askCard.action === 'open'" class="p-btn mt-4" @click="openHref(askCard.place, askCard.href)" x-text="t('askOpen')"></button>
+            <button type="button" x-show="askCard && askCard.action === 'person'" class="p-btn mt-4" @click="sendAskToPerson()" x-text="t('askPerson')"></button>
+        </div>
+    </form>
     <p x-show="brand?.emergencyPhone" x-cloak class="text-sm text-muted font-sans font-light mt-6">
       <span x-text="t('emergency') + ': '"></span><a :href="'tel:' + (brand?.emergencyPhone || '').replace(/\s+/g, '')" class="text-black hover:text-accent" x-text="brand?.emergencyPhone"></a>
     </p>
@@ -1714,6 +2186,7 @@
                 <!-- ─────────────────────────────────── -->
                 <!-- TAB 2: HOME PROFILE                  -->
                 <!-- ─────────────────────────────────── -->
+                <div id="minu-kaust"></div>
                 <div id="minu-minu"></div>
 
 
@@ -1726,58 +2199,32 @@
                         <div class="lg:col-span-8 space-y-6 lg:space-y-8 min-w-0">
 
                             <!-- Upcoming: a timeline grouped by month -->
-                            <div class="bg-white border border-[#E8E3DD]">
-                                <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
-                                    <h2 class="p-h"><span class="p-num">01</span><span x-text="lang === 'et' ? 'Eelseisvad' : 'Upcoming'"></span></h2>
-                                    <p class="text-xs text-muted font-sans font-light" x-show="upcomingBookings.length" x-text="upcomingBookings.length + (lang === 'et' ? (upcomingBookings.length === 1 ? ' visiit' : ' visiiti') : (upcomingBookings.length === 1 ? ' visit' : ' visits'))"></p>
+                            <div class="bg-white border border-line">
+                                <div class="px-6 py-4 border-b border-line">
+                                    <h2 class="p-h"><span x-text="t('upcomingTitle')"></span></h2>
                                 </div>
-
-                                <div x-show="upcomingBookings.length === 0" class="p-10 text-center">
-                                    <svg class="w-8 h-8 text-muted mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                    <p class="text-sm text-muted font-sans font-light" x-text="lang === 'et' ? 'Visiite pole veel planeeritud' : 'No visits scheduled yet'"></p>
+                                <div x-show="upcomingBookings.length === 0" class="px-6 py-10">
+                                    <p class="text-sm text-muted font-sans font-light" x-text="t('upcomingEmpty')"></p>
                                 </div>
-
-                                <div class="divide-y divide-[#E8E3DD]">
-                                    <template x-for="g in upcomingByMonth" :key="g.key">
-                                        <div class="divide-y divide-[#E8E3DD]">
-                                            <p class="px-6 py-2.5 bg-cream/50 text-[11px] uppercase tracking-[0.18em] text-muted font-sans" x-text="g.label"></p>
-                                            <template x-for="booking in g.items" :key="booking.id">
-                                                <div class="grid grid-cols-[56px_minmax(0,1fr)] sm:grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-x-5 gap-y-3 px-6 py-4">
-                                                    <div class="w-14 h-14 rounded-full flex flex-col items-center justify-center leading-none shrink-0" :class="booking.kind === 'extra' ? 'bg-white border border-[#E8E3DD]' : 'bg-accent/10'">
-                                                        <span class="font-serif text-2xl" :class="booking.kind === 'extra' ? 'text-black' : 'text-accent'" x-text="dayNumber(booking.scheduledAt)"></span>
-                                                        <span class="text-[10px] uppercase tracking-[0.14em] text-muted font-sans mt-0.5" x-text="weekdayShort(booking.scheduledAt)"></span>
-                                                    </div>
-                                                    <div class="min-w-0">
-                                                        <p class="font-sans text-base"><span class="capitalize" x-text="window.SUKODA_TIME.formatDate(booking.scheduledAt, locale(), { weekday: 'long' })"></span> · <span x-text="formatTime(booking.scheduledAt)"></span></p>
-                                                        <p class="text-sm text-muted font-sans font-light truncate"><span x-text="visitLabel(booking)"></span><span x-show="booking.providerName || order?.provider?.name" x-text="' · ' + (booking.providerName || order?.provider?.name)"></span><span x-show="booking.price" x-text="' · ' + booking.price"></span></p>
-                                                        <p x-show="booking.customerNote" class="text-xs text-muted font-sans font-light mt-1" x-text="booking.customerNote"></p>
-                                                    </div>
-                                                    <div class="col-span-2 sm:col-span-1 flex sm:justify-end">
-                                                        <span x-show="pendingRescheduleIds.includes(booking.id)" class="inline-flex px-2.5 py-1 text-[10px] uppercase tracking-[0.15em] font-sans text-amber-600 bg-amber-50 rounded-full" x-text="lang === 'et' ? 'Uus aeg ootel' : 'New time pending'"></span>
-                                                        <button type="button" x-show="!pendingRescheduleIds.includes(booking.id)" @click="changeTime(booking)" class="h-9 px-4 border border-[#E8E3DD] text-[11px] uppercase tracking-[0.16em] font-sans hover:border-black transition-colors" x-text="lang === 'et' ? 'Muuda aega' : 'Reschedule'"></button>
-                                                    </div>
-                                                </div>
-                                            </template>
+                                <template x-for="booking in upcomingBookings" :key="booking.id">
+                                    <div class="px-6 py-4 border-b border-line last:border-b-0 flex items-baseline justify-between gap-4">
+                                        <div class="min-w-0">
+                                            <p class="font-sans" x-text="formatDate(booking.scheduledAt)"></p>
+                                            <p class="text-sm text-muted font-sans font-light mt-1 truncate" x-text="[formatTime(booking.scheduledAt), visitLabel(booking)].filter(Boolean).join(' · ')"></p>
                                         </div>
-                                    </template>
-                                </div>
+                                        <p x-show="pendingRescheduleIds.includes(booking.id)" class="text-sm text-muted font-sans font-light shrink-0" x-text="t('pending')"></p>
+                                        <button type="button" x-show="!pendingRescheduleIds.includes(booking.id)" class="text-sm font-sans underline underline-offset-4 shrink-0" @click="changeTime(booking)" x-text="t('reschedule')"></button>
+                                    </div>
+                                </template>
                             </div>
 
-                            <!-- Past -->
-                            <div x-show="pastBookings.length > 0" class="border border-[#E8E3DD]">
-                                <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
-                                    <h2 class="p-h"><span class="p-num">02</span><span x-text="lang === 'et' ? 'Möödunud' : 'Past'"></span></h2>
-                                    <p class="text-xs text-muted font-sans font-light" x-text="pastBookings.length"></p>
-                                </div>
-                                <div class="divide-y divide-[#E8E3DD]">
+                            <div x-show="pastBookings.length > 0" class="mt-10">
+                                <p class="eyebrow" x-text="t('pastTitle')"></p>
+                                <div class="mt-2 border-t border-line">
                                     <template x-for="booking in pastBookings" :key="booking.id">
-                                        <div class="px-6 py-3 grid grid-cols-[minmax(0,1fr)_auto] sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-center gap-x-6 text-sm font-sans font-light text-muted">
-                                            <p class="text-black/70" x-text="formatDateLong(booking.scheduledAt)"></p>
-                                            <p class="hidden sm:block truncate"><span x-text="formatTime(booking.scheduledAt)"></span> · <span x-text="visitLabel(booking)"></span><span x-show="booking.providerName" x-text="' · ' + shortName(booking.providerName)"></span></p>
-                                            <span class="text-[11px] uppercase tracking-[0.15em] flex items-center gap-2">
-                                                <svg x-show="booking.status === 'completed'" class="w-3 h-3 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"></path></svg>
-                                                <span x-text="booking.status === 'completed' ? (lang === 'et' ? 'Tehtud' : 'Completed') : booking.status === 'cancelled' ? (lang === 'et' ? 'Tühistatud' : 'Cancelled') : (lang === 'et' ? 'Möödunud' : 'Past')"></span>
-                                            </span>
+                                        <div class="py-3 border-b border-line flex items-baseline justify-between gap-4">
+                                            <p class="text-sm font-sans" x-text="formatDate(booking.scheduledAt)"></p>
+                                            <p class="text-sm text-muted font-sans font-light truncate" x-text="visitLabel(booking)"></p>
                                         </div>
                                     </template>
                                 </div>
@@ -1787,14 +2234,13 @@
                         <aside class="lg:col-span-4 space-y-6 lg:space-y-8 min-w-0">
 
                             <!-- The standing rhythm behind the list -->
-                            <div class="border border-[#E8E3DD]">
-                                <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
-                                    <h2 class="p-h" x-text="lang === 'et' ? 'Püsigraafik' : 'Standing schedule'"></h2>
-                                    <span class="inline-flex items-center px-3 py-1 text-[11px] uppercase tracking-[0.12em] font-sans font-medium rounded-full" :class="getStatusColor(order?.status)" x-text="getStatusLabel(order?.status)"></span>
+                            <div x-show="order?.schedule?.active" class="border border-line">
+                                <div class="px-6 py-4 border-b border-line">
+                                    <h2 class="p-h" x-text="t('standingTitle')"></h2>
                                 </div>
                                 <div class="p-6">
                                     <p class="font-serif text-3xl font-light" x-text="getPackageName(order?.package)"></p>
-                                    <p class="text-sm text-muted font-sans font-light mt-1"><span x-text="lang === 'et' ? 'Regulaarne koristus' : 'Regular cleaning'"></span><span x-show="order?.provider?.name" x-text="' · ' + order?.provider?.name"></span></p>
+                                    <p class="text-sm text-muted font-sans font-light mt-1" x-show="showProvider && order?.provider?.name" x-text="order?.provider?.name"></p>
                                 </div>
                             </div>
 
@@ -1914,13 +2360,7 @@
                             <span x-text="requestService?.name"></span>
                             <span x-show="requestDate && requestKind !== 'question'" x-text="' · ' + formatDateShort(requestDate)"></span>
                         </p>
-                        <p class="text-sm text-muted font-sans font-light leading-relaxed max-w-sm mx-auto" x-text="requestDone?.interest
-                            ? (lang === 'et' ? 'Selles valdkonnas pole sinu kodul veel partnerit. Kui leiame sobiva, anname sulle isiklikult teada — midagi pole veel tellitud.' : 'Your home has no partner for this yet. When we find the right one, we will tell you personally — nothing has been ordered.')
-                            : requestKind === 'question'
-                                ? ((requestDone?.providerName || '') + (lang === 'et' ? ' vastab kirjalikult, tavaliselt sama tööpäeva jooksul. Vastus tuleb e-postiga ja jääb siia kirja.' : ' will answer in writing, usually the same working day. The answer arrives by e-mail and stays on record here.'))
-                                : requestKind === 'issue'
-                                    ? ((requestDone?.providerName || '') + (lang === 'et' ? ' vaatab pöördumise üle ja kinnitab ülevaatuse aja — tavaliselt 2 tööpäeva jooksul. Saatsime sulle ka kinnituskirja.' : ' will review the report and confirm an inspection time — usually within 2 working days. We also emailed you a confirmation.'))
-                                    : ((requestDone?.providerName || (lang === 'et' ? 'Tegija' : 'The provider')) + (lang === 'et' ? ' kinnitab aja tavaliselt sama päeva jooksul. Saatsime sulle ka kinnituskirja.' : ' usually confirms a time the same day. We also emailed you a confirmation.'))"></p>
+                        <p class="text-sm text-muted font-sans font-light leading-relaxed max-w-sm mx-auto" x-text="requestDoneBody"></p>
                         <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
                             <button type="button" x-show="requestDone?.request?.id" @click="const id = requestDone.request.id; closeRequest(); openThread((extras.requests || []).find((x) => x.id === id))" class="p-btn" x-text="lang === 'et' ? 'Ava pöördumine' : 'Open the request'"></button>
                             <button type="button" @click="closeRequest()" :class="requestDone?.request?.id ? 'p-btn-2' : 'p-btn'" x-text="lang === 'et' ? 'Selge' : 'Done'"></button>
@@ -1954,7 +2394,7 @@
                                 <p class="flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-2">
                                     <span class="w-2 h-2 rounded-full shrink-0" :class="partnerDot(requestService?.category)"></span>
                                     <span x-text="requestKind === 'question' ? (lang === 'et' ? 'Küsimus' : 'Question') : requestKind === 'issue' ? (lang === 'et' ? 'Pöördumine' : 'Report') : (lang === 'et' ? 'Soov' : 'Request')"></span>
-                                    <span x-show="partnerNameFor(requestService)" class="text-muted/70" x-text="'· ' + shortName(partnerNameFor(requestService))"></span>
+                                    <span x-show="showProvider && partnerNameFor(requestService)" class="text-muted/70" x-text="'· ' + shortName(partnerNameFor(requestService))"></span>
                                 </p>
                                 <h3 id="request-modal-title" class="font-serif text-2xl font-light leading-tight" x-text="requestService?.name"></h3>
                             </div>
@@ -2002,7 +2442,6 @@
                                 </div>
                                 <input x-show="requestKind !== 'issue' || requestDate" type="date" x-model="requestDate" :min="requestDateMin" class="w-full bg-white border border-[#E8E3DD] focus:border-accent outline-none px-4 py-3 font-sans font-light text-sm" :class="requestKind === 'issue' ? 'mt-2' : ''">
                                 <p x-show="requestKind === 'visit' && requestService?.category === 'cleaning'" class="text-xs text-muted font-sans font-light mt-1.5" x-text="t('visitLead', { date: requestDateMin })"></p>
-                                <p x-show="requestKind !== 'issue' && !(requestKind === 'visit' && requestService?.category === 'cleaning')" class="text-xs text-muted/70 font-sans font-light mt-1.5" x-text="lang === 'et' ? 'Jäta tühjaks, kui sobib esimesel võimalusel.' : 'Leave empty for the earliest available.'"></p>
                             </div>
                             <div x-show="requestKind !== 'question' && isOrderable(requestService)">
                                 <label class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans block mb-3" x-text="lang === 'et' ? 'Kellaaeg' : 'Time of day'"></label>
@@ -2037,7 +2476,7 @@
                             <p x-show="requestError" x-cloak class="text-sm text-red-500 font-sans font-light" x-text="requestError"></p>
                             <div class="flex items-center justify-between gap-4 pt-2">
                                 <p class="text-xs text-muted font-sans font-light leading-relaxed" x-text="!isOrderable(requestService) ? (lang === 'et' ? 'Ainult huvi — ei kohusta millekski.' : 'Interest only — no commitment.') : requestService?.id === 'cleaning-note' ? (lang === 'et' ? 'Koduhooldaja vastab siia ja e-postiga.' : 'The housekeeper replies here and by e-mail.') : requestKind === 'question' ? (lang === 'et' ? 'Vastus tuleb kirjalikult ja jääb kodu juurde kirja.' : 'The answer comes in writing and stays on record.') : requestKind === 'issue' ? (lang === 'et' ? 'Garantii korras — tasuta. Saad kohe kinnituskirja.' : 'Under warranty — free. You get an instant confirmation.') : (lang === 'et' ? 'Saad kohe kinnituskirja. Lõplik aeg ja hind kinnitatakse vastuses.' : 'You get an instant confirmation. Final time and price are confirmed in the reply.')"></p>
-                                <button type="submit" :disabled="requestProcessing || (isOrderable(requestService) && requestNoteTooShort)" class="p-btn shrink-0 disabled:opacity-50">
+                                <button type="submit" :disabled="requestProcessing || (isOrderable(requestService) && requestNoteTooShort) || (requestKind === 'visit' && isOrderable(requestService) && !requestDate)" class="p-btn shrink-0 disabled:opacity-50">
                                     <span x-show="!requestProcessing" x-text="!isOrderable(requestService) ? (lang === 'et' ? 'Soovin seda' : 'I would like this') : (lang === 'et' ? 'Saada ' : 'Send ') + requestNoun.toLowerCase()"></span>
                                     <span x-show="requestProcessing" x-cloak>
                                         <svg class="w-4 h-4 animate-spin mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
@@ -2057,7 +2496,7 @@
                             <p class="flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-2">
                                 <span class="w-2 h-2 rounded-full shrink-0" :class="partnerDot(viewRequest?.category)"></span>
                                 <span :class="viewRequest ? requestStatusColor(viewRequest.status).split(' ')[0] : ''" x-text="viewRequest ? requestStatusLabel(viewRequest.status, viewRequest) : ''"></span>
-                                <span x-show="viewRequest?.providerName" class="text-muted/70 truncate" x-text="'· ' + shortName(viewRequest?.providerName)"></span>
+                                <span x-show="showProvider && viewRequest?.providerName" class="text-muted/70 truncate" x-text="'· ' + shortName(viewRequest?.providerName)"></span>
                             </p>
                             <h3 id="thread-modal-title" class="font-serif text-2xl font-light leading-tight" x-text="viewRequest?.serviceName"></h3>
                         </div>
@@ -2089,7 +2528,7 @@
                         <template x-for="m in threadMessages" :key="m.id">
                             <div>
                                 <p class="text-[10px] uppercase tracking-[0.14em] font-sans text-muted mb-1">
-                                    <span x-text="m.by === 'client' ? (m.name || (lang === 'et' ? 'Sina' : 'You')) : (m.name || viewRequest?.providerName || '')"></span>
+                                    <span x-text="m.by === 'client' ? (m.name || (lang === 'et' ? 'Sina' : 'You')) : (showProvider ? (m.name || viewRequest?.providerName || '') : 'SUKODA')"></span>
                                     <span x-show="m.at" x-text="' · ' + formatMsgTime(m.at)"></span>
                                 </p>
                                 <p class="text-sm font-sans font-light leading-relaxed whitespace-pre-line" :class="m.by === 'provider' ? 'bg-cream/50 border border-[#E8E3DD] p-3' : ''" x-text="m.text"></p>
@@ -2121,7 +2560,7 @@
                             <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"></path></svg>
                         </div>
                         <h3 class="font-serif text-2xl font-light mb-3" x-text="lang === 'et' ? 'Soov saadetud' : 'Request sent'"></h3>
-                        <p class="text-sm text-muted font-sans font-light max-w-sm mx-auto" x-text="(shortName(proposeBooking?.providerName) || (lang === 'et' ? 'Koduhooldaja' : 'Your housekeeper')) + (lang === 'et' ? ' kinnitab uue aja ja kõik pere kontaktid saavad uue kalendrikutse.' : ' confirms the new time and every household contact gets an updated invite.')"></p>
+                        <p class="text-sm text-muted font-sans font-light max-w-sm mx-auto" x-text="proposeSentBody"></p>
                     </div>
                     <div x-show="!proposeSuccess">
                         <div class="flex justify-between items-center mb-6">
@@ -2133,7 +2572,7 @@
                         <p class="text-sm text-muted font-sans font-light mb-6">
                             <span x-text="lang === 'et' ? 'Praegune aeg: ' : 'Current time: '"></span>
                             <span class="capitalize text-black" x-text="formatDate(proposeBooking?.scheduledAt) + ', ' + formatTime(proposeBooking?.scheduledAt)"></span>.
-                            <span x-text="lang === 'et' ? ' Paku sobiv päev — ' + (shortName(proposeBooking?.providerName) || 'koduhooldaja') + ' kinnitab täpse kellaaja.' : ' Suggest a day — ' + (shortName(proposeBooking?.providerName) || 'your housekeeper') + ' confirms the exact time.'"></span>
+                            <span x-text="proposeHintText"></span>
                         </p>
                         <form @submit.prevent="submitPropose()" class="space-y-6">
                             <div>

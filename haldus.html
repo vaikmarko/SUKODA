@@ -7,8 +7,18 @@
     <meta name="referrer" content="no-referrer">
     <title>SUKODA | Töölaud</title>
     <meta name="robots" content="noindex, nofollow">
-    <link rel="icon" type="image/svg+xml" href="assets/logo/icon-s-black.svg">
-    <link rel="apple-touch-icon" href="assets/logo/icon-square.svg">
+    <link rel="icon" type="image/png" href="/icons/desk-192.png">
+    <link rel="apple-touch-icon" href="/icons/desk-180.png">
+    <link rel="manifest" href="/manifest-desk.webmanifest">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Töölaud">
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' }).catch(function () {});
+      }
+    </script>
+    <script src="/push.js"></script>
     <link rel="preload" href="/assets/fonts/cormorant-garamond-400.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/assets/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
     <script type="module" src="/assets/js/main.js"></script>
@@ -128,19 +138,14 @@
                 </div>
             </nav>
 
-            <div class="px-4 md:px-12 py-6 md:py-10 grid-line-b">
-                <div class="accent-line mb-4"></div>
-                <h1 class="font-serif text-3xl md:text-4xl font-light mb-1" x-text="'Tere, ' + greetName()"></h1>
-                <p class="text-muted font-sans font-light text-base">
-                    <span x-text="plural(stats.customers, 'klient', 'klienti')"></span> · <span x-text="plural(stats.weekVisits, 'visiit', 'visiiti')"></span> sel nädalal
-                    <span x-show="pendingRequests.length" class="text-accent"> · <span x-text="plural(pendingRequests.length, 'pöördumine ootab vastust', 'pöördumist ootab vastust')"></span></span>
-                </p>
+            <div class="px-4 md:px-12 py-4 grid-line-b">
+                <p class="font-serif text-2xl font-light" x-text="t('greet', { name: greetName() })"></p>
             </div>
 
             <!-- Tabs -->
             <div class="px-4 md:px-12 grid-line-b flex items-stretch">
                 <div class="flex-1 overflow-x-auto">
-                    <div class="flex gap-8 md:gap-12 text-xs md:text-[13px] uppercase tracking-[0.16em] font-sans font-medium whitespace-nowrap">
+                    <div class="flex gap-3 md:gap-12 text-xs md:text-[13px] uppercase tracking-wide md:tracking-[0.16em] font-sans font-medium whitespace-nowrap">
                         <template x-for="tab in tabs" :key="tab.id">
                             <button type="button" @click="activeTab = tab.id" :class="activeTab === tab.id ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black'" class="pb-4 pt-4 transition-colors relative">
                                 <span x-text="t(tab.key)"></span>
@@ -156,6 +161,14 @@
             </div>
 
             <main class="px-4 md:px-12 py-6 md:py-10">
+                <section id="push-offer" hidden class="border border-line bg-paper p-4 mb-6 max-w-xl">
+                    <p class="eyebrow" data-push-label></p>
+                    <p class="text-sm text-muted font-sans font-light mt-2" data-push-lead></p>
+                    <div class="flex gap-3 mt-4">
+                        <button type="button" class="p-btn" data-push-allow></button>
+                        <button type="button" class="p-btn-2" data-push-later></button>
+                    </div>
+                </section>
 
                 <p x-show="globalError" x-cloak class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 text-sm font-sans" x-text="globalError"></p>
                 <p x-show="toast" x-cloak x-transition class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] bg-black text-paper px-6 py-3 text-xs font-sans tracking-wide shadow-lg" x-text="toast"></p>
@@ -163,12 +176,7 @@
                 <!-- ─────────── TÄNA ─────────── -->
                 <div x-show="activeTab === 'today'">
                     <div class="max-w-3xl">
-                        <div class="flex items-end justify-between gap-4 mb-6">
-                            <div>
-                                <p class="eyebrow" x-text="t('tabToday')"></p>
-                                <h2 class="font-serif text-2xl font-light mt-2 capitalize" x-text="todayHeading()"></h2>
-                            </div>
-                        </div>
+                        <p class="font-serif text-xl font-light capitalize mb-4" x-text="todayHeading()"></p>
                         <div x-show="todayVisits.length === 0" class="border border-line bg-cream/40 p-8 text-center">
                             <p class="text-sm text-muted font-sans" x-text="t('todayEmpty')"></p>
                         </div>
@@ -185,8 +193,21 @@
                                         </div>
                                     </template>
                                     <p x-show="hasAccess(b) && !accessVisible(b)" class="text-sm text-muted font-sans mt-4" x-text="t('accessLater')"></p>
-                                    <a x-show="accessVisible(b) && floorPlanFor(b)" :href="floorPlanFor(b)" target="_blank" rel="noopener" class="text-sm font-sans underline underline-offset-4 mt-4 inline-block" x-text="t('floorPlan')"></a>
                                     <a x-show="residentPhone(b)" :href="telHref(residentPhone(b))" class="p-btn-2 w-full mt-4" :aria-label="t('call')" x-text="residentPhone(b)"></a>
+                                    <div x-show="jobText(b)" class="mt-4">
+                                        <p class="eyebrow" x-text="t('jobLabel')"></p>
+                                        <p class="text-sm font-sans font-light mt-1" x-text="jobText(b)"></p>
+                                    </div>
+                                    <a x-show="jobPhoto(b)" :href="jobPhoto(b)" target="_blank" rel="noopener" class="text-sm font-sans underline underline-offset-4 mt-4 inline-block" x-text="t('jobPhoto')"></a>
+                                    <a x-show="floorPlanFor(b)" :href="floorPlanFor(b)" target="_blank" rel="noopener" class="text-sm font-sans underline underline-offset-4 mt-4 inline-block" x-text="t('floorPlan')"></a>
+                                    <div x-show="passFact(b, 'water')" class="mt-4">
+                                        <p class="eyebrow" x-text="t('waterMain')"></p>
+                                        <p class="text-sm font-sans font-light mt-1" x-text="passFact(b, 'water')"></p>
+                                    </div>
+                                    <div x-show="passFact(b, 'panel')" class="mt-4">
+                                        <p class="eyebrow" x-text="t('breaker')"></p>
+                                        <p class="text-sm font-sans font-light mt-1" x-text="passFact(b, 'panel')"></p>
+                                    </div>
                                     <div x-show="todayTasks(b).length" class="mt-4">
                                         <p class="eyebrow" x-text="t('todayList')"></p>
                                         <ul class="mt-2 space-y-1">
@@ -200,11 +221,12 @@
                                         <p class="text-sm font-sans font-light mt-1" x-text="standingNote(b)"></p>
                                     </div>
                                     <p x-show="bringLine(b)" class="text-sm font-sans mt-4" x-text="bringLine(b)"></p>
+                                    <button type="button" class="p-btn w-full mt-4 disabled:opacity-40" :disabled="todaySavingId === b.id" @click="markTodayDone(b)" x-text="todaySavingId === b.id ? t('saving') : t('done')"></button>
+                                    <button type="button" class="p-btn-2 w-full mt-3" :disabled="todaySavingId === b.id" @click="markNoEntry(b)" x-text="t('noEntry')"></button>
                                     <label class="block mt-4">
                                         <span class="eyebrow" x-text="t('noteLabel')"></span>
                                         <textarea rows="2" class="h-input resize-none font-sans mt-1" :placeholder="t('notePh')" :value="todayNotes[b.id] || ''" @input="todayNotes[b.id] = $event.target.value"></textarea>
                                     </label>
-                                    <button type="button" class="p-btn w-full mt-4 disabled:opacity-40" :disabled="todaySavingId === b.id" @click="markTodayDone(b)" x-text="todaySavingId === b.id ? t('saving') : t('done')"></button>
                                 </article>
                             </template>
                         </div>
@@ -318,7 +340,7 @@
                 <div x-show="activeTab === 'customers'">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                         <input type="text" x-model="customerSearch" :placeholder="t('searchHomes')" class="h-input font-sans sm:max-w-xs">
-                        <button type="button" x-show="isCleaningProvider" @click="openCustomerModal()" class="h-btn h-btn-primary font-sans" x-text="t('addClient')"></button>
+                        <button type="button" x-show="isCleaningProvider && (filteredCustomers.length || customerSearch)" @click="openCustomerModal()" class="h-btn h-btn-primary font-sans" x-text="t('addClient')"></button>
                     </div>
                     <div x-show="filteredCustomers.length === 0" class="bg-cream/40 border border-[#E8E3DD] p-10 text-center">
                         <p class="font-serif text-xl font-light mb-2" x-text="t('homesEmpty')"></p>
@@ -331,7 +353,8 @@
                             <div @click="openCustomerDetail(c)" class="bg-white border border-[#E8E3DD] p-5 cursor-pointer hover:bg-cream/40 transition-colors">
                                 <p class="font-serif text-lg font-light truncate" x-text="c.name"></p>
                                 <p class="text-sm text-muted font-sans font-light truncate" x-text="c.address"></p>
-                                <p class="text-xs text-muted font-sans font-light mt-2" x-text="homeLine(c)"></p>
+                                <p class="text-sm font-sans font-light mt-3" x-text="homeWhen(c)"></p>
+                                <p class="text-xs text-muted font-sans font-light mt-1" x-show="serviceLine(c)" x-text="serviceLine(c)"></p>
                             </div>
                         </template>
                     </div>
@@ -485,6 +508,23 @@
                             <p class="eyebrow" x-text="t('earned')"></p>
                             <p class="font-serif text-2xl font-light mt-2" x-text="earnedLabel()"></p>
                             <p class="text-sm text-muted font-sans font-light mt-2" x-text="t('earnedWait')"></p>
+                            <form class="mt-8 border-t border-line pt-6" @submit.prevent="saveProviderAway()">
+                                <p class="eyebrow" x-text="t('awayTitle')"></p>
+                                <p class="text-sm text-muted font-sans font-light mt-2" x-text="t('awayBody')"></p>
+                                <div class="grid sm:grid-cols-2 gap-4 mt-4">
+                                    <label class="block">
+                                        <span class="h-label" x-text="t('awayFrom')"></span>
+                                        <input type="date" class="h-input" x-model="providerAway.from" required>
+                                    </label>
+                                    <label class="block">
+                                        <span class="h-label" x-text="t('awayTo')"></span>
+                                        <input type="date" class="h-input" x-model="providerAway.to" :min="providerAway.from" required>
+                                    </label>
+                                </div>
+                                <button type="submit" class="p-btn mt-4" :disabled="providerAway.busy" x-text="providerAway.busy ? t('saving') : t('awaySave')"></button>
+                                <p x-show="providerAway.error" x-cloak class="text-sm text-muted font-sans font-light mt-3" x-text="providerAway.error"></p>
+                                <p x-show="providerAway.saved" x-cloak class="text-sm font-sans font-light mt-3" x-text="t('awaySaved')"></p>
+                            </form>
                             <form class="mt-6 grid sm:grid-cols-2 gap-4" @submit.prevent="saveAvailability()">
                                 <label class="block">
                                     <span class="h-label" x-text="t('leadLabel')"></span>
@@ -635,67 +675,104 @@
 
             <!-- ═══════════════ CUSTOMER MODAL (create) ═══════════════ -->
             <div x-show="customerModal.open" x-cloak class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4 bg-black/40" @click.self="customerModal.open = false" @keydown.escape.window="customerModal.open = false">
-                <div class="bg-paper w-full sm:max-w-xl max-h-[92vh] overflow-y-auto border border-[#E8E3DD] p-6 md:p-8 shadow-lg">
+                <div class="bg-paper w-full sm:max-w-xl max-h-[92vh] overflow-y-auto border border-line p-6 md:p-8 shadow-lg" role="dialog" aria-modal="true" aria-labelledby="add-client-title">
                     <div class="flex justify-between items-center mb-6">
-                        <h3 class="font-serif text-xl font-light">Lisa klient</h3>
-                        <button type="button" @click="customerModal.open = false" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/></svg></button>
+                        <h3 id="add-client-title" class="font-serif text-xl font-light" x-text="customerModal.done ? t('addedTitle', { name: customerModal.done.name }) : t('addClientTitle')"></h3>
+                        <button type="button" @click="customerModal.open = false" class="w-11 h-11 flex items-center justify-center hover:bg-cream rounded-full" :aria-label="t('close')"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/></svg></button>
                     </div>
-                    <form @submit.prevent="saveCustomer()" class="space-y-6 font-sans">
+
+                    <div x-show="customerModal.done" x-cloak class="space-y-5 font-sans">
+                        <p class="text-sm font-light" x-text="customerModal.done && customerModal.done.when ? t('addedWhen', { when: customerModal.done.when }) : ''"></p>
+                        <p class="text-sm text-muted font-light" x-text="customerModal.done && customerModal.done.welcomeSent ? t('addedMail', { email: customerModal.done.email }) : t('addedNoMail')"></p>
+                        <p x-show="customerModal.done && customerModal.done.missed" class="text-sm text-muted font-light" x-text="t('addedMissed')"></p>
+                        <label class="block" x-show="customerModal.done && customerModal.done.inviteUrl">
+                            <span class="h-label" x-text="t('appLink')"></span>
+                            <input type="text" readonly class="h-input" :value="customerModal.done ? customerModal.done.inviteUrl : ''" @focus="$event.target.select()">
+                        </label>
+                        <div class="flex gap-3 pt-2">
+                            <button type="button" x-show="customerModal.done && customerModal.done.inviteUrl" @click="copyInvite(customerModal.done.inviteUrl)" class="h-btn h-btn-primary flex-1" x-text="t('copyLink')"></button>
+                            <button type="button" @click="customerModal.open = false" class="h-btn" :class="customerModal.done && customerModal.done.inviteUrl ? 'h-btn-outline' : 'h-btn-primary'" x-text="t('doneClose')"></button>
+                        </div>
+                    </div>
+
+                    <form x-show="!customerModal.done" @submit.prevent="saveCustomer()" class="space-y-6 font-sans">
+                        <p class="text-sm text-muted font-light" x-text="t('addClientLead')"></p>
+                        <div>
+                            <label class="h-label" x-text="t('nameReq')"></label>
+                            <input type="text" x-model="customerModal.form.name" required class="h-input" autocomplete="name">
+                        </div>
                         <div class="grid sm:grid-cols-2 gap-4">
-                            <div><label class="h-label">Nimi *</label><input type="text" x-model="customerModal.form.name" required class="h-input"></div>
-                            <div><label class="h-label">E-post *</label><input type="email" x-model="customerModal.form.email" required class="h-input"></div>
-                            <div><label class="h-label">Telefon</label><input type="tel" x-model="customerModal.form.phone" class="h-input"></div>
-                            <div><label class="h-label">Kodu suurus</label>
-                                <select x-model="customerModal.form.size" class="h-select"><option value="small">1–2 tuba</option><option value="medium">3 tuba</option><option value="large">4+ tuba</option></select>
+                            <div>
+                                <label class="h-label" x-text="t('emailReq')"></label>
+                                <input type="email" x-model="customerModal.form.email" required class="h-input" autocomplete="email">
+                            </div>
+                            <div>
+                                <label class="h-label" x-text="t('phoneOpt')"></label>
+                                <input type="tel" x-model="customerModal.form.phone" class="h-input" autocomplete="tel">
                             </div>
                         </div>
-                        <div><label class="h-label">Aadress *</label><input type="text" x-model="customerModal.form.address" required placeholder="Tänav maja-korter, linn" class="h-input"></div>
+                        <div>
+                            <label class="h-label" x-text="t('addressReq')"></label>
+                            <input type="text" x-model="customerModal.form.address" required class="h-input" :placeholder="t('addressPh')" autocomplete="street-address">
+                        </div>
 
                         <div>
-                            <div class="flex items-center justify-between mb-2">
-                                <label class="h-label mb-0">Kes veel saab teavitusi</label>
-                                <button type="button" @click="customerModal.form.contacts.push({ _k: rowKey(), name: '', email: '', phone: '', notify: true })" class="text-[11px] uppercase tracking-[0.15em] text-accent">+ Lisa</button>
-                            </div>
-                            <p class="text-xs text-muted font-light mb-3">Nt abikaasa või elukaaslane — kõik ajad ja muudatused jõuavad ka temani koos kalendrikutsega.</p>
-                            <template x-for="(ct, i) in customerModal.form.contacts" :key="ct._k">
-                                <div class="grid grid-cols-12 gap-2 mb-2 items-end">
-                                    <input type="text" x-model="ct.name" placeholder="Nimi" class="h-input col-span-5">
-                                    <input type="email" x-model="ct.email" placeholder="E-post" class="h-input col-span-6">
-                                    <button type="button" @click="customerModal.form.contacts.splice(i, 1)" class="col-span-1 text-muted hover:text-black text-lg">×</button>
-                                </div>
-                            </template>
-                        </div>
-
-                        <div class="border border-[#E8E3DD] p-4">
-                            <label class="flex items-center gap-2 text-sm mb-4"><input type="checkbox" x-model="customerModal.form.useSchedule"> <span class="font-light">Määra korduv graafik</span></label>
-                            <div x-show="customerModal.form.useSchedule" class="grid sm:grid-cols-2 gap-4">
-                                <div><label class="h-label">Sagedus</label>
-                                    <select x-model="customerModal.form.schedule.frequency" class="h-select"><option value="weekly">Iga nädal</option><option value="biweekly">Iga 2 nädala tagant</option><option value="monthly">1× kuus (sama nädalapäev)</option></select>
-                                </div>
-                                <div><label class="h-label">Esimene visiit</label><input type="date" x-model="customerModal.form.schedule.anchorDate" class="h-input"></div>
-                                <div><label class="h-label">Kell</label>
-                                    <select x-model="customerModal.form.schedule.time" class="h-select"><template x-for="tm in timeOptions" :key="tm"><option :value="tm" x-text="tm"></option></template></select>
-                                </div>
-                                <div><label class="h-label">Kestus</label>
-                                    <select x-model.number="customerModal.form.schedule.durationMin" class="h-select"><template x-for="d in durationOptions" :key="d"><option :value="d" x-text="d + ' min'"></option></template></select>
-                                </div>
-                                <p class="sm:col-span-2 text-xs text-muted font-light" x-text="schedulePreview(customerModal.form.schedule)"></p>
+                            <p class="h-label" x-text="t('sizeLabel')"></p>
+                            <div class="flex flex-wrap gap-2">
+                                <template x-for="s in sizeChoices" :key="s.id">
+                                    <button type="button" @click="customerModal.form.size = s.id" class="min-h-11 px-3 border text-sm font-light" :class="customerModal.form.size === s.id ? 'bg-black text-paper border-black' : 'border-line text-black'" :aria-pressed="customerModal.form.size === s.id" x-text="t(s.key)"></button>
+                                </template>
                             </div>
                         </div>
 
-                        <div><label class="h-label">Märkmed endale (klient ei näe)</label><textarea x-model="customerModal.form.providerNotes" rows="2" class="h-input resize-none" placeholder="Nt maksab kuu lõpus arvega"></textarea></div>
+                        <div>
+                            <p class="h-label" x-text="t('rhythmLabel')"></p>
+                            <div class="flex flex-wrap gap-2">
+                                <template x-for="r in rhythmChoices" :key="r.id">
+                                    <button type="button" @click="customerModal.form.frequency = r.id" class="min-h-11 px-3 border text-sm font-light" :class="customerModal.form.frequency === r.id ? 'bg-black text-paper border-black' : 'border-line text-black'" :aria-pressed="customerModal.form.frequency === r.id" x-text="t(r.key)"></button>
+                                </template>
+                            </div>
+                        </div>
 
-                        <label class="flex items-center gap-2 text-sm font-light text-muted"><input type="checkbox" x-model="customerModal.form.sendWelcome"> Saada kliendile tervituskiri portaali lingiga</label>
+                        <div>
+                            <p class="h-label" x-text="t('dayLabel')"></p>
+                            <div class="flex flex-wrap gap-2">
+                                <template x-for="d in weekdayChoices" :key="d.n">
+                                    <button type="button" @click="customerModal.form.weekday = d.n" class="min-h-11 min-w-11 px-3 border text-sm font-light" :class="customerModal.form.weekday === d.n ? 'bg-black text-paper border-black' : 'border-line text-black'" :aria-pressed="customerModal.form.weekday === d.n" x-text="d.label"></button>
+                                </template>
+                            </div>
+                        </div>
 
-                        <div x-show="customerModal.existingWarning" x-cloak class="bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800">
+                        <div>
+                            <p class="h-label" x-text="t('timeLabel')"></p>
+                            <div class="flex flex-wrap gap-2">
+                                <template x-for="tm in hourChoices" :key="tm">
+                                    <button type="button" @click="customerModal.form.time = tm" class="min-h-11 px-3 border text-sm font-light" :class="customerModal.form.time === tm ? 'bg-black text-paper border-black' : 'border-line text-black'" :aria-pressed="customerModal.form.time === tm" x-text="tm"></button>
+                                </template>
+                            </div>
+                        </div>
+
+                        <p class="text-sm font-light" x-text="firstVisitLine()"></p>
+
+                        <div>
+                            <p class="h-label" x-text="t('whatLabel')"></p>
+                            <p class="text-sm text-muted font-light mb-3" x-text="t('whatLead')"></p>
+                            <div class="flex flex-wrap gap-2">
+                                <template x-for="s in offerServices" :key="s.id">
+                                    <button type="button" @click="toggleService(s.id)" class="min-h-11 px-3 border text-sm font-light" :class="customerModal.form.services.includes(s.id) ? 'bg-black text-paper border-black' : 'border-line text-black'" :aria-pressed="customerModal.form.services.includes(s.id)" x-text="s.label"></button>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div x-show="customerModal.existingWarning" x-cloak class="bg-cream border border-line p-4 text-sm">
                             <p class="mb-2" x-text="customerModal.existingWarning"></p>
-                            <label class="flex items-center gap-2"><input type="checkbox" x-model="customerModal.form.force"> Jah, see on uus klient — salvesta</label>
+                            <label class="flex items-center gap-2"><input type="checkbox" x-model="customerModal.form.force"> <span x-text="t('forceNew')"></span></label>
                         </div>
                         <p x-show="customerModal.error" x-cloak class="text-sm text-red-500 font-light" x-text="customerModal.error"></p>
-                        <button type="button" x-show="customerModal.upgrade" x-cloak @click="customerModal.open = false; activeTab = 'account'" class="h-btn h-btn-outline">Vaata pakette</button>
+                        <button type="button" x-show="customerModal.upgrade" x-cloak @click="customerModal.open = false; activeTab = 'account'" class="h-btn h-btn-outline" x-text="t('seePlans')"></button>
                         <div class="flex gap-3 pt-2">
-                            <button type="button" @click="customerModal.open = false" class="h-btn h-btn-outline">Loobu</button>
-                            <button type="submit" :disabled="customerModal.saving" class="h-btn h-btn-primary flex-1"><span x-text="customerModal.saving ? 'Salvestan…' : 'Lisa klient'"></span></button>
+                            <button type="button" @click="customerModal.open = false" class="h-btn h-btn-outline" x-text="t('cancel')"></button>
+                            <button type="submit" :disabled="customerModal.saving" class="h-btn h-btn-primary flex-1" x-text="customerModal.saving ? t('savingProfile') : t('addClientTitle')"></button>
                         </div>
                     </form>
                 </div>
@@ -709,6 +786,11 @@
                             <p class="text-[11px] uppercase tracking-[0.16em] text-accent font-sans mb-1" x-text="detail.customer?.brand ? [detail.customer.brand.project, detail.customer.brand.name].filter(Boolean).join(' · ') : (detail.customer?.source === 'manual' ? 'Sinu klient' : 'SUKODA klient')"></p>
                             <h3 class="font-serif text-2xl font-light" x-text="detail.customer?.name"></h3>
                             <p class="text-sm text-muted font-sans font-light" x-text="detail.customer?.address"></p>
+                            <div x-show="detail.customer?.source === 'manual' && detail.customer?.canEditHome" class="mt-4 space-y-3">
+                                <button type="button" @click="resendPortal()" class="h-btn h-btn-outline" x-text="t('sendAppLink')"></button>
+                                <p x-show="detail.inviteUrl" x-cloak class="text-sm font-sans font-light break-all" x-text="detail.inviteUrl"></p>
+                                <button type="button" x-show="detail.inviteUrl" x-cloak @click="copyInvite(detail.inviteUrl)" class="h-btn h-btn-primary" x-text="t('copyLink')"></button>
+                            </div>
                         </div>
                         <button type="button" @click="detail.open = false" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/></svg></button>
                     </div>
@@ -911,7 +993,6 @@
                         </div>
 
                         <div class="flex flex-wrap gap-4 pt-4 border-t border-[#E8E3DD]" x-show="detail.customer?.canEditHome && detail.customer?.source === 'manual'">
-                            <button type="button" @click="resendPortal()" class="h-btn h-btn-ghost">Saada portaali link uuesti</button>
                             <button type="button" x-show="detail.customer?.status === 'paid'" @click="archiveCustomer()" class="h-btn h-btn-ghost text-red-500">Lõpeta koostöö</button>
                         </div>
                     </div>
@@ -986,6 +1067,11 @@
         const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         const COPY = {
             tabToday: { et: 'Täna', en: 'Today' },
+            greet: { et: 'Tere, {name}', en: 'Hello, {name}' },
+            jobLabel: { et: 'Töö', en: 'Job' },
+            jobPhoto: { et: 'Foto', en: 'Photo' },
+            waterMain: { et: 'Peakraan', en: 'Main tap' },
+            breaker: { et: 'Kilp', en: 'Panel' },
             todayEmpty: { et: 'Täna kodusid ei ole.', en: 'No homes today.' },
             addVisit: { et: 'Lisa visiit', en: 'Add a visit' },
             access: { et: 'Sissepääs', en: 'Access' },
@@ -999,6 +1085,14 @@
             noteLabel: { et: 'Märkus elanikule', en: 'Note for the resident' },
             notePh: { et: 'Valikuline — jõuab elanikule teatega', en: 'Optional — the resident sees it' },
             done: { et: 'Tehtud', en: 'Done' },
+            noEntry: { et: 'Ei saanud sisse', en: 'Could not get in' },
+            noEntryDone: { et: 'Uus aeg on homme samal kellaajal. Elanik sai teate.', en: 'The new time is tomorrow at the same hour. The resident was told.' },
+            awayTitle: { et: 'Eemalolek', en: 'Away' },
+            awayBody: { et: 'Visiidid selles vahemikus liiguvad eemaloleku järele. Iga kodu saab ühe teate.', en: 'Visits in this range move to the days after. Each home gets one notice.' },
+            awayFrom: { et: 'Alates', en: 'From' },
+            awayTo: { et: 'Kuni', en: 'Until' },
+            awaySave: { et: 'Märgi eemalolek', en: 'Mark the away days' },
+            awaySaved: { et: 'Eemalolek on kirjas. Visiidid liikusid.', en: 'The away days are saved. The visits moved.' },
             earned: { et: 'Teenitud', en: 'Earned' },
             earnedWait: { et: 'Väljamakse ootab Stripe’i ühendust. Summa on tehtud visiitidest.', en: 'Payout waits for Stripe. The sum is from visits marked done.' },
             earnedNone: { et: 'Tehtud visiite veel pole.', en: 'No completed visits yet.' },
@@ -1038,9 +1132,48 @@
             calWeekdays: { et: 'E,T,K,N,R,L,P', en: 'M,T,W,T,F,S,S' },
             calEmpty: { et: 'Sel päeval visiite pole.', en: 'No visits that day.' },
             searchHomes: { et: 'Otsi nime või aadressi…', en: 'Search by name or address…' },
-            addClient: { et: '+ Lisa klient', en: '+ Add a client' },
+            addClient: { et: 'Lisa klient', en: 'Add a client' },
+            addClientTitle: { et: 'Lisa klient', en: 'Add a client' },
+            addClientLead: { et: 'Nimi, aadress ja millal sa tuled. Tema saab lingi ja avab äpi.', en: 'Name, address and when you come. They get a link and open the app.' },
+            nameReq: { et: 'Nimi', en: 'Name' },
+            emailReq: { et: 'E-post', en: 'E-mail' },
+            phoneOpt: { et: 'Telefon', en: 'Phone' },
+            addressReq: { et: 'Aadress', en: 'Address' },
+            addressPh: { et: 'Tänav, maja, korter, linn', en: 'Street, building, apartment, city' },
+            sizeLabel: { et: 'Kodu', en: 'Home' },
+            sizeSmall: { et: '1–2 tuba', en: '1–2 rooms' },
+            sizeMed: { et: '3 tuba', en: '3 rooms' },
+            sizeLarge: { et: '4+ tuba', en: '4+ rooms' },
+            rhythmLabel: { et: 'Kui tihti', en: 'How often' },
+            dayLabel: { et: 'Päev', en: 'Day' },
+            firstVisit: { et: 'Esimene kord {when} kell {time}. Kestus {hours} tundi.', en: 'First visit {when} at {time}. {hours} hours.' },
+            holidaySkip: { et: 'See päev on riigipüha — esimene aeg läheb järgmisele.', en: 'That day is a public holiday — the first visit moves to the next one.' },
+            whatLabel: { et: 'Mida sa seal teed', en: 'What you do there' },
+            whatLead: { et: 'Tavakoristus on graafikus. Märgi juurde see, mida sa selle kodu juures veel teed.', en: 'The regular clean is on the schedule. Mark anything else you do at this home.' },
+            svcFlowers: { et: 'Lilled', en: 'Flowers' },
+            svcWindows: { et: 'Aknad', en: 'Windows' },
+            svcDeep: { et: 'Süvapuhastus', en: 'Deep clean' },
+            svcLinens: { et: 'Voodipesu', en: 'Linens' },
+            svcHood: { et: 'Pliidikubu', en: 'Range hood' },
+            svcDish: { et: 'Nõudepesumasin', en: 'Dishwasher' },
+            svcWasher: { et: 'Pesumasin', en: 'Washing machine' },
+            forceNew: { et: 'Jah, see on uus klient — salvesta', en: 'Yes, this is a new client — save' },
+            seePlans: { et: 'Vaata pakette', en: 'See plans' },
+            addedTitle: { et: '{name} on platvormil', en: '{name} is on the platform' },
+            addedWhen: { et: 'Esimene kord on {when}.', en: 'The first visit is {when}.' },
+            addedMail: { et: 'Link läks aadressile {email}. Kui ta kirja ei näe, kopeeri link ja saada sõnumiga.', en: 'The link went to {email}. If they miss the letter, copy the link and send it in a message.' },
+            addedNoMail: { et: 'Kirja ei läinud välja. Kopeeri link ja saada see talle sõnumiga.', en: 'The letter did not go out. Copy the link and send it in a message.' },
+            addedMissed: { et: 'Mõni teenus ei salvestunud. Ava kodu ja märgi see uuesti.', en: 'One service did not save. Open the home and mark it again.' },
+            appLink: { et: 'Link äppi', en: 'Link to the app' },
+            copyLink: { et: 'Kopeeri link', en: 'Copy the link' },
+            copied: { et: 'Link on kopeeritud. Saada see talle sõnumiga.', en: 'Link copied. Send it in a message.' },
+            copyFailed: { et: 'Kopeerimine ei õnnestunud. Hoia lingil sõrme ja kopeeri sealt.', en: 'Could not copy. Press and hold the link, then copy it.' },
+            doneClose: { et: 'Valmis', en: 'Done' },
+            close: { et: 'Sulge', en: 'Close' },
+            sendAppLink: { et: 'Saada äppi link', en: 'Send the app link' },
+            needsTime: { et: 'Aeg puudu — ava ja pane päev', en: 'No time yet — open and set the day' },
             homesEmpty: { et: 'Kodud veel puuduvad', en: 'No homes yet' },
-            homesEmptyAdd: { et: 'Lisa nimi, e-post ja aadress. Klient saab portaali lingi.', en: 'Add a name, e-mail and address. The client gets a portal link.' },
+            homesEmptyAdd: { et: 'Lisa nimi, aadress ja päev. Tema saab lingi ja avab äpi.', en: 'Add a name, an address and a day. They get a link and open the app.' },
             homesEmptyAssigned: { et: 'Kodud, mis sulle on määratud, ilmuvad siia.', en: 'Homes assigned to you show up here.' },
             nextVisit: { et: 'Järgmine', en: 'Next' },
             archived: { et: 'Arhiveeritud', en: 'Archived' },
@@ -1165,12 +1298,15 @@
             T: COPY,
             nowTick: 0,
             todayNotes: {},
+            providerAway: { from: '', to: '', busy: false, error: '', saved: false },
             todaySavingId: '',
             activeTab: 'today',
             tabs: [
                 { id: 'today', key: 'tabToday' },
-                { id: 'overview', key: 'tabOverview' }, { id: 'calendar', key: 'tabCalendar' }, { id: 'customers', key: 'tabHomes' },
-                { id: 'requests', key: 'tabWishes' }, { id: 'summary', key: 'tabSummary' }, { id: 'account', key: 'tabAccount' },
+                { id: 'calendar', key: 'tabCalendar' },
+                { id: 'customers', key: 'tabHomes' },
+                { id: 'requests', key: 'tabWishes' },
+                { id: 'account', key: 'tabAccount' },
             ],
             customerSearch: '',
             calMonth: '', selectedDay: '',
@@ -1184,7 +1320,7 @@
 
             visitModal: { open: false, orderId: '', bookingId: null, customerName: '', currentStart: null, date: '', time: '10:00', durationMin: 180, serviceId: '', price: '', note: '', customerNote: '', notify: true, force: false, conflicts: [], error: '', saving: false, completed: false },
             // `form` starts with the real shape so Alpine never evaluates customerModal.form.* against null on load
-            customerModal: { open: false, saving: false, error: '', existingWarning: '', upgrade: false, form: { name: '', email: '', phone: '', address: '', size: 'medium', contacts: [], useSchedule: true, schedule: { frequency: 'biweekly', anchorDate: '', time: '10:00', durationMin: 180 }, providerNotes: '', sendWelcome: true, force: false } },
+            customerModal: { open: false, saving: false, error: '', existingWarning: '', upgrade: false, done: null, form: { name: '', email: '', phone: '', address: '', size: 'medium', frequency: 'biweekly', weekday: 2, time: '10:00', services: [], force: false } },
             msgModal: { open: false, title: '', subtitle: '', hint: '', placeholder: '', button: 'Saada', danger: false, required: true, text: '', error: '', saving: false, submit() {} },
             detail: { open: false, customer: null, editSchedule: false, scheduleForm: {}, contactsForm: [], editContacts: false, notes: '', notesDirty: false, saving: false, error: '', editAway: false, awayForm: { from: '', to: '', note: '' }, editFlowers: false, flowersForm: { auto: false, floristId: '', leadDays: 2, note: '', budget: '' }, maintAdding: false, maintForm: { name: '', intervalMonths: 6 } },
             confirmModal: { open: false, request: null, date: '', time: '10:00', durationMin: 60, price: '', message: '', force: false, conflicts: [], error: '', saving: false },
@@ -1202,8 +1338,13 @@
                 this.summaryMonth = this.todayStr.slice(0, 7);
                 const params = new URLSearchParams(location.search);
                 const urlToken = params.get('token');
+                if (!urlToken && !this.token) {
+                    window.location.replace('/too');
+                    return;
+                }
                 // Deep link straight to a tab (e-mails: "Ava kalender" → /haldus?tab=calendar)
-                if (this.tabs.some((t) => t.id === params.get('tab'))) this.activeTab = params.get('tab');
+                const askedTab = params.get('tab') === 'summary' ? 'account' : (params.get('tab') === 'overview' ? 'today' : params.get('tab'));
+                if (this.tabs.some((t) => t.id === askedTab)) this.activeTab = askedTab;
                 if (params.get('billing') === 'success') { this.showToast('Makse õnnestus — pakett on aktiivne'); history.replaceState({}, '', '/haldus?tab=account'); }
                 this.$watch('activeTab', (t) => { if (t === 'account' && this.authenticated) { this.loadInvoices(); this.loadEarned(); } });
                 if (urlToken) {
@@ -1235,6 +1376,7 @@
                     this.profileForm = { name: d.provider.name || '', businessName: d.provider.businessName || '', phone: d.provider.phone || '', notifyEmail: d.provider.notifyEmail || '' };
                     if (this.activeTab === 'account') { this.loadInvoices(); this.loadEarned(); }
                     this.range = d.range; this.authenticated = true;
+                    if (window.SUKODA_PUSH) window.SUKODA_PUSH.offer({ audience: 'desk', token: this.token, lang: this.lang, when: true });
                     if (this.detail.open && this.detail.customer) {
                         const fresh = this.customers.find((c) => c.id === this.detail.customer.id);
                         if (fresh) this.detail.customer = fresh;
@@ -1273,7 +1415,7 @@
 
             logout() {
                 localStorage.removeItem('sukoda_haldus_token');
-                this.token = ''; this.authenticated = false; this.provider = null; this.customers = []; this.bookings = []; this.requests = [];
+                window.location.replace('/too');
             },
 
             showToast(msg) { this.toast = msg; setTimeout(() => { this.toast = ''; }, 3200); },
@@ -1424,12 +1566,11 @@
             termsIncluded(r) { return !!this.termsFor(r)?.included; },
             termsLine(r) {
                 const t = this.termsFor(r); if (!t) return '';
+                if (t.included && t.quota) return t.quota;
                 const parts = [];
                 if (t.included) parts.push((t.cat === 'warranty' ? 'garantii korras' : 'hinnas sees') + (t.until ? ' kuni ' + this.fmtDateFull(t.until) : ''));
                 else if (t.expired) parts.push((t.cat === 'warranty' ? 'garantii lõppes ' : 'sisaldus kuni ') + this.fmtDateFull(t.until));
-                if (t.quota) parts.push(t.quota);
-                if (t.after) parts.push((t.included ? 'üle selle ' : '') + t.after);
-                if (t.billedBy) parts.push('arve ' + t.billedBy);
+                if (t.after) parts.push(t.after);
                 return parts.join(' · ');
             },
             plural(n, one, many) { return `${n} ${Number(n) === 1 ? one : many}`; },
@@ -1447,16 +1588,26 @@
                 const keys = { warranty: 'routeWarranty', handyman: 'roleHandyman', building: 'roleBuilding', flowers: 'roleFlowers', garden: 'roleGarden', cleaning: 'roleCleaning' };
                 return keys[role] ? this.t(keys[role]) : '';
             },
-            homeLine(c) {
+            homeWhen(c) {
                 const parts = [];
                 if (c.role && c.role !== 'cleaning') parts.push(this.roleLabel(c.role));
-                if (c.role === 'cleaning' && c.schedule && c.schedule.active !== false) parts.push(this.scheduleLabel(c.schedule));
                 const next = this.nextVisitFor(c.id);
-                if (next) parts.push(this.t('nextVisit') + ' ' + this.fmtDateShort(next.scheduledAt));
+                if (next) parts.push(this.t('nextVisit') + ' ' + this.fmtDateShort(next.scheduledAt) + ' ' + this.fmtTime(next.scheduledAt));
+                else if (c.role === 'cleaning' && c.status === 'paid') parts.push(this.t('needsTime'));
                 if (c.status !== 'paid') parts.push(this.t('archived'));
                 const away = this.awayLabel(c);
                 if (away) parts.push(away);
                 return parts.filter(Boolean).join(' · ');
+            },
+            serviceLine(c) {
+                if (!c || c.role !== 'cleaning') return '';
+                const bits = [];
+                if (c.flowers && c.flowers.auto) bits.push(this.t('svcFlowers'));
+                const en = this.lang === 'en';
+                for (const it of (c.maintenance || [])) {
+                    if (it.doneBy === 'provider') bits.push(en ? (it.nameEn || it.name) : it.name);
+                }
+                return bits.join(' · ');
             },
             planHomes() {
                 const limit = this.billing.limit ? ' / ' + this.billing.limit : '';
@@ -1578,6 +1729,37 @@
                 finally { this.todaySavingId = ''; }
             },
             markTodayDone(b) { return this.completeVisit(b, this.todayNotes[b.id]); },
+            async markNoEntry(b) {
+                if (!b || this.todaySavingId) return;
+                this.todaySavingId = b.id;
+                this.globalError = '';
+                try {
+                    const res = await this.api('/api/haldus/visits/missed', { method: 'POST', body: JSON.stringify({ bookingId: b.id }) });
+                    const d = await res.json().catch(() => ({}));
+                    if (res.status === 401) { this.logout(); return; }
+                    if (!res.ok) { this.globalError = this.errText(d); return; }
+                    this.showToast(this.t('noEntryDone'));
+                    await this.loadData(this.range.from, this.range.to);
+                } catch (e) { this.globalError = this.t('saveFailed'); }
+                finally { this.todaySavingId = ''; }
+            },
+            async saveProviderAway() {
+                if (this.providerAway.busy) return;
+                this.providerAway.busy = true;
+                this.providerAway.error = '';
+                this.providerAway.saved = false;
+                try {
+                    const res = await this.api('/api/haldus/away', { method: 'POST', body: JSON.stringify({ from: this.providerAway.from, to: this.providerAway.to || this.providerAway.from }) });
+                    const d = await res.json().catch(() => ({}));
+                    if (res.status === 401) { this.logout(); return; }
+                    if (!res.ok) { this.providerAway.error = this.errText(d); return; }
+                    this.providerAway.saved = true;
+                    this.providerAway.from = '';
+                    this.providerAway.to = '';
+                    await this.loadData(this.range.from, this.range.to);
+                } catch (e) { this.providerAway.error = this.t('saveFailed'); }
+                finally { this.providerAway.busy = false; }
+            },
             errText(d) {
                 const e = d && d.error;
                 if (e && typeof e === 'object') return e[this.lang] || e.et || this.t('saveFailed');
@@ -1620,9 +1802,70 @@
                 return String(this.customerOf(b)?.homeProfile?.access || '').trim();
             },
             floorPlanFor(b) {
-                if (!this.accessVisible(b)) return '';
                 const url = String(this.customerOf(b)?.floorPlan || '');
-                return url.indexOf('https://') === 0 ? url : '';
+                if (url.indexOf('https://') !== 0) return '';
+                if (this.isCleaningProvider && !this.accessVisible(b)) return '';
+                return url;
+            },
+            jobRequest(b) {
+                return this.requests.find((r) => (b.requestId && r.id === b.requestId) || (r.bookingId && r.bookingId === b.id)) || null;
+            },
+            jobText(b) {
+                if (this.isCleaningProvider) return '';
+                const req = this.jobRequest(b);
+                const bits = [];
+                const add = (s) => { const t = String(s || '').trim(); if (t && !bits.includes(t)) bits.push(t); };
+                add(b.customerNote);
+                add(b.note);
+                if (req) add(req.note);
+                return bits.join(' · ');
+            },
+            httpsUrl(v) {
+                if (v && typeof v === 'object') return this.httpsUrl(v.url || v.href);
+                const s = String(v || '').trim();
+                return s.indexOf('https://') === 0 ? s : '';
+            },
+            jobPhoto(b) {
+                if (this.isCleaningProvider) return '';
+                const req = this.jobRequest(b);
+                const c = this.customerOf(b) || {};
+                const singles = [b.photo, b.photoUrl, req && req.photo, req && req.photoUrl, c.photo, c.photoUrl];
+                for (const item of singles) { const url = this.httpsUrl(item); if (url) return url; }
+                const lists = [b.photos, req && req.photos, c.photos];
+                for (const list of lists) {
+                    if (!Array.isArray(list)) continue;
+                    for (const item of list) { const url = this.httpsUrl(item); if (url) return url; }
+                }
+                return '';
+            },
+            passFact(b, kind) {
+                if (this.isCleaningProvider) return '';
+                const keys = kind === 'water' ? ['water-main', 'watermain', 'peakraan', 'maintap'] : ['breaker', 'kilp', 'panel', 'electricpanel'];
+                const c = this.customerOf(b);
+                if (!c) return '';
+                const read = (v) => {
+                    if (v && typeof v === 'object') return String(v.value || v.et || '').trim();
+                    return String(v || '').trim();
+                };
+                const hp = c.homeProfile || {};
+                const passport = c.passport && typeof c.passport === 'object' ? c.passport : {};
+                const norm = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                const wanted = keys.map(norm);
+                for (const bag of [hp, passport]) {
+                    for (const [prop, val] of Object.entries(bag)) {
+                        if (!wanted.includes(norm(prop))) continue;
+                        const direct = read(val);
+                        if (direct) return direct;
+                    }
+                }
+                const facts = Array.isArray(c.facts) ? c.facts : (Array.isArray(passport.facts) ? passport.facts : []);
+                for (const fact of facts) {
+                    const key = norm(fact && fact.key);
+                    if (!wanted.includes(key)) continue;
+                    const value = read(fact.value);
+                    if (value) return value;
+                }
+                return '';
             },
             accessVisible(b) {
                 if (!b || !this.hasAccess(b)) return false;
@@ -1642,6 +1885,7 @@
                     if (this.dateOf(o.scheduledAt) !== day) continue;
                     if (o.kind === 'extra' && o.serviceName) lines.push(o.serviceName);
                 }
+                if (!this.isCleaningProvider) return lines;
                 const maint = this.customerOf(b)?.maintenance || [];
                 for (const it of maint) {
                     if (it.doneBy !== 'provider' || !it.nextDueAt || it.nextDueAt > this.todayStr) continue;
@@ -1652,9 +1896,13 @@
             standingNote(b) {
                 const c = this.customerOf(b);
                 const hp = c?.homeProfile || {};
-                return [hp.pets, hp.specialRequests, hp.linens, hp.allergies].map((s) => String(s || '').trim()).filter(Boolean).join(' · ');
+                const bits = [hp.pets, hp.specialRequests];
+                if (this.isCleaningProvider) bits.push(hp.linens);
+                bits.push(hp.allergies);
+                return bits.map((s) => String(s || '').trim()).filter(Boolean).join(' · ');
             },
             bringLine(b) {
+                if (!this.isCleaningProvider) return '';
                 const c = this.customerOf(b);
                 const extraFlowers = this.bookings.some((o) => o.orderId === b.orderId && o.status !== 'cancelled' && this.dateOf(o.scheduledAt) === this.dateOf(b.scheduledAt) && (o.serviceId === 'flowers' || o.flowersOrdered));
                 if (!b.flowersOrdered && !c?.flowers?.auto && !extraFlowers) return '';
@@ -1694,34 +1942,118 @@
 
             // ---------- customers ----------
             openCustomerModal() {
-                this.customerModal = { open: true, saving: false, error: '', existingWarning: '', upgrade: false, form: this.blankCustomerForm() };
+                this.customerModal = { open: true, saving: false, error: '', existingWarning: '', upgrade: false, done: null, form: this.blankCustomerForm() };
             },
             blankCustomerForm() {
-                return {
-                    name: '', email: '', phone: '', address: '', size: 'medium', contacts: [{ _k: this.rowKey(), name: '', email: '', phone: '', notify: true }], useSchedule: true,
-                    schedule: { frequency: 'biweekly', anchorDate: this.todayStr ? T().shiftDateString(this.todayStr, 7) : '', time: '10:00', durationMin: 180 }, providerNotes: '', sendWelcome: true, force: false,
-                };
+                return { name: '', email: '', phone: '', address: '', size: 'medium', frequency: 'biweekly', weekday: 2, time: '10:00', services: [], force: false };
+            },
+            get sizeChoices() { return [{ id: 'small', key: 'sizeSmall' }, { id: 'medium', key: 'sizeMed' }, { id: 'large', key: 'sizeLarge' }]; },
+            get rhythmChoices() { return [{ id: 'weekly', key: 'schedWeek' }, { id: 'biweekly', key: 'schedTwo' }, { id: 'monthly', key: 'schedMonth' }]; },
+            get weekdayChoices() {
+                const labels = this.lang === 'en' ? ['M', 'T', 'W', 'T', 'F'] : ['E', 'T', 'K', 'N', 'R'];
+                return [1, 2, 3, 4, 5].map((n, i) => ({ n, label: labels[i] }));
+            },
+            get hourChoices() { return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00']; },
+            get offerServices() {
+                const picks = [
+                    ['windows', 'svcWindows'], ['deep-clean', 'svcDeep'], ['mattress', 'svcLinens'],
+                    ['hood-filter', 'svcHood'], ['dishwasher-filter', 'svcDish'], ['washer-service', 'svcWasher'],
+                ];
+                const have = new Set((this.maintenanceCatalogue || []).filter((m) => m.byProvider).map((m) => m.id));
+                const rows = picks.filter(([id]) => have.has(id)).map(([id, key]) => ({ id, label: this.t(key) }));
+                if (this.florists.length) rows.unshift({ id: 'flowers', label: this.t('svcFlowers') });
+                return rows;
+            },
+            durationForSize(size) { return { small: 120, medium: 180, large: 240 }[size] || 180; },
+            nextWeekday(weekday) {
+                const today = this.todayStr || new Date().toISOString().slice(0, 10);
+                const [y, m, d] = today.split('-').map(Number);
+                const base = new Date(Date.UTC(y, m - 1, d, 12));
+                let add = (Number(weekday) - base.getUTCDay() + 7) % 7;
+                if (add === 0) add = 7;
+                base.setUTCDate(base.getUTCDate() + add);
+                return base.toISOString().slice(0, 10);
+            },
+            addMonthsStr(dateStr, n) {
+                const [y, m, d] = String(dateStr || '').split('-').map(Number);
+                if (!y || !m || !d) return dateStr;
+                const dt = new Date(Date.UTC(y, m - 1, 1, 12));
+                dt.setUTCMonth(dt.getUTCMonth() + Number(n || 0));
+                const last = new Date(Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth() + 1, 0)).getUTCDate();
+                dt.setUTCDate(Math.min(d, last));
+                return dt.toISOString().slice(0, 10);
+            },
+            intervalOf(id) {
+                const row = (this.maintenanceCatalogue || []).find((m) => m.id === id);
+                return row ? row.intervalMonths : 6;
+            },
+            toggleService(id) {
+                const list = this.customerModal.form.services;
+                const i = list.indexOf(id);
+                if (i >= 0) list.splice(i, 1);
+                else list.push(id);
+            },
+            firstVisitLine() {
+                const f = this.customerModal.form;
+                if (!f) return '';
+                const date = this.nextWeekday(f.weekday);
+                const line = this.t('firstVisit', { when: this.fmtDateLong(date), time: f.time, hours: this.durationForSize(f.size) / 60 });
+                return this.holidayName(date) ? line + ' ' + this.t('holidaySkip') : line;
+            },
+            async copyInvite(url) {
+                if (!url) return;
+                try {
+                    await navigator.clipboard.writeText(url);
+                    this.showToast(this.t('copied'));
+                } catch (e) { this.showToast(this.t('copyFailed')); }
             },
             rowKey() { return Math.random().toString(36).slice(2, 10); },
             async saveCustomer() {
                 const m = this.customerModal; if (m.saving) return;
                 m.saving = true; m.error = '';
                 const f = m.form;
-                const body = { name: f.name, email: f.email, phone: f.phone, address: f.address, size: f.size, contacts: f.contacts.filter((c) => c.name || c.email).map(({ _k, ...c }) => c), providerNotes: f.providerNotes, sendWelcome: f.sendWelcome, force: f.force, schedule: f.useSchedule ? f.schedule : null };
+                const anchor = this.nextWeekday(f.weekday);
+                const body = {
+                    name: f.name, email: f.email, phone: f.phone, address: f.address, size: f.size,
+                    sendWelcome: true, force: f.force, contacts: [],
+                    schedule: { frequency: f.frequency, anchorDate: anchor, time: f.time, durationMin: this.durationForSize(f.size) },
+                };
                 try {
                     const res = await this.api('/api/haldus/customers', { method: 'POST', body: JSON.stringify(body) });
                     const d = await res.json();
-                    if (res.status === 409 && d.code === 'EXISTING_ORDER') { m.existingWarning = d.error; return; }
-                    if (res.status === 402) { m.error = d.error; m.upgrade = true; return; }
-                    if (!res.ok) throw new Error(d.error || 'Salvestamine ebaõnnestus');
-                    m.open = false;
-                    const n = d.createdVisits?.length || 0;
-                    this.showToast(`Klient lisatud${n ? `, ${n} aega loodud ja saadetud` : ''}${d.skippedHolidays?.length ? ` · ${d.skippedHolidays.length} riigipüha vahele` : ''}`);
+                    if (res.status === 409 && d.code === 'EXISTING_ORDER') { m.existingWarning = typeof d.error === 'string' ? d.error : this.t('saveFailed'); return; }
+                    if (res.status === 402) { m.error = typeof d.error === 'string' ? d.error : this.t('saveFailed'); m.upgrade = true; return; }
+                    if (!res.ok) throw new Error(typeof d.error === 'string' ? d.error : this.t('saveFailed'));
+                    const orderId = d.customer && d.customer.id;
+                    let missed = false;
+                    if (orderId) {
+                        for (const id of f.services) {
+                            let ok = false;
+                            try {
+                                if (id === 'flowers') {
+                                    const floristId = (this.provider && this.provider.defaultFloristId) || (this.florists[0] && this.florists[0].id) || '';
+                                    if (!floristId) { missed = true; continue; }
+                                    const fr = await this.api('/api/haldus/customers/flowers', { method: 'POST', body: JSON.stringify({ orderId, auto: true, floristId, leadDays: 2 }) });
+                                    ok = fr.ok;
+                                } else {
+                                    const startsAt = this.addMonthsStr(anchor, this.intervalOf(id));
+                                    const mr = await this.api('/api/haldus/customers/maintenance', { method: 'POST', body: JSON.stringify({ orderId, action: 'add', catalogId: id, startsAt }) });
+                                    ok = mr.ok;
+                                }
+                            } catch (err) { ok = false; }
+                            if (!ok) missed = true;
+                        }
+                    }
+                    const first = (d.createdVisits || [])[0];
+                    const when = first && first.scheduledAt
+                        ? (this.fmtDateLong(first.scheduledAt) + ' ' + this.t('atTime') + ' ' + this.fmtTime(first.scheduledAt))
+                        : (this.fmtDateLong(anchor) + ' ' + this.t('atTime') + ' ' + f.time);
+                    m.done = { name: f.name, email: f.email, when, inviteUrl: d.inviteUrl || '', welcomeSent: !!d.welcomeSent, missed };
                     await this.loadData(this.range.from, this.range.to);
                 } catch (e) { m.error = e.message; } finally { m.saving = false; }
             },
             openCustomerDetail(c) {
-                this.detail = { open: true, customer: c, editSchedule: false, scheduleForm: {}, contactsForm: JSON.parse(JSON.stringify(c.contacts || [])).map((ct) => ({ _k: this.rowKey(), ...ct })), editContacts: false, notes: c.providerNotes || '', notesDirty: false, saving: false, error: '', editAway: false, awayForm: { from: '', to: '', note: '' }, editFlowers: false, flowersForm: { auto: false, floristId: '', leadDays: 2, note: '', budget: '' }, maintAdding: false, maintForm: { name: '', intervalMonths: 6 } };
+                this.detail = { open: true, customer: c, inviteUrl: '', editSchedule: false, scheduleForm: {}, contactsForm: JSON.parse(JSON.stringify(c.contacts || [])).map((ct) => ({ _k: this.rowKey(), ...ct })), editContacts: false, notes: c.providerNotes || '', notesDirty: false, saving: false, error: '', editAway: false, awayForm: { from: '', to: '', note: '' }, editFlowers: false, flowersForm: { auto: false, floristId: '', leadDays: 2, note: '', budget: '' }, maintAdding: false, maintForm: { name: '', intervalMonths: 6 } };
             },
             startEditSchedule() {
                 const s = this.detail.customer.schedule;
@@ -1926,8 +2258,10 @@
             async resendPortal() {
                 try {
                     const res = await this.api('/api/haldus/customers/resend-portal', { method: 'POST', body: JSON.stringify({ orderId: this.detail.customer.id }) });
-                    if (!res.ok) throw new Error((await res.json()).error);
-                    this.showToast('Portaali link saadetud kliendile');
+                    const d = await res.json();
+                    if (!res.ok) throw new Error(typeof d.error === 'string' ? d.error : this.t('saveFailed'));
+                    this.detail.inviteUrl = d.inviteUrl || '';
+                    this.showToast(this.t('addedMail', { email: this.detail.customer.email || '' }));
                 } catch (e) { this.globalError = e.message; }
             },
             async archiveCustomer() {

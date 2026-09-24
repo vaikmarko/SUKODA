@@ -1,7 +1,12 @@
 import { add } from './dict.js';
 
 add({
-  folderTitle: { et: 'Kodu kaust', en: 'Home folder', ru: 'Папка дома' },
+  folderTitle: { et: 'Kaust', en: 'Folder', ru: 'Папка' },
+  factHeat: { et: 'Küte', en: 'Heating', ru: 'Отопление' },
+  factFilter: { et: 'Filter', en: 'Filter', ru: 'Фильтр' },
+  factWater: { et: 'Vesi', en: 'Water', ru: 'Вода' },
+  factPower: { et: 'Elekter', en: 'Electricity', ru: 'Электричество' },
+  factWarranty: { et: 'Garantii lõpp', en: 'Warranty end', ru: 'Конец гарантии' },
   addFile: { et: '+ Lisa fail', en: '+ Add a file', ru: '+ Добавьте файл' },
   docChoose: { et: 'Vali fail — PDF või foto', en: 'Choose a file — PDF or photo', ru: 'Выберите файл — PDF или фото' },
   docFileHint: { et: 'kuni 8 MB · või jäta tühjaks ja lisa link', en: 'up to 8 MB · or leave empty and add a link', ru: 'до 8 МБ · или оставьте пустым и добавьте ссылку' },
@@ -12,23 +17,26 @@ add({
   docNote: { et: 'Märge', en: 'Note', ru: 'Заметка' },
   docNotePh: { et: 'nt kehtib kuni 03.2028', en: 'e.g. valid until 03.2028', ru: 'напр. действует до 03.2028' },
   docSaving: { et: 'Salvestan…', en: 'Saving…', ru: 'Сохраняю…' },
-  docUpload: { et: 'Laadi kausta', en: 'Upload to folder', ru: 'Загрузите в папку' },
-  docAdd: { et: 'Lisa kausta', en: 'Add to folder', ru: 'Добавьте в папку' },
+  docUpload: { et: 'Lisa fail', en: 'Add the file', ru: 'Добавьте файл' },
+  docAdd: { et: 'Lisa dokument', en: 'Add the document', ru: 'Добавьте документ' },
   docCancel: { et: 'Loobu', en: 'Cancel', ru: 'Отмена' },
   docRemove: { et: 'Eemalda', en: 'Remove', ru: 'Удалите' },
   docOpen: { et: 'Ava', en: 'Open', ru: 'Откройте' },
-  folderEmpty: { et: 'Kaust on veel tühi. Lisa esimene fail — leping, garantii või seadme juhend.', en: 'The folder is still empty. Add the first file — a contract, a warranty or an appliance manual.', ru: 'Папка ещё пуста. Добавьте первый файл — договор, гарантию или инструкцию к прибору.' },
+  docClose: { et: 'Sulge', en: 'Close', ru: 'Закройте' },
+  folderEmpty: { et: 'Dokumente veel ei ole. Lisa fail, kui sul on leping või juhend.', en: 'There are no documents yet. Add a file if you have a contract or a guide.', ru: 'Документов пока нет. Добавьте файл, если есть договор или инструкция.' },
   docTooBig: { et: 'Fail on suurem kui 8 MB', en: 'File is larger than 8 MB', ru: 'Файл больше 8 МБ' },
   docRemoveAsk: { et: 'Eemalda dokument nimekirjast?', en: 'Remove this document?', ru: 'Удалить документ из списка?' },
   askLabel: { et: 'Küsi', en: 'Ask', ru: 'Спросите' },
+  askHomeLead: { et: 'Küsi kodu kohta', en: 'Ask about the home', ru: 'Спросите о доме' },
   askPh: { et: 'nt filtri mõõt', en: 'e.g. the filter size', ru: 'напр. размер фильтра' },
-  askEmpty: { et: 'Juhendites seda ei ole.', en: 'The guides do not say.', ru: 'В инструкциях этого нет.' },
+  askEmpty: { et: 'Dokumentides seda ei ole.', en: 'This is not in the documents.', ru: 'В документах этого нет.' },
+  askIn: { et: 'Dokumendis', en: 'In the document', ru: 'В документе' },
   askPage: { et: 'lk {page}', en: 'p. {page}', ru: 'стр. {page}' },
-  askOpen: { et: 'Ava juhend', en: 'Open the guide', ru: 'Откройте инструкцию' },
+  askOpen: { et: 'Ava dokument', en: 'Open the document', ru: 'Откройте документ' },
   askTechBtn: { et: 'Telli tehnik', en: 'Order a technician', ru: 'Закажите техника' },
-  askPerson: { et: 'Saada inimesele', en: 'Send to a person', ru: 'Отправьте человеку' },
+  askPerson: { et: 'Saada küsimus edasi', en: 'Send the question on', ru: 'Отправьте вопрос дальше' },
   askSent: { et: 'Saadetud. Vastus tuleb siia.', en: 'Sent. The answer comes here.', ru: 'Отправлено. Ответ придёт сюда.' },
-  exportHome: { et: 'Laadi kodu alla', en: 'Download this home', ru: 'Скачайте дом' },
+  exportHome: { et: 'Laadi dokumendid alla', en: 'Download the documents', ru: 'Скачайте документы' },
   exportPdfWaits: {
     et: 'Passi PDF tuleb hiljem. Alla tuleb kodu, kinnitatud faktid ja ajalugu.',
     en: 'The pass PDF comes later. This file is the home, the confirmed facts and the history.',
@@ -36,28 +44,21 @@ add({
   },
 });
 
-export const kaustHtml = `<div id="dokumendid" class="lg:col-span-12 bg-white border border-line p-have">
+export const kaustHtml = `<div id="dokumendid" x-show="activeTab === 'folder'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="min-w-0 bg-white border border-line p-have">
                             <div class="flex flex-wrap items-center justify-between gap-4 px-6 py-4 border-b border-line">
-                                <h2 class="p-h"><span class="p-num">03</span><span x-text="t('folderTitle')"></span></h2>
+                                <h2 class="p-h"><span x-text="t('folderTitle')"></span></h2>
                                 <button type="button" @click="docAdding = !docAdding; docFile = null" class="p-btn-2 p-btn-sm" x-text="t('addFile')"></button>
                             </div>
-                            <form class="px-6 py-4 border-b border-line" @submit.prevent="askFolder()">
-                                <label class="eyebrow" for="ask-q" x-text="t('askLabel')"></label>
-                                <div class="flex flex-col sm:flex-row gap-3 mt-2">
-                                    <input id="ask-q" type="text" x-model="askText" maxlength="200" :placeholder="t('askPh')" class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-line-strong">
-                                    <button type="submit" class="p-btn shrink-0" x-text="t('askLabel')"></button>
-                                </div>
-                                <div x-show="askCard" x-cloak class="mt-4 border border-line p-4 text-left">
-                                    <p class="text-sm font-sans font-light" x-show="askCard && askCard.fact" x-text="askCard && askCard.fact"></p>
-                                    <p class="text-sm text-muted font-sans font-light mt-1" x-show="askCard && askCard.place" x-text="askCard && askCard.place"></p>
-                                    <p class="text-sm font-sans font-light" x-show="askCard && !askCard.fact" x-text="t('askEmpty')"></p>
-                                    <a x-show="askCard && askCard.action === 'open'" class="p-btn mt-4 no-underline" :href="askCard ? askCard.href : ''" target="_blank" rel="noopener" x-text="t('askOpen')"></a>
-                                    <button type="button" x-show="askCard && askCard.action === 'tech'" class="p-btn mt-4" @click="orderTechnician()" x-text="t('askTechBtn')"></button>
-                                    <button type="button" x-show="askCard && askCard.action === 'person'" class="p-btn mt-4" @click="sendAskToPerson()" x-text="t('askPerson')"></button>
-                                </div>
-                                <button type="button" class="text-sm font-sans mt-4 underline underline-offset-4" @click="downloadHome()" x-text="t('exportHome')"></button>
-                                <p class="text-sm text-muted font-sans font-light mt-2" x-text="t('exportPdfWaits')"></p>
-                            </form>
+                            <div x-show="folderFacts.length" x-cloak class="px-6 border-b border-line">
+                                <template x-for="fact in folderFacts" :key="fact.id">
+                                    <div class="py-4 border-b border-line last:border-b-0">
+                                        <p class="eyebrow" x-text="t(fact.labelKey)"></p>
+                                        <p class="text-sm font-sans font-light mt-2" x-text="fact.value"></p>
+                                        <p class="text-xs text-muted font-sans font-light mt-1" x-show="fact.page" x-text="t('askPage', { page: fact.page })"></p>
+                                        <button type="button" x-show="fact.docId" class="text-sm font-sans mt-2 underline underline-offset-4" @click="openPassLine(fact)" x-text="t('docOpen')"></button>
+                                    </div>
+                                </template>
+                            </div>
 
                             <!-- Add: a file (PDF or photo) or a link — one form -->
                             <div x-show="docAdding" x-cloak class="px-6 py-6 border-b border-line bg-white">
@@ -96,7 +97,7 @@ export const kaustHtml = `<div id="dokumendid" class="lg:col-span-12 bg-white bo
                                                     </span>
                                                     <span class="flex items-center gap-4 shrink-0">
                                                         <button type="button" x-show="d.source !== 'developer' && d.source !== 'building'" @click="removeDocument(d)" class="text-[10px] uppercase tracking-[0.14em] text-muted hover:text-black font-sans" x-text="t('docRemove')"></button>
-                                                        <a x-show="d.file || d.url" :href="docHref(d)" target="_blank" rel="noopener" class="text-[11px] uppercase tracking-[0.14em] font-sans text-muted hover:text-black" x-text="t('docOpen')"></a>
+                                                        <button type="button" x-show="d.file || d.url" @click="openDoc(d)" class="text-[11px] uppercase tracking-[0.14em] font-sans text-muted hover:text-black" x-text="t('docOpen')"></button>
                                                     </span>
                                                 </div>
                                             </template>
@@ -105,4 +106,12 @@ export const kaustHtml = `<div id="dokumendid" class="lg:col-span-12 bg-white bo
                                 </template>
                             </div>
                             <p x-show="!documents.items.length" class="px-6 py-10 text-center text-sm text-muted font-sans font-light" x-text="t('folderEmpty')"></p>
+                            <button type="button" class="text-sm font-sans px-6 py-4 underline underline-offset-4" @click="downloadHome()" x-text="t('exportHome')"></button>
+                        </div>
+                        <div x-show="docPreview" x-cloak class="fixed inset-0 z-[120] bg-paper flex flex-col" role="dialog" aria-modal="true" @keydown.escape.window="if (docPreview) closeDoc()">
+                            <div class="flex items-center justify-between gap-4 px-4 h-14 border-b border-line shrink-0">
+                                <p class="font-sans text-sm truncate" x-text="docPreview && docPreview.title"></p>
+                                <button type="button" class="p-btn-2 p-btn-sm shrink-0" @click="closeDoc()" x-text="t('docClose')"></button>
+                            </div>
+                            <iframe class="flex-1 w-full min-h-0 border-0" :src="docPreview ? docPreview.href : ''" title=""></iframe>
                         </div>`;

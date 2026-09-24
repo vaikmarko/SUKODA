@@ -4,7 +4,11 @@
   var dict = bucket.dict = bucket.dict || {};
 Object.assign(dict, {
   tabKodu: { et: 'Kodu', en: 'Home', ru: 'Дом' },
-  tabCalendar: { et: 'Kalender', en: 'Calendar', ru: 'Календарь' },
+  tabServices: { et: 'Teenused', en: 'Services', ru: 'Услуги' },
+  tabFolder: { et: 'Kaust', en: 'Folder', ru: 'Папка' },
+  tabMine: { et: 'Minu', en: 'Profile', ru: 'Профиль' },
+  tabHome: { et: 'Kaust', en: 'Folder', ru: 'Папка' },
+  tabCalendar: { et: 'Ajad', en: 'Times', ru: 'Время' },
   hello: { et: 'Tere, ', en: 'Hello, ', ru: 'Здравствуйте, ' },
   logOut: { et: 'Logi välja', en: 'Log out', ru: 'Выйти' },
   warrantyUntil: { et: 'Garantii kuni {date}', en: 'Warranty until {date}', ru: 'Гарантия до {date}' },
@@ -33,6 +37,14 @@ Object.assign(dict, {
   firstOpenTitle: { et: 'Kolm asja enne esimest visiiti', en: 'Three things before the first visit', ru: 'Три вещи до первого визита' },
   firstOpenBody: { et: 'Voodipesu, lilled ja kuidas sisse saada. Koduhooldaja näeb neid igal visiidil.', en: 'Linens, flowers and how to get in. The housekeeper sees them on every visit.', ru: 'Постельное бельё, цветы и как войти. Специалист по дому видит это на каждом визите.' },
   firstOpenAction: { et: 'Täida', en: 'Fill in', ru: 'Заполните' },
+  welcomeEyebrow: { et: 'Uus kodu', en: 'New home', ru: 'Новый дом' },
+  welcomeTitle: { et: 'Vali esimene koristus', en: 'Pick the first clean', ru: 'Выберите первую уборку' },
+  welcomeBody: { et: 'Arco kingib esimese koristuse.', en: 'Arco gives the first clean.', ru: 'Arco дарит первую уборку.' },
+  welcomeAction: { et: 'Vali aeg', en: 'Pick a time', ru: 'Выберите время' },
+  upcomingTitle: { et: 'Eelseisvad', en: 'Upcoming', ru: 'Предстоящие' },
+  upcomingEmpty: { et: 'Kinnitatud aegu ei ole.', en: 'There are no confirmed times.', ru: 'Подтверждённых времён нет.' },
+  pastTitle: { et: 'Möödunud', en: 'Earlier', ru: 'Прошедшие' },
+  standingTitle: { et: 'Püsikoristus', en: 'Standing clean', ru: 'Постоянная уборка' },
   allClearTitle: { et: 'Praegu ei oota sind miski', en: 'Nothing is waiting on you', ru: 'Сейчас от вас ничего не требуется' },
   allClearBody: { et: 'Kui kodus on midagi katki, teata sellest ühe lausega.', en: 'If something at home is broken, report it in one sentence.', ru: 'Если дома что-то сломалось, сообщите об этом одним предложением.' },
   reportProblem: { et: 'Teata probleemist', en: 'Report a problem', ru: 'Сообщите о проблеме' },
@@ -57,6 +69,17 @@ Object.assign(dict, {
   statusDeclined: { et: 'Vajab uut aega', en: 'Needs a new time', ru: 'Нужно новое время' },
   statusCancelled: { et: 'Tühistatud', en: 'Cancelled', ru: 'Отменено' },
   statusReviewed: { et: 'Vaadatud üle', en: 'Reviewed', ru: 'Просмотрено' },
+  notedOpen: { et: 'Panime kirja. Kui see teenus sinu kodule avaneb, ütleme ise.', en: 'Noted. If this service opens for your home, we will say so.', ru: 'Записали. Если эта услуга откроется для вашего дома, мы скажем сами.' },
+  questionIn: { et: 'Küsimus on kirjas. Vastus tuleb siia.', en: 'The question is in. The answer comes here.', ru: 'Вопрос записан. Ответ придёт сюда.' },
+  issueIn: { et: 'Pöördumine on kirjas. Vastus tuleb siia.', en: 'The report is in. The answer comes here.', ru: 'Обращение записано. Ответ придёт сюда.' },
+  visitIn: { et: 'Aeg on kirjas. Näed seda Kodu kaardil.', en: 'The time is set. You will see it on Home.', ru: 'Время назначено. Оно на вкладке Дом.' },
+  questionNamed: { et: '{name} vastab kirjalikult. Vastus tuleb siia.', en: '{name} answers in writing. The reply comes here.', ru: '{name} ответит письменно. Ответ придёт сюда.' },
+  issueNamed: { et: '{name} vaatab pöördumise üle. Vastus tuleb siia.', en: '{name} reviews the report. The reply comes here.', ru: '{name} рассмотрит обращение. Ответ придёт сюда.' },
+  visitNamed: { et: '{name} kinnitab aja. Näed seda siin.', en: '{name} confirms the time. You will see it here.', ru: '{name} подтвердит время. Вы увидите его здесь.' },
+  proposeQuiet: { et: 'Uus aeg kinnitatakse siin ja kõik pere kontaktid saavad uue kalendrikutse.', en: 'The new time is confirmed here and every household contact gets an updated invite.', ru: 'Новое время подтверждается здесь, и все контакты семьи получат приглашение.' },
+  proposeNamed: { et: '{name} kinnitab uue aja ja kõik pere kontaktid saavad uue kalendrikutse.', en: '{name} confirms the new time and every household contact gets an updated invite.', ru: '{name} подтвердит новое время, и все контакты семьи получат приглашение.' },
+  proposeHint: { et: 'Paku sobiv päev.', en: 'Suggest a day.', ru: 'Предложите день.' },
+  proposeHintNamed: { et: 'Paku sobiv päev. {name} kinnitab täpse kellaaja.', en: 'Suggest a day. {name} confirms the exact time.', ru: 'Предложите день. {name} подтвердит точное время.' },
 });
 
 const FAILED_SUB = new Set(['past_due', 'unpaid', 'incomplete', 'incomplete_expired']);
@@ -98,6 +121,10 @@ function waitingQuestion(requests) {
   return (requests || []).find((r) => r.status === 'requested' && (r.kind === 'question' || r.kind === 'issue'));
 }
 
+function openClean(requests) {
+  return (requests || []).some((r) => ['requested', 'confirmed'].includes(r.status) && (r.serviceId === 'extra-clean' || r.category === 'cleaning'));
+}
+
 /**
  * One card. Money first, then a reply the resident must act on,
  * then the next visit, then a question still waiting, then away, then calm.
@@ -119,7 +146,22 @@ function pickNextThing(vm) {
       title: t(failed ? 'unpaidFailedTitle' : 'unpaidPendingTitle'),
       body: t(failed ? 'unpaidFailedBody' : 'unpaidPendingBody'),
       action: t('checkAgain'),
+      action2: '',
       thenLine: thenVisit(vm),
+    };
+  }
+
+  if (vm.extrasLoaded && !upcoming.length && vm.arcoCleanLine && !openClean(requests)) {
+    return {
+      kind: 'welcome',
+      refId: '',
+      pending: false,
+      eyebrow: t('welcomeEyebrow'),
+      title: t('welcomeTitle'),
+      body: t('welcomeBody'),
+      action: t('welcomeAction'),
+      action2: '',
+      thenLine: '',
     };
   }
 
@@ -142,7 +184,7 @@ function pickNextThing(vm) {
   if (visit) {
     const pendingTime = pendingIds.includes(visit.id);
     const when = vm.formatDate(visit.scheduledAt) + (vm.formatTime(visit.scheduledAt) ? ' ' + vm.formatTime(visit.scheduledAt) : '');
-    const who = visit.providerName || (vm.order && vm.order.provider && vm.order.provider.name) || '';
+    const who = vm.showProvider ? (visit.providerName || (vm.order && vm.order.provider && vm.order.provider.name) || '') : '';
     const bits = [vm.formatTime(visit.scheduledAt), vm.visitLabel(visit), who].filter(Boolean).join(' · ');
     let body = pendingTime ? t('pendingBody', { when }) : (bits ? bits + '. ' + t('visitDo') : t('visitDo'));
     if (!pendingTime && awayCovers(vm.extras && vm.extras.away, dayOf(visit.scheduledAt))) body += ' ' + t('visitAway');
