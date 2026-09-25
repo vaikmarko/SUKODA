@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SUKODA — Koduportaal arendaja klientidele</title>
+    <title>SUKODA — Koduportaal arendaja ostjatele</title>
     <meta name="robots" content="noindex, nofollow">
     <link rel="icon" type="image/svg+xml" href="assets/logo/icon-s-black.svg">
 
-    <meta property="og:title" content="SUKODA — Koduportaal arendaja klientidele">
-    <meta property="og:description" content="Töötav halduskeskkond, kus koduomaniku ajad, pere, partnerid, pöördumised ja teenused on ühes kohas. Arendaja brändi all, arendaja partneritega.">
+    <meta property="og:title" content="SUKODA — Koduportaal arendaja ostjatele">
+    <meta property="og:description" content="Ostja saab võtmetega kaasa kaardi, mille kood avab tema kodu portaalis: ajad, pere, dokumendid, garantii ja teenused ühes kohas. Arendaja brändi all, arendaja partneritega.">
     <meta property="og:type" content="website">
 
     <link rel="preload" href="/assets/fonts/cormorant-garamond-400.woff2" as="font" type="font/woff2" crossorigin>
@@ -19,23 +19,30 @@
         @media print { .no-print { display: none !important; } .reveal { opacity: 1 !important; transform: none !important; } section { break-inside: avoid; } }
     </style>
 </head>
-<body class="antialiased">
+<body class="antialiased" x-data="devPage()">
 
-    <div class="max-w-[1440px] mx-auto bg-paper min-h-screen border-x border-[#E8E3DD]">
+    <div class="max-w-[1440px] mx-auto bg-paper min-h-screen border-x border-line">
 
         <div class="bg-black text-paper py-2.5 px-4 md:px-12 no-print">
-            <div class="flex justify-between items-center">
-                <p class="text-[10px] md:text-[11px] uppercase tracking-[0.3em] font-sans font-medium">
-                    <span class="text-accent">&#9670;</span>&ensp;Memorandum arendajale&ensp;<span class="text-accent">·</span>&ensp;Konfidentsiaalne&ensp;<span class="text-accent">·</span>&ensp;September 2026
-                </p>
-                <span class="text-[10px] uppercase tracking-[0.2em] font-sans font-medium text-gray-400">tere@sukoda.ee</span>
+            <div class="flex justify-between items-center gap-4">
+                <p class="eyebrow text-paper" x-text="t('bar')"></p>
+                <span class="eyebrow text-gray-400 hidden sm:block">tere@sukoda.ee</span>
             </div>
         </div>
 
-        <nav class="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm grid-line-b no-print">
+        <nav class="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm grid-line-b no-print" :aria-label="t('navLabel')">
             <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12">
                 <a href="index.html" class="font-serif text-2xl md:text-3xl tracking-[0.08em] font-light">SUKODA</a>
-                <a href="#tehing" class="inline-block bg-accent text-paper px-5 py-2 text-[10px] uppercase tracking-[0.2em] font-sans font-medium hover:bg-black transition-colors duration-500">Tehingu sisu</a>
+                <div class="flex items-center gap-4 md:gap-6">
+                    <div class="flex items-center gap-2 text-xs uppercase tracking-[0.16em] font-sans font-medium" role="group" :aria-label="t('langLabel')">
+                        <button type="button" @click="lang = 'et'" :class="{ 'text-black': lang === 'et', 'text-muted hover:text-black': lang !== 'et' }" :aria-pressed="lang === 'et'" class="transition-colors py-2 px-1">ET</button>
+                        <span class="text-muted-light" aria-hidden="true">·</span>
+                        <button type="button" @click="lang = 'en'" :class="{ 'text-black': lang === 'en', 'text-muted hover:text-black': lang !== 'en' }" :aria-pressed="lang === 'en'" class="transition-colors py-2 px-1">EN</button>
+                        <span class="text-muted-light" aria-hidden="true">·</span>
+                        <button type="button" @click="lang = 'ru'" :class="{ 'text-black': lang === 'ru', 'text-muted hover:text-black': lang !== 'ru' }" :aria-pressed="lang === 'ru'" class="transition-colors py-2 px-1">RU</button>
+                    </div>
+                    <a href="#tehing" class="p-btn p-btn-sm" x-text="t('navCta')"></a>
+                </div>
             </div>
         </nav>
 
@@ -44,153 +51,116 @@
         <!-- Hero -->
         <header class="grid-line-b">
             <div class="max-w-4xl px-6 md:px-16 py-20 md:py-32">
-                <span class="text-[10px] uppercase tracking-[0.3em] text-accent font-sans mb-6 block animate-fade-in">Koduportaal arendaja klientidele</span>
+                <span class="eyebrow text-accent mb-6 animate-fade-in" x-text="t('heroKicker')"></span>
                 <div class="accent-line mb-8 animate-fade-in"></div>
                 <h1 class="font-serif text-4xl md:text-6xl lg:text-7xl leading-[1.08] font-light animate-hero-title mb-8">
-                    Kodu, mis tuleb<br>hooldusega.
+                    <span x-text="t('heroTitle1')"></span><br><span x-text="t('heroTitle2')"></span>
                 </h1>
-                <p class="text-base md:text-lg text-muted max-w-xl font-sans font-light leading-relaxed animate-hero-subtitle">
-                    SUKODA on töötav halduskeskkond, kus koduomaniku ajad, pere, teenusepakkujad, pöördumised ja teenused on ühes kohas — ja partneri töölaud, kus koduhooldaja, remondimees või lillepood neid kodusid teenindab. Mitte kavand: seda kasutavad täna päris kodud ja päris partnerid.
-                </p>
-                <p class="text-sm text-muted max-w-xl font-sans font-light leading-relaxed mt-6 animate-hero-subtitle">
-                    Arendajale tähendab see ostja portaali, mis avaneb võtmete üleandmise päeval: teie brändi all, teie ehitaja ja teie partneritega, teie arveldusega.
-                </p>
+                <p class="text-base md:text-lg text-muted max-w-xl font-sans font-light leading-relaxed animate-hero-subtitle" x-text="t('heroLead')"></p>
+                <p class="text-sm text-muted max-w-xl font-sans font-light leading-relaxed mt-6 animate-hero-subtitle" x-text="t('heroLead2')"></p>
             </div>
         </header>
 
-        <!-- Facts -->
-        <section class="grid-line-b py-8 md:py-10 px-6 md:px-16 bg-cream/50 reveal">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-10 max-w-5xl mx-auto text-center">
-                <div><div class="font-serif text-3xl md:text-4xl font-light">2</div><div class="text-[10px] uppercase tracking-[0.2em] text-muted font-sans mt-1">portaali: kodu ja partner</div></div>
-                <div><div class="font-serif text-3xl md:text-4xl font-light">4</div><div class="text-[10px] uppercase tracking-[0.2em] text-muted font-sans mt-1">teenuskategooriat, suunatud tegijale</div></div>
-                <div><div class="font-serif text-3xl md:text-4xl font-light">ET / EN</div><div class="text-[10px] uppercase tracking-[0.2em] text-muted font-sans mt-1">kliendi pool kahes keeles</div></div>
-                <div><div class="font-serif text-3xl md:text-4xl font-light text-accent">Elus</div><div class="text-[10px] uppercase tracking-[0.2em] text-muted font-sans mt-1">päris kodud, päris partnerid</div></div>
-            </div>
-        </section>
-
         <!-- 01 -->
         <section class="grid md:grid-cols-12 grid-line-b">
-            <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
+            <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-line reveal">
                 <div class="accent-line mb-4"></div>
-                <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 01 )</span>
-                <h2 class="font-serif text-2xl md:text-3xl font-light">Mis see on</h2>
+                <span class="eyebrow mb-3">( 01 )</span>
+                <h2 class="font-serif text-2xl md:text-3xl font-light" x-text="t('s1Title')"></h2>
             </div>
             <div class="md:col-span-8 p-6 md:p-20 lg:p-24 reveal">
                 <p class="text-xl md:text-3xl font-serif font-light leading-relaxed mb-10">
-                    Üks koht kodu jaoks. <span class="text-muted/50">Üks töölaud nende jaoks, kes kodu eest hoolitsevad.</span>
+                    <span x-text="t('s1Big1')"></span> <span class="text-muted/50" x-text="t('s1Big2')"></span>
                 </p>
                 <div class="grid md:grid-cols-2 gap-8 md:gap-12 font-sans text-sm text-muted leading-relaxed">
                     <div>
-                        <p class="text-[10px] uppercase tracking-[0.2em] text-black font-sans mb-4">Koduomanikule</p>
+                        <p class="eyebrow text-black mb-4" x-text="t('forOwner')"></p>
                         <ul class="space-y-3 font-light">
-                            <li class="flex gap-3"><span class="text-accent shrink-0">—</span>Kõik ajad kalendris: kutsed kogu perele, muudatused ja meeldetuletused ise</li>
-                            <li class="flex gap-3"><span class="text-accent shrink-0">—</span>Teenusepakkujad nimepidi — inimesed, kes kodu tunnevad, mitte anonüümne teenus</li>
-                            <li class="flex gap-3"><span class="text-accent shrink-0">—</span>Soovid mõne klikiga: aknad, filtrid, pildid seina, aed — kinnitus koos ajaga</li>
-                            <li class="flex gap-3"><span class="text-accent shrink-0">—</span>Koduprofiil, kontaktid, eemalolekud, korduv graafik</li>
-                            <li class="flex gap-3"><span class="text-accent shrink-0">—</span>Sisenemine ilma paroolita, ka abikaasal oma nimega</li>
+                            <template x-for="(row, i) in ownerItems" :key="i"><li class="flex gap-3"><span class="text-accent shrink-0">—</span><span x-text="pick(row)"></span></li></template>
                         </ul>
                     </div>
                     <div>
-                        <p class="text-[10px] uppercase tracking-[0.2em] text-black font-sans mb-4">Partnerile</p>
+                        <p class="eyebrow text-black mb-4" x-text="t('forPartner')"></p>
                         <ul class="space-y-3 font-light">
-                            <li class="flex gap-3"><span class="text-accent shrink-0">—</span>Oma kliendid, ajad ja korduvad graafikud; pühad ja konfliktid kontrollitud</li>
-                            <li class="flex gap-3"><span class="text-accent shrink-0">—</span>Kliendi soov jõuab tema töölauale, ta kinnitab aja ühe klikiga</li>
-                            <li class="flex gap-3"><span class="text-accent shrink-0">—</span>Kõik teavitused, kutsed ja kirjad saadab süsteem — ei SMS-e ega meeldetuletusi käsitsi</li>
-                            <li class="flex gap-3"><span class="text-accent shrink-0">—</span>Teenusesse kuuluv (nt lilled poest igaks visiidiks) tellitakse automaatselt</li>
-                            <li class="flex gap-3"><span class="text-accent shrink-0">—</span>Kuu kokkuvõte arve tegemiseks</li>
+                            <template x-for="(row, i) in partnerItems" :key="i"><li class="flex gap-3"><span class="text-accent shrink-0">—</span><span x-text="pick(row)"></span></li></template>
                         </ul>
                     </div>
                 </div>
                 <div class="border-l-2 border-accent/30 pl-6 mt-12">
-                    <p class="font-serif text-lg font-light italic text-muted/70 leading-relaxed">Koristus on üks teenus paljudest. Kodu keskmes on koduomanik ja tema partnerid; platvorm hoiab nende vahelise suhtluse, ajad ja kokkulepped korras.</p>
+                    <p class="font-serif text-lg font-light italic text-muted/70 leading-relaxed" x-text="t('s1Quote')"></p>
                 </div>
             </div>
         </section>
 
         <!-- 02 -->
         <section class="grid md:grid-cols-12 grid-line-b">
-            <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
+            <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-line reveal">
                 <div class="accent-line mb-4"></div>
-                <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 02 )</span>
-                <h2 class="font-serif text-2xl md:text-3xl font-light">Kuidas see täna töötab</h2>
+                <span class="eyebrow mb-3">( 02 )</span>
+                <h2 class="font-serif text-2xl md:text-3xl font-light" x-text="t('s2Title')"></h2>
             </div>
             <div class="md:col-span-8 p-6 md:p-20 lg:p-24 reveal">
                 <p class="text-xl md:text-3xl font-serif font-light leading-relaxed mb-10">
-                    Tõestus ei ole slaid, <span class="text-muted/50">vaid kodu, kus see iga nädal töötab.</span>
+                    <span x-text="t('s2Big1')"></span> <span class="text-muted/50" x-text="t('s2Big2')"></span>
                 </p>
                 <div class="font-sans text-sm leading-relaxed text-muted space-y-5 max-w-xl font-light">
-                    <p>Koduhooldaja avab töölaua, lisab kliendi ja tema pere kontaktid, määrab kuu ajad või korduva graafiku. Sel hetkel saab pere ühe kirja kõigi aegadega ja kalendrikutsed; edaspidi jõuavad muudatused, tühistamised ja meeldetuletused kõigini automaatselt.</p>
-                    <p>Kui kodu soovib midagi lisaks — aknad, üks lisavisiit, lilled külaliste tulekuks — saadab ta soovi portaalist. Koduhooldaja näeb seda oma töölaual, kinnitab aja ja hinna; pere saab kinnituse kalendrikutsega. Kui pere on kuu aega ära, märgib ta selle portaalis: visiidid tühistuvad, graafik jätab need nädalad vahele ja partner saab teate.</p>
-                    <p>Kui koduhooldaja teenusesse kuuluvad värsked lilled, seadistab ta poe ühe korra. Tellimus läheb poodi kaks päeva enne iga visiiti kliendi eelistusega, koduhooldaja saab meeldetuletuse kaasa võtta, klient koopia. Keegi ei helista ja ei kirjuta.</p>
+                    <p x-text="t('s2P1')"></p>
+                    <p x-text="t('s2P2')"></p>
+                    <p x-text="t('s2P3')"></p>
                 </div>
                 <div class="grid grid-cols-3 gap-4 md:gap-6 mt-12">
-                    <div class="border border-[#E8E3DD] p-5 md:p-6"><span class="text-[9px] uppercase tracking-[0.2em] text-muted font-sans block mb-3">Enne</span><p class="font-serif text-lg font-light leading-snug">SMS aegadega, edasi abikaasale, lilled telefoniga, arve käsitsi</p></div>
-                    <div class="border border-accent bg-cream/30 p-5 md:p-6"><span class="text-[9px] uppercase tracking-[0.2em] text-accent font-sans block mb-3">Nüüd</span><p class="font-serif text-lg font-light leading-snug">Ajad kalendris, pere kursis, lilled tellitud, kuu kokkuvõte valmis</p></div>
-                    <div class="border border-[#E8E3DD] p-5 md:p-6"><span class="text-[9px] uppercase tracking-[0.2em] text-muted font-sans block mb-3">Partneri töö</span><p class="font-serif text-lg font-light leading-snug">Sama, mis enne — ainult ilma suhtluskoormuseta</p></div>
+                    <div class="border border-line p-5 md:p-6"><span class="eyebrow mb-3" x-text="t('before')"></span><p class="font-serif text-lg font-light leading-snug" x-text="t('beforeText')"></p></div>
+                    <div class="border border-accent bg-cream/30 p-5 md:p-6"><span class="eyebrow text-accent mb-3" x-text="t('now')"></span><p class="font-serif text-lg font-light leading-snug" x-text="t('nowText')"></p></div>
+                    <div class="border border-line p-5 md:p-6"><span class="eyebrow mb-3" x-text="t('partnerWork')"></span><p class="font-serif text-lg font-light leading-snug" x-text="t('partnerWorkText')"></p></div>
                 </div>
             </div>
         </section>
 
         <!-- 03 -->
         <section class="grid md:grid-cols-12 grid-line-b bg-cream/30">
-            <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
+            <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-line reveal">
                 <div class="accent-line mb-4"></div>
-                <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 03 )</span>
-                <h2 class="font-serif text-2xl md:text-3xl font-light">Arendaja jaoks</h2>
+                <span class="eyebrow mb-3">( 03 )</span>
+                <h2 class="font-serif text-2xl md:text-3xl font-light" x-text="t('s3Title')"></h2>
             </div>
             <div class="md:col-span-8 p-6 md:p-20 lg:p-24 reveal">
                 <p class="text-xl md:text-3xl font-serif font-light leading-relaxed mb-10">
-                    Ostja saab võtmetega portaali. <span class="text-muted/50">Arendaja saab suhte, mis ei lõpe üleandmisega.</span>
+                    <span x-text="t('s3Big1')"></span> <span class="text-muted/50" x-text="t('s3Big2')"></span>
                 </p>
                 <div class="font-sans text-sm leading-relaxed text-muted space-y-5 max-w-xl font-light mb-12">
-                    <p>Iga müüdud kodu on portaalis olemas enne, kui ostja sisse kolib: aadress, plaanid, kasutusjuhendid, garantiitingimused, majaga seotud partnerid. Ostja logib sisse oma e-postiga, lisab pere, ja näeb, kes tema kodu eest hoolitseb.</p>
-                    <p>Garantiipöördumine, koristus, remondimees, lilled, aed — kõik liigub sama ahelat pidi: soov → õige tegija → kinnitus ajaga → kalendrikutse → tehtud. Tegijad on arendaja omad: ehitaja garantiimeeskond, lepinguline koristusfirma, haldur. Kui mõnes valdkonnas partnerit pole, kogub portaal huvi ja arendaja näeb, mida ostjad tegelikult tahavad.</p>
-                    <p>Kõik käib arendaja brändi all — portaal, kirjad, kalendrikutsed — ja arendaja arveldusega: pakett hinna sees, kuutasu või tellimus tegija arvega. Platvorm ei võta vahelt ega sunni peale oma tegijaid.</p>
+                    <p x-text="t('s3P1')"></p>
+                    <p x-text="t('s3P2')"></p>
+                    <p x-text="t('s3P3')"></p>
                 </div>
                 <div class="grid sm:grid-cols-2 gap-4 font-sans text-sm">
-                    <div class="bg-white border border-[#E8E3DD] p-6"><p class="text-[10px] uppercase tracking-[0.2em] text-black mb-2">Müügiargument</p><p class="text-muted font-light leading-relaxed">„Kodu, mis tuleb hooldusega": koristus ja remondimees esimesed 12–24 kuud hinna sees, kõik ühes portaalis.</p></div>
-                    <div class="bg-white border border-[#E8E3DD] p-6"><p class="text-[10px] uppercase tracking-[0.2em] text-black mb-2">Garantiiperiood</p><p class="text-muted font-light leading-relaxed">Pöördumised jõuavad õige inimeseni, staatused on ostjale nähtavad, ajalugu jääb kodu juurde ka omaniku vahetudes.</p></div>
-                    <div class="bg-white border border-[#E8E3DD] p-6"><p class="text-[10px] uppercase tracking-[0.2em] text-black mb-2">Tuluvoog pärast müüki</p><p class="text-muted font-light leading-relaxed">Hooldusteenused, mida ostja tellib aastaid — arendaja partneritelt, arendaja portaalist.</p></div>
-                    <div class="bg-white border border-[#E8E3DD] p-6"><p class="text-[10px] uppercase tracking-[0.2em] text-black mb-2">Andmed</p><p class="text-muted font-light leading-relaxed">Mida ostjad soovivad, kui tihti, mis jääb tegemata — päris nõudlus, mitte küsitlus.</p></div>
+                    <template x-for="(card, i) in devCards" :key="i">
+                        <div class="bg-white border border-line p-6"><p class="eyebrow text-black mb-2" x-text="pick(card.title)"></p><p class="text-muted font-light leading-relaxed" x-text="pick(card.text)"></p></div>
+                    </template>
                 </div>
             </div>
         </section>
 
         <!-- 04 -->
         <section class="grid md:grid-cols-12 grid-line-b">
-            <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
+            <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-line reveal">
                 <div class="accent-line mb-4"></div>
-                <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 04 )</span>
-                <h2 class="font-serif text-2xl md:text-3xl font-light">Mis on valmis, mis lisandub</h2>
+                <span class="eyebrow mb-3">( 04 )</span>
+                <h2 class="font-serif text-2xl md:text-3xl font-light" x-text="t('s4Title')"></h2>
             </div>
             <div class="md:col-span-8 p-6 md:p-20 lg:p-24 reveal">
                 <div class="grid md:grid-cols-2 gap-8 md:gap-12 font-sans text-sm text-muted leading-relaxed">
                     <div>
-                        <p class="text-[10px] uppercase tracking-[0.2em] text-black font-sans mb-4">Valmis ja kasutuses</p>
+                        <p class="eyebrow text-black mb-4" x-text="t('readyTitle')"></p>
                         <ul class="space-y-2.5 font-light">
-                            <li class="flex gap-3"><span class="text-accent shrink-0">✓</span>Koduportaal: ajad, kalender, pere kontaktid oma sisenemisega, koduprofiil, eemalolekud</li>
-                            <li class="flex gap-3"><span class="text-accent shrink-0">✓</span>Kodu hooldusrütm: filtrid, seadmed, süvapuhastus — meeldetuletused õigel ajal, „telli tegija“ samast kohast</li>
-                            <li class="flex gap-3"><span class="text-accent shrink-0">✓</span>Kodu dokumendid: lepingud, kindlustus, garantiid, tehtud tööd — lingid ja märkmed kodu juures</li>
-                            <li class="flex gap-3"><span class="text-accent shrink-0">✓</span>Partneri töölaud: kliendid, visiidid, korduvad graafikud, soovide kinnitamine, kuu kokkuvõte</li>
-                            <li class="flex gap-3"><span class="text-accent shrink-0">✓</span>Soovide ahel nelja kategooriaga (koristus, lilled, remondimees, aed) ja suunamine õigele partnerile; huvi kogumine, kui tegijat pole</li>
-                            <li class="flex gap-3"><span class="text-accent shrink-0">✓</span>Automaatne lillede tellimine partneri teenuse osana</li>
-                            <li class="flex gap-3"><span class="text-accent shrink-0">✓</span>Kõik teavitused: kinnitused, muudatused, meeldetuletused, kalendrikutsed (ICS), ET/EN</li>
-                            <li class="flex gap-3"><span class="text-accent shrink-0">✓</span>Halduskonsool: kodud, partnerid, määramised</li>
-                            <li class="flex gap-3"><span class="text-accent shrink-0">✓</span>Partneri iseteeninduslik liitumine; koduomanik saab oma partneri kutsuda</li>
-                            <li class="flex gap-3"><span class="text-accent shrink-0">✓</span>Valikuline: kuumaksed ja kinkekaardid (Stripe), kui arendaja tahab ise müüa</li>
+                            <template x-for="(row, i) in readyItems" :key="i"><li class="flex gap-3"><span class="text-accent shrink-0" aria-hidden="true">—</span><span x-text="pick(row)"></span></li></template>
                         </ul>
                     </div>
                     <div>
-                        <p class="text-[10px] uppercase tracking-[0.2em] text-black font-sans mb-4">Arendaja kihina lisandub · 4–6 nädalat</p>
+                        <p class="eyebrow text-black mb-4" x-text="t('nextTitle')"></p>
                         <ul class="space-y-2.5 font-light">
-                            <li class="flex gap-3"><span class="text-muted/50 shrink-0">○</span>Kodu kui iseseisev objekt: maja → korter → omanik, ajalugu omaniku vahetudes</li>
-                            <li class="flex gap-3"><span class="text-muted/50 shrink-0">○</span>Garantiipöördumine fotodega, tähtaja ja staatustega, suunatud ehitaja meeskonnale</li>
-                            <li class="flex gap-3"><span class="text-muted/50 shrink-0">○</span>Dokumendifailide üleslaadimine ja arendaja poolt eeltäidetud kaust (plaanid, juhendid, garantiitingimused, näidud)</li>
-                            <li class="flex gap-3"><span class="text-muted/50 shrink-0">○</span>Arendaja bränd portaalis ja kirjades; halduri rollid ja kontod</li>
-                            <li class="flex gap-3"><span class="text-muted/50 shrink-0">○</span>Teated majale (kõigile ühe maja omanikele korraga)</li>
-                            <li class="flex gap-3"><span class="text-muted/50 shrink-0">○</span>Ostja portaali avamine võtmete üleandmise päeval, otse müügiprotsessist</li>
+                            <template x-for="(row, i) in nextItems" :key="i"><li class="flex gap-3"><span class="text-muted-light shrink-0" aria-hidden="true">○</span><span x-text="pick(row)"></span></li></template>
                         </ul>
-                        <p class="text-xs text-muted/70 font-light mt-6 leading-relaxed">Kõik lisanduv ehitub olemasolevale ahelale (kodu, partner, soov, teavitus) — ümberehitust ei ole, on laiendus.</p>
+                        <p class="text-xs text-muted font-light mt-6 leading-relaxed" x-text="t('nextNote')"></p>
                     </div>
                 </div>
             </div>
@@ -198,87 +168,283 @@
 
         <!-- 05 -->
         <section class="grid md:grid-cols-12 grid-line-b">
-            <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
+            <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-line reveal">
                 <div class="accent-line mb-4"></div>
-                <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 05 )</span>
-                <h2 class="font-serif text-2xl md:text-3xl font-light">Tehnoloogia ja üleandmine</h2>
+                <span class="eyebrow mb-3">( 05 )</span>
+                <h2 class="font-serif text-2xl md:text-3xl font-light" x-text="t('s5Title')"></h2>
             </div>
             <div class="md:col-span-8 p-6 md:p-20 lg:p-24 reveal">
                 <div class="font-sans text-sm leading-relaxed text-muted space-y-5 max-w-xl font-light">
-                    <p>Google Firebase (Cloud Functions, Firestore, Hosting) Euroopa regioonis; e-kirjad Resend'i kaudu, kalendrikutsed standardse ICS-iga. Halduskulu on väike ja kasvab kodude arvuga, mitte ette. Sõltuvus välisteenustest on minimaalne: partneri kaudu tulevad kodud ei vaja ei Stripe'i ega välist kalendriteenust.</p>
-                    <p>Üleandmine on projekti omaniku vahetus Google'i organisatsioonis, domeeni ja saatja-aadressi seadistus ning dokumenteeritud koodibaas. Arendaja saab kogu koodi ja andmed; ühtegi komponenti ei jää müüja kontrolli alla.</p>
-                    <p>Andmemudel on juba mitme partneri ja mitme rolliga (koduomanik, pere kontakt, partner, haldur). Arendaja kiht — organisatsioon, mille alla kuuluvad kodud, partnerid ja bränd — lisandub sellele.</p>
+                    <p x-text="t('s5P1')"></p>
+                    <p x-text="t('s5P2')"></p>
+                    <p x-text="t('s5P3')"></p>
                 </div>
             </div>
         </section>
 
         <!-- 06 -->
         <section id="tehing" class="grid md:grid-cols-12 grid-line-b bg-cream/30">
-            <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
+            <div class="md:col-span-4 p-6 md:p-12 grid-line border-b md:border-b-0 border-line reveal">
                 <div class="accent-line mb-4"></div>
-                <span class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans block mb-3">( 06 )</span>
-                <h2 class="font-serif text-2xl md:text-3xl font-light">Tehingu sisu</h2>
+                <span class="eyebrow mb-3">( 06 )</span>
+                <h2 class="font-serif text-2xl md:text-3xl font-light" x-text="t('s6Title')"></h2>
             </div>
             <div class="md:col-span-8 p-6 md:p-20 lg:p-24 reveal">
                 <p class="text-xl md:text-3xl font-serif font-light leading-relaxed mb-10">
-                    Kaks teed. <span class="text-muted/50">Mõlemad algavad kohtumisest.</span>
+                    <span x-text="t('s6Big1')"></span> <span class="text-muted/50" x-text="t('s6Big2')"></span>
                 </p>
                 <div class="grid md:grid-cols-2 gap-6 font-sans text-sm mb-12">
                     <div class="bg-white border border-accent p-6 md:p-8">
-                        <span class="text-[9px] uppercase tracking-[0.2em] text-accent font-sans block mb-3">A · Omandamine</span>
-                        <p class="font-serif text-xl font-light mb-4">Platvorm, kood ja andmed arendajale</p>
+                        <span class="eyebrow text-accent mb-3" x-text="t('optA')"></span>
+                        <p class="font-serif text-xl font-light mb-4" x-text="t('optATitle')"></p>
                         <ul class="space-y-2 text-muted font-light">
-                            <li class="flex gap-3"><span class="text-accent shrink-0">—</span>Kogu koodibaas, andmemudel, dokumentatsioon ja üleandmine</li>
-                            <li class="flex gap-3"><span class="text-accent shrink-0">—</span>Eksklusiivsus kinnisvaraarendajate segmendis</li>
-                            <li class="flex gap-3"><span class="text-accent shrink-0">—</span>Arendaja kihi ehitus (osa 04) juurutuslepinguga, 2–3 kuud</li>
-                            <li class="flex gap-3"><span class="text-accent shrink-0">—</span>Edasine arendus ja hooldus kokkuleppel</li>
+                            <template x-for="(row, i) in optAItems" :key="i"><li class="flex gap-3"><span class="text-accent shrink-0">—</span><span x-text="pick(row)"></span></li></template>
                         </ul>
                     </div>
-                    <div class="bg-white border border-[#E8E3DD] p-6 md:p-8">
-                        <span class="text-[9px] uppercase tracking-[0.2em] text-muted font-sans block mb-3">B · Litsents</span>
-                        <p class="font-serif text-xl font-light mb-4">Arendaja oma nurk SUKODA-s</p>
+                    <div class="bg-white border border-line p-6 md:p-8">
+                        <span class="eyebrow mb-3" x-text="t('optB')"></span>
+                        <p class="font-serif text-xl font-light mb-4" x-text="t('optBTitle')"></p>
                         <ul class="space-y-2 text-muted font-light">
-                            <li class="flex gap-3"><span class="text-accent shrink-0">—</span>Oma bränd, oma kodud, oma partnerid, oma arveldus</li>
-                            <li class="flex gap-3"><span class="text-accent shrink-0">—</span>Tasu kodu kohta kuus; ühekordne seadistus</li>
-                            <li class="flex gap-3"><span class="text-accent shrink-0">—</span>Arendaja kiht ehitatakse ühiselt, kulu jagatud</li>
-                            <li class="flex gap-3"><span class="text-accent shrink-0">—</span>Platvormi areng jätkub, arendaja saab selle kaasa</li>
+                            <template x-for="(row, i) in optBItems" :key="i"><li class="flex gap-3"><span class="text-accent shrink-0">—</span><span x-text="pick(row)"></span></li></template>
                         </ul>
                     </div>
                 </div>
-                <div class="border border-[#E8E3DD] bg-white p-6 md:p-8 font-sans text-sm">
-                    <p class="text-[10px] uppercase tracking-[0.2em] text-black mb-4">Võrdluseks: sama terviku ehitamine nullist</p>
+                <div class="border border-line bg-white p-6 md:p-8 font-sans text-sm">
+                    <p class="eyebrow text-black mb-4" x-text="t('compareTitle')"></p>
                     <div class="grid sm:grid-cols-3 gap-4 text-muted font-light">
-                        <div><p class="font-serif text-2xl font-light text-black">2 portaali</p><p class="text-xs mt-1">kodu ja partner, ET/EN, kalendrikutsed, teavitused</p></div>
-                        <div><p class="font-serif text-2xl font-light text-black">9–12 kuud</p><p class="text-xs mt-1">tiimiga, enne esimest päris kodu</p></div>
-                        <div><p class="font-serif text-2xl font-light text-black">Katse-eksitus</p><p class="text-xs mt-1">graafikud, pühad, eemalolekud, tühistamised — juba läbitud</p></div>
+                        <template x-for="(row, i) in compareItems" :key="i">
+                            <div><p class="font-serif text-2xl font-light text-black" x-text="pick(row.big)"></p><p class="text-xs mt-1" x-text="pick(row.small)"></p></div>
+                        </template>
                     </div>
-                    <p class="text-xs text-muted/70 font-light mt-6 leading-relaxed">Hind ja tingimused lepitakse kokku pärast kohtumist ja konfidentsiaalsuslepingut. Kohtumisel näitame süsteemi arendaja maja andmetega: korterid, ostjad, partnerid, üks garantiipöördumine algusest lõpuni.</p>
+                    <p class="text-xs text-muted font-light mt-6 leading-relaxed" x-text="t('compareNote')"></p>
                 </div>
             </div>
         </section>
 
         <!-- Closing: the system is shown in person; contacts are enough -->
-        <section class="px-6 md:px-16 py-16 md:py-24 reveal grid-line-t">
+        <section class="px-6 md:px-16 py-16 md:py-24 reveal border-t border-line">
             <div class="grid md:grid-cols-12 gap-10 md:gap-16 items-start">
                 <div class="md:col-span-7">
                     <div class="accent-line mb-8"></div>
-                    <h2 class="font-serif text-3xl md:text-4xl font-light mb-6 leading-tight">Ülejäänu räägime<br>kohtumisel.</h2>
-                    <p class="text-base text-muted font-sans font-light leading-relaxed max-w-lg">See leht annab pildi. Süsteemi ennast — koduportaali, töölauda ja seda, kuidas need teie maja andmetega toimiksid — saab täpsemalt näidata kohtumisel. Huvi korral lepime aja kokku.</p>
+                    <h2 class="font-serif text-3xl md:text-4xl font-light mb-6 leading-tight"><span x-text="t('closeTitle1')"></span><br><span x-text="t('closeTitle2')"></span></h2>
+                    <p class="text-base text-muted font-sans font-light leading-relaxed max-w-lg" x-text="t('closeText')"></p>
                 </div>
                 <div class="md:col-span-5 md:pt-14">
-                    <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans mb-4">Kontakt</p>
+                    <p class="eyebrow mb-4" x-text="t('contact')"></p>
                     <p class="font-serif text-2xl font-light text-black">Marko Vaik</p>
                     <p class="text-sm text-muted font-sans font-light mt-2 leading-relaxed"><a href="tel:+37256805509" class="hover:text-black transition-colors">+372 5680 5509</a><br><a href="mailto:tere@sukoda.ee" class="hover:text-black transition-colors">tere@sukoda.ee</a></p>
-                    <p class="text-xs text-muted/70 font-sans font-light mt-5 leading-relaxed">Epic Ship OÜ · kümme aastat digitooteid ja teenusbrände</p>
+                    <p class="text-xs text-muted font-sans font-light mt-5 leading-relaxed" x-text="t('contactNote')"></p>
                 </div>
             </div>
         </section>
 
         </main>
 
-        <footer class="grid-line-t py-8 px-6 md:px-16 text-center">
-            <p class="text-[10px] uppercase tracking-[0.25em] text-muted font-sans">SUKODA · Epic Ship OÜ · Registrikood 14713548 · sukoda.ee</p>
+        <footer class="border-t border-line py-8 px-6 md:px-16 text-center">
+            <p class="eyebrow" x-text="t('footer')"></p>
         </footer>
     </div>
+
+    <script>
+    function devPage() {
+        const LANGS = ['et', 'en', 'ru'];
+        const saved = localStorage.getItem('sukoda_lang');
+        return {
+            lang: LANGS.includes(saved) ? saved : 'et',
+            T: {
+                navLabel: { et: 'Peamenüü', en: 'Main navigation', ru: 'Главное меню' },
+                langLabel: { et: 'Keel', en: 'Language', ru: 'Язык' },
+                bar: { et: 'Memorandum arendajale · konfidentsiaalne · september 2026', en: 'Memorandum for developers · confidential · September 2026', ru: 'Меморандум для застройщика · конфиденциально · сентябрь 2026' },
+                navCta: { et: 'Koostöö sisu', en: 'The offer', ru: 'Условия сотрудничества' },
+
+                heroKicker: { et: 'Koduportaal arendaja ostjatele', en: 'A home portal for a developer\'s buyers', ru: 'Портал дома для покупателей застройщика' },
+                heroTitle1: { et: 'Kodu, mis tuleb', en: 'A home that comes', ru: 'Дом, который передаётся' },
+                heroTitle2: { et: 'hooldusega.', en: 'with its upkeep.', ru: 'вместе с уходом.' },
+                heroLead: {
+                    et: 'SUKODA on koduportaal, kus ostja ajad, pere, teenused, dokumendid ja küsimused on ühes kohas, ja töölaud, kus koduhooldaja, remondimees või lillepood neid kodusid teenindab. Portaal ja töölaud on kasutuses päris kodudes.',
+                    en: 'SUKODA is a home portal where the buyer\'s times, household, services, documents and questions live in one place, and a desk from which the housekeeper, handyman or florist serves those homes. The portal and the desk are in use in real homes.',
+                    ru: 'SUKODA — это портал дома, где время визитов, семья, услуги, документы и вопросы покупателя собраны в одном месте, и рабочий стол, с которого помощница по дому, мастер или цветочный магазин обслуживают эти дома. Портал и рабочий стол уже используются в реальных домах.',
+                },
+                heroLead2: {
+                    et: 'Teie ostja saab võtmetega kaasa kaardi. Kaardi kood avab tema kodu portaalis, mis kannab teie brändi ning töötab teie ehitaja ja teie partneritega.',
+                    en: 'Your buyer receives a card together with the keys. The code on the card opens their home in a portal that carries your brand and works with your builder and your partners.',
+                    ru: 'Ваш покупатель получает вместе с ключами карту. Код на карте открывает его дом в портале, который носит ваш бренд и работает с вашим строителем и вашими партнёрами.',
+                },
+
+                s1Title: { et: 'Mis see on', en: 'What it is', ru: 'Что это' },
+                s1Big1: { et: 'Üks koht kodu jaoks.', en: 'One place for the home.', ru: 'Одно место для дома.' },
+                s1Big2: { et: 'Üks töölaud neile, kes kodu eest hoolitsevad.', en: 'One desk for those who care for the home.', ru: 'Один рабочий стол для тех, кто заботится о доме.' },
+                forOwner: { et: 'Koduomanikule', en: 'For the homeowner', ru: 'Владельцу жилья' },
+                forPartner: { et: 'Partnerile', en: 'For the partner', ru: 'Партнёру' },
+                s1Quote: {
+                    et: 'Kodu keskmes on omanik ja inimesed, kes kodu eest hoolitsevad; platvorm hoiab omaniku ja partnerite suhtluse, ajad ja kokkulepped korras.',
+                    en: 'At the centre of the home are the owner and the people who care for it; the platform keeps the communication, times and agreements between owner and partners in order.',
+                    ru: 'В центре дома — владелец и люди, которые о нём заботятся; платформа поддерживает порядок в общении, времени визитов и договорённостях между владельцем и партнёрами.',
+                },
+
+                s2Title: { et: 'Kuidas portaal töötab', en: 'How the portal works', ru: 'Как работает портал' },
+                s2Big1: { et: 'Tõestus ei ole slaid,', en: 'The proof is not a slide,', ru: 'Доказательство — не слайд,' },
+                s2Big2: { et: 'vaid kodu, kus portaal iga nädal töötab.', en: 'but a home where the portal works every week.', ru: 'а дом, где портал работает каждую неделю.' },
+                s2P1: {
+                    et: 'Koduhooldaja avab töölaua, lisab kliendi ja pere kontaktid ning määrab ajad või korduva graafiku. Pere saab ühe kirja kõigi aegadega ja kalendrikutsed. Edaspidi jõuavad muudatused, tühistamised ja meeldetuletused kõigini ise.',
+                    en: 'The housekeeper opens a desk, adds the client and the household contacts, and sets the times or a recurring schedule. The household gets one e-mail with all the times and the calendar invites. From then on, changes, cancellations and reminders reach everyone by themselves.',
+                    ru: 'Помощница по дому открывает рабочий стол, добавляет клиента и контакты семьи и задаёт время визитов или регулярный график. Семья получает одно письмо со всем расписанием и приглашения в календарь. Дальше изменения, отмены и напоминания приходят всем сами.',
+                },
+                s2P2: {
+                    et: 'Kui pere soovib midagi lisaks, näiteks aknaid, lisavisiiti või lilli külaliste tulekuks, saadab pere soovi portaalist. Koduhooldaja näeb soovi töölaual ning kinnitab aja ja hinna, pere saab kinnituse kalendrikutsega. Kui pere on kuu aega ära, märgib pere eemaloleku portaalis: visiidid jäävad ära, graafik jätab need nädalad vahele ja partner saab teate.',
+                    en: 'When the household wants something extra, such as windows, an additional visit or flowers before guests arrive, the household sends the request from the portal. The housekeeper sees the request on the desk and confirms the time and the price; the household gets the confirmation as a calendar invite. When the household is away for a month, the household marks the absence in the portal: the visits are cancelled, the schedule skips those weeks and the partner is notified.',
+                    ru: 'Если семье нужно что-то дополнительно, например окна, дополнительный визит или цветы к приходу гостей, семья отправляет пожелание из портала. Помощница по дому видит его на рабочем столе и подтверждает время и цену, семья получает подтверждение приглашением в календарь. Если семьи нет месяц, семья отмечает отсутствие в портале: визиты отменяются, график пропускает эти недели, а партнёр получает уведомление.',
+                },
+                s2P3: {
+                    et: 'Kui koduhooldaja teenusesse kuuluvad värsked lilled, seadistab koduhooldaja poe ühe korra. Tellimus läheb poodi kaks päeva enne iga visiiti koos kliendi eelistusega, koduhooldaja saab meeldetuletuse lilled kaasa võtta ja klient koopia. Keegi ei helista ega kirjuta.',
+                    en: 'When fresh flowers are part of the housekeeper\'s service, the housekeeper sets up the shop once. The order goes to the shop two days before every visit together with the client\'s preference; the housekeeper gets a reminder to bring the flowers and the client gets a copy. Nobody calls and nobody writes.',
+                    ru: 'Если в услугу помощницы по дому входят свежие цветы, помощница один раз настраивает магазин. Заказ уходит в магазин за два дня до каждого визита вместе с предпочтениями клиента, помощница получает напоминание взять цветы, а клиент — копию. Никто не звонит и не пишет.',
+                },
+                before: { et: 'Enne', en: 'Before', ru: 'Раньше' },
+                beforeText: { et: 'Ajad tulid SMS-iga ja need saadeti abikaasale edasi, lilled telliti telefoniga ja arve tehti käsitsi.', en: 'Times came by text and were forwarded to the spouse, flowers were ordered by phone and the invoice was made by hand.', ru: 'Время приходило смской и пересылалось супругу, цветы заказывали по телефону, счёт выписывали вручную.' },
+                now: { et: 'Nüüd', en: 'Now', ru: 'Теперь' },
+                nowText: { et: 'Ajad on kalendris, pere on kursis, lilled on tellitud ja kuu kokkuvõte on valmis.', en: 'Times are in the calendar, the household is informed, the flowers are ordered and the month\'s summary is ready.', ru: 'Время в календаре, семья в курсе, цветы заказаны, сводка за месяц готова.' },
+                partnerWork: { et: 'Partneri töö', en: 'The partner\'s work', ru: 'Работа партнёра' },
+                partnerWorkText: { et: 'Sama töö kui enne, ainult ilma suhtluskoormuseta.', en: 'The same work as before, only without the communication load.', ru: 'Та же работа, что и раньше, только без нагрузки на общение.' },
+
+                s3Title: { et: 'Teie ostjale ja teile', en: 'For your buyer and for you', ru: 'Вашему покупателю и вам' },
+                s3Big1: { et: 'Ostja saab võtmetega portaali.', en: 'The buyer gets the portal with the keys.', ru: 'Покупатель получает портал вместе с ключами.' },
+                s3Big2: { et: 'Teie saate suhte, mis ei lõpe üleandmisega.', en: 'You get a relationship that does not end at handover.', ru: 'Вы получаете отношения, которые не заканчиваются передачей ключей.' },
+                s3P1: {
+                    et: 'Iga müüdud kodu on portaalis olemas enne, kui ostja sisse kolib: aadress, plaanid, kasutusjuhendid, garantiitingimused ja majaga seotud partnerid. Ostja sisestab kaardilt koodi, lisab pere ja näeb, kes tema kodu eest hoolitseb.',
+                    en: 'Every sold home is in the portal before the buyer moves in: address, plans, manuals, warranty terms and the partners tied to the building. The buyer enters the code from the card, adds the household and sees who cares for their home.',
+                    ru: 'Каждый проданный дом есть в портале ещё до заселения покупателя: адрес, планы, инструкции, гарантийные условия и партнёры, связанные с домом. Покупатель вводит код с карты, добавляет семью и видит, кто заботится о его доме.',
+                },
+                s3P2: {
+                    et: 'Garantiiküsimus, koristus, remondimees, lilled ja aed liiguvad kõik sama rada: soov, õige partner, kinnitus koos ajaga, kalendrikutse, tehtud. Partnerid on teie omad: ehitaja garantiimeeskond, lepinguline koristusfirma, haldur. Kui mõnes valdkonnas partnerit ei ole, kogub portaal huvi ja teie näete, mida ostjad tegelikult tahavad.',
+                    en: 'A warranty question, cleaning, the handyman, flowers and the garden all follow the same path: request, the right partner, confirmation with a time, calendar invite, done. The partners are yours: the builder\'s warranty team, the contracted cleaning company, the property manager. Where there is no partner yet, the portal collects interest and you see what buyers actually want.',
+                    ru: 'Гарантийный вопрос, уборка, мастер, цветы и сад идут по одному пути: пожелание, нужный партнёр, подтверждение со временем, приглашение в календарь, выполнено. Партнёры ваши: гарантийная команда строителя, клининговая компания по договору, управляющий. Если в какой-то области партнёра нет, портал собирает интерес, и вы видите, чего покупатели действительно хотят.',
+                },
+                s3P3: {
+                    et: 'Kõik käib teie brändi all, portaal, kirjad ja kalendrikutsed, ning teie arveldusega: pakett hinna sees, kuutasu või tellimus partneri arvega. Platvorm ei võta vahelt ega sunni peale oma partnereid.',
+                    en: 'Everything runs under your brand, the portal, the e-mails and the calendar invites, and with your billing: a package included in the price, a monthly fee or an order invoiced by the partner. The platform takes no cut and imposes no partners of its own.',
+                    ru: 'Всё работает под вашим брендом — портал, письма и приглашения в календарь — и с вашими расчётами: пакет в цене, ежемесячная плата или заказ по счёту партнёра. Платформа не берёт комиссию и не навязывает своих партнёров.',
+                },
+
+                s4Title: { et: 'Mis on valmis, mis lisandub', en: 'What is ready, what is added', ru: 'Что готово, что добавится' },
+                readyTitle: { et: 'Valmis ja kasutuses', en: 'Ready and in use', ru: 'Готово и используется' },
+                nextTitle: { et: 'Arendaja kihina lisandub · 4–6 nädalat', en: 'Added as the developer layer · 4–6 weeks', ru: 'Добавится как слой застройщика · 4–6 недель' },
+                nextNote: { et: 'Kõik lisanduv ehitub olemasolevale ahelale (kodu, partner, soov, teavitus). Ümberehitust ei ole, on laiendus.', en: 'Everything added builds on the existing chain (home, partner, request, notification). There is no rebuild, only an extension.', ru: 'Всё новое строится на существующей цепочке (дом, партнёр, пожелание, уведомление). Это не переделка, а расширение.' },
+
+                s5Title: { et: 'Tehnoloogia ja üleandmine', en: 'Technology and handover', ru: 'Технология и передача' },
+                s5P1: {
+                    et: 'Google Firebase (Cloud Functions, Firestore, Hosting) Euroopa regioonis, e-kirjad Resendi kaudu, kalendrikutsed standardse ICS-failiga. Halduskulu on väike ja kasvab kodude arvuga, mitte ette. Partneri kaudu tulevad kodud ei vaja Stripe\'i ega välist kalendriteenust.',
+                    en: 'Google Firebase (Cloud Functions, Firestore, Hosting) in the European region, e-mail through Resend, calendar invites as standard ICS files. Running costs are small and grow with the number of homes, not up front. Homes that come through a partner need neither Stripe nor an external calendar service.',
+                    ru: 'Google Firebase (Cloud Functions, Firestore, Hosting) в европейском регионе, письма через Resend, приглашения в календарь стандартными файлами ICS. Расходы на эксплуатацию небольшие и растут вместе с числом домов, а не авансом. Домам, подключённым через партнёра, не нужны ни Stripe, ни внешний календарный сервис.',
+                },
+                s5P2: {
+                    et: 'Üleandmine on projekti omaniku vahetus Google\'i organisatsioonis, domeeni ja saatja-aadressi seadistus ning dokumenteeritud koodibaas. Arendaja saab kogu koodi ja andmed, ühtegi komponenti ei jää müüja kontrolli alla.',
+                    en: 'Handover means changing the project owner in the Google organisation, setting up the domain and sender address, and a documented codebase. The developer receives all the code and data; no component stays under the seller\'s control.',
+                    ru: 'Передача — это смена владельца проекта в организации Google, настройка домена и адреса отправителя и задокументированная кодовая база. Застройщик получает весь код и данные, ни один компонент не остаётся под контролем продавца.',
+                },
+                s5P3: {
+                    et: 'Andmemudel toetab juba mitut partnerit ja rolli: koduomanik, pere kontakt, partner, haldur. Arendaja kiht, organisatsioon, mille alla kuuluvad kodud, partnerid ja bränd, lisandub olemasolevale.',
+                    en: 'The data model already supports several partners and roles: homeowner, household contact, partner, property manager. The developer layer, an organisation that owns homes, partners and a brand, is added on top.',
+                    ru: 'Модель данных уже поддерживает нескольких партнёров и роли: владелец жилья, контакт семьи, партнёр, управляющий. Слой застройщика — организация, к которой относятся дома, партнёры и бренд, — добавляется поверх существующего.',
+                },
+
+                s6Title: { et: 'Koostöö sisu', en: 'The offer', ru: 'Условия сотрудничества' },
+                s6Big1: { et: 'Kaks teed.', en: 'Two paths.', ru: 'Два пути.' },
+                s6Big2: { et: 'Mõlemad algavad kohtumisest.', en: 'Both start with a meeting.', ru: 'Оба начинаются со встречи.' },
+                optA: { et: 'A · Omandamine', en: 'A · Acquisition', ru: 'A · Приобретение' },
+                optATitle: { et: 'Platvorm, kood ja andmed arendajale', en: 'Platform, code and data to the developer', ru: 'Платформа, код и данные застройщику' },
+                optB: { et: 'B · Litsents', en: 'B · Licence', ru: 'B · Лицензия' },
+                optBTitle: { et: 'Teie oma osa SUKODA-s', en: 'Your own space in SUKODA', ru: 'Ваша собственная часть SUKODA' },
+                compareTitle: { et: 'Võrdluseks: sama terviku ehitamine nullist', en: 'For comparison: building the same from scratch', ru: 'Для сравнения: построить то же самое с нуля' },
+                compareNote: {
+                    et: 'Hind ja tingimused lepime kokku pärast kohtumist ja konfidentsiaalsuslepingut. Kohtumisel näitame süsteemi teie maja andmetega: korterid, ostjad, partnerid ja üks garantiiküsimus algusest lõpuni.',
+                    en: 'Price and terms are agreed after a meeting and a non-disclosure agreement. At the meeting we show the system with your building\'s data: apartments, buyers, partners and one warranty question from start to finish.',
+                    ru: 'Цену и условия согласуем после встречи и соглашения о конфиденциальности. На встрече мы покажем систему на данных вашего дома: квартиры, покупатели, партнёры и один гарантийный вопрос от начала до конца.',
+                },
+
+                closeTitle1: { et: 'Ülejäänu räägime', en: 'The rest we discuss', ru: 'Остальное обсудим' },
+                closeTitle2: { et: 'kohtumisel.', en: 'in person.', ru: 'при встрече.' },
+                closeText: {
+                    et: 'See leht annab pildi. Koduportaali, töölauda ja seda, kuidas need teie maja andmetega töötaksid, näitame kohtumisel. Kui olete huvitatud, lepime aja kokku.',
+                    en: 'This page gives the picture. The home portal, the desk and how they would work with your building\'s data we show at a meeting. If you are interested, we agree on a time.',
+                    ru: 'Эта страница даёт общее представление. Портал дома, рабочий стол и то, как они работали бы с данными вашего дома, мы покажем при встрече. Если вам интересно, договоримся о времени.',
+                },
+                contact: { et: 'Kontakt', en: 'Contact', ru: 'Контакт' },
+                contactNote: { et: 'Epic Ship OÜ · kümme aastat digitooteid ja teenusbrände', en: 'Epic Ship OÜ · ten years of digital products and service brands', ru: 'Epic Ship OÜ · десять лет цифровых продуктов и сервисных брендов' },
+                footer: { et: 'SUKODA · Epic Ship OÜ · Registrikood 14713548 · sukoda.ee', en: 'SUKODA · Epic Ship OÜ · Reg. code 14713548 · sukoda.ee', ru: 'SUKODA · Epic Ship OÜ · Рег. код 14713548 · sukoda.ee' },
+            },
+            ownerItems: [
+                { et: 'Kõik ajad on kalendris: kutsed kogu perele, muudatused ja meeldetuletused tulevad ise.', en: 'All times are in the calendar: invites for the whole household, changes and reminders come by themselves.', ru: 'Всё расписание в календаре: приглашения всей семье, изменения и напоминания приходят сами.' },
+                { et: 'Teenusepakkujad on nimepidi: inimesed, kes kodu tunnevad, mitte anonüümne teenus.', en: 'Service providers by name: people who know the home, not an anonymous service.', ru: 'Специалисты по именам: люди, которые знают дом, а не безликая услуга.' },
+                { et: 'Soovid, nagu aknad, filtrid, pilt seina või aed, saab esitada mõne puutega ja kinnitus tuleb koos ajaga.', en: 'Requests such as windows, filters, a picture on the wall or the garden take a few taps, and the confirmation comes with a time.', ru: 'Пожелания — окна, фильтры, картина на стену или сад — отправляются в несколько касаний, подтверждение приходит со временем.' },
+                { et: 'Kodu andmed, kontaktid, eemalolekud ja korduv graafik on ühes kohas.', en: 'Home details, contacts, absences and the recurring schedule are in one place.', ru: 'Данные дома, контакты, отсутствия и регулярный график в одном месте.' },
+                { et: 'Sisenemine käib ilma paroolita, ka abikaasal oma nimega.', en: 'Login without a password, the spouse under their own name too.', ru: 'Вход без пароля, супруг тоже под своим именем.' },
+            ],
+            partnerItems: [
+                { et: 'Oma kliendid, ajad ja korduvad graafikud; pühad ja kattuvused on kontrollitud.', en: 'Own clients, times and recurring schedules; holidays and overlaps are checked.', ru: 'Свои клиенты, время и регулярные графики; праздники и накладки проверяются.' },
+                { et: 'Kliendi soov jõuab töölauale ja partner kinnitab aja ühe puutega.', en: 'The client\'s request lands on the desk and the partner confirms a time with one tap.', ru: 'Пожелание клиента приходит на рабочий стол, партнёр подтверждает время одним касанием.' },
+                { et: 'Kõik teavitused, kutsed ja kirjad saadab süsteem; käsitsi SMS-e ega meeldetuletusi ei ole.', en: 'All notifications, invites and e-mails are sent by the system; no manual texts or reminders.', ru: 'Все уведомления, приглашения и письма отправляет система; никаких смс и напоминаний вручную.' },
+                { et: 'Teenusesse kuuluv, näiteks lilled poest igaks visiidiks, tellitakse automaatselt.', en: 'What belongs to the service, for example flowers from the shop for every visit, is ordered automatically.', ru: 'То, что входит в услугу, например цветы из магазина к каждому визиту, заказывается автоматически.' },
+                { et: 'Kuu kokkuvõte on arve tegemiseks valmis.', en: 'The month\'s summary is ready for invoicing.', ru: 'Сводка за месяц готова для выставления счёта.' },
+            ],
+            devCards: [
+                { title: { et: 'Müügiargument', en: 'Sales argument', ru: 'Аргумент для продажи' }, text: { et: '„Kodu, mis tuleb hooldusega“: koristus ja remondimees on esimesed 12–24 kuud hinna sees ja kõik on ühes portaalis.', en: '“A home that comes with its upkeep”: cleaning and a handyman are included in the price for the first 12–24 months, and everything is in one portal.', ru: '«Дом, который передаётся вместе с уходом»: уборка и мастер включены в цену на первые 12–24 месяца, и всё в одном портале.' } },
+                { title: { et: 'Garantiiperiood', en: 'Warranty period', ru: 'Гарантийный период' }, text: { et: 'Garantiiküsimused jõuavad õige inimeseni, ostja näeb seisu ja ajalugu jääb kodu juurde ka omaniku vahetudes.', en: 'Warranty questions reach the right person, the buyer sees the status, and the history stays with the home even when the owner changes.', ru: 'Гарантийные вопросы доходят до нужного человека, покупатель видит статус, а история остаётся с домом даже при смене владельца.' } },
+                { title: { et: 'Tulu pärast müüki', en: 'Revenue after the sale', ru: 'Доход после продажи' }, text: { et: 'Hooldusteenused, mida ostja tellib aastaid, tulevad teie partneritelt ja teie portaalist.', en: 'The upkeep services the buyer orders for years come from your partners and your portal.', ru: 'Услуги по уходу, которые покупатель заказывает годами, идут от ваших партнёров и из вашего портала.' } },
+                { title: { et: 'Andmed', en: 'Data', ru: 'Данные' }, text: { et: 'Teie näete, mida ostjad soovivad, kui tihti ja mis jääb tegemata. Nõudlus on päris, mitte küsitlus.', en: 'You see what buyers want, how often, and what goes undone. The demand is real, not a survey.', ru: 'Вы видите, чего хотят покупатели, как часто и что остаётся несделанным. Это реальный спрос, а не опрос.' } },
+            ],
+            readyItems: [
+                { et: 'Koduportaal: ajad, kalender, pere kontaktid oma sisenemisega, kodu andmed, eemalolekud', en: 'Home portal: times, calendar, household contacts with their own login, home details, absences', ru: 'Портал дома: расписание, календарь, контакты семьи с собственным входом, данные дома, отсутствия' },
+                { et: 'Kodu hooldusrütm: filtrid, seadmed ja süvapuhastus tulevad õigel ajal meelde ja partneri saab tellida otse meeldetuletusest', en: 'Home upkeep rhythm: filters, appliances and the deep clean come to mind on time, and a partner can be ordered straight from the reminder', ru: 'Ритм ухода за домом: фильтры, техника и генеральная уборка напоминают о себе вовремя, партнёра можно заказать прямо из напоминания' },
+                { et: 'Kodu dokumendid: lepingud, kindlustus, garantiid ja tehtud tööd on kodu juures', en: 'Home documents: contracts, insurance, warranties and work done stay with the home', ru: 'Документы дома: договоры, страховка, гарантии и выполненные работы хранятся с домом' },
+                { et: 'Partneri töölaud: kliendid, visiidid, korduvad graafikud, soovide kinnitamine, kuu kokkuvõte', en: 'Partner desk: clients, visits, recurring schedules, confirming requests, monthly summary', ru: 'Рабочий стол партнёра: клиенты, визиты, регулярные графики, подтверждение пожеланий, сводка за месяц' },
+                { et: 'Soovid neljas kategoorias (koristus, lilled, remondimees, aed) suunatakse õigele partnerile; kui partnerit ei ole, kogub portaal huvi', en: 'Requests in four categories (cleaning, flowers, handyman, garden) are routed to the right partner; where there is no partner, the portal collects interest', ru: 'Пожелания в четырёх категориях (уборка, цветы, мастер, сад) направляются нужному партнёру; если партнёра нет, портал собирает интерес' },
+                { et: 'Lillede automaatne tellimine partneri teenuse osana', en: 'Automatic flower ordering as part of the partner\'s service', ru: 'Автоматический заказ цветов как часть услуги партнёра' },
+                { et: 'Kõik teavitused: kinnitused, muudatused, meeldetuletused ja kalendrikutsed eesti ja inglise keeles', en: 'All notifications: confirmations, changes, reminders and calendar invites in Estonian and English', ru: 'Все уведомления: подтверждения, изменения, напоминания и приглашения в календарь на эстонском и английском' },
+                { et: 'Halduskonsool: kodud, partnerid, määramised', en: 'Admin console: homes, partners, assignments', ru: 'Консоль администратора: дома, партнёры, назначения' },
+                { et: 'Partner liitub ise; koduomanik saab oma partneri kutsuda', en: 'Partners join by themselves; a homeowner can invite their own partner', ru: 'Партнёр подключается сам; владелец жилья может пригласить своего партнёра' },
+                { et: 'Valikuline: kuumaksed ja kinkekaardid (Stripe), kui arendaja tahab ise müüa', en: 'Optional: monthly payments and gift cards (Stripe) if the developer wants to sell directly', ru: 'По желанию: ежемесячные платежи и подарочные карты (Stripe), если застройщик хочет продавать сам' },
+            ],
+            nextItems: [
+                { et: 'Kodu kui iseseisev objekt: maja, korter, omanik; ajalugu jääb alles omaniku vahetudes', en: 'The home as its own object: building, apartment, owner; the history survives a change of owner', ru: 'Дом как самостоятельный объект: здание, квартира, владелец; история сохраняется при смене владельца' },
+                { et: 'Garantiiküsimus fotode, tähtaja ja seisuga, suunatud ehitaja meeskonnale', en: 'Warranty question with photos, deadline and status, routed to the builder\'s team', ru: 'Гарантийный вопрос с фото, сроком и статусом, направленный команде строителя' },
+                { et: 'Dokumendifailide üleslaadimine ja arendaja eeltäidetud kaust: plaanid, juhendid, garantiitingimused, näidud', en: 'Document uploads and a folder pre-filled by the developer: plans, manuals, warranty terms, meter readings', ru: 'Загрузка файлов и папка, заранее заполненная застройщиком: планы, инструкции, гарантийные условия, показания счётчиков' },
+                { et: 'Arendaja bränd portaalis ja kirjades; halduri rollid ja kontod', en: 'The developer\'s brand in the portal and e-mails; property manager roles and accounts', ru: 'Бренд застройщика в портале и письмах; роли и учётные записи управляющего' },
+                { et: 'Teated majale, kõigile ühe maja omanikele korraga', en: 'Building notices, to all owners in one building at once', ru: 'Объявления для дома — всем владельцам одного здания сразу' },
+                { et: 'Ostja portaali avamine võtmete üleandmise päeval koodiga kaardilt', en: 'Opening the buyer\'s portal on handover day with the code from the card', ru: 'Открытие портала покупателя в день передачи ключей кодом с карты' },
+            ],
+            optAItems: [
+                { et: 'Kogu koodibaas, andmemudel, dokumentatsioon ja üleandmine', en: 'The whole codebase, data model, documentation and handover', ru: 'Вся кодовая база, модель данных, документация и передача' },
+                { et: 'Eksklusiivsus kinnisvaraarendajate seas', en: 'Exclusivity among property developers', ru: 'Эксклюзивность среди застройщиков' },
+                { et: 'Arendaja kihi ehitus (osa 04) juurutuslepinguga, 2–3 kuud', en: 'Building the developer layer (part 04) under an implementation agreement, 2–3 months', ru: 'Создание слоя застройщика (часть 04) по договору внедрения, 2–3 месяца' },
+                { et: 'Edasine arendus ja hooldus kokkuleppel', en: 'Further development and maintenance by agreement', ru: 'Дальнейшая разработка и поддержка по договорённости' },
+            ],
+            optBItems: [
+                { et: 'Oma bränd, oma kodud, oma partnerid, oma arveldus', en: 'Own brand, own homes, own partners, own billing', ru: 'Свой бренд, свои дома, свои партнёры, свои расчёты' },
+                { et: 'Tasu kodu kohta kuus ja ühekordne seadistus', en: 'A fee per home per month and a one-off setup', ru: 'Плата за дом в месяц и разовая настройка' },
+                { et: 'Arendaja kiht ehitatakse ühiselt ja kulu jagatakse', en: 'The developer layer is built together and the cost is shared', ru: 'Слой застройщика создаётся совместно, расходы делятся' },
+                { et: 'Platvormi areng jätkub ja arendaja saab uuendused kaasa', en: 'The platform keeps developing and the developer receives the updates', ru: 'Платформа продолжает развиваться, застройщик получает обновления' },
+            ],
+            compareItems: [
+                { big: { et: '2 portaali', en: '2 portals', ru: '2 портала' }, small: { et: 'kodu ja partner, kalendrikutsed, teavitused', en: 'home and partner, calendar invites, notifications', ru: 'дом и партнёр, приглашения в календарь, уведомления' } },
+                { big: { et: '9–12 kuud', en: '9–12 months', ru: '9–12 месяцев' }, small: { et: 'tiimiga, enne esimest päris kodu', en: 'with a team, before the first real home', ru: 'с командой, до первого реального дома' } },
+                { big: { et: 'Katse-eksitus', en: 'Trial and error', ru: 'Метод проб и ошибок' }, small: { et: 'graafikud, pühad, eemalolekud ja tühistamised on juba läbitud', en: 'schedules, holidays, absences and cancellations are already solved', ru: 'графики, праздники, отсутствия и отмены уже пройдены' } },
+            ],
+            t(key, vars) {
+                const row = this.T[key] || {};
+                const s = row[this.lang] || row.et || key;
+                return vars ? s.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '') : s;
+            },
+            pick(obj) {
+                if (!obj) return '';
+                return obj[this.lang] || obj.et || '';
+            },
+            init() {
+                this.$watch('lang', (v) => { localStorage.setItem('sukoda_lang', v); document.documentElement.lang = v; });
+                document.documentElement.lang = this.lang;
+            },
+        };
+    }
+    </script>
 </body>
 </html>

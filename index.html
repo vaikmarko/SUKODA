@@ -68,9 +68,9 @@
     </script>
 </head>
 <script>/* Public package sales are paused: SUKODA works by invitation. Flip to true to restore Stripe checkout on the homepage. */window.SUKODA_SALES = false;</script>
-<body class="antialiased" x-data="{ lang: localStorage.getItem('sukoda_lang') || 'et' }" x-init="$watch('lang', val => localStorage.setItem('sukoda_lang', val))">
+<body class="antialiased" x-data="landing()">
 
-    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[10000] focus:bg-accent focus:text-paper focus:px-4 focus:py-2 focus:text-sm focus:font-sans">Skip to main content</a>
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[10000] focus:bg-accent focus:text-paper focus:px-4 focus:py-2 focus:text-sm focus:font-sans" x-text="t('skip')">Sisu juurde</a>
 
     <!-- Preloader -->
     <div class="preloader" id="preloader" aria-hidden="true">
@@ -90,23 +90,25 @@
                     SUKODA
                 </a>
                 
-                <div class="hidden md:flex gap-10 text-[11px] uppercase tracking-[0.2em] font-sans font-medium text-muted">
-                    <a href="#kodule" class="luxury-link hover:text-black transition-colors" x-text="lang === 'et' ? 'Koduomanikule' : 'For homeowners'">Koduomanikule</a>
-                    <a href="kingitus.html" x-show="window.SUKODA_SALES" x-cloak class="luxury-link hover:text-black transition-colors" x-text="lang === 'et' ? 'Kingitus' : 'Gift'">Kingitus</a>
-                    <a href="#teenusepakkujale" class="luxury-link hover:text-black transition-colors" x-text="lang === 'et' ? 'Teenusepakkujale' : 'For providers'">Teenusepakkujale</a>
-                    <a href="lugu.html" class="luxury-link hover:text-black transition-colors" x-text="lang === 'et' ? 'Lugu' : 'Story'">Lugu</a>
+                <div class="hidden md:flex gap-10 text-xs uppercase tracking-[0.16em] font-sans font-medium text-muted">
+                    <a href="#kodule" class="luxury-link hover:text-black transition-colors" x-text="t('navHome')">Koduomanikule</a>
+                    <a href="kingitus.html" x-show="window.SUKODA_SALES" x-cloak class="luxury-link hover:text-black transition-colors" x-text="t('navGift')">Kingitus</a>
+                    <a href="#teenusepakkujale" class="luxury-link hover:text-black transition-colors" x-text="t('navProvider')">Teenusepakkujale</a>
+                    <a href="lugu.html" class="luxury-link hover:text-black transition-colors" x-text="t('navStory')">Lugu</a>
                 </div>
 
                 <div class="flex items-center gap-4 md:gap-6">
-                    <div class="flex text-[10px] uppercase tracking-[0.2em] font-sans font-medium gap-2">
-                        <button @click="lang = 'et'" :class="lang === 'et' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">ET</button>
-                        <span class="text-[#D4CFC8]">/</span>
-                        <button @click="lang = 'en'" :class="lang === 'en' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">EN</button>
+                    <div class="flex items-center gap-2 text-xs uppercase tracking-[0.16em] font-sans font-medium" role="group" :aria-label="t('langLabel')">
+                        <button type="button" @click="lang = 'et'" :class="{ 'text-black': lang === 'et', 'text-muted hover:text-black': lang !== 'et' }" :aria-pressed="lang === 'et'" class="transition-colors py-2 px-1">ET</button>
+                        <span class="text-muted-light" aria-hidden="true">·</span>
+                        <button type="button" @click="lang = 'en'" :class="{ 'text-black': lang === 'en', 'text-muted hover:text-black': lang !== 'en' }" :aria-pressed="lang === 'en'" class="transition-colors py-2 px-1">EN</button>
+                        <span class="text-muted-light" aria-hidden="true">·</span>
+                        <button type="button" @click="lang = 'ru'" :class="{ 'text-black': lang === 'ru', 'text-muted hover:text-black': lang !== 'ru' }" :aria-pressed="lang === 'ru'" class="transition-colors py-2 px-1">RU</button>
                     </div>
 
-                    <a href="minu.html" class="hidden md:inline-block bg-black text-paper px-5 py-2 text-[11px] uppercase tracking-[0.2em] font-sans font-medium hover:bg-accent transition-colors duration-500" x-text="lang === 'et' ? 'Sisene' : 'Log in'">Sisene</a>
+                    <a href="minu.html" class="p-btn p-btn-sm hidden md:inline-flex" x-text="t('login')">Sisene</a>
 
-                    <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2" :aria-expanded="mobileMenu" aria-label="Toggle menu">
+                    <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2" :aria-expanded="mobileMenu" :aria-label="t('menu')">
                         <svg x-show="!mobileMenu" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path>
                         </svg>
@@ -118,13 +120,13 @@
             </div>
 
             <!-- Mobile Menu -->
-            <div x-show="mobileMenu" x-cloak class="md:hidden bg-paper border-t border-[#E8E3DD]">
-                <div class="flex flex-col px-4 py-8 space-y-5 text-[11px] uppercase tracking-[0.2em] font-sans font-medium text-muted">
-                    <a href="#kodule" @click="mobileMenu = false" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Koduomanikule' : 'For homeowners'">Koduomanikule</a>
-                    <a href="kingitus.html" x-show="window.SUKODA_SALES" x-cloak class="py-2 hover:text-black" x-text="lang === 'et' ? 'Kingitus' : 'Gift'">Kingitus</a>
-                    <a href="lugu.html" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Lugu' : 'Story'">Lugu</a>
-                    <a href="#teenusepakkujale" @click="mobileMenu = false" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Teenusepakkujale' : 'For providers'">Teenusepakkujale</a>
-                    <a href="minu.html" @click="mobileMenu = false" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Sisene' : 'Log in'">Sisene</a>
+            <div x-show="mobileMenu" x-cloak class="md:hidden bg-paper border-t border-line">
+                <div class="flex flex-col px-4 py-8 space-y-5 text-xs uppercase tracking-[0.16em] font-sans font-medium text-muted">
+                    <a href="#kodule" @click="mobileMenu = false" class="py-2 hover:text-black" x-text="t('navHome')">Koduomanikule</a>
+                    <a href="kingitus.html" x-show="window.SUKODA_SALES" x-cloak class="py-2 hover:text-black" x-text="t('navGift')">Kingitus</a>
+                    <a href="#teenusepakkujale" @click="mobileMenu = false" class="py-2 hover:text-black" x-text="t('navProvider')">Teenusepakkujale</a>
+                    <a href="lugu.html" class="py-2 hover:text-black" x-text="t('navStory')">Lugu</a>
+                    <a href="minu.html" @click="mobileMenu = false" class="py-2 hover:text-black" x-text="t('login')">Sisene</a>
                 </div>
             </div>
         </nav>
@@ -138,23 +140,16 @@
         <header class="grid md:grid-cols-12 grid-line-b overflow-hidden">
             <div class="md:col-span-6 px-6 md:px-16 pt-16 pb-12 md:py-28 flex flex-col justify-center grid-line border-b md:border-b-0 border-[#E8E3DD]">
                 <div class="accent-line mb-8 animate-fade-in"></div>
-                <p class="text-[11px] uppercase tracking-[0.22em] text-muted font-sans mb-6 animate-fade-in" x-text="lang === 'et' ? 'Koduportaal' : 'Home portal'">Koduportaal</p>
+                <p class="eyebrow mb-6 animate-fade-in" x-text="t('heroKicker')">Koduportaal</p>
                 <h1 class="font-serif text-5xl md:text-6xl lg:text-[4.75rem] leading-[1.05] mb-8 font-light animate-hero-title">
-                    <span x-show="lang === 'et'">Kõik, mis su kodu vajab.<br><span class="text-muted/60">Ühes kohas.</span></span>
-                    <span x-show="lang === 'en'" x-cloak>Everything your home needs.<br><span class="text-muted/60">In one place.</span></span>
+                    <span x-text="t('heroTitle1')">Kõik, mis su kodu vajab.</span><br><span class="text-muted/60" x-text="t('heroTitle2')">Ühes kohas.</span>
                 </h1>
-                <p class="text-base md:text-lg text-muted max-w-md font-sans font-light leading-relaxed animate-hero-subtitle">
-                    <span x-show="lang === 'et'">Koduhooldaja ajad kogu pere kalendris. Filtrid, pesumasin ja suitsuandur õigel ajal meeles. Lepingud, garantiid ja tehtud tööd kodu juures. Ja inimesed, kes su kodu tunnevad — koduhooldaja, florist, remondimees — samas süsteemis, mida sinu pere näeb.</span>
-                    <span x-show="lang === 'en'" x-cloak>Your housekeeper's times in the whole household's calendar. Filters, washing machine and smoke detector remembered on time. Contracts, warranties and work done kept with the home. And the people who know your home — housekeeper, florist, handyman — in the same system your family sees.</span>
-                </p>
+                <p class="text-base md:text-lg text-muted max-w-md font-sans font-light leading-relaxed animate-hero-subtitle" x-text="t('heroLead')"></p>
                 <div class="mt-10 md:mt-12 flex flex-wrap items-center gap-4 md:gap-6 animate-hero-cta">
-                    <a href="#alusta" class="inline-block bg-black text-paper px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-colors duration-500" x-text="lang === 'et' ? 'Too oma kodu portaali' : 'Bring your home in'">Too oma kodu portaali</a>
-                    <a href="#teenusepakkujale" class="text-[11px] uppercase tracking-[0.2em] font-sans text-muted hover:text-black transition-colors luxury-link" x-text="lang === 'et' ? 'Olen koduhooldaja või teenusepakkuja' : 'I am a housekeeper or service provider'">Olen koduhooldaja või teenusepakkuja</a>
+                    <a href="#alusta" class="p-btn" x-text="t('heroCta')">Too oma kodu portaali</a>
+                    <a href="#teenusepakkujale" class="text-xs uppercase tracking-[0.16em] font-sans text-muted hover:text-black transition-colors luxury-link" x-text="t('heroCta2')">Olen koduhooldaja või teenusepakkuja</a>
                 </div>
-                <p class="mt-10 text-xs text-muted/80 font-sans font-light tracking-wide animate-fade-in">
-                    <span x-show="lang === 'et'">Kutsega · Koduomanikule tasuta · Eesti</span>
-                    <span x-show="lang === 'en'" x-cloak>By invitation · Free for homeowners · Estonia</span>
-                </p>
+                <p class="mt-10 text-xs text-muted font-sans font-light tracking-wide animate-fade-in" x-text="t('heroNote')"></p>
             </div>
             <!-- Product, as it is today: the household's overview -->
             <div class="md:col-span-6 relative bg-cream/60 flex items-center overflow-hidden min-h-[420px] md:min-h-0">
@@ -165,9 +160,9 @@
                             <span class="w-2 h-2 rounded-full bg-[#E8E3DD]"></span><span class="w-2 h-2 rounded-full bg-[#E8E3DD]"></span><span class="w-2 h-2 rounded-full bg-[#E8E3DD]"></span>
                             <span class="ml-3 text-[10px] font-sans text-muted/70 tracking-wide">sukoda.ee/minu</span>
                         </div>
-                        <img src="/assets/images/product/minu-ulevaade.png" alt="SUKODA koduportaal: järgmine visiit, teenused, kodu hooldus ja inimesed, kes kodus käivad" class="w-full h-auto block" width="1200" height="800" fetchpriority="high">
+                        <img src="/assets/images/product/minu-ulevaade.png" alt="SUKODA koduportaal: järgmine visiit, teenused, kodu hooldus ja inimesed, kes kodus käivad" :alt="t('heroImgAlt')" class="w-full h-auto block" width="1200" height="800" fetchpriority="high">
                     </div>
-                    <figcaption class="sr-only">Koduportaali ülevaade</figcaption>
+                    <figcaption class="sr-only" x-text="t('heroImgCaption')">Koduportaali ülevaade</figcaption>
                 </figure>
             </div>
         </header>
@@ -179,29 +174,18 @@
             <div class="grid md:grid-cols-12">
                 <div class="md:col-span-4 p-6 md:p-16 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
                     <div class="accent-line mb-4"></div>
-                    <span class="text-[11px] uppercase tracking-[0.2em] text-muted font-sans block mb-3">( 01 )</span>
+                    <span class="eyebrow mb-3">( 01 )</span>
                     <h2 class="font-serif text-3xl md:text-4xl font-light mb-6">
-                        <span x-show="lang === 'et'">Üks kodu.<br>Üks koht.</span>
-                        <span x-show="lang === 'en'" x-cloak>One home.<br>One place.</span>
+                        <span x-text="t('s1Title1')">Üks kodu.</span><br><span x-text="t('s1Title2')">Üks koht.</span>
                     </h2>
-                    <p class="text-base text-muted font-sans font-light leading-relaxed">
-                        <span x-show="lang === 'et'">Täna on kodu haldus laiali: ajad SMS-is, garantii sahtlis, remondimehe number kellegi telefonis, filter vahetamata, sest keegi ei mäleta. SUKODA paneb selle kõik ühte kohta, mida näeb kogu pere — ja inimesed, kes su kodus käivad.</span>
-                        <span x-show="lang === 'en'" x-cloak>Today a home is managed in pieces: times by text, the warranty in a drawer, the handyman's number on someone's phone, the filter unchanged because nobody remembers. SUKODA puts it all in one place the whole household sees — along with the people who come to your home.</span>
-                    </p>
+                    <p class="text-base text-muted font-sans font-light leading-relaxed" x-text="t('s1Lead')"></p>
                 </div>
-                <div class="md:col-span-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-[#E8E3DD]">
-                    <template x-for="(f, i) in [
-                        { et: ['Ajad kalendris', 'Iga visiit jõuab kalendrikutsena sinule ja kõigile, kes peaksid teadma. Muudatus tuleb ise järele.'], en: ['Times in the calendar', 'Every visit arrives as a calendar invite to you and everyone who should know. Changes follow by themselves.'], icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
-                        { et: ['Inimesed nimepidi', 'Kes su kodus käib, millal, ja kuidas teda kätte saada. Koduhooldaja, florist, remondimees — mitte anonüümne teenus.'], en: ['People by name', 'Who comes to your home, when, and how to reach them. Housekeeper, florist, handyman — not an anonymous service.'], icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
-                        { et: ['Soovid ühe klikiga', 'Aknad, filtrid, pilt seina, lilled külalisteks. Sa ütled, millal sobib; õige inimene kinnitab aja.'], en: ['Requests in one click', 'Windows, filters, a picture on the wall, flowers for guests. You say when suits; the right person confirms a time.'], icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
-                        { et: ['Hooldusrütm', 'Ventilatsioonifiltrid, pesumasin, suitsuandur, süvapuhastus. Sa määrad rütmi, meie tuletame õigel ajal meelde.'], en: ['Upkeep rhythm', 'Ventilation filters, washing machine, smoke detector, deep clean. You set the rhythm, we remind you in time.'], icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15' },
-                        { et: ['Kodu dokumendid', 'Lepingud, kindlustus, seadmete garantiid, tehtud tööd. Kodu juures, mitte laiali — ja kodu müües kaasa antav.'], en: ['Home documents', 'Contracts, insurance, appliance warranties, work done. Kept with the home, not scattered — and handed over when you sell.'], icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
-                        { et: ['Oleme eemal', 'Reis või suvi maal? Märgi periood. Visiidid selleks ajaks tühistatakse ja igaüks, kes kodus käib, teab.'], en: ['We are away', 'A trip or a summer at the cottage? Mark the period. Visits are cancelled for it and everyone who comes to the home knows.'], icon: 'M12 19l9 2-9-18-9 18 9-2zm0 0v-8' },
-                    ]" :key="i">
+                <div class="md:col-span-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-line">
+                    <template x-for="(f, i) in features" :key="i">
                         <div class="p-6 md:p-10 bg-paper reveal" :style="'transition-delay: ' + (i * 60) + 'ms'">
                             <svg class="w-6 h-6 text-accent mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.3" :d="f.icon"></path></svg>
-                            <h3 class="font-serif text-xl md:text-2xl font-light mb-3" x-text="f[lang][0]"></h3>
-                            <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="f[lang][1]"></p>
+                            <h3 class="font-serif text-xl md:text-2xl font-light mb-3" x-text="pick(f.title)"></h3>
+                            <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="pick(f.text)"></p>
                         </div>
                     </template>
                 </div>
@@ -220,54 +204,45 @@
                             <span class="w-2 h-2 rounded-full bg-[#E8E3DD]"></span><span class="w-2 h-2 rounded-full bg-[#E8E3DD]"></span><span class="w-2 h-2 rounded-full bg-[#E8E3DD]"></span>
                             <span class="ml-3 text-[10px] font-sans text-muted/70 tracking-wide">sukoda.ee/haldus</span>
                         </div>
-                        <img src="/assets/images/product/haldus-kalender.png" alt="SUKODA töölaud koduhooldajale: kliendid ja visiidid kuukalendris" class="w-full h-auto block" width="1200" height="800" loading="lazy">
+                        <img src="/assets/images/product/haldus-kalender.png" alt="SUKODA töölaud koduhooldajale: kliendid ja visiidid kuukalendris" :alt="t('deskImgAlt')" class="w-full h-auto block" width="1200" height="800" loading="lazy">
                     </div>
-                    <figcaption class="sr-only">Teenusepakkuja töölaud</figcaption>
+                    <figcaption class="sr-only" x-text="t('deskImgCaption')">Teenusepakkuja töölaud</figcaption>
                 </figure>
             </div>
             <div class="md:col-span-6 p-6 md:p-16 flex flex-col justify-center reveal">
                 <div class="accent-line mb-4"></div>
-                <span class="text-[11px] uppercase tracking-[0.2em] text-muted font-sans block mb-3">( 02 )</span>
-                <h2 class="font-serif text-3xl md:text-4xl font-light mb-6">
-                    <span x-show="lang === 'et'">Koduhooldajale, floristile, remondimehele.</span>
-                    <span x-show="lang === 'en'" x-cloak>For housekeepers, florists, handymen.</span>
-                </h2>
-                <p class="text-base text-muted font-sans font-light leading-relaxed mb-8">
-                    <span x-show="lang === 'et'">Sa teed oma tööd hästi ja kulutad õhtud sõnumitele: ajad, muudatused, meeldetuletused, „kas homme ikka sobib?“. Töölaud teeb selle sinu eest. Sa lisad kliendi ja ajad — kõik muu liigub ise.</span>
-                    <span x-show="lang === 'en'" x-cloak>You do your work well and spend your evenings on messages: times, changes, reminders, "is tomorrow still fine?". The desk does that for you. You add the client and the times — everything else moves by itself.</span>
-                </p>
+                <span class="eyebrow mb-3">( 02 )</span>
+                <h2 class="font-serif text-3xl md:text-4xl font-light mb-6" x-text="t('s2Title')"></h2>
+                <p class="text-base text-muted font-sans font-light leading-relaxed mb-8" x-text="t('s2Lead')"></p>
                 <ul class="space-y-4 text-base font-sans font-light mb-10">
-                    <li class="flex gap-4"><span class="text-accent shrink-0">01</span><span x-text="lang === 'et' ? 'Kliendid, korduv graafik ja ühekordsed ajad — üks kalender, ka telefonis.' : 'Clients, recurring schedules and one-off times — one calendar, on your phone too.'"></span></li>
-                    <li class="flex gap-4"><span class="text-accent shrink-0">02</span><span x-text="lang === 'et' ? 'Klient ja tema pere saavad kalendrikutsed, muudatused ja meeldetuletused ise. Sa ei saada enam ühtegi SMS-i aegadega.' : 'The client and their household get invites, changes and reminders automatically. You never text a time again.'"></span></li>
-                    <li class="flex gap-4"><span class="text-accent shrink-0">03</span><span x-text="lang === 'et' ? 'Kliendi soovid — aknad, süvapuhastus, lilled — jõuavad sinuni; sa kinnitad aja ühe klikiga. Lisatöö, mida sa muidu ei küsiks.' : 'Client requests — windows, deep clean, flowers — reach you; you confirm a time in one click. Extra work you would not otherwise ask for.'"></span></li>
-                    <li class="flex gap-4"><span class="text-accent shrink-0">04</span><span x-text="lang === 'et' ? 'Kuu kokkuvõte arve tegemiseks. Kliendi eemalolek, ligipääs ja eelistused alati näha.' : 'A monthly summary for invoicing. The client\'s away periods, access and preferences always visible.'"></span></li>
+                    <li class="flex gap-4"><span class="text-accent shrink-0">01</span><span x-text="t('s2Item1')"></span></li>
+                    <li class="flex gap-4"><span class="text-accent shrink-0">02</span><span x-text="t('s2Item2')"></span></li>
+                    <li class="flex gap-4"><span class="text-accent shrink-0">03</span><span x-text="t('s2Item3')"></span></li>
+                    <li class="flex gap-4"><span class="text-accent shrink-0">04</span><span x-text="t('s2Item4')"></span></li>
                 </ul>
                 <div class="flex flex-wrap items-center gap-4 md:gap-6">
-                    <a href="/haldus?alusta" class="inline-block bg-black text-paper px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-colors duration-500" x-text="lang === 'et' ? 'Ava oma töölaud' : 'Open your desk'"></a>
-                    <p class="text-xs text-muted font-sans font-light" x-text="lang === 'et' ? 'Tasuta kuni 3 kodu. Link tuleb kohe e-postile.' : 'Free up to 3 homes. The link arrives at once.'"></p>
+                    <a href="/haldus?alusta" class="p-btn" x-text="t('openDesk')"></a>
+                    <p class="text-xs text-muted font-sans font-light" x-text="t('s2Note')"></p>
                 </div>
                 <!-- Price, stated up front: it depends on one number only -->
-                <div class="mt-10 grid grid-cols-3 gap-px bg-[#E8E3DD] border border-[#E8E3DD]">
+                <div class="mt-10 grid grid-cols-3 gap-px bg-line border border-line">
                     <div class="bg-paper p-4 md:p-5">
-                        <p class="text-[10px] uppercase tracking-[0.18em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Tasuta' : 'Free'"></p>
+                        <p class="eyebrow mb-2" x-text="t('planFree')"></p>
                         <p class="font-serif text-2xl md:text-3xl font-light">0 <span class="text-sm text-muted">€</span></p>
-                        <p class="text-xs text-muted font-sans font-light mt-1" x-text="lang === 'et' ? 'kuni 3 kodu' : 'up to 3 homes'"></p>
+                        <p class="text-xs text-muted font-sans font-light mt-1" x-text="t('planFreeHomes')"></p>
                     </div>
                     <div class="bg-paper p-4 md:p-5">
-                        <p class="text-[10px] uppercase tracking-[0.18em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Standard' : 'Standard'"></p>
-                        <p class="font-serif text-2xl md:text-3xl font-light">19 <span class="text-sm text-muted" x-text="lang === 'et' ? '€/kuus' : '€/mo'"></span></p>
-                        <p class="text-xs text-muted font-sans font-light mt-1" x-text="lang === 'et' ? 'kuni 20 kodu' : 'up to 20 homes'"></p>
+                        <p class="eyebrow mb-2" x-text="t('planStandard')"></p>
+                        <p class="font-serif text-2xl md:text-3xl font-light">19 <span class="text-sm text-muted" x-text="t('perMonth')"></span></p>
+                        <p class="text-xs text-muted font-sans font-light mt-1" x-text="t('planStandardHomes')"></p>
                     </div>
                     <div class="bg-paper p-4 md:p-5">
-                        <p class="text-[10px] uppercase tracking-[0.18em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Stuudio' : 'Studio'"></p>
-                        <p class="font-serif text-2xl md:text-3xl font-light">39 <span class="text-sm text-muted" x-text="lang === 'et' ? '€/kuus' : '€/mo'"></span></p>
-                        <p class="text-xs text-muted font-sans font-light mt-1" x-text="lang === 'et' ? 'piiramatult kodusid' : 'unlimited homes'"></p>
+                        <p class="eyebrow mb-2" x-text="t('planStudio')"></p>
+                        <p class="font-serif text-2xl md:text-3xl font-light">39 <span class="text-sm text-muted" x-text="t('perMonth')"></span></p>
+                        <p class="text-xs text-muted font-sans font-light mt-1" x-text="t('planStudioHomes')"></p>
                     </div>
                 </div>
-                <p class="mt-4 text-sm text-muted font-sans font-light leading-relaxed">
-                    <span x-show="lang === 'et'">Hind sõltub ainult sellest, mitu kodu sul töölaual on. Kõik funktsioonid igas paketis, kuu kaupa, tühistatav igal ajal. Klient ei maksa SUKODA-le kunagi midagi — sinu hinnad ja arved jäävad sinu enda asjaks.</span>
-                    <span x-show="lang === 'en'" x-cloak>The price depends on one thing only: how many homes are on your desk. Every feature in every plan, month to month, cancel any time. The client never pays SUKODA anything — your prices and invoices stay yours.</span>
-                </p>
+                <p class="mt-4 text-sm text-muted font-sans font-light leading-relaxed" x-text="t('s2Price')"></p>
             </div>
         </section>
 
@@ -277,38 +252,24 @@
         <section id="teenused" class="grid-line-b">
             <div class="p-6 md:p-16 md:pb-10 reveal">
                 <div class="accent-line mb-4"></div>
-                <span class="text-[11px] uppercase tracking-[0.2em] text-muted font-sans block mb-3">( 03 )</span>
+                <span class="eyebrow mb-3">( 03 )</span>
                 <div class="md:flex md:items-end md:justify-between gap-12">
-                    <h2 class="font-serif text-3xl md:text-4xl font-light">
-                        <span x-show="lang === 'et'">Mida kodu siit saab.</span>
-                        <span x-show="lang === 'en'" x-cloak>What a home gets here.</span>
-                    </h2>
-                    <p class="text-base text-muted font-sans font-light leading-relaxed max-w-lg mt-4 md:mt-0">
-                        <span x-show="lang === 'et'">Koristus on üks teenus paljudest. Iga soov läheb inimesele, kes su kodu juba tunneb — või ütled meile, mida sooviksid, ja me otsime õige tegija.</span>
-                        <span x-show="lang === 'en'" x-cloak>Cleaning is one service among many. Every request goes to someone who already knows your home — or you tell us what you would want and we find the right person.</span>
-                    </p>
+                    <h2 class="font-serif text-3xl md:text-4xl font-light" x-text="t('s3Title')"></h2>
+                    <p class="text-base text-muted font-sans font-light leading-relaxed max-w-lg mt-4 md:mt-0" x-text="t('s3Lead')"></p>
                 </div>
             </div>
-            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-[#E8E3DD] border-t border-[#E8E3DD]">
-                <template x-for="(c, i) in [
-                    { et: ['Koristus', ['Regulaarne koristus', 'Süvapuhastus', 'Akende pesu', 'Külmik ja ahi', 'Triikimine', 'Voodipesu vahetus']], en: ['Cleaning', ['Regular cleaning', 'Deep clean', 'Windows', 'Fridge and oven', 'Ironing', 'Linen change']] },
-                    { et: ['Lilled', ['Värsked lilled igaks visiidiks', 'Kimp külalisteks', 'Toataimede hooldus']], en: ['Flowers', ['Fresh flowers for every visit', 'A bouquet for guests', 'Houseplant care']] },
-                    { et: ['Remondimees', ['Pilt seina, riiul üles', 'Ventilatsioonifiltrid', 'Väikesed parandused', 'Mööbli kokkupanek']], en: ['Handyman', ['Pictures and shelves up', 'Ventilation filters', 'Small repairs', 'Furniture assembly']] },
-                    { et: ['Aed ja õu', ['Muru', 'Hekk', 'Terrassi ja kivide pesu', 'Hooajatööd aias']], en: ['Garden and outdoors', ['Lawn', 'Hedge', 'Terrace and paving wash', 'Seasonal garden work']] },
-                ]" :key="i">
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-line border-t border-line">
+                <template x-for="(c, i) in categories" :key="i">
                     <div class="p-6 md:p-10 bg-paper reveal" :style="'transition-delay: ' + (i * 80) + 'ms'">
-                        <p class="text-[11px] uppercase tracking-[0.2em] text-accent font-sans mb-5" x-text="'0' + (i + 1)"></p>
-                        <h3 class="font-serif text-2xl font-light mb-5" x-text="c[lang][0]"></h3>
+                        <p class="eyebrow text-accent mb-5" x-text="'0' + (i + 1)"></p>
+                        <h3 class="font-serif text-2xl font-light mb-5" x-text="pick(c.title)"></h3>
                         <ul class="space-y-2 text-sm text-muted font-sans font-light">
-                            <template x-for="s in c[lang][1]" :key="s"><li class="flex gap-3"><span class="text-[#D4CFC8]">—</span><span x-text="s"></span></li></template>
+                            <template x-for="s in pick(c.items)" :key="s"><li class="flex gap-3"><span class="text-muted-light">—</span><span x-text="s"></span></li></template>
                         </ul>
                     </div>
                 </template>
             </div>
-            <div class="border-t border-[#E8E3DD] px-6 md:px-16 py-6 text-sm text-muted font-sans font-light leading-relaxed">
-                <span x-show="lang === 'et'">Hinnad lepid kokku otse tegijaga, nagu seni. SUKODA ei ole vahendaja ega turuplats — see on koht, kus su kodu ja need inimesed kokku saavad.</span>
-                <span x-show="lang === 'en'" x-cloak>Prices are agreed directly with the person doing the work, as before. SUKODA is not a middleman or a marketplace — it is the place where your home and those people meet.</span>
-            </div>
+            <div class="border-t border-line px-6 md:px-16 py-6 text-sm text-muted font-sans font-light leading-relaxed" x-text="t('s3Note')"></div>
         </section>
 
         <!-- ═══════════════════════════════════════════════════════════════
@@ -317,27 +278,17 @@
         <section id="kuidas" class="grid md:grid-cols-12 grid-line-b">
             <div class="md:col-span-4 p-6 md:p-16 grid-line border-b md:border-b-0 border-[#E8E3DD] reveal">
                 <div class="accent-line mb-4"></div>
-                <span class="text-[11px] uppercase tracking-[0.2em] text-muted font-sans block mb-3">( 04 )</span>
-                <h2 class="font-serif text-3xl md:text-4xl font-light mb-6">
-                    <span x-show="lang === 'et'">Kuidas kodu liitub.</span>
-                    <span x-show="lang === 'en'" x-cloak>How a home joins.</span>
-                </h2>
-                <p class="text-base text-muted font-sans font-light leading-relaxed">
-                    <span x-show="lang === 'et'">Kontot ei pea looma. Kodu tuleb portaali inimese kaudu, kes seal juba käib — enamasti koduhooldaja. Nii ei ole siin otsingut ega võrdlust, vaid inimesed, keda usaldatakse.</span>
-                    <span x-show="lang === 'en'" x-cloak>No account to create. A home joins through the person who already comes there — usually the housekeeper. So there is no search or comparison here, only people who are trusted.</span>
-                </p>
+                <span class="eyebrow mb-3">( 04 )</span>
+                <h2 class="font-serif text-3xl md:text-4xl font-light mb-6" x-text="t('s4Title')"></h2>
+                <p class="text-base text-muted font-sans font-light leading-relaxed" x-text="t('s4Lead')"></p>
             </div>
-            <div class="md:col-span-8 grid md:grid-cols-3 gap-px bg-[#E8E3DD]">
-                <template x-for="(s, i) in [
-                    { et: ['Koduhooldaja avab töölaua', 'Kaks minutit: nimi, e-post, mida ta pakub. Sisenemislink tuleb kohe. Või sa kutsud ta ise.', 'Ava töölaud või kutsu oma koduhooldaja'], en: ['The housekeeper opens a desk', 'Two minutes: name, e-mail, what they offer. The login link arrives at once. Or you invite them yourself.', 'Open a desk or invite your housekeeper'], href: '#alusta' },
-                    { et: ['Lisab sinu kodu', 'Aadress, ajad või korduv graafik, kes veel peaks teadma. Sa saad e-kirja oma portaali lingiga — parooli pole. Või jätab sulle kutsekaardi ja koodi sisestad ise.'], en: ['Adds your home', 'Address, times or a recurring schedule, who else should know. You get an e-mail with your portal link — no password. Or leaves you an invitation card and you enter the code yourself.'] },
-                    { et: ['Sellest hetkest liigub kõik ise', 'Kalendrikutsed, muudatused, meeldetuletused. Sa lisad pere, paned paika hooldusrütmi ja dokumendid — ja unustad ära.'], en: ['From then on it runs itself', 'Invites, changes, reminders. You add the household, set the upkeep rhythm and documents — and forget about it.'] },
-                ]" :key="i">
+            <div class="md:col-span-8 grid md:grid-cols-3 gap-px bg-line">
+                <template x-for="(s, i) in steps" :key="i">
                     <div class="p-6 md:p-10 bg-paper reveal flex flex-col" :style="'transition-delay: ' + (i * 80) + 'ms'">
                         <p class="font-serif text-5xl font-light text-accent/70 mb-6" x-text="'0' + (i + 1)"></p>
-                        <h3 class="font-serif text-xl md:text-2xl font-light mb-3" x-text="s[lang][0]"></h3>
-                        <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="s[lang][1]"></p>
-                        <a x-show="s.href" :href="s.href" class="mt-6 inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] font-sans text-accent hover:text-black transition-colors self-start"><span x-text="s[lang][2]"></span><span aria-hidden="true">↓</span></a>
+                        <h3 class="font-serif text-xl md:text-2xl font-light mb-3" x-text="pick(s.title)"></h3>
+                        <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="pick(s.text)"></p>
+                        <a x-show="s.href" :href="s.href" class="mt-6 inline-flex items-center gap-2 text-xs uppercase tracking-[0.16em] font-sans text-accent hover:text-black transition-colors self-start"><span x-text="pick(s.link)"></span><span aria-hidden="true">↓</span></a>
                     </div>
                 </template>
             </div>
@@ -346,11 +297,8 @@
         <!-- Story teaser -->
         <section class="grid-line-b bg-black text-paper">
             <div class="px-6 md:px-16 py-16 md:py-24 max-w-4xl reveal">
-                <p class="font-serif text-2xl md:text-4xl font-light leading-snug mb-8">
-                    <span x-show="lang === 'et'">„Ajad tulid sõnumiga ja tuli edasi saata. Lilled tellisin telefoniga. Remondimehe number oli kellegi juures. Kõik töötas — inimeste, mitte süsteemi tõttu.“</span>
-                    <span x-show="lang === 'en'" x-cloak>"Times arrived by text and had to be forwarded. Flowers were ordered by phone. The handyman's number was with someone else. It all worked — because of people, not because of a system."</span>
-                </p>
-                <a href="lugu.html" class="text-[11px] uppercase tracking-[0.2em] font-sans text-gray-300 hover:text-paper transition-colors luxury-link" x-text="lang === 'et' ? 'Kuidas SUKODA sündis →' : 'How SUKODA came to be →'"></a>
+                <p class="font-serif text-2xl md:text-4xl font-light leading-snug mb-8" x-text="t('quote')"></p>
+                <a href="lugu.html" class="text-xs uppercase tracking-[0.16em] font-sans text-gray-300 hover:text-paper transition-colors luxury-link" x-text="t('quoteLink')"></a>
             </div>
         </section>
 
@@ -382,108 +330,101 @@
                     }
                     if (!res.ok) throw new Error('fail');
                     this.sent = this.role === 'home' && this.homeMode === 'invite' ? 'invite' : 'wait';
-                } catch (e) { this.error = lang === 'et' ? 'Saatmine ei õnnestunud. Kirjuta tere@sukoda.ee.' : 'Could not send. Email tere@sukoda.ee.'; }
+                } catch (e) { this.error = this.t('startError'); }
                 this.sending = false;
             }
         }">
-            <div class="md:col-span-5 p-6 md:p-16 grid-line border-b md:border-b-0 border-[#E8E3DD] flex flex-col justify-center reveal">
+            <div class="md:col-span-5 p-6 md:p-16 grid-line border-b md:border-b-0 border-line flex flex-col justify-center reveal">
                 <div class="accent-line mb-4"></div>
-                <span class="text-[11px] uppercase tracking-[0.2em] text-muted font-sans block mb-3">( 05 )</span>
-                <h2 class="font-serif text-3xl md:text-4xl font-light mb-6" x-text="lang === 'et' ? 'Alusta' : 'Get started'">Alusta</h2>
-                <p class="text-base text-muted font-sans font-light leading-relaxed mb-6">
-                    <span x-show="lang === 'et'">Kolm teed sisse. Koduomanik kutsub oma koduhooldaja. Koduhooldaja või muu teenusepakkuja avab endale töölaua. Arendaja räägib meiega, kuidas tema müüdavad kodud võiksid tulla portaaliga.</span>
-                    <span x-show="lang === 'en'" x-cloak>Three ways in. A homeowner invites their housekeeper. A housekeeper or other service provider opens a desk. A developer talks to us about homes that come with a portal.</span>
-                </p>
-                <p class="text-sm text-muted font-sans font-light leading-relaxed">
-                    <span x-show="lang === 'et'">Kodu tuleb portaali inimese kaudu, kes juba su kodus käib. Nii hoiame taset: ei ole otsingut ega võrdlust, on inimene, keda usaldad, ja tööriist, mis teeb tema ja su pere elu lihtsamaks.</span>
-                    <span x-show="lang === 'en'" x-cloak>A home joins through the person who already comes to it. That is how we keep the standard: no search, no comparison, just someone you trust and a tool that makes life easier for them and your household.</span>
-                </p>
+                <span class="eyebrow mb-3">( 05 )</span>
+                <h2 class="font-serif text-3xl md:text-4xl font-light mb-6" x-text="t('startTitle')">Alusta</h2>
+                <p class="text-base text-muted font-sans font-light leading-relaxed" x-text="t('startLead')"></p>
             </div>
             <div class="md:col-span-7 p-6 md:p-16 flex items-center reveal">
                 <div class="w-full max-w-md">
                     <div x-show="!sent" class="space-y-6">
-                        <div class="flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.16em] font-sans">
-                            <button type="button" @click="role = 'home'" :class="role === 'home' ? 'bg-black text-paper border-black' : 'border-[#D4CFC8] text-muted hover:text-black'" class="px-4 py-2 border transition-colors" x-text="lang === 'et' ? 'Koduomanik' : 'Homeowner'"></button>
-                            <button type="button" @click="role = 'partner'" :class="role === 'partner' ? 'bg-black text-paper border-black' : 'border-[#D4CFC8] text-muted hover:text-black'" class="px-4 py-2 border transition-colors" x-text="lang === 'et' ? 'Teenusepakkuja' : 'Service provider'"></button>
-                            <button type="button" @click="role = 'developer'" :class="role === 'developer' ? 'bg-black text-paper border-black' : 'border-[#D4CFC8] text-muted hover:text-black'" class="px-4 py-2 border transition-colors" x-text="lang === 'et' ? 'Arendaja' : 'Developer'"></button>
+                        <div class="flex flex-wrap gap-2 text-xs uppercase tracking-[0.16em] font-sans" role="tablist">
+                            <button type="button" @click="role = 'home'" :class="role === 'home' ? 'bg-black text-paper border-black' : 'border-line-strong text-muted hover:text-black'" :aria-selected="role === 'home'" role="tab" class="px-4 py-2 border transition-colors" x-text="t('roleHome')"></button>
+                            <button type="button" @click="role = 'partner'" :class="role === 'partner' ? 'bg-black text-paper border-black' : 'border-line-strong text-muted hover:text-black'" :aria-selected="role === 'partner'" role="tab" class="px-4 py-2 border transition-colors" x-text="t('rolePartner')"></button>
+                            <button type="button" @click="role = 'developer'" :class="role === 'developer' ? 'bg-black text-paper border-black' : 'border-line-strong text-muted hover:text-black'" :aria-selected="role === 'developer'" role="tab" class="px-4 py-2 border transition-colors" x-text="t('roleDeveloper')"></button>
                         </div>
 
                         <!-- Homeowner -->
                         <div x-show="role === 'home'" class="space-y-6">
-                            <div class="flex gap-6 text-[11px] uppercase tracking-[0.16em] font-sans border-b border-[#E8E3DD]">
-                                <button type="button" @click="homeMode = 'invite'" :class="homeMode === 'invite' ? 'text-black border-b border-black -mb-px' : 'text-muted hover:text-black'" class="pb-3 transition-colors" x-text="lang === 'et' ? 'Mul on koduhooldaja' : 'I have a housekeeper'"></button>
-                                <button type="button" @click="homeMode = 'wait'" :class="homeMode === 'wait' ? 'text-black border-b border-black -mb-px' : 'text-muted hover:text-black'" class="pb-3 transition-colors" x-text="lang === 'et' ? 'Mul pole veel koduhooldajat' : 'No housekeeper yet'"></button>
+                            <div class="flex gap-6 text-xs uppercase tracking-[0.16em] font-sans border-b border-line">
+                                <button type="button" @click="homeMode = 'invite'" :class="homeMode === 'invite' ? 'text-black border-b border-black -mb-px' : 'text-muted hover:text-black'" class="pb-3 transition-colors" x-text="t('haveKeeper')"></button>
+                                <button type="button" @click="homeMode = 'wait'" :class="homeMode === 'wait' ? 'text-black border-b border-black -mb-px' : 'text-muted hover:text-black'" class="pb-3 transition-colors" x-text="t('noKeeper')"></button>
                             </div>
                             <div x-show="homeMode === 'invite'" class="space-y-4">
-                                <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="lang === 'et' ? 'Kutsu oma koduhooldaja SUKODA-sse. Ta avab endale tasuta töölaua, lisab sinu kodu ja edaspidi jõuavad kõik ajad sinu ja pere kalendrisse ise.' : 'Invite your housekeeper to SUKODA. They open a free desk, add your home, and from then on every time lands in your household calendars by itself.'"></p>
-                                <div class="border-b border-[#D4CFC8] focus-within:border-accent transition-colors">
-                                    <input type="text" x-model="partnerName" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="lang === 'et' ? 'Koduhooldaja nimi' : 'Housekeeper\'s name'">
+                                <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="t('inviteLead')"></p>
+                                <div class="border-b border-line-strong focus-within:border-accent transition-colors">
+                                    <input type="text" x-model="partnerName" autocomplete="off" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="t('keeperName')" :aria-label="t('keeperName')">
                                 </div>
-                                <div class="border-b border-[#D4CFC8] focus-within:border-accent transition-colors">
-                                    <input type="email" x-model="partnerEmail" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="lang === 'et' ? 'Koduhooldaja e-post' : 'Housekeeper\'s email'">
+                                <div class="border-b border-line-strong focus-within:border-accent transition-colors">
+                                    <input type="email" x-model="partnerEmail" autocomplete="off" inputmode="email" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="t('keeperEmail')" :aria-label="t('keeperEmail')">
                                 </div>
                                 <div class="grid sm:grid-cols-2 gap-4">
-                                    <div class="border-b border-[#D4CFC8] focus-within:border-accent transition-colors">
-                                        <input type="text" x-model="name" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="lang === 'et' ? 'Sinu nimi' : 'Your name'">
+                                    <div class="border-b border-line-strong focus-within:border-accent transition-colors">
+                                        <input type="text" x-model="name" autocomplete="name" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="t('yourName')" :aria-label="t('yourName')">
                                     </div>
-                                    <div class="border-b border-[#D4CFC8] focus-within:border-accent transition-colors">
-                                        <input type="email" x-model="email" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="lang === 'et' ? 'Sinu e-post' : 'Your email'">
+                                    <div class="border-b border-line-strong focus-within:border-accent transition-colors">
+                                        <input type="email" x-model="email" autocomplete="email" inputmode="email" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="t('yourEmail')" :aria-label="t('yourEmail')">
                                     </div>
                                 </div>
                             </div>
                             <div x-show="homeMode === 'wait'" x-cloak class="space-y-4">
-                                <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="lang === 'et' ? 'Praegu ei saa koristust siit otse tellida — kodu tuleb portaali partneri kaudu. Jäta kontakt: kui sinu piirkonnas on koduhooldaja, kelle taset usaldame, anname isiklikult teada.' : 'Cleaning cannot be ordered here directly yet — a home joins through its partner. Leave your details: when there is a housekeeper in your area whose standard we trust, we will tell you personally.'"></p>
-                                <div class="border-b border-[#D4CFC8] focus-within:border-accent transition-colors">
-                                    <input type="text" x-model="name" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="lang === 'et' ? 'Nimi' : 'Name'">
+                                <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="t('waitLead')"></p>
+                                <div class="border-b border-line-strong focus-within:border-accent transition-colors">
+                                    <input type="text" x-model="name" autocomplete="name" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="t('fName')" :aria-label="t('fName')">
                                 </div>
-                                <div class="border-b border-[#D4CFC8] focus-within:border-accent transition-colors">
-                                    <input type="email" x-model="email" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="lang === 'et' ? 'E-post' : 'Email'">
+                                <div class="border-b border-line-strong focus-within:border-accent transition-colors">
+                                    <input type="email" x-model="email" autocomplete="email" inputmode="email" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="t('fEmail')" :aria-label="t('fEmail')">
                                 </div>
-                                <div class="border-b border-[#D4CFC8] focus-within:border-accent transition-colors">
-                                    <input type="text" x-model="note" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="lang === 'et' ? 'Linn või piirkond' : 'City or area'">
+                                <div class="border-b border-line-strong focus-within:border-accent transition-colors">
+                                    <input type="text" x-model="note" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="t('fCity')" :aria-label="t('fCity')">
                                 </div>
                             </div>
                         </div>
 
                         <!-- Partner: straight to the desk -->
                         <div x-show="role === 'partner'" x-cloak class="space-y-6">
-                            <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="lang === 'et' ? 'Töölaud koduhooldajale, floristile, remondimehele või aednikule. Lisad kliendi, määrad ajad või graafiku — klient ja tema pere saavad kalendrikutsed, muudatused ja meeldetuletused ise. Sina ei saada enam ühtegi SMS-i aegadega.' : 'A desk for housekeepers, florists, handymen and gardeners. Add a client, set times or a schedule — the client and their household get calendar invites, changes and reminders automatically. No more texting times.'"></p>
+                            <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="t('partnerLead')"></p>
                             <ul class="text-sm text-muted font-sans font-light space-y-2">
-                                <li class="flex gap-3"><span class="text-accent">—</span><span x-text="lang === 'et' ? 'Kliendid, ajad ja korduv graafik ühes kohas' : 'Clients, times and recurring schedules in one place'"></span></li>
-                                <li class="flex gap-3"><span class="text-accent">—</span><span x-text="lang === 'et' ? 'Kliendi soovid jõuavad sinuni, sina kinnitad aja ühe klikiga' : 'Client requests come to you; you confirm a time in one click'"></span></li>
-                                <li class="flex gap-3"><span class="text-accent">—</span><span x-text="lang === 'et' ? 'Lilled ja muu, mis kuulub sinu teenusesse, tellitakse automaatselt' : 'Flowers and whatever else is part of your service are ordered automatically'"></span></li>
-                                <li class="flex gap-3"><span class="text-accent">—</span><span x-text="lang === 'et' ? 'Kuu kokkuvõte arve tegemiseks' : 'A monthly summary for invoicing'"></span></li>
+                                <li class="flex gap-3"><span class="text-accent">—</span><span x-text="t('partnerItem1')"></span></li>
+                                <li class="flex gap-3"><span class="text-accent">—</span><span x-text="t('partnerItem2')"></span></li>
+                                <li class="flex gap-3"><span class="text-accent">—</span><span x-text="t('partnerItem3')"></span></li>
+                                <li class="flex gap-3"><span class="text-accent">—</span><span x-text="t('partnerItem4')"></span></li>
                             </ul>
-                            <a href="/haldus?alusta" class="block w-full text-center bg-black text-paper py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-all duration-500" x-text="lang === 'et' ? 'Ava oma töölaud' : 'Open your desk'"></a>
-                            <p class="text-xs text-muted font-sans font-light" x-text="lang === 'et' ? 'Tasuta kuni 3 kodu, edasi 19 €/kuus. Sisenemislink tuleb kohe e-postile.' : 'Free up to 3 homes, then 19 €/month. Your login link arrives immediately.'"></p>
+                            <a href="/haldus?alusta" class="p-btn w-full" x-text="t('openDesk')"></a>
+                            <p class="text-xs text-muted font-sans font-light" x-text="t('partnerNote')"></p>
                         </div>
 
                         <!-- Developer -->
                         <div x-show="role === 'developer'" x-cloak class="space-y-4">
-                            <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="lang === 'et' ? 'Kodud, mis tulevad portaaliga: ostja saab kodu, mille ajad, hooldus, dokumendid, garantiid ja teenusepakkujad on ühes kohas — teie brändi all, teie partneritega. Räägime.' : 'Homes that come with a portal: the buyer gets a home whose times, upkeep, documents, warranties and service providers live in one place — under your brand, with your partners. Let\'s talk.'"></p>
-                            <div class="border-b border-[#D4CFC8] focus-within:border-accent transition-colors">
-                                <input type="text" x-model="name" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="lang === 'et' ? 'Nimi' : 'Name'">
+                            <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="t('devLead')"></p>
+                            <div class="border-b border-line-strong focus-within:border-accent transition-colors">
+                                <input type="text" x-model="name" autocomplete="name" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="t('fName')" :aria-label="t('fName')">
                             </div>
-                            <div class="border-b border-[#D4CFC8] focus-within:border-accent transition-colors">
-                                <input type="email" x-model="email" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="lang === 'et' ? 'E-post' : 'Email'">
+                            <div class="border-b border-line-strong focus-within:border-accent transition-colors">
+                                <input type="email" x-model="email" autocomplete="email" inputmode="email" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="t('fEmail')" :aria-label="t('fEmail')">
                             </div>
-                            <div class="border-b border-[#D4CFC8] focus-within:border-accent transition-colors">
-                                <input type="text" x-model="note" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="lang === 'et' ? 'Ettevõte ja objekt' : 'Company and project'">
+                            <div class="border-b border-line-strong focus-within:border-accent transition-colors">
+                                <input type="text" x-model="note" autocomplete="organization" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="t('fCompany')" :aria-label="t('fCompany')">
                             </div>
                         </div>
 
-                        <p x-show="error" x-cloak class="text-sm text-red-500 font-sans font-light" x-text="error"></p>
-                        <button type="button" x-show="role !== 'partner'" @click="submit()" :disabled="sending || !canSend" class="w-full bg-black text-paper py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-all duration-500 disabled:opacity-50">
-                            <span x-show="!sending" x-text="role === 'home' && homeMode === 'invite' ? (lang === 'et' ? 'Saada kutse' : 'Send invitation') : (lang === 'et' ? 'Anna teada' : 'Keep me posted')"></span>
-                            <span x-show="sending" x-cloak>…</span>
+                        <p x-show="error" x-cloak class="text-sm text-accent font-sans font-light" x-text="error" role="alert"></p>
+                        <button type="button" x-show="role !== 'partner'" @click="submit()" :disabled="sending || !canSend" class="p-btn w-full disabled:opacity-50">
+                            <span x-show="!sending" x-text="role === 'home' && homeMode === 'invite' ? t('sendInvite') : t('leaveContact')"></span>
+                            <span x-show="sending" x-cloak x-text="t('sendingShort')"></span>
                         </button>
                     </div>
                     <div x-show="sent" x-cloak x-transition class="py-6">
                         <div class="w-14 h-14 bg-accent rounded-full flex items-center justify-center mb-6">
                             <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"></path></svg>
                         </div>
-                        <p class="font-serif text-2xl font-light mb-2" x-text="sent === 'invite' ? (lang === 'et' ? 'Kutse saadetud.' : 'Invitation sent.') : (lang === 'et' ? 'Aitäh. Võtame ühendust.' : 'Thank you. We will be in touch.')"></p>
-                        <p class="text-sm text-muted font-sans font-light" x-text="sent === 'invite' ? (lang === 'et' ? 'Kui ' + (partnerName || 'ta') + ' töölaua avab ja su kodu lisab, saad e-kirja portaali lingiga.' : 'When ' + (partnerName || 'they') + ' open their desk and add your home, you get an email with your portal link.') : (lang === 'et' ? 'Kirjutame sulle isiklikult, tavaliselt paari päeva jooksul.' : 'We write to you personally, usually within a couple of days.')"></p>
+                        <p class="font-serif text-2xl font-light mb-2" x-text="sent === 'invite' ? t('sentInviteTitle') : t('sentWaitTitle')"></p>
+                        <p class="text-sm text-muted font-sans font-light" x-text="sent === 'invite' ? t('sentInviteText', { name: partnerName || t('keeperFallback') }) : t('sentWaitText')"></p>
                     </div>
                 </div>
             </div>
@@ -1179,32 +1120,26 @@
             <div class="grid md:grid-cols-12 gap-8 py-12 md:py-14 px-6 md:px-12">
                 <div class="md:col-span-4">
                     <a href="/" class="font-serif text-2xl tracking-[0.08em] font-light block mb-4">SUKODA</a>
-                    <p class="text-gray-300 text-sm font-sans font-light leading-relaxed max-w-xs">
-                        <span x-show="lang === 'et'">Koduportaal ja töölaud neile, kes kodude eest hoolitsevad.<br>Tallinn, Eesti.</span>
-                        <span x-show="lang === 'en'" x-cloak>A home portal, and a desk for those who care for homes.<br>Tallinn, Estonia.</span>
-                    </p>
+                    <p class="text-gray-300 text-sm font-sans font-light leading-relaxed max-w-xs" x-text="t('footerTagline')"></p>
                 </div>
                 <div class="md:col-span-4">
-                    <p class="text-[10px] uppercase tracking-[0.25em] text-gray-300 font-sans mb-4"><span x-show="lang === 'et'">Lingid</span><span x-show="lang === 'en'" x-cloak>Links</span></p>
+                    <p class="eyebrow text-gray-300 mb-4" x-text="t('footerLinks')"></p>
                     <div class="flex flex-col gap-3 text-sm text-gray-300 font-sans font-light">
-                        <a href="/lugu" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Lugu' : 'Story'">Lugu</a>
-                        <a href="/haldus" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Töölaud teenusepakkujale' : 'Provider desk'">Töölaud teenusepakkujale</a>
-                        <a href="/minu" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Minu kodu' : 'My home'">Minu kodu</a>
-                        <a href="/tingimused" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Tingimused' : 'Terms'">Tingimused</a>
-                        <a href="/privaatsus" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Privaatsuspoliitika' : 'Privacy'">Privaatsuspoliitika</a>
+                        <a href="/lugu" class="hover:text-paper transition-colors" x-text="t('navStory')">Lugu</a>
+                        <a href="/haldus" class="hover:text-paper transition-colors" x-text="t('footerDesk')">Töölaud teenusepakkujale</a>
+                        <a href="/minu" class="hover:text-paper transition-colors" x-text="t('myHome')">Minu kodu</a>
+                        <a href="/tingimused" class="hover:text-paper transition-colors" x-text="t('terms')">Tingimused</a>
+                        <a href="/privaatsus" class="hover:text-paper transition-colors" x-text="t('privacy')">Privaatsuspoliitika</a>
                     </div>
                 </div>
                 <div class="md:col-span-4">
-                    <p class="text-[10px] uppercase tracking-[0.25em] text-gray-300 font-sans mb-4"><span x-show="lang === 'et'">Kontakt</span><span x-show="lang === 'en'" x-cloak>Contact</span></p>
+                    <p class="eyebrow text-gray-300 mb-4" x-text="t('footerContact')"></p>
                     <a href="mailto:tere@sukoda.ee" class="text-sm font-sans font-light text-gray-300 hover:text-paper transition-colors block mb-2">tere@sukoda.ee</a>
                     <a href="mailto:partner@sukoda.ee" class="text-sm font-sans font-light text-gray-300 hover:text-paper transition-colors block">partner@sukoda.ee</a>
                 </div>
             </div>
             <div class="border-t border-gray-800 py-6 px-6 md:px-12">
-                <p class="text-[11px] text-gray-400 font-sans text-center tracking-wide">
-                    <span x-show="lang === 'et'">© 2026 SUKODA on Epic Ship OÜ kaubamärk · Registrikood 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
-                    <span x-show="lang === 'en'" x-cloak>© 2026 SUKODA is a trademark of Epic Ship OÜ · Reg. code 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
-                </p>
+                <p class="text-xs text-gray-400 font-sans text-center tracking-wide" x-text="t('footerLegal')"></p>
             </div>
         </footer>
 
@@ -1282,26 +1217,236 @@
          x-transition:enter-end="translate-y-0 opacity-100">
         <div class="max-w-[1440px] mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div class="flex-1">
-                <p class="text-sm font-sans font-light" x-show="lang === 'et'">
-                    Kasutame küpsiseid veebilehe kasutuskogemuse parendamiseks ja turunduse tõhususe mõõtmiseks.
-                    <a href="privaatsus.html" class="text-accent hover:underline">Loe lähemalt</a>
-                </p>
-                <p class="text-sm font-sans font-light" x-show="lang === 'en'" x-cloak>
-                    We use cookies to improve your experience and measure marketing effectiveness.
-                    <a href="privaatsus.html" class="text-accent hover:underline">Learn more</a>
+                <p class="text-sm font-sans font-light">
+                    <span x-text="t('cookieText')"></span>
+                    <a href="privaatsus.html" class="text-accent hover:underline" x-text="t('cookieMore')"></a>
                 </p>
             </div>
             <div class="flex gap-3 shrink-0">
                 <button @click="if(window.SUKODA_TRACKING) SUKODA_TRACKING.declineCookies(); show = false"
-                        class="px-4 py-2 text-[10px] uppercase tracking-[0.2em] font-sans text-muted hover:text-paper transition-colors border border-muted/30 hover:border-paper/50"
-                        x-text="lang === 'et' ? 'Keeldu' : 'Decline'">Keeldu</button>
+                        class="px-4 py-2 text-xs uppercase tracking-[0.16em] font-sans text-muted hover:text-paper transition-colors border border-muted/30 hover:border-paper/50"
+                        x-text="t('cookieDecline')">Keeldu</button>
                 <button @click="if(window.SUKODA_TRACKING) SUKODA_TRACKING.acceptCookies(); show = false"
-                        class="px-6 py-2 text-[10px] uppercase tracking-[0.2em] font-sans bg-accent hover:bg-accent/80 text-paper transition-colors"
-                        x-text="lang === 'et' ? 'Nõustun' : 'Accept'">Nõustun</button>
+                        class="px-6 py-2 text-xs uppercase tracking-[0.16em] font-sans bg-accent hover:bg-accent/80 text-paper transition-colors"
+                        x-text="t('cookieAccept')">Nõustun</button>
             </div>
         </div>
     </div>
 
+    <script>
+    // Landing copy in three languages. Sections behind SUKODA_SALES (old package checkout) still carry their own inline strings.
+    function landing() {
+        const LANGS = ['et', 'en', 'ru'];
+        const saved = localStorage.getItem('sukoda_lang');
+        return {
+            lang: LANGS.includes(saved) ? saved : 'et',
+            T: {
+                skip: { et: 'Sisu juurde', en: 'Skip to content', ru: 'К содержимому' },
+                langLabel: { et: 'Keel', en: 'Language', ru: 'Язык' },
+                menu: { et: 'Menüü', en: 'Menu', ru: 'Меню' },
+                navHome: { et: 'Koduomanikule', en: 'For homeowners', ru: 'Владельцам жилья' },
+                navGift: { et: 'Kingitus', en: 'Gift', ru: 'Подарок' },
+                navProvider: { et: 'Teenusepakkujale', en: 'For providers', ru: 'Специалистам' },
+                navStory: { et: 'Lugu', en: 'Story', ru: 'История' },
+                login: { et: 'Sisene', en: 'Log in', ru: 'Войти' },
+                myHome: { et: 'Minu kodu', en: 'My home', ru: 'Мой дом' },
+
+                heroKicker: { et: 'Koduportaal', en: 'Home portal', ru: 'Портал дома' },
+                heroTitle1: { et: 'Kõik, mis su kodu vajab.', en: 'Everything your home needs.', ru: 'Всё, что нужно вашему дому.' },
+                heroTitle2: { et: 'Ühes kohas.', en: 'In one place.', ru: 'В одном месте.' },
+                heroLead: {
+                    et: 'Koduhooldaja ajad on kogu pere kalendris. Filtrid, pesumasin ja suitsuandur tulevad õigel ajal meelde. Lepingud, garantiid ja tehtud tööd on kodu juures. Ja inimesed, kes su kodu tunnevad, on sinu perega ühes portaalis.',
+                    en: 'Your housekeeper\'s times are in the whole household\'s calendar. Filters, the washing machine and the smoke detector come to mind on time. Contracts, warranties and work done stay with the home. And the people who know your home are in the same portal as your family.',
+                    ru: 'Время визитов помощницы по дому в календаре всей семьи. Фильтры, стиральная машина и датчик дыма напомнят о себе вовремя. Договоры, гарантии и выполненные работы хранятся вместе с домом. А люди, которые знают ваш дом, в одном портале с вашей семьёй.',
+                },
+                heroCta: { et: 'Too oma kodu portaali', en: 'Bring your home in', ru: 'Добавить свой дом' },
+                heroCta2: { et: 'Olen koduhooldaja või teenusepakkuja', en: 'I am a housekeeper or service provider', ru: 'Я помощница по дому или специалист' },
+                heroNote: { et: 'Liitumine käib kutsega ja on koduomanikule tasuta.', en: 'Joining is by invitation and free for the homeowner.', ru: 'Подключение по приглашению, для владельца жилья бесплатно.' },
+                heroImgAlt: { et: 'SUKODA koduportaal: järgmine visiit, teenused, kodu hooldus ja inimesed, kes kodus käivad', en: 'SUKODA home portal: the next visit, services, home upkeep and the people who come to the home', ru: 'Портал дома SUKODA: ближайший визит, услуги, уход за домом и люди, которые приходят в дом' },
+                heroImgCaption: { et: 'Koduportaali ülevaade', en: 'Home portal overview', ru: 'Обзор портала дома' },
+
+                s1Title1: { et: 'Üks kodu.', en: 'One home.', ru: 'Один дом.' },
+                s1Title2: { et: 'Üks koht.', en: 'One place.', ru: 'Одно место.' },
+                s1Lead: {
+                    et: 'Täna on kodu asjad laiali: ajad on SMS-is, garantii sahtlis, remondimehe number kellegi telefonis ja filter vahetamata, sest keegi ei mäleta. SUKODA toob kodu asjad ühte kohta, mida näevad kogu pere ja inimesed, kes su kodus käivad.',
+                    en: 'Today a home\'s affairs are scattered: times in text messages, the warranty in a drawer, the handyman\'s number on someone\'s phone, and the filter unchanged because nobody remembers. SUKODA brings them into one place that the whole household sees, along with the people who come to your home.',
+                    ru: 'Сегодня дела дома разбросаны: время визитов в смс, гарантия в ящике стола, номер мастера в чьём-то телефоне, а фильтр не заменён, потому что никто не вспомнил. SUKODA собирает всё в одном месте, которое видят вся семья и люди, приходящие в ваш дом.',
+                },
+
+                s2Title: { et: 'Koduhooldajale, floristile, remondimehele.', en: 'For housekeepers, florists and handymen.', ru: 'Помощницам по дому, флористам, мастерам.' },
+                s2Lead: {
+                    et: 'Sa teed oma tööd hästi ja kulutad õhtud sõnumitele: ajad, muudatused, meeldetuletused ja „kas homme ikka sobib?“. Töölaud saadab need sõnumid sinu eest. Sa lisad kliendi ja ajad, ülejäänu liigub ise.',
+                    en: 'You do your work well and spend your evenings on messages: times, changes, reminders and “is tomorrow still fine?”. The desk sends those messages for you. You add the client and the times, the rest moves by itself.',
+                    ru: 'Вы хорошо делаете свою работу, а вечера уходят на сообщения: время, изменения, напоминания и «завтра всё в силе?». Рабочий стол отправляет эти сообщения за вас. Вы добавляете клиента и время, остальное идёт само.',
+                },
+                s2Item1: { et: 'Kliendid, korduv graafik ja ühekordsed ajad on ühes kalendris, ka telefonis.', en: 'Clients, recurring schedules and one-off times are in one calendar, on your phone too.', ru: 'Клиенты, регулярный график и разовые визиты в одном календаре, в том числе в телефоне.' },
+                s2Item2: { et: 'Klient ja tema pere saavad kalendrikutsed, muudatused ja meeldetuletused ise. Sa ei saada enam ühtegi SMS-i aegadega.', en: 'The client and their household get calendar invites, changes and reminders by themselves. You never text a time again.', ru: 'Клиент и его семья сами получают приглашения в календарь, изменения и напоминания. Вы больше не отправляете ни одного смс со временем.' },
+                s2Item3: { et: 'Kliendi soovid, nagu aknad, süvapuhastus või lilled, jõuavad sinuni ja sa kinnitad aja ühe puutega.', en: 'Client requests such as windows, a deep clean or flowers reach you, and you confirm a time with one tap.', ru: 'Пожелания клиента, например окна, генеральная уборка или цветы, приходят к вам, и вы подтверждаете время одним касанием.' },
+                s2Item4: { et: 'Kuu lõpus on kokkuvõte arve tegemiseks valmis. Kliendi eemalolek, sissepääs ja eelistused on alati näha.', en: 'At the end of the month the summary for your invoice is ready. The client\'s away periods, access and preferences are always visible.', ru: 'В конце месяца сводка для счёта уже готова. Отсутствие клиента, доступ в дом и предпочтения всегда перед глазами.' },
+                openDesk: { et: 'Ava oma töölaud', en: 'Open your desk', ru: 'Открыть рабочий стол' },
+                s2Note: { et: 'Kuni 3 kodu on tasuta. Sisenemislink tuleb kohe e-postile.', en: 'Up to 3 homes are free. The login link arrives by e-mail at once.', ru: 'До 3 домов бесплатно. Ссылка для входа сразу придёт на почту.' },
+                planFree: { et: 'Tasuta', en: 'Free', ru: 'Бесплатно' },
+                planFreeHomes: { et: 'kuni 3 kodu', en: 'up to 3 homes', ru: 'до 3 домов' },
+                planStandard: { et: 'Standard', en: 'Standard', ru: 'Стандарт' },
+                planStandardHomes: { et: 'kuni 20 kodu', en: 'up to 20 homes', ru: 'до 20 домов' },
+                planStudio: { et: 'Stuudio', en: 'Studio', ru: 'Студия' },
+                planStudioHomes: { et: 'piiramatult kodusid', en: 'unlimited homes', ru: 'без ограничения' },
+                perMonth: { et: '€ kuus', en: '€ a month', ru: '€ в месяц' },
+                s2Price: {
+                    et: 'Hind sõltub ainult sellest, mitu kodu sul töölaual on. Kõik võimalused on igas paketis, maksad kuu kaupa ja võid igal ajal lõpetada. Sinu klient ei maksa SUKODA-le midagi, sinu hinnad ja arved jäävad sinu enda asjaks.',
+                    en: 'The price depends on one thing only: how many homes are on your desk. Every feature is in every plan, you pay month by month and can stop at any time. Your client pays SUKODA nothing; your prices and invoices stay your own business.',
+                    ru: 'Цена зависит только от того, сколько домов у вас на рабочем столе. Все возможности есть в каждом тарифе, оплата помесячно, отказаться можно в любой момент. Ваш клиент ничего не платит SUKODA, ваши цены и счета остаются вашим делом.',
+                },
+
+                s3Title: { et: 'Mida kodu siit saab.', en: 'What a home gets here.', ru: 'Что получает дом.' },
+                s3Lead: {
+                    et: 'Iga soov läheb inimesele, kes su kodu juba tunneb. Kui sellist inimest veel ei ole, ütle meile, mida vajad, ja me otsime õige inimese.',
+                    en: 'Every request goes to a person who already knows your home. If there is no such person yet, tell us what you need and we find the right one.',
+                    ru: 'Каждое пожелание уходит человеку, который уже знает ваш дом. Если такого человека пока нет, скажите нам, что нужно, и мы найдём подходящего.',
+                },
+                s3Note: {
+                    et: 'Hinna lepid kokku otse inimesega, kes töö teeb, nagu seni. SUKODA ei ole vahendaja ega turuplats, vaid koht, kus su kodu ja inimesed, kes kodu eest hoolitsevad, kokku saavad.',
+                    en: 'You agree the price directly with the person doing the work, as before. SUKODA is not a middleman or a marketplace; it is the place where your home and the people who care for the home meet.',
+                    ru: 'Цену вы согласуете напрямую с тем, кто выполняет работу, как и раньше. SUKODA не посредник и не маркетплейс, а место, где встречаются ваш дом и люди, которые о нём заботятся.',
+                },
+
+                s4Title: { et: 'Kuidas kodu liitub.', en: 'How a home joins.', ru: 'Как подключить дом.' },
+                s4Lead: {
+                    et: 'Kontot ei pea looma. Kodu tuleb portaali inimese kaudu, kes seal juba käib, enamasti koduhooldaja, või arendajalt koos võtmetega. Siin ei ole otsingut ega võrdlust, on inimesed, keda sa usaldad.',
+                    en: 'There is no account to create. A home joins through the person who already comes there, usually the housekeeper, or from the developer together with the keys. There is no search or comparison here, only people you trust.',
+                    ru: 'Аккаунт создавать не нужно. Дом подключается через человека, который уже в нём бывает, чаще всего помощницу по дому, или от застройщика вместе с ключами. Здесь нет поиска и сравнения, только люди, которым вы доверяете.',
+                },
+
+                quote: {
+                    et: '„Ajad tulid sõnumiga ja tuli edasi saata. Lilled tellisin telefoniga. Remondimehe number oli kellegi juures. Kõik töötas, aga inimeste, mitte süsteemi tõttu.“',
+                    en: '“Times arrived by text and had to be forwarded. Flowers were ordered by phone. The handyman\'s number was with someone else. It all worked, but because of people, not because of a system.”',
+                    ru: '«Время приходило смской, и его нужно было пересылать. Цветы я заказывал по телефону. Номер мастера был у кого-то другого. Всё работало, но благодаря людям, а не системе».',
+                },
+                quoteLink: { et: 'Kuidas SUKODA sündis →', en: 'How SUKODA came to be →', ru: 'Как появилась SUKODA →' },
+
+                startTitle: { et: 'Alusta', en: 'Get started', ru: 'Начать' },
+                startLead: {
+                    et: 'Sisse saab kolmel viisil. Koduomanik kutsub oma koduhooldaja. Koduhooldaja või muu teenusepakkuja avab endale töölaua. Arendaja räägib meiega, kuidas anda kodud üle koos portaaliga.',
+                    en: 'There are three ways in. A homeowner invites their housekeeper. A housekeeper or other service provider opens a desk. A developer talks to us about handing over homes together with the portal.',
+                    ru: 'Подключиться можно тремя способами. Владелец жилья приглашает свою помощницу по дому. Помощница по дому или другой специалист открывает рабочий стол. Застройщик обсуждает с нами, как передавать дома вместе с порталом.',
+                },
+                startError: { et: 'Saatmine ei õnnestunud. Kirjuta tere@sukoda.ee.', en: 'Sending failed. Write to tere@sukoda.ee.', ru: 'Не удалось отправить. Напишите на tere@sukoda.ee.' },
+                roleHome: { et: 'Koduomanik', en: 'Homeowner', ru: 'Владелец жилья' },
+                rolePartner: { et: 'Teenusepakkuja', en: 'Service provider', ru: 'Специалист' },
+                roleDeveloper: { et: 'Arendaja', en: 'Developer', ru: 'Застройщик' },
+                haveKeeper: { et: 'Mul on koduhooldaja', en: 'I have a housekeeper', ru: 'У меня есть помощница по дому' },
+                noKeeper: { et: 'Mul ei ole veel koduhooldajat', en: 'No housekeeper yet', ru: 'Помощницы по дому пока нет' },
+                inviteLead: {
+                    et: 'Kutsu oma koduhooldaja SUKODA-sse. Koduhooldaja avab tasuta töölaua, lisab sinu kodu ja ajad jõuavad edaspidi sinu pere kalendrisse ise.',
+                    en: 'Invite your housekeeper to SUKODA. The housekeeper opens a free desk, adds your home, and from then on the times reach your household calendar by themselves.',
+                    ru: 'Пригласите свою помощницу по дому в SUKODA. Она откроет бесплатный рабочий стол, добавит ваш дом, и время визитов дальше будет само попадать в календарь вашей семьи.',
+                },
+                keeperName: { et: 'Koduhooldaja nimi', en: 'Housekeeper\'s name', ru: 'Имя помощницы по дому' },
+                keeperEmail: { et: 'Koduhooldaja e-post', en: 'Housekeeper\'s e-mail', ru: 'Электронная почта помощницы' },
+                keeperFallback: { et: 'koduhooldaja', en: 'your housekeeper', ru: 'помощница по дому' },
+                yourName: { et: 'Sinu nimi', en: 'Your name', ru: 'Ваше имя' },
+                yourEmail: { et: 'Sinu e-post', en: 'Your e-mail', ru: 'Ваша электронная почта' },
+                fName: { et: 'Nimi', en: 'Name', ru: 'Имя' },
+                fEmail: { et: 'E-post', en: 'E-mail', ru: 'Электронная почта' },
+                fCity: { et: 'Linn või piirkond', en: 'City or area', ru: 'Город или район' },
+                fCompany: { et: 'Ettevõte ja objekt', en: 'Company and project', ru: 'Компания и объект' },
+                waitLead: {
+                    et: 'Koristust ei saa siit otse tellida, kodu tuleb portaali koduhooldaja kaudu. Jäta oma kontakt ja me anname isiklikult teada, kui sinu piirkonnas on koduhooldaja, keda usaldame.',
+                    en: 'Cleaning cannot be ordered here directly; a home joins through its housekeeper. Leave your contact and we will tell you personally when there is a housekeeper in your area whom we trust.',
+                    ru: 'Уборку здесь напрямую заказать нельзя, дом подключается через помощницу по дому. Оставьте контакт, и мы лично сообщим, когда в вашем районе появится помощница, которой мы доверяем.',
+                },
+                partnerLead: {
+                    et: 'Töölaud on koduhooldajale, floristile, remondimehele või aednikule. Sa lisad kliendi ja ajad või graafiku, klient ja tema pere saavad kalendrikutsed, muudatused ja meeldetuletused ise. Sina ei saada enam ühtegi SMS-i aegadega.',
+                    en: 'The desk is for housekeepers, florists, handymen and gardeners. You add a client and the times or a schedule; the client and their household get calendar invites, changes and reminders by themselves. You never text a time again.',
+                    ru: 'Рабочий стол для помощниц по дому, флористов, мастеров и садовников. Вы добавляете клиента и время или график, а клиент и его семья сами получают приглашения в календарь, изменения и напоминания. Вы больше не отправляете смс со временем.',
+                },
+                partnerItem1: { et: 'Kliendid, ajad ja korduv graafik on ühes kohas.', en: 'Clients, times and recurring schedules are in one place.', ru: 'Клиенты, время и регулярный график в одном месте.' },
+                partnerItem2: { et: 'Kliendi soovid jõuavad sinuni ja sa kinnitad aja ühe puutega.', en: 'Client requests reach you and you confirm a time with one tap.', ru: 'Пожелания клиента приходят к вам, и вы подтверждаете время одним касанием.' },
+                partnerItem3: { et: 'Lilled ja muu, mis kuulub sinu teenusesse, tellitakse automaatselt.', en: 'Flowers and whatever else is part of your service are ordered automatically.', ru: 'Цветы и всё остальное, что входит в вашу услугу, заказываются автоматически.' },
+                partnerItem4: { et: 'Kuu lõpus on kokkuvõte arve tegemiseks valmis.', en: 'At the end of the month the summary for your invoice is ready.', ru: 'В конце месяца сводка для счёта уже готова.' },
+                partnerNote: { et: 'Kuni 3 kodu on tasuta, edasi 19 € kuus. Sisenemislink tuleb kohe e-postile.', en: 'Up to 3 homes are free, then 19 € a month. The login link arrives by e-mail at once.', ru: 'До 3 домов бесплатно, дальше 19 € в месяц. Ссылка для входа сразу придёт на почту.' },
+                devLead: {
+                    et: 'Ostja saab võtmetega kaasa kaardi, mille kood avab tema kodu portaalis: dokumendid, garantii, hooldus ja teenused on ühes kohas, teie partneritega. Jätke kontakt ja me võtame ühendust.',
+                    en: 'The buyer receives a card with the keys; its code opens their home in the portal, with documents, warranty, upkeep and services in one place, together with your partners. Leave your contact and we will get in touch.',
+                    ru: 'Покупатель получает вместе с ключами карту, код которой открывает его дом в портале: документы, гарантия, обслуживание и услуги в одном месте, с вашими партнёрами. Оставьте контакт, и мы свяжемся с вами.',
+                },
+                sendInvite: { et: 'Saada kutse', en: 'Send the invitation', ru: 'Отправить приглашение' },
+                leaveContact: { et: 'Jäta kontakt', en: 'Leave my contact', ru: 'Оставить контакт' },
+                sendingShort: { et: 'Saadan…', en: 'Sending…', ru: 'Отправляем…' },
+                sentInviteTitle: { et: 'Kutse on saadetud.', en: 'The invitation is sent.', ru: 'Приглашение отправлено.' },
+                sentInviteText: { et: 'Kui {name} töölaua avab ja sinu kodu lisab, saad e-kirja portaali lingiga.', en: 'When {name} opens the desk and adds your home, you get an e-mail with your portal link.', ru: 'Когда {name} откроет рабочий стол и добавит ваш дом, вы получите письмо со ссылкой на портал.' },
+                sentWaitTitle: { et: 'Aitäh. Võtame ühendust.', en: 'Thank you. We will be in touch.', ru: 'Спасибо. Мы свяжемся с вами.' },
+                sentWaitText: { et: 'Kirjutame sulle isiklikult, tavaliselt paari päeva jooksul.', en: 'We write to you personally, usually within a couple of days.', ru: 'Мы напишем вам лично, обычно в течение пары дней.' },
+
+                footerTagline: { et: 'Koduportaal ja töölaud neile, kes kodude eest hoolitsevad. Tallinn, Eesti.', en: 'A home portal, and a desk for those who care for homes. Tallinn, Estonia.', ru: 'Портал дома и рабочий стол для тех, кто заботится о домах. Таллинн, Эстония.' },
+                footerLinks: { et: 'Lingid', en: 'Links', ru: 'Ссылки' },
+                footerDesk: { et: 'Töölaud teenusepakkujale', en: 'Provider desk', ru: 'Рабочий стол специалиста' },
+                footerContact: { et: 'Kontakt', en: 'Contact', ru: 'Контакты' },
+                footerLegal: { et: '© 2026 SUKODA on Epic Ship OÜ kaubamärk · Registrikood 14713548 · Kiikri tn 6/2, Tallinn 10159', en: '© 2026 SUKODA is a trademark of Epic Ship OÜ · Reg. code 14713548 · Kiikri tn 6/2, Tallinn 10159', ru: '© 2026 SUKODA — торговая марка Epic Ship OÜ · Рег. код 14713548 · Kiikri tn 6/2, Таллинн 10159' },
+                terms: { et: 'Tingimused', en: 'Terms', ru: 'Условия' },
+                privacy: { et: 'Privaatsuspoliitika', en: 'Privacy', ru: 'Конфиденциальность' },
+
+                cookieText: { et: 'Kasutame küpsiseid, et leht töötaks paremini ja me näeksime, kust külastajad tulevad.', en: 'We use cookies so the site works better and we can see where visitors come from.', ru: 'Мы используем файлы cookie, чтобы сайт работал лучше и мы видели, откуда приходят посетители.' },
+                cookieMore: { et: 'Loe lähemalt', en: 'Read more', ru: 'Подробнее' },
+                cookieDecline: { et: 'Keeldu', en: 'Decline', ru: 'Отклонить' },
+                cookieAccept: { et: 'Nõustun', en: 'Accept', ru: 'Принять' },
+            },
+            features: [
+                { icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
+                  title: { et: 'Ajad kalendris', en: 'Times in the calendar', ru: 'Время в календаре' },
+                  text: { et: 'Iga visiit jõuab kalendrikutsena sinule ja kõigile, kes peaksid teadma. Kui aeg muutub, uueneb kutse ise.', en: 'Every visit arrives as a calendar invite to you and to everyone who should know. When the time changes, the invite updates by itself.', ru: 'Каждый визит приходит приглашением в календарь вам и всем, кому нужно знать. Если время меняется, приглашение обновляется само.' } },
+                { icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
+                  title: { et: 'Inimesed nimepidi', en: 'People by name', ru: 'Люди по именам' },
+                  text: { et: 'Sa näed, kes su kodus käib, millal ta tuleb ja kuidas ta kätte saad. Koduhooldaja, florist ja remondimees on nimega inimesed, mitte anonüümne teenus.', en: 'You see who comes to your home, when they come and how to reach them. The housekeeper, florist and handyman are people with names, not an anonymous service.', ru: 'Вы видите, кто приходит в ваш дом, когда придёт и как с ним связаться. Помощница по дому, флорист и мастер — люди с именами, а не безликая услуга.' } },
+                { icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
+                  title: { et: 'Soovid ühe puutega', en: 'Requests with one tap', ru: 'Пожелания одним касанием' },
+                  text: { et: 'Aknad, filtrid, pilt seina või lilled külalisteks: sa ütled, millal sobib, ja õige inimene kinnitab aja.', en: 'Windows, filters, a picture on the wall or flowers for guests: you say when suits you and the right person confirms a time.', ru: 'Окна, фильтры, картина на стену или цветы к приходу гостей: вы говорите, когда удобно, и нужный человек подтверждает время.' } },
+                { icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15',
+                  title: { et: 'Hooldusrütm', en: 'Upkeep rhythm', ru: 'Ритм ухода' },
+                  text: { et: 'Ventilatsioonifiltrid, pesumasin, suitsuandur ja süvapuhastus tulevad õigel ajal meelde, ilma et sa neid ise mäletaksid.', en: 'Ventilation filters, the washing machine, the smoke detector and the deep clean come to mind on time, without you having to remember them.', ru: 'Фильтры вентиляции, стиральная машина, датчик дыма и генеральная уборка напомнят о себе вовремя, вам не нужно держать их в голове.' } },
+                { icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+                  title: { et: 'Kodu dokumendid', en: 'Home documents', ru: 'Документы дома' },
+                  text: { et: 'Lepingud, kindlustus, seadmete garantiid ja tehtud tööd on kodu juures. Kodu müües annad kausta kaasa.', en: 'Contracts, insurance, appliance warranties and work done stay with the home. When you sell, the folder goes with it.', ru: 'Договоры, страховка, гарантии на технику и выполненные работы хранятся вместе с домом. При продаже папка переходит новому владельцу.' } },
+                { icon: 'M12 19l9 2-9-18-9 18 9-2zm0 0v-8',
+                  title: { et: 'Oleme eemal', en: 'We are away', ru: 'Нас нет дома' },
+                  text: { et: 'Oled reisil või suvel maal? Märgi periood ja visiidid jäävad selleks ajaks ära. Igaüks, kes su kodus käib, saab teate.', en: 'On a trip or at the cottage for the summer? Mark the period and visits are cancelled for that time. Everyone who comes to your home gets notified.', ru: 'Уезжаете или проводите лето за городом? Отметьте период, и визиты на это время отменятся. Все, кто приходит в ваш дом, получат уведомление.' } },
+            ],
+            categories: [
+                { title: { et: 'Koristus', en: 'Cleaning', ru: 'Уборка' },
+                  items: { et: ['Regulaarne koristus', 'Süvapuhastus', 'Akende pesu', 'Külmik ja ahi', 'Triikimine', 'Voodipesu vahetus'], en: ['Regular cleaning', 'Deep clean', 'Windows', 'Fridge and oven', 'Ironing', 'Linen change'], ru: ['Регулярная уборка', 'Генеральная уборка', 'Мытьё окон', 'Холодильник и духовка', 'Глажка', 'Смена постельного белья'] } },
+                { title: { et: 'Lilled', en: 'Flowers', ru: 'Цветы' },
+                  items: { et: ['Värsked lilled igaks visiidiks', 'Kimp külalisteks', 'Toataimede hooldus'], en: ['Fresh flowers for every visit', 'A bouquet for guests', 'Houseplant care'], ru: ['Свежие цветы к каждому визиту', 'Букет к приходу гостей', 'Уход за комнатными растениями'] } },
+                { title: { et: 'Remondimees', en: 'Handyman', ru: 'Мастер' },
+                  items: { et: ['Pilt seina, riiul üles', 'Ventilatsioonifiltrid', 'Väikesed parandused', 'Mööbli kokkupanek'], en: ['Pictures and shelves up', 'Ventilation filters', 'Small repairs', 'Furniture assembly'], ru: ['Повесить картину или полку', 'Фильтры вентиляции', 'Мелкий ремонт', 'Сборка мебели'] } },
+                { title: { et: 'Aed ja õu', en: 'Garden and outdoors', ru: 'Сад и двор' },
+                  items: { et: ['Muru', 'Hekk', 'Terrassi ja kivide pesu', 'Hooajatööd aias'], en: ['Lawn', 'Hedge', 'Terrace and paving wash', 'Seasonal garden work'], ru: ['Газон', 'Живая изгородь', 'Мойка террасы и плитки', 'Сезонные работы в саду'] } },
+            ],
+            steps: [
+                { href: '#alusta',
+                  title: { et: 'Koduhooldaja avab töölaua', en: 'The housekeeper opens a desk', ru: 'Помощница по дому открывает рабочий стол' },
+                  text: { et: 'Koduhooldaja sisestab oma nime, e-posti ja teenused. Sisenemislink tuleb kohe. Kui tahad, saadad kutse ise.', en: 'The housekeeper enters their name, e-mail and services. The login link arrives at once. If you like, you send the invitation yourself.', ru: 'Помощница по дому вводит имя, электронную почту и услуги. Ссылка для входа приходит сразу. Если хотите, приглашение отправите вы сами.' },
+                  link: { et: 'Ava töölaud või kutsu oma koduhooldaja', en: 'Open a desk or invite your housekeeper', ru: 'Открыть рабочий стол или пригласить помощницу' } },
+                { title: { et: 'Koduhooldaja lisab sinu kodu', en: 'The housekeeper adds your home', ru: 'Помощница по дому добавляет ваш дом' },
+                  text: { et: 'Koduhooldaja paneb kirja aadressi, ajad ja kes veel peaks teadma. Sina saad e-kirja portaali lingiga, parooli ei ole. Kaardiga kodu avad koodiga ise.', en: 'The housekeeper writes down the address, the times and who else should know. You get an e-mail with your portal link; there is no password. A home that came with a card you open with the code yourself.', ru: 'Помощница по дому записывает адрес, время визитов и кого ещё нужно оповещать. Вы получаете письмо со ссылкой на портал, пароль не нужен. Дом, полученный с картой, вы открываете кодом сами.' } },
+                { title: { et: 'Edasi liigub kõik ise', en: 'From then on it runs itself', ru: 'Дальше всё идёт само' },
+                  text: { et: 'Kalendrikutsed, muudatused ja meeldetuletused tulevad ise. Sa lisad pere ja dokumendid ega pea rohkem midagi meeles pidama.', en: 'Calendar invites, changes and reminders come by themselves. You add the household and the documents and no longer have to remember anything.', ru: 'Приглашения в календарь, изменения и напоминания приходят сами. Вы добавляете семью и документы, и больше ничего не нужно держать в голове.' } },
+            ],
+            t(key, vars) {
+                const row = this.T[key] || {};
+                const s = row[this.lang] || row.et || key;
+                return vars ? s.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '') : s;
+            },
+            pick(obj) {
+                if (!obj) return '';
+                return obj[this.lang] || obj.et || '';
+            },
+            init() {
+                this.$watch('lang', (v) => { localStorage.setItem('sukoda_lang', v); document.documentElement.lang = v; });
+                document.documentElement.lang = this.lang;
+            },
+        };
+    }
+    </script>
 
 </body>
 </html>

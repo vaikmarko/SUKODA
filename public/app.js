@@ -61,9 +61,9 @@
     sendCode: { et: 'Saada kood', en: 'Send the code', ru: 'Отправить код' },
     codeTitle: { et: 'Kirjuta kood', en: 'Enter the code', ru: 'Введите код' },
     codeWhere: {
-      et: 'Saatsime kuus numbrit aadressile {email}.',
-      en: 'We sent six digits to {email}.',
-      ru: 'Мы отправили шесть цифр на {email}.',
+      et: 'Saatsime kuuekohalise koodi aadressile {email}. Kirjuta kood siia.',
+      en: 'We sent a six-digit code to {email}. Enter the code here.',
+      ru: 'Мы отправили шестизначный код на {email}. Введите код здесь.',
     },
     newCode: {
       et: 'Saada uus kood',

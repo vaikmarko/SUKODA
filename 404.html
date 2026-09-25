@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <style>[x-cloak] { display: none !important; }</style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SUKODA | 404</title>
-    
+    <title>SUKODA | Lehte ei leitud</title>
+
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/assets/logo/icon-s-black.svg">
     <link rel="apple-touch-icon" href="/assets/logo/icon-square.svg">
@@ -13,113 +13,94 @@
     <link rel="preload" href="/assets/fonts/cormorant-garamond-400.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/assets/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
 </head>
-<body class="antialiased" x-data="{ lang: localStorage.getItem('sukoda_lang') || 'et' }" x-init="$watch('lang', val => localStorage.setItem('sukoda_lang', val))">
-    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[10000] focus:bg-accent focus:text-paper focus:px-4 focus:py-2 focus:text-sm focus:font-sans">Skip to main content</a>
+<body class="antialiased" x-data="notFoundPage()">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[10000] focus:bg-accent focus:text-paper focus:px-4 focus:py-2 focus:text-sm focus:font-sans" x-text="t('skip')">Sisu juurde</a>
 
-    <div class="max-w-[1440px] mx-auto bg-paper min-h-screen border-x border-[#E8E3DD] flex flex-col">
-        
-        <!-- Navigation -->
-        <nav class="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm grid-line-b" x-data="{ mobileMenu: false }" aria-label="Main navigation">
+    <div class="max-w-[1440px] mx-auto bg-paper min-h-screen border-x border-line flex flex-col">
+
+        <!-- Navigation: name, language, one way in -->
+        <nav class="grid-line-b" :aria-label="t('navLabel')">
             <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12">
                 <a href="/" class="font-serif text-2xl md:text-3xl tracking-[0.08em] font-light">SUKODA</a>
-                <div class="hidden md:flex gap-10 text-[11px] uppercase tracking-[0.2em] font-sans font-medium text-muted">
-                    <a href="/#kodule" class="luxury-link hover:text-black transition-colors" x-text="lang === 'et' ? 'Koduomanikule' : 'For homeowners'">Koduomanikule</a>
-                    <a href="/#teenusepakkujale" class="luxury-link hover:text-black transition-colors" x-text="lang === 'et' ? 'Teenusepakkujale' : 'For providers'">Teenusepakkujale</a>
-                    <a href="/lugu" class="luxury-link hover:text-black transition-colors" x-text="lang === 'et' ? 'Lugu' : 'Story'">Lugu</a>
-                </div>
                 <div class="flex items-center gap-4 md:gap-6">
-                    <div class="flex text-[10px] uppercase tracking-[0.2em] font-sans font-medium gap-2">
-                        <button @click="lang = 'et'" :class="lang === 'et' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">ET</button>
-                        <span class="text-[#D4CFC8]">/</span>
-                        <button @click="lang = 'en'" :class="lang === 'en' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">EN</button>
+                    <div class="flex items-center gap-2 text-xs uppercase tracking-[0.16em] font-sans font-medium" role="group" :aria-label="t('langLabel')">
+                        <button type="button" @click="lang = 'et'" :class="{ 'text-black': lang === 'et', 'text-muted hover:text-black': lang !== 'et' }" :aria-pressed="lang === 'et'" class="transition-colors py-2 px-1">ET</button>
+                        <span class="text-muted-light" aria-hidden="true">·</span>
+                        <button type="button" @click="lang = 'en'" :class="{ 'text-black': lang === 'en', 'text-muted hover:text-black': lang !== 'en' }" :aria-pressed="lang === 'en'" class="transition-colors py-2 px-1">EN</button>
+                        <span class="text-muted-light" aria-hidden="true">·</span>
+                        <button type="button" @click="lang = 'ru'" :class="{ 'text-black': lang === 'ru', 'text-muted hover:text-black': lang !== 'ru' }" :aria-pressed="lang === 'ru'" class="transition-colors py-2 px-1">RU</button>
                     </div>
-                    <a href="/minu" class="hidden md:inline-block bg-black text-paper px-5 py-2 text-[11px] uppercase tracking-[0.2em] font-sans font-medium hover:bg-accent transition-colors duration-500" x-text="lang === 'et' ? 'Sisene' : 'Log in'">Sisene</a>
-                    <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2" :aria-expanded="mobileMenu" aria-label="Toggle menu">
-                        <svg x-show="!mobileMenu" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-                        <svg x-show="mobileMenu" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
-                </div>
-            </div>
-            <div x-show="mobileMenu" x-cloak class="md:hidden bg-paper border-t border-[#E8E3DD]">
-                <div class="flex flex-col px-4 py-8 space-y-5 text-[11px] uppercase tracking-[0.2em] font-sans font-medium text-muted">
-                    <a href="/#kodule" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Koduomanikule' : 'For homeowners'">Koduomanikule</a>
-                    <a href="/#teenusepakkujale" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Teenusepakkujale' : 'For providers'">Teenusepakkujale</a>
-                    <a href="/lugu" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Lugu' : 'Story'">Lugu</a>
-                    <a href="/minu" class="py-2 hover:text-black" x-text="lang === 'et' ? 'Sisene' : 'Log in'">Sisene</a>
+                    <a href="/minu" class="p-btn p-btn-sm hidden md:inline-flex" x-text="t('login')">Sisene</a>
                 </div>
             </div>
         </nav>
 
-        <!-- 404 Content -->
+        <!-- 404: what happened, what to do -->
         <main id="main-content" class="flex-1 flex items-center justify-center px-6 py-24 md:py-32">
             <div class="text-center max-w-lg">
-                
                 <div class="animate-in">
-                    <p class="text-[10px] uppercase tracking-[0.3em] text-accent font-sans mb-8">404</p>
-                    <div class="accent-line mx-auto mb-8"></div>
-                    <h1 class="font-serif text-5xl md:text-7xl font-light mb-6">
-                        <span x-show="lang === 'et'">Siin pole<br>midagi.</span>
-                        <span x-show="lang === 'en'" x-cloak>Nothing<br>here.</span>
-                    </h1>
+                    <p class="eyebrow text-accent mb-6">404</p>
+                    <h1 class="font-serif text-3xl md:text-4xl font-light mb-6 leading-tight" x-text="t('title')">Sellist lehte ei ole.</h1>
                 </div>
-
                 <div class="animate-in-delay">
-                    <p class="text-base md:text-lg text-muted font-sans font-light leading-relaxed mb-12 max-w-sm mx-auto">
-                        <span x-show="lang === 'et'">Seda lehte ei leitud. Aga kodu ootab sind alati.</span>
-                        <span x-show="lang === 'en'" x-cloak>This page wasn't found. But home is always waiting for you.</span>
+                    <p class="text-sm text-muted font-sans font-light leading-relaxed mb-10 max-w-sm mx-auto" x-text="t('text')"></p>
+                    <a href="/" class="p-btn w-full sm:w-auto sm:min-w-[14rem]" x-text="t('home')">Avalehele</a>
+                    <p class="mt-6">
+                        <a href="/minu" class="text-sm font-sans font-light text-muted hover:text-black transition-colors border-b border-line hover:border-black" x-text="t('myHome')">Minu kodu</a>
                     </p>
-
-                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                        <a href="/" class="inline-block bg-black text-paper px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-accent transition-colors duration-500" x-text="lang === 'et' ? 'Avalehele' : 'Go home'">
-                            Avalehele
-                        </a>
-                        <a href="/minu" class="inline-block border border-black text-black px-8 py-4 text-[11px] uppercase tracking-[0.2em] font-sans hover:bg-black hover:text-paper transition-all duration-500" x-text="lang === 'et' ? 'Minu kodu' : 'My home'">Minu kodu</a>
-                    </div>
-
-                    <p class="mt-12 text-xs text-muted/50 font-sans font-light">
-                        <span x-show="lang === 'et'">Küsimuste korral: </span>
-                        <span x-show="lang === 'en'" x-cloak>Questions? </span>
-                        <a href="mailto:tere@sukoda.ee" class="text-muted hover:text-black transition-colors border-b border-muted/30 hover:border-black">tere@sukoda.ee</a>
+                    <p class="mt-12 text-xs text-muted font-sans font-light">
+                        <span x-text="t('questions')"></span>
+                        <a href="mailto:tere@sukoda.ee" class="text-muted hover:text-black transition-colors border-b border-line hover:border-black">tere@sukoda.ee</a>
                     </p>
                 </div>
             </div>
         </main>
 
         <!-- Footer -->
-        <footer class="bg-black text-paper">
-            <div class="grid md:grid-cols-12 gap-8 py-12 md:py-14 px-6 md:px-12">
-                <div class="md:col-span-4">
-                    <a href="/" class="font-serif text-2xl tracking-[0.08em] font-light block mb-4">SUKODA</a>
-                    <p class="text-gray-300 text-sm font-sans font-light leading-relaxed max-w-xs">
-                        <span x-show="lang === 'et'">Koduportaal ja töölaud neile, kes kodude eest hoolitsevad.<br>Tallinn, Eesti.</span>
-                        <span x-show="lang === 'en'" x-cloak>A home portal, and a desk for those who care for homes.<br>Tallinn, Estonia.</span>
-                    </p>
-                </div>
-                <div class="md:col-span-4">
-                    <p class="text-[10px] uppercase tracking-[0.25em] text-gray-300 font-sans mb-4"><span x-show="lang === 'et'">Lingid</span><span x-show="lang === 'en'" x-cloak>Links</span></p>
-                    <div class="flex flex-col gap-3 text-sm text-gray-300 font-sans font-light">
-                        <a href="/lugu" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Lugu' : 'Story'">Lugu</a>
-                        <a href="/haldus" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Töölaud teenusepakkujale' : 'Provider desk'">Töölaud teenusepakkujale</a>
-                        <a href="/minu" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Minu kodu' : 'My home'">Minu kodu</a>
-                        <a href="/tingimused" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Tingimused' : 'Terms'">Tingimused</a>
-                        <a href="/privaatsus" class="hover:text-paper transition-colors" x-text="lang === 'et' ? 'Privaatsuspoliitika' : 'Privacy'">Privaatsuspoliitika</a>
-                    </div>
-                </div>
-                <div class="md:col-span-4">
-                    <p class="text-[10px] uppercase tracking-[0.25em] text-gray-300 font-sans mb-4"><span x-show="lang === 'et'">Kontakt</span><span x-show="lang === 'en'" x-cloak>Contact</span></p>
-                    <a href="mailto:tere@sukoda.ee" class="text-sm font-sans font-light text-gray-300 hover:text-paper transition-colors block mb-2">tere@sukoda.ee</a>
-                    <a href="mailto:partner@sukoda.ee" class="text-sm font-sans font-light text-gray-300 hover:text-paper transition-colors block">partner@sukoda.ee</a>
-                </div>
-            </div>
-            <div class="border-t border-gray-800 py-6 px-6 md:px-12">
-                <p class="text-[11px] text-gray-400 font-sans text-center tracking-wide">
-                    <span x-show="lang === 'et'">© 2026 SUKODA on Epic Ship OÜ kaubamärk · Registrikood 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
-                    <span x-show="lang === 'en'" x-cloak>© 2026 SUKODA is a trademark of Epic Ship OÜ · Reg. code 14713548 · Kiikri tn 6/2, Tallinn 10159</span>
-                </p>
-            </div>
+        <footer class="border-t border-line py-6 px-6 md:px-12">
+            <p class="text-xs text-muted font-sans font-light text-center leading-relaxed">
+                <span x-text="t('company')"></span>
+                <span class="text-muted-light mx-2" aria-hidden="true">·</span>
+                <a href="/tingimused" class="hover:text-black transition-colors" x-text="t('terms')"></a>
+                <span class="text-muted-light mx-2" aria-hidden="true">·</span>
+                <a href="/privaatsus" class="hover:text-black transition-colors" x-text="t('privacy')"></a>
+            </p>
         </footer>
 
     </div>
+
+    <script>
+    function notFoundPage() {
+        const LANGS = ['et', 'en', 'ru'];
+        const saved = localStorage.getItem('sukoda_lang');
+        return {
+            lang: LANGS.includes(saved) ? saved : 'et',
+            T: {
+                skip: { et: 'Sisu juurde', en: 'Skip to content', ru: 'К содержимому' },
+                navLabel: { et: 'Peamenüü', en: 'Main navigation', ru: 'Главное меню' },
+                langLabel: { et: 'Keel', en: 'Language', ru: 'Язык' },
+                login: { et: 'Sisene', en: 'Log in', ru: 'Войти' },
+                title: { et: 'Sellist lehte ei ole.', en: 'There is no such page.', ru: 'Такой страницы нет.' },
+                text: { et: 'Aadress võib olla vale või on leht ära kolinud. Mine avalehele või ava oma kodu.', en: 'The address may be wrong, or the page has moved. Go to the front page or open your home.', ru: 'Возможно, адрес указан неверно или страница переехала. Перейдите на главную или откройте свой дом.' },
+                home: { et: 'Avalehele', en: 'Front page', ru: 'На главную' },
+                myHome: { et: 'Minu kodu', en: 'My home', ru: 'Мой дом' },
+                questions: { et: 'Küsimuste korral kirjuta', en: 'Questions? Write to', ru: 'Есть вопросы? Напишите на' },
+                company: { et: '© 2026 SUKODA · Epic Ship OÜ', en: '© 2026 SUKODA · Epic Ship OÜ', ru: '© 2026 SUKODA · Epic Ship OÜ' },
+                terms: { et: 'Tingimused', en: 'Terms', ru: 'Условия' },
+                privacy: { et: 'Privaatsus', en: 'Privacy', ru: 'Конфиденциальность' },
+            },
+            t(key, vars) {
+                const row = this.T[key] || {};
+                const s = row[this.lang] || row.et || key;
+                return vars ? s.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '') : s;
+            },
+            init() {
+                this.$watch('lang', (v) => { localStorage.setItem('sukoda_lang', v); document.documentElement.lang = v; });
+                document.documentElement.lang = this.lang;
+            },
+        };
+    }
+    </script>
 
 </body>
 </html>

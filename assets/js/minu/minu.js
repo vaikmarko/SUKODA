@@ -4,66 +4,63 @@ add({
   tabMine: { et: 'Minu', en: 'Profile', ru: 'Профиль' },
   langLabel: { et: 'Keel', en: 'Language', ru: 'Язык' },
   accessSaved: { et: 'Juhis on kirjas', en: 'The note is saved', ru: 'Указание записано' },
-  profileTitle: { et: 'Sissepääs', en: 'Access', ru: 'Вход' },
-  upkeepQuiet: {
-    et: 'Voodipesu, rätikud ja masinate hooldus käivad koristusega. Kui koristust enam ei ole, vaheta ventilatsioonifilter ise iga kuue kuu tagant.',
-    en: 'Bed linen, towels and appliance care come with the cleaning. If the cleaning stops, change the ventilation filter yourself every six months.',
-    ru: 'Постельное бельё, полотенца и уход за техникой идут вместе с уборкой. Если уборки больше нет, меняйте фильтр вентиляции сами каждые шесть месяцев.',
-  },
-  showUpkeep: { et: 'Näita hooldust', en: 'Show upkeep', ru: 'Показать уход' },
-  keeperSees: { et: 'Koduhooldaja näeb sissepääsu, lemmikuid ja eelistusi igal visiidil.', en: 'The housekeeper sees access, pets and preferences on every visit.', ru: 'Специалист по дому видит вход, животных и предпочтения на каждом визите.' },
-  edit: { et: 'Muuda', en: 'Edit', ru: 'Измените' },
-  notFilled: { et: 'Täitmata: ', en: 'Not filled: ', ru: 'Не заполнено: ' },
-  save: { et: 'Salvesta', en: 'Save', ru: 'Сохраните' },
+  profileTitle: { et: 'Juhised koristajale', en: 'Notes for the cleaner', ru: 'Указания для уборщика' },
+  showUpkeep: { et: 'Näita nimekirja', en: 'Show the list', ru: 'Показать список' },
+  upkeepLead: { et: 'Nimekirjas on kirjas, mida kodu regulaarselt vajab, kes seda teeb ja millal on järgmine kord.', en: 'The list shows what the home needs regularly, who does it and when the next time is.', ru: 'В списке указано, что дому нужно регулярно, кто это делает и когда следующий раз.' },
+  keeperSees: { et: 'Koristaja näeb neid juhiseid igal visiidil.', en: 'The cleaner sees these notes on every visit.', ru: 'Уборщик видит эти указания на каждом визите.' },
+  edit: { et: 'Muuda', en: 'Edit', ru: 'Изменить' },
+  notFilled: { et: 'Täitmata: ', en: 'Not filled in: ', ru: 'Не заполнено: ' },
+  save: { et: 'Salvesta', en: 'Save', ru: 'Сохранить' },
   saved: { et: 'Salvestatud', en: 'Saved', ru: 'Сохранено' },
-  upkeep: { et: 'Hooldus', en: 'Upkeep', ru: 'Уход' },
+  saveFailed: { et: 'Salvestamine ei õnnestunud. Proovi uuesti.', en: 'Saving did not work. Try again.', ru: 'Сохранить не удалось. Попробуйте снова.' },
+  upkeep: { et: 'Hooldus', en: 'Upkeep', ru: 'Уход за домом' },
   dueSuffix: { et: ' ootel', en: ' due', ru: ' ждут' },
   youShort: { et: 'Sina', en: 'You', ru: 'Вы' },
-  markIt: { et: 'Märgi', en: 'Mark', ru: 'Отметьте' },
-  doneWord: { et: 'Tehtud', en: 'Done', ru: 'Готово' },
+  markIt: { et: 'Märgi', en: 'Mark', ru: 'Отметить' },
+  doneWord: { et: 'Tehtud', en: 'Done', ru: 'Сделано' },
   otherDate: { et: 'Muu kuupäev', en: 'Other date', ru: 'Другая дата' },
-  wantDoer: { et: 'Soovin tegijat', en: 'Want someone', ru: 'Нужен исполнитель' },
-  agreeTime: { et: 'Lepi aeg', en: 'Agree a time', ru: 'Согласуйте время' },
-  orderVerb: { et: 'Telli', en: 'Order', ru: 'Закажите' },
+  wantDoer: { et: 'Soovin tellida', en: 'I want to order this', ru: 'Хочу заказать' },
+  agreeTime: { et: 'Lepi aeg kokku', en: 'Agree a time', ru: 'Согласовать время' },
+  orderVerb: { et: 'Telli', en: 'Order', ru: 'Заказать' },
   doneByPrefix: { et: 'Teeb ', en: 'Done by ', ru: 'Делает ' },
-  housekeeper: { et: 'Koduhooldaja', en: 'Housekeeper', ru: 'Специалист по дому' },
-  nextPrefix: { et: 'järgmine ', en: 'next ', ru: 'следующее ' },
-  iDoIt: { et: 'Teen ise', en: 'I do it', ru: 'Сделаю сам' },
-  nothingYet: { et: 'Midagi pole veel kirjas.', en: 'Nothing here yet.', ru: 'Пока ничего не записано.' },
-  hideIt: { et: 'Peida', en: 'Hide', ru: 'Скройте' },
-  addShort: { et: 'Lisa', en: 'Add', ru: 'Добавьте' },
-  addOwn: { et: '+ Lisa oma kirje', en: '+ Add your own', ru: '+ Добавьте свою запись' },
+  housekeeper: { et: 'Koristaja', en: 'Cleaner', ru: 'Уборщик' },
+  nextPrefix: { et: 'järgmine ', en: 'next ', ru: 'следующий раз ' },
+  iDoIt: { et: 'Teen ise', en: 'I do it myself', ru: 'Сделаю сам' },
+  nothingYet: { et: 'Hooldusrida veel ei ole. Vali allpool, mida kodu vajab.', en: 'There is no upkeep item yet. Choose below what the home needs.', ru: 'Пунктов ухода пока нет. Выберите ниже, что нужно дому.' },
+  hideIt: { et: 'Peida', en: 'Hide', ru: 'Скрыть' },
+  addShort: { et: 'Lisa', en: 'Add', ru: 'Добавить' },
+  addOwn: { et: '+ Lisa oma rida', en: '+ Add your own item', ru: '+ Добавить свой пункт' },
   whatLabel: { et: 'Mis', en: 'What', ru: 'Что' },
-  maintPh: { et: 'nt Rõduukse tihendi kontroll', en: 'e.g. Balcony door seal check', ru: 'напр. проверка уплотнителя балконной двери' },
+  maintPh: { et: 'nt rõduukse tihendi kontroll', en: 'e.g. balcony door seal check', ru: 'напр. проверка уплотнителя балконной двери' },
   howOften: { et: 'Kui tihti', en: 'How often', ru: 'Как часто' },
   lastDoneField: { et: 'Viimati tehtud', en: 'Last done', ru: 'Последний раз' },
-  reminderMail: { et: 'Meeldetuletus e-postiga, kaks nädalat enne.', en: 'An e-mail reminder, two weeks before.', ru: 'Напоминание по почте за две недели.' },
-  whoNotified: { et: 'Kes saab teavitusi', en: 'Who receives notifications', ru: 'Кто получает уведомления' },
-  whoElse: { et: 'Kes veel peaks aegadest teada saama. Teade ja kalendrikutse jõuavad ka temani.', en: 'Who else should know the times. The notice and the calendar invite reach them too.', ru: 'Кто ещё должен знать о времени. Уведомление и приглашение в календарь придут и ему.' },
+  reminderMail: { et: 'Saada mulle meeldetuletus e-postiga kaks nädalat enne tähtaega.', en: 'Send me an e-mail reminder two weeks before the due date.', ru: 'Присылать мне напоминание по почте за две недели до срока.' },
+  whoNotified: { et: 'Kes saab teateid', en: 'Who gets the notices', ru: 'Кто получает уведомления' },
+  whoElse: { et: 'Lisa pereliikmed, kes peavad aegadest teada saama. Iga lisatud inimene saab samad teated ja kalendrikutsed.', en: 'Add the household members who should know the times. Each added person gets the same notices and calendar invites.', ru: 'Добавьте членов семьи, которым нужно знать о времени. Каждый добавленный человек получает те же уведомления и приглашения в календарь.' },
   newPerson: { et: 'Uus inimene', en: 'New person', ru: 'Новый человек' },
-  sameTimes: { et: 'Saab samad ajad ja kalendrikutsed', en: 'Gets the same times and calendar invites', ru: 'Получает те же время и приглашения в календарь' },
+  sameTimes: { et: 'Saab samad teated', en: 'Gets the same notices', ru: 'Получает те же уведомления' },
   household: { et: 'Pere', en: 'Household', ru: 'Семья' },
   homesTitle: { et: 'Kodud', en: 'Homes', ru: 'Дома' },
   currentHome: { et: 'See kodu', en: 'This home', ru: 'Этот дом' },
-  openThisHome: { et: 'Ava see kodu', en: 'Open this home', ru: 'Откройте этот дом' },
-  makeTenant: { et: 'Märgi üürnikuks', en: 'Mark as tenant', ru: 'Отметьте как арендатора' },
+  openThisHome: { et: 'Ava see kodu', en: 'Open this home', ru: 'Открыть этот дом' },
+  makeTenant: { et: 'Märgi üürnikuks', en: 'Mark as tenant', ru: 'Отметить как арендатора' },
   tenantOn: { et: 'Üürnik', en: 'Tenant', ru: 'Арендатор' },
-  tenantHint: { et: 'Näeb aegu ja saab tellida. Omandi dokumente ja üleandmist ei näe.', en: 'Sees the times and can order. Does not see ownership documents or the handover.', ru: 'Видит время и может заказывать. Не видит документы собственности и передачу.' },
-  handoverTitle: { et: 'Anna kodu üle', en: 'Hand the home over', ru: 'Передайте дом' },
-  handoverBody: { et: 'Uus omanik saab lingi. Sinu kontaktid, sissepääs ja pöördumised lähevad ära. Dokumendid, rütm ja visiidid jäävad.', en: 'The new owner gets a link. Your contacts, the door note and the requests go. Documents, the rhythm and the visits stay.', ru: 'Новый владелец получит ссылку. Ваши контакты, указание ко входу и обращения уходят. Документы, ритм и визиты остаются.' },
-  handoverGo: { et: 'Anna üle', en: 'Hand over', ru: 'Передайте' },
+  tenantHint: { et: 'Üürnik näeb aegu ja saab tellida. Omaniku dokumente ja kodu üleandmist üürnik ei näe.', en: 'The tenant sees the times and can order. The tenant does not see the owner’s documents or the handover.', ru: 'Арендатор видит время и может заказывать. Документы владельца и передачу дома арендатор не видит.' },
+  handoverTitle: { et: 'Anna kodu üle', en: 'Hand the home over', ru: 'Передать дом' },
+  handoverBody: { et: 'Uus omanik saab e-kirjaga lingi. Sinu kontaktid, sissepääsu juhis ja küsimused kustutatakse. Dokumendid, hooldus ja visiidid jäävad uuele omanikule.', en: 'The new owner gets a link by e-mail. Your contacts, the access note and your questions are deleted. The documents, the upkeep and the visits stay with the new owner.', ru: 'Новый владелец получит ссылку по электронной почте. Ваши контакты, указание ко входу и вопросы будут удалены. Документы, уход за домом и визиты останутся новому владельцу.' },
+  handoverGo: { et: 'Anna üle', en: 'Hand over', ru: 'Передать' },
   handoverSent: { et: 'Link on saadetud. See kodu on nüüd uue omaniku käes.', en: 'The link is sent. This home is now with the new owner.', ru: 'Ссылка отправлена. Дом теперь у нового владельца.' },
-  handoverFail: { et: 'Link ei läinud välja. Proovi sama aadressiga uuesti.', en: 'The link did not go out. Try the same address again.', ru: 'Ссылка не ушла. Попробуйте тот же адрес ещё раз.' },
+  handoverFail: { et: 'Link ei läinud teele. Kontrolli aadressi ja proovi uuesti.', en: 'The link did not go out. Check the address and try again.', ru: 'Ссылка не отправилась. Проверьте адрес и попробуйте снова.' },
   nameLabel: { et: 'Nimi', en: 'Name', ru: 'Имя' },
-  namePh: { et: 'nt Kristi', en: 'e.g. Mark', ru: 'напр. Кристи' },
+  namePh: { et: 'nt Kristi', en: 'e.g. Anna', ru: 'напр. Анна' },
   phoneLabel: { et: 'Telefon', en: 'Phone', ru: 'Телефон' },
-  emailLabel: { et: 'E-post', en: 'Email', ru: 'Эл. почта' },
-  addPerson: { et: '+ Lisa inimene', en: '+ Add person', ru: '+ Добавьте человека' },
+  emailLabel: { et: 'E-post', en: 'E-mail', ru: 'Эл. почта' },
+  addPerson: { et: '+ Lisa inimene', en: '+ Add a person', ru: '+ Добавить человека' },
   homeFlat: { et: 'Korter', en: 'Flat', ru: 'Квартира' },
   homeHouse: { et: 'Maja', en: 'House', ru: 'Дом' },
   homeCottage: { et: 'Suvila', en: 'Cottage', ru: 'Дача' },
   pfAccess: { et: 'Sissepääs', en: 'Access', ru: 'Вход' },
-  pfAccessHint: { et: 'Koduhooldaja püsiv juhis: kood, võti, kellel võti on. Garantiile ja tehnikule küsitakse iga visiidi juures eraldi.', en: 'The housekeeper’s standing note: code, key, who holds it. Warranty and the technician are asked separately, each visit.', ru: 'Постоянная заметка для специалиста по дому: код, ключ, у кого ключ. Гарантию и техника спрашивают отдельно на каждом визите.' },
+  pfAccessHint: { et: 'nt uksekood 8821#, võti on naabri käes. Seda juhist näeb ainult koristaja, remondimehelt ja garantiilt küsitakse eraldi.', en: 'e.g. door code 8821#, the neighbour holds the key. Only the cleaner sees this note, the handyman and the warranty team are asked separately.', ru: 'напр. код двери 8821#, ключ у соседа. Это указание видит только уборщик, у мастера и гарантийной службы спрашивают отдельно.' },
   pfPets: { et: 'Lemmikloomad', en: 'Pets', ru: 'Животные' },
   pfPetsHint: { et: 'nt kass Luna, sõbralik', en: 'e.g. cat Luna, friendly', ru: 'напр. кошка Луна, дружелюбная' },
   pfAllergies: { et: 'Allergiad ja vahendid', en: 'Allergies & products', ru: 'Аллергии и средства' },
@@ -80,8 +77,9 @@ add({
   intervalYear: { et: 'kord aastas', en: 'yearly', ru: 'раз в год' },
   intervalTwoYears: { et: 'iga 2 aasta tagant', en: 'every 2 years', ru: 'раз в 2 года' },
   intervalEvery: { et: 'iga {n} kuu tagant', en: 'every {n} months', ru: 'каждые {n} мес.' },
-  maintRemoveAsk: { et: 'Eemalda see kirje hooldusrütmist?', en: 'Remove this item?', ru: 'Удалить эту запись из графика ухода?' },
-  contactsSaveFailed: { et: 'Salvestamine ebaõnnestus. Kontrolli e-posti aadresse.', en: 'Saving failed. Check the email addresses.', ru: 'Не удалось сохранить. Проверьте адреса электронной почты.' },
+  maintRemoveAsk: { et: 'Eemaldad selle rea hooldusest?', en: 'Remove this item from the upkeep?', ru: 'Удалить этот пункт из ухода?' },
+  maintFailed: { et: 'Muudatus ei salvestunud. Proovi uuesti.', en: 'The change was not saved. Try again.', ru: 'Изменение не сохранилось. Попробуйте снова.' },
+  contactsSaveFailed: { et: 'Salvestamine ei õnnestunud. Kontrolli e-posti aadresse ja proovi uuesti.', en: 'Saving did not work. Check the e-mail addresses and try again.', ru: 'Сохранить не удалось. Проверьте адреса электронной почты и попробуйте снова.' },
 });
 
 export const minuHtml = `<div x-show="activeTab === 'mine'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
@@ -110,12 +108,12 @@ export const minuHtml = `<div x-show="activeTab === 'mine'" x-transition:enter="
                             <div class="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-line">
                                 <h2 class="p-h"><span x-text="t('profileTitle')"></span></h2>
                                 <!-- Home type: a fact about the home, and it narrows the upkeep suggestions. The developer already knows what it built. -->
-                                <div x-show="!brand" class="flex items-center gap-1 text-[11px] uppercase tracking-[0.14em] font-sans shrink-0">
+                                <div x-show="!brand" class="flex items-center gap-1 text-xs font-sans shrink-0">
                                     <template x-for="kind in ['apartment', 'house', 'summer']" :key="kind">
                                         <button type="button" @click="setHomeType(kind)" :class="maintenance.homeType === kind ? 'bg-black text-paper border-black' : 'border-line text-muted hover:text-black'" class="px-3 py-1.5 border transition-colors duration-150" x-text="homeTypeLabel(kind)"></button>
                                     </template>
                                 </div>
-                                <p x-show="brand && homeTypeText" x-cloak class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans shrink-0"><span x-text="homeTypeText"></span><span x-show="brand?.project" x-text="' · ' + brand?.project"></span></p>
+                                <p x-show="brand && homeTypeText" x-cloak class="eyebrow shrink-0"><span x-text="homeTypeText"></span><span x-show="brand?.project" x-text="' · ' + brand?.project"></span></p>
                             </div>
                             <div class="p-6 md:p-8">
                                 <p class="font-serif text-2xl md:text-3xl font-light leading-snug" x-text="order?.customerAddress || order?.address || (t('tabKodu'))"></p>
@@ -127,13 +125,13 @@ export const minuHtml = `<div x-show="activeTab === 'mine'" x-transition:enter="
                                     <dl class="grid sm:grid-cols-2 gap-x-8 gap-y-5 pt-5 border-t border-line">
                                         <template x-for="f in profileFilled" :key="f.key">
                                             <div :class="f.long ? 'sm:col-span-2' : ''">
-                                                <dt class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-1" x-text="f.label"></dt>
+                                                <dt class="eyebrow mb-1" x-text="f.label"></dt>
                                                 <dd class="font-sans text-sm leading-relaxed whitespace-pre-line" x-text="f.key === 'access' ? t('accessSaved') : homeProfile[f.key]"></dd>
                                             </div>
                                         </template>
                                     </dl>
                                     <div class="flex flex-wrap items-center gap-x-5 gap-y-2 mt-5">
-                                        <button type="button" @click="profileEditing = true" class="text-[11px] uppercase tracking-[0.16em] font-sans font-medium text-accent hover:text-black transition-colors" x-text="t('edit')"></button>
+                                        <button type="button" @click="profileEditing = true" class="p-btn-2 p-btn-sm" x-text="t('edit')"></button>
                                         <p x-show="profileFilled.length < profileFields.length" class="text-xs text-muted font-sans font-light" x-text="(t('notFilled')) + profileFields.filter((f) => !(homeProfile[f.key] || '').trim()).map((f) => f.label.toLowerCase()).join(', ')"></p>
                                     </div>
                                 </div>
@@ -143,7 +141,7 @@ export const minuHtml = `<div x-show="activeTab === 'mine'" x-transition:enter="
                                     <div class="grid sm:grid-cols-2 gap-x-8 gap-y-6">
                                         <template x-for="f in profileFields" :key="f.key">
                                             <label class="block" :class="f.long ? 'sm:col-span-2' : ''">
-                                                <span class="text-[11px] uppercase tracking-[0.15em] text-muted font-sans block mb-1.5" x-text="f.label"></span>
+                                                <span class="eyebrow mb-1.5" x-text="f.label"></span>
                                                 <template x-if="f.long"><textarea x-model="homeProfile[f.key]" :placeholder="f.hint" rows="3" maxlength="500" class="w-full bg-transparent border border-line focus:border-accent outline-none p-3 font-sans font-light text-base transition-colors placeholder:text-line-strong resize-none"></textarea></template>
                                                 <template x-if="!f.long"><input type="text" x-model="homeProfile[f.key]" :placeholder="f.hint" maxlength="300" class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-2 font-sans font-light text-base transition-colors placeholder:text-line-strong"></template>
                                             </label>
@@ -154,9 +152,10 @@ export const minuHtml = `<div x-show="activeTab === 'mine'" x-transition:enter="
                                             <span x-show="!profileSaving" x-text="t('save')"></span>
                                             <span x-show="profileSaving" x-cloak x-text="t('docSaving')"></span>
                                         </button>
-                                        <button type="button" x-show="profileFilled.length" @click="profileEditing = false" class="text-[11px] uppercase tracking-[0.15em] text-muted hover:text-black font-sans" x-text="t('docCancel')"></button>
-                                        <span x-show="profileSaved" x-cloak x-transition class="text-green-600 text-sm font-sans font-light" x-text="t('saved')"></span>
+                                        <button type="button" x-show="profileFilled.length" @click="profileEditing = false; profileError = ''" class="text-sm font-sans text-muted hover:text-black" x-text="t('docCancel')"></button>
+                                        <span x-show="profileSaved" x-cloak x-transition class="text-sm font-sans font-light" x-text="t('saved')"></span>
                                     </div>
+                                    <p x-show="profileError" x-cloak class="text-sm text-red-500 font-sans font-light mt-3" x-text="profileError"></p>
                                 </form>
                                 <div class="mt-8 pt-6 border-t border-line">
                                     <p class="eyebrow" x-text="t('langLabel')"></p>
@@ -172,12 +171,14 @@ export const minuHtml = `<div x-show="activeTab === 'mine'" x-transition:enter="
                         <!-- ── Hooldusrütm: what the home needs on a rhythm — split by who does it ── -->
                         <div id="hooldus" class="bg-white border border-line">
                             <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-line">
-                                <h2 class="p-h"><span class="p-num">02</span><span x-text="t('upkeep')"></span></h2>
-                                <span x-show="maintenanceDue" class="inline-flex px-2.5 py-1 text-[11px] uppercase tracking-[0.12em] rounded-full bg-accent/10 text-accent" x-text="maintenanceDue + (t('dueSuffix'))"></span>
+                                <h2 class="p-h"><span x-text="t('upkeep')"></span></h2>
+                                <span x-show="maintenanceDue" class="text-xs font-sans text-accent" x-text="maintenanceDue + (t('dueSuffix'))"></span>
                             </div>
                             <div class="p-6 md:p-8 space-y-10">
-                            <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="t('upkeepQuiet')"></p>
-                            <button type="button" @click="upkeepOpen = !upkeepOpen" class="eyebrow" x-text="upkeepOpen ? t('hideIt') : t('showUpkeep')"></button>
+                            <div>
+                                <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="t('upkeepLead')"></p>
+                                <button type="button" @click="upkeepOpen = !upkeepOpen" class="p-btn-2 p-btn-sm mt-4" x-text="upkeepOpen ? t('hideIt') : t('showUpkeep')"></button>
+                            </div>
                             <div x-show="upkeepOpen" x-cloak class="space-y-10">
 
                             <div x-show="maintHomeItems.length">
@@ -202,8 +203,8 @@ export const minuHtml = `<div x-show="activeTab === 'mine'" x-transition:enter="
                                                     <input type="date" x-model="maintDoneDate" :max="maintenance.today" class="border border-line bg-white px-3 py-2 text-sm font-sans font-light outline-none focus:border-accent">
                                                     <button type="button" @click="markMaintenanceDone(item, maintDoneDate)" :disabled="!!maintBusy" class="p-btn p-btn-sm disabled:opacity-50" x-text="t('markIt')"></button>
                                                 </div>
-                                                <div class="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4 text-[11px] uppercase tracking-[0.14em] font-sans">
-                                                    <button type="button" @click="markMaintenanceDone(item)" :disabled="!!maintBusy" class="text-black hover:text-accent transition-colors disabled:opacity-40" x-text="t('doneWord')"></button>
+                                                <div class="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4 text-sm font-sans">
+                                                    <button type="button" @click="markMaintenanceDone(item)" :disabled="!!maintBusy" class="underline underline-offset-4 hover:text-accent transition-colors disabled:opacity-40" x-text="t('doneWord')"></button>
                                                     <button type="button" @click="maintDoneFor = maintDoneFor === item.id ? null : item.id; maintDoneDate = maintenance.today" class="text-muted hover:text-black transition-colors" x-text="t('otherDate')"></button>
                                                     <button type="button" x-show="item.serviceId" @click="orderMaintenance(item)" class="text-accent hover:text-black transition-colors" x-text="!item.orderable ? (t('wantDoer')) : item.doerCategory === 'warranty' ? (t('agreeTime')) : (t('orderVerb'))"></button>
                                                     <button type="button" x-show="showProvider && maintenance.provider && item.doer !== 'partner'" @click="assignMaintenance(item, 'provider')" :disabled="!!maintBusy" class="text-muted hover:text-black transition-colors" x-text="(t('doneByPrefix')) + providerFirstName"></button>
@@ -226,7 +227,7 @@ export const minuHtml = `<div x-show="activeTab === 'mine'" x-transition:enter="
                                             </button>
                                             <div x-show="maintOpen === item.id" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="pb-4">
                                                 <p class="text-sm text-muted font-sans font-light" x-text="(item.lastDoneAt ? lastDoneLabel(item) + ' · ' : '') + (t('nextPrefix')) + nextLabel(item)"></p>
-                                                <button type="button" @click="assignMaintenance(item, 'home')" :disabled="!!maintBusy" class="mt-3 text-[11px] uppercase tracking-[0.14em] font-sans text-muted hover:text-black transition-colors" x-text="t('iDoIt')"></button>
+                                                <button type="button" @click="assignMaintenance(item, 'home')" :disabled="!!maintBusy" class="mt-3 text-sm font-sans text-muted hover:text-black transition-colors" x-text="t('iDoIt')"></button>
                                             </div>
                                         </div>
                                     </template>
@@ -236,7 +237,7 @@ export const minuHtml = `<div x-show="activeTab === 'mine'" x-transition:enter="
                             <p x-show="!maintenance.items.length && extrasLoaded" class="text-sm text-muted font-sans font-light" x-text="t('nothingYet')"></p>
 
                             <div x-show="maintenance.suggestions.length">
-                                <button type="button" @click="maintShowSuggestions = !maintShowSuggestions" x-show="maintenance.items.length" class="text-[11px] uppercase tracking-[0.14em] font-sans text-muted hover:text-black" x-text="maintShowSuggestions ? (t('hideIt')) : (t('addShort'))"></button>
+                                <button type="button" @click="maintShowSuggestions = !maintShowSuggestions" x-show="maintenance.items.length" class="text-sm font-sans text-muted hover:text-black" x-text="maintShowSuggestions ? (t('hideIt')) : (t('addShort'))"></button>
                                 <div x-show="maintShowSuggestions || !maintenance.items.length" x-cloak>
                                     <template x-for="s in maintenance.suggestions" :key="s.id">
                                         <button type="button" @click="addSuggestion(s)" :disabled="!!maintBusy" class="w-full text-left py-3 border-b border-line flex items-baseline justify-between gap-4 disabled:opacity-50 hover:border-black transition-colors">
@@ -249,15 +250,15 @@ export const minuHtml = `<div x-show="activeTab === 'mine'" x-transition:enter="
 
                             <!-- Custom item -->
                             <div class="mt-6">
-                                <button type="button" x-show="!maintAdding" @click="maintAdding = true" class="text-[11px] uppercase tracking-[0.16em] font-sans font-medium text-accent hover:text-black transition-colors" x-text="t('addOwn')"></button>
+                                <button type="button" x-show="!maintAdding" @click="maintAdding = true" class="text-sm font-sans underline underline-offset-4" x-text="t('addOwn')"></button>
                                 <div x-show="maintAdding" x-cloak class="border border-line p-4 grid sm:grid-cols-3 gap-4">
-                                    <label class="block sm:col-span-3"><span class="text-[11px] uppercase tracking-[0.15em] text-muted font-sans block mb-1" x-text="t('whatLabel')"></span><input type="text" x-model="maintForm.name" maxlength="80" :placeholder="t('maintPh')" class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-line-strong"></label>
-                                    <label class="block"><span class="text-[11px] uppercase tracking-[0.15em] text-muted font-sans block mb-1" x-text="t('howOften')"></span>
+                                    <label class="block sm:col-span-3"><span class="eyebrow mb-1" x-text="t('whatLabel')"></span><input type="text" x-model="maintForm.name" maxlength="80" :placeholder="t('maintPh')" class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-line-strong"></label>
+                                    <label class="block"><span class="eyebrow mb-1" x-text="t('howOften')"></span>
                                         <select x-model.number="maintForm.intervalMonths" class="w-full bg-transparent border-b border-line py-2 font-sans font-light text-base outline-none"><template x-for="m in maintenance.intervals" :key="m"><option :value="m" x-text="intervalLabel(m)"></option></template></select></label>
-                                    <label class="block"><span class="text-[11px] uppercase tracking-[0.15em] text-muted font-sans block mb-1" x-text="t('lastDoneField')"></span><input type="date" x-model="maintForm.lastDoneAt" :max="maintenance.today" class="w-full bg-transparent border-b border-line py-2 font-sans font-light text-base outline-none"></label>
+                                    <label class="block"><span class="eyebrow mb-1" x-text="t('lastDoneField')"></span><input type="date" x-model="maintForm.lastDoneAt" :max="maintenance.today" class="w-full bg-transparent border-b border-line py-2 font-sans font-light text-base outline-none"></label>
                                     <div class="flex items-end gap-3">
                                         <button type="button" @click="addCustomMaintenance()" :disabled="!maintForm.name || !!maintBusy" class="p-btn p-btn-sm disabled:opacity-50" x-text="t('addShort')"></button>
-                                        <button type="button" @click="maintAdding = false" class="text-[11px] uppercase tracking-[0.15em] text-muted hover:text-black font-sans pb-2.5" x-text="t('docCancel')"></button>
+                                        <button type="button" @click="maintAdding = false" class="text-sm text-muted hover:text-black font-sans pb-2" x-text="t('docCancel')"></button>
                                     </div>
                                 </div>
                             </div>
@@ -278,7 +279,6 @@ export const minuHtml = `<div x-show="activeTab === 'mine'" x-transition:enter="
                         <div class="bg-white border border-line">
                             <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-line">
                                 <h2 class="p-h" x-text="t('whoNotified')"></h2>
-                                <p class="text-xs text-muted font-sans font-light" x-text="(1 + contacts.length) + ' / ' + (1 + (extras.maxContacts || 6))"></p>
                             </div>
                             <div class="p-6">
                             <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="t('whoElse')"></p>
@@ -289,7 +289,7 @@ export const minuHtml = `<div x-show="activeTab === 'mine'" x-transition:enter="
                                         <p class="truncate" x-text="order?.customerName"></p>
                                         <p class="text-sm text-muted font-light truncate"><span x-text="order?.customerEmail"></span><span x-show="order?.customerPhone" x-text="' · ' + order?.customerPhone"></span></p>
                                     </div>
-                                    <span class="text-[11px] uppercase tracking-[0.15em] text-muted shrink-0" x-text="t('youShort')"></span>
+                                    <span class="eyebrow shrink-0" x-text="t('youShort')"></span>
                                 </div>
                                 <template x-for="(c, i) in contacts" :key="c.id || ('new-' + i)">
                                     <div class="border border-line bg-white p-4">
@@ -303,15 +303,15 @@ export const minuHtml = `<div x-show="activeTab === 'mine'" x-transition:enter="
                                         </div>
                                         <div class="grid sm:grid-cols-2 gap-4">
                                             <label class="block">
-                                                <span class="text-[11px] uppercase tracking-[0.15em] text-muted font-sans block mb-1" x-text="t('nameLabel')"></span>
+                                                <span class="eyebrow mb-1" x-text="t('nameLabel')"></span>
                                                 <input type="text" x-model="c.name" :placeholder="t('namePh')" class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-line-strong">
                                             </label>
                                             <label class="block">
-                                                <span class="text-[11px] uppercase tracking-[0.15em] text-muted font-sans block mb-1" x-text="t('phoneLabel')"></span>
+                                                <span class="eyebrow mb-1" x-text="t('phoneLabel')"></span>
                                                 <input type="tel" x-model="c.phone" placeholder="+372 …" class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-line-strong">
                                             </label>
                                             <label class="block sm:col-span-2">
-                                                <span class="text-[11px] uppercase tracking-[0.15em] text-muted font-sans block mb-1" x-text="t('emailLabel')"></span>
+                                                <span class="eyebrow mb-1" x-text="t('emailLabel')"></span>
                                                 <input type="email" x-model="c.email" placeholder="nimi@näide.ee" class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-line-strong">
                                             </label>
                                         </div>
@@ -324,12 +324,12 @@ export const minuHtml = `<div x-show="activeTab === 'mine'" x-transition:enter="
                                 </template>
                             </div>
                             <div class="flex flex-wrap items-center gap-4 mt-6" x-show="viewer && viewer.primary">
-                                <button type="button" @click="addContact()" :disabled="contacts.length >= (extras.maxContacts || 6)" class="text-[11px] uppercase tracking-[0.16em] font-sans font-medium text-accent hover:text-black transition-colors disabled:opacity-40" x-text="t('addPerson')"></button>
+                                <button type="button" @click="addContact()" :disabled="contacts.length >= (extras.maxContacts || 6)" class="text-sm font-sans underline underline-offset-4 disabled:opacity-40" x-text="t('addPerson')"></button>
                                 <button type="button" x-show="contacts.length" @click="saveContacts()" :disabled="contactsSaving" class="ml-auto p-btn disabled:opacity-50">
                                     <span x-show="!contactsSaving" x-text="t('save')"></span>
                                     <span x-show="contactsSaving" x-cloak x-text="t('docSaving')"></span>
                                 </button>
-                                <span x-show="contactsSaved" x-cloak x-transition class="text-green-600 text-sm font-sans font-light" x-text="t('saved')"></span>
+                                <span x-show="contactsSaved" x-cloak x-transition class="text-sm font-sans font-light" x-text="t('saved')"></span>
                             </div>
                             <p x-show="contactsError" x-cloak class="text-sm text-muted font-sans font-light mt-3" x-text="contactsError"></p>
                             </div>

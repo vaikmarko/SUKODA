@@ -227,6 +227,9 @@
     docAdding: false,
     askText: '',
     askCard: null,
+    askSending: false,
+    profileError: '',
+    pauseError: '',
     docForm: { title: '', url: '', category: 'other', note: '' },
     docFile: null,
     docBusy: false,
@@ -450,28 +453,26 @@
                 body: JSON.stringify({ from: this.awayFrom, to: this.awayTo || this.awayFrom, note: this.awayNote }),
             });
             const data = await res.json();
-            if (!res.ok) { this.awayError = data.error || (this.lang === 'et' ? 'Salvestamine ebaõnnestus' : 'Could not save'); return; }
+            if (!res.ok) { this.awayError = data.error || this.t('awaySaveFail'); return; }
             this.extras.away = data.away || [];
             const n = (data.cancelled || []).length;
             const kept = data.kept || [];
-            this.awayDone = this.lang === 'et'
-                ? (n ? `Kirjas. ${n} koristus${n === 1 ? '' : 't'} tühistatud, koduhooldaja sai teate.` : 'Kirjas. Sellesse vahemikku koristusi ei jäänud, koduhooldaja sai teate.')
-                : (n ? `Saved. ${n} cleaning visit${n === 1 ? '' : 's'} cancelled, your housekeeper has been told.` : 'Saved. No cleaning visits fell into this period, your housekeeper has been told.');
+            this.awayDone = n === 0 ? this.t('awaySavedNone') : n === 1 ? this.t('awaySavedOne') : this.t('awaySavedMany', { n });
             if (kept.length) {
                 const list = kept.map((b) => this.visitLabel(b) + ' ' + this.formatDateShort(b.scheduledAt)).join(', ');
-                this.awayDone += this.lang === 'et' ? ` Need visiidid jäävad alles — muuda aega eraldi: ${list}.` : ` These visits stay — move them separately: ${list}.`;
+                this.awayDone += ' ' + this.t('awayKept', { list });
             }
             this.awayFrom = ''; this.awayTo = ''; this.awayNote = '';
             await this.loadProfile();
         } catch (e) {
-            this.awayError = this.lang === 'et' ? 'Ühendus ebaõnnestus' : 'Connection failed';
+            this.awayError = this.t('netFail');
         } finally {
             this.awayProcessing = false;
         }
     },
     async removeAway(p) {
         if (this.awayProcessing) return;
-        if (!confirm(this.lang === 'et' ? 'Eemalda eemalolek? Tühistatud ajad taastatakse ja koduhooldaja saab teate.' : 'Remove this away period? Cancelled visits are restored and your housekeeper is told.')) return;
+        if (!confirm(this.t('awayRemoveAsk'))) return;
         this.awayProcessing = true; this.awayError = ''; this.awayDone = '';
         try {
             const res = await fetch('/api/me/away/remove', {
@@ -480,12 +481,12 @@
                 body: JSON.stringify({ periodId: p.id }),
             });
             const data = await res.json();
-            if (!res.ok) { this.awayError = data.error || 'Error'; return; }
+            if (!res.ok) { this.awayError = data.error || this.t('awayRemoveFail'); return; }
             this.extras.away = data.awayPeriods || [];
-            this.awayDone = this.lang === 'et' ? `Eemaldatud. ${data.restored || 0} aega taastatud.` : `Removed. ${data.restored || 0} visit(s) restored.`;
+            this.awayDone = this.t('awayRemoved') + ((data.restored || 0) > 0 ? ' ' + this.t('awayRestored') : '');
             await this.loadProfile();
         } catch (e) {
-            this.awayError = this.lang === 'et' ? 'Ühendus ebaõnnestus' : 'Connection failed';
+            this.awayError = this.t('netFail');
         } finally {
             this.awayProcessing = false;
         }
@@ -742,7 +743,7 @@
             });
         });
         (this.extras.requests || []).forEach((request) => {
-            if (!['requested', 'confirmed', 'declined'].includes(request.status)) return;
+            if (!['requested', 'confirmed', 'declined', 'answered'].includes(request.status)) return;
             const day = request.preferredDate ? this.formatDateShort(String(request.preferredDate).slice(0, 10) + 'T12:00:00') : '';
             rows.push({
                 id: 'req-' + request.id,
@@ -893,35 +894,33 @@
         if (!iso) return '';
         return this.formatDateLong(iso) + ' · ' + this.formatTime(iso);
     },
-    /** Message · Küsimus · Pöördumine · Soov — what the drawer calls the thing being sent */
+    /** Sõnum · Hinnapäring · Küsimus · Probleem · Soov — what the dialog calls the thing being sent */
     get requestNoun() {
-        const et = this.lang === 'et';
-        if (this.requestService?.id === 'cleaning-note') return et ? 'Sõnum' : 'Message';
-        if (this.requestService?.id === 'extra-works') return et ? 'Hinnapäring' : 'Quote request';
-        if (this.requestKind === 'question') return et ? 'Küsimus' : 'Question';
-        if (this.requestKind === 'issue') return et ? 'Pöördumine' : 'Report';
-        return et ? 'Soov' : 'Request';
+        if (this.requestService?.id === 'cleaning-note') return this.t('nounMessage');
+        if (this.requestService?.id === 'extra-works') return this.t('nounQuote');
+        if (this.requestKind === 'question') return this.t('nounQuestion');
+        if (this.requestKind === 'issue') return this.t('nounIssue');
+        return this.t('nounRequest');
     },
     /** Issues, questions, messages and “something else” all start with words; the server wants at least a few */
     get requestNeedsNote() { return this.requestKind !== 'visit' || this.requestService?.id === 'other'; },
     get requestNoteTooShort() { return this.requestNeedsNote && (this.requestNote || '').trim().length < 5; },
     resolveAccess() {
         if (this.requestKind === 'question') return '';
-        if (this.requestAccess === 'home') return this.lang === 'et' ? 'Olen sel ajal kodus.' : 'I will be home.';
+        if (this.requestAccess === 'home') return this.t('telliHome');
         if (this.requestAccess === 'note') return (this.requestAccessNote || '').trim();
         return (this.homeProfile.access || '').trim();
     },
     get requestPriceBlurb() {
-        const et = this.lang === 'et';
         const s = this.requestService;
         if (!s) return '';
         const cat = (this.extras.categories || []).find((c) => c.id === s.category);
         const tm = cat?.terms;
-        if (s.pricing === 'quote') return et ? 'Küsimine on tasuta. Hinnapakkumine tuleb kirjalikult — töö algab alles siis, kui sa selle kinnitad.' : 'Asking is free. The quote comes in writing — work starts only once you confirm it.';
-        if (this.requestKind === 'question') return et ? 'Küsimus on tasuta. Vastus tuleb siia.' : 'Questions are free. The answer comes here.';
-        if (this.requestKind === 'issue') return et ? 'Garantiiajal tasuta. Kui töö jääb garantiist välja, ütleme enne.' : 'Free during warranty. If the work falls outside it, we say so first.';
-        if (s.priceLabel?.included && tm?.quota) return et ? `${tm.quota} Kui miski jääb sellest välja, ütleme hinna enne tööd.` : `${tm.quota} If anything falls outside that, we say the price before the work.`;
-        return et ? 'Hinna ütleme enne tööd. Arvet ei esitata enne, kui oled töö kinnitanud.' : 'We say the price before the work. Nothing is invoiced before you confirm it.';
+        if (s.pricing === 'quote') return this.t('blurbQuote');
+        if (this.requestKind === 'question') return this.t('blurbQuestion');
+        if (this.requestKind === 'issue') return this.t('blurbIssue');
+        if (s.priceLabel?.included && tm?.quota) return this.t('blurbQuota', { quota: tm.quota });
+        return this.t('blurbDefault');
     },
     /** Guide price for this job. A category invoice (the standing clean) is not this job's bill. */
     get requestPriceLine() {
@@ -961,7 +960,7 @@
                 this.viewRequest = (this.extras.requests || []).find((x) => x.id === r.id) || r;
             }
         } catch (e) {
-            this.threadError = e.message && e.message !== 'failed' ? e.message : (this.lang === 'et' ? 'Saatmine ebaõnnestus.' : 'Sending failed.');
+            this.threadError = e.message && e.message !== 'failed' ? e.message : this.t('telliFailed');
         } finally {
             this.threadSending = false;
         }
@@ -1020,10 +1019,10 @@
         try {
             const res = await fetch('/api/me/maintenance', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token }, body: JSON.stringify(body) });
             const data = await res.json();
-            if (!res.ok) { this.maintError = data.error || 'Error'; return false; }
+            if (!res.ok) { this.maintError = data.error || this.t('maintFailed'); return false; }
             this.extras = { ...this.extras, maintenance: data.maintenance };
             return true;
-        } catch (e) { this.maintError = 'Error'; return false; } finally { this.maintBusy = ''; }
+        } catch (e) { this.maintError = this.t('netFail'); return false; } finally { this.maintBusy = ''; }
     },
     async addSuggestion(s) { await this.maintenanceAction({ action: 'add', catalogId: s.id }, 'add-' + s.id); },
     async addCustomMaintenance() {
@@ -1088,26 +1087,14 @@
     },
     get requestKind() { return this.requestService?.kind || 'visit'; },
     get requestPlaceholder() {
-        const et = this.lang === 'et';
         const id = this.requestService?.id;
         const map = {
-            'warranty-claim': et ? 'Nt: vannitoa uks ei sulgu korralikult — hing on vajunud, uks käib vastu lengi.' : 'E.g.: the bathroom door no longer closes — the hinge has dropped.',
-            'home-manual': et ? 'Nt: kuidas panna ventilatsioon suverežiimile? Kas rõdule võib paigaldada markiisi?' : 'E.g.: how do I set the ventilation to summer mode?',
-            'building-question': et ? 'Nt: vajan teist parklapulti. Kelle käest saab?' : 'E.g.: I need a second parking fob. Who do I ask?',
-            flowers: et ? 'Nt: valged pojengid, mitte roosid. Vaas on köögis.' : 'E.g.: white peonies, no roses. The vase is in the kitchen.',
-            'extra-works': et ? 'Nt: soovin rõdu klaasida. Kas saate hinnapakkumise teha?' : 'E.g.: I would like the balcony glazed. Could you send a quote?',
-            'appliance-care': et ? 'Nt pesumasina filter ja pliidikubu. Kohvimasin on kapis vasakul.' : 'E.g. the washing-machine filter and the hood. The coffee machine is in the cupboard on the left.',
-            laundry: et ? 'Nt kaks masinatäit voodipesu ja rätikud.' : 'E.g. two loads of bed linen and towels.',
-            rugs: et ? 'Nt elutoa vaip, umbes 2 × 3 m, villane.' : 'E.g. the living-room rug, about 2 × 3 m, wool.',
-            curtains: et ? 'Nt magamistoa kardinapuu ja kardinad, mis on kapis.' : 'E.g. the bedroom rail and the curtains, which are in the cupboard.',
-            lock: et ? 'Nt välisukse südamik. Uus südamik on mul olemas.' : 'E.g. the front-door cylinder. I already have the new one.',
-            'appliance-install': et ? 'Nt nõudepesumasin on esikus, vaja oma kohale ühendada.' : 'E.g. the dishwasher is in the hall and needs connecting in place.',
-            'away-care': et ? 'Nt 3. kuni 12. oktoober. Taimed elutoas ja rõdul, post lauale.' : 'E.g. 3 to 12 October. Plants in the living room and on the balcony, post on the table.',
-            'small-repairs': et ? 'Nt esiku lambipirn ja vannitoa äravool voolab aeglaselt.' : 'E.g. the hall bulb and the bathroom drain runs slowly.',
-            'cleaning-note': et ? 'Nt: alates oktoobrist sobiks koristus reedeti. Ja palun sel korral eritähelepanu köögile.' : 'E.g.: from October, Fridays would suit better. And extra attention to the kitchen this time, please.',
-            other: et ? 'Kirjelda, mida vajad — mida rohkem täpsust, seda kiirem vastus.' : 'Describe what you need — the more detail, the quicker the reply.',
+            'warranty-claim': 'phWarrantyClaim', 'home-manual': 'phHomeManual', 'building-question': 'phBuildingQuestion',
+            flowers: 'phFlowers', 'extra-works': 'phExtraWorks', 'appliance-care': 'phApplianceCare', laundry: 'phLaundry',
+            rugs: 'phRugs', curtains: 'phCurtains', lock: 'phLock', 'appliance-install': 'phApplianceInstall',
+            'away-care': 'phAwayCare', 'small-repairs': 'phSmallRepairs', 'cleaning-note': 'phCleaningNote', other: 'phOther',
         };
-        return map[id] || (et ? 'Nt: 6 akent, 2. korrus, rõdu uks' : 'E.g.: 6 windows, 2nd floor, balcony door');
+        return this.t(map[id] || 'phDefault');
     },
     /** With-the-next-cleaning only makes sense for the housekeeper’s own extras */
     timeWindowsFor(service) {
@@ -1388,10 +1375,10 @@
         try {
             const res = await fetch('/api/me/documents', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token }, body: JSON.stringify(body) });
             const data = await res.json();
-            if (!res.ok) { this.docError = data.error || 'Error'; return false; }
+            if (!res.ok) { this.docError = data.error || this.t('docFail'); return false; }
             this.extras = { ...this.extras, documents: data.documents };
             return true;
-        } catch (e) { this.docError = 'Error'; return false; } finally { this.docBusy = false; }
+        } catch (e) { this.docError = this.t('netFail'); return false; } finally { this.docBusy = false; }
     },
     get docsFromDeveloper() { return this.documents.items.filter((d) => d.source === 'developer').length; },
     docKind(d) {
@@ -1444,13 +1431,14 @@
     },
     async askFolder() {
         const question = String(this.askText || '').trim();
-        if (!question) return;
+        if (!question || this.askSending) return;
         this.askCard = null;
+        this.askSending = true;
         try {
             const res = await fetch('/api/me/documents/ask', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + this.token }, body: JSON.stringify({ question }) });
             const data = await res.json();
             if (res.ok) { this.askCard = this.askCardFrom(data); return; }
-        } catch (e) { /* the phone keeps the answer it can read offline */ }
+        } catch (e) { /* the phone keeps the answer it can read offline */ } finally { this.askSending = false; }
         const local = this.localAsk(question);
         this.askCard = local && local.fact ? local : { fact: '', place: '', action: 'person', href: '' };
     },
@@ -1462,14 +1450,16 @@
     },
     async sendAskToPerson() {
         const question = String(this.askText || '').trim();
-        if (question.length < 5) { this.askCard = { fact: '', place: '', action: 'person', href: '' }; return; }
+        if (this.askSending) return;
+        if (question.length < 5) { this.askCard = { fact: '', place: '', action: 'person', href: '', error: this.t('askTooShort') }; return; }
+        this.askSending = true;
         try {
             const res = await fetch('/api/me/requests', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + this.token }, body: JSON.stringify({ serviceId: 'home-manual', note: question }) });
             const data = await res.json();
-            if (!res.ok) { this.askCard = { fact: (data && data.error) || '', place: '', action: 'person', href: '' }; return; }
+            if (!res.ok) { this.askCard = { fact: '', place: '', action: 'person', href: '', error: (data && data.error) || this.t('askFailed') }; return; }
             this.askCard = { fact: this.t('askSent'), place: '', action: '', href: '' };
             if (data.request) this.extras = { ...this.extras, requests: [data.request].concat(this.extras.requests || []) };
-        } catch (e) { this.askCard = { fact: '', place: '', action: 'person', href: '' }; }
+        } catch (e) { this.askCard = { fact: '', place: '', action: 'person', href: '', error: this.t('netFail') }; } finally { this.askSending = false; }
     },
     async downloadHome() {
         try {
@@ -1500,10 +1490,10 @@
             try {
                 const res = await fetch('/api/me/documents/upload', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token }, body: JSON.stringify({ ...this.docForm, url: '', fileName: f.name, contentType: f.type || 'application/octet-stream', data }) });
                 const out = await res.json();
-                if (!res.ok) { this.docError = out.error || 'Error'; return; }
+                if (!res.ok) { this.docError = out.error || this.t('docFail'); return; }
                 this.extras = { ...this.extras, documents: out.documents };
                 this.docAdding = false; this.docFile = null; this.docForm = { title: '', url: '', category: 'other', note: '' };
-            } catch (e) { this.docError = 'Error'; } finally { this.docBusy = false; }
+            } catch (e) { this.docError = this.t('netFail'); } finally { this.docBusy = false; }
             return;
         }
         if (await this.documentAction({ action: 'add', ...this.docForm })) { this.docAdding = false; this.docForm = { title: '', url: '', category: 'other', note: '' }; }
@@ -1534,14 +1524,14 @@
             this.requestDone = data;
             await this.loadExtras();
         } catch (e) {
-            this.requestError = e.message && e.message !== 'failed' ? e.message : (this.lang === 'et' ? 'Soovi saatmine ebaõnnestus. Proovi uuesti.' : 'Sending failed. Please try again.');
+            this.requestError = e.message && e.message !== 'failed' ? e.message : this.t('telliFailed');
         } finally {
             this.requestProcessing = false;
         }
     },
     /** Withdraw a request. Returns true only when it was actually withdrawn, so the caller knows whether to close the thread. */
     async cancelRequest(r) {
-        if (!confirm(this.lang === 'et' ? 'Võtan pöördumise tagasi?' : 'Withdraw this request?')) return false;
+        if (!confirm(this.t('withdrawAsk'))) return false;
         try {
             const res = await fetch('/api/me/requests/cancel', {
                 method: 'POST',
@@ -1550,11 +1540,11 @@
             });
             if (res.ok) { await this.loadExtras(); return true; }
             const data = await res.json().catch(() => ({}));
-            this.threadError = data.error || (this.lang === 'et' ? 'Tagasivõtmine ebaõnnestus.' : 'Could not withdraw.');
+            this.threadError = data.error || this.t('withdrawFail');
             return false;
         } catch (e) {
             console.error(e);
-            this.threadError = this.lang === 'et' ? 'Ühendus ebaõnnestus.' : 'Connection failed.';
+            this.threadError = this.t('netFail');
             return false;
         }
     },
@@ -1629,7 +1619,7 @@
             await this.loadExtras();
             setTimeout(() => this.closePropose(), 2500);
         } catch (e) {
-            this.proposeError = e.message && e.message !== 'failed' ? e.message : (this.lang === 'et' ? 'Saatmine ebaõnnestus.' : 'Sending failed.');
+            this.proposeError = e.message && e.message !== 'failed' ? e.message : this.t('telliFailed');
         } finally {
             this.proposeProcessing = false;
         }
@@ -1654,10 +1644,10 @@
                 this.loginDesk = !!d.desk;
                 this.loginSent = true;
             } else {
-                this.loginError = this.lang === 'et' ? 'Midagi läks valesti. Proovi uuesti.' : 'Something went wrong. Please try again.';
+                this.loginError = this.t('loginFailed');
             }
         } catch (e) {
-            this.loginError = this.lang === 'et' ? 'Ühenduse viga. Proovi uuesti.' : 'Connection error. Please try again.';
+            this.loginError = this.t('netFail');
         } finally {
             this.loginSending = false;
         }
@@ -1667,6 +1657,7 @@
         if (this.profileSaving) return;
         this.profileSaving = true;
         this.profileSaved = false;
+        this.profileError = '';
         try {
             const res = await fetch('/api/me/home-profile', {
                 method: 'POST',
@@ -1680,9 +1671,12 @@
                 this.profileSaved = true;
                 this.profileEditing = false;
                 setTimeout(() => this.profileSaved = false, 3000);
+            } else {
+                this.profileError = this.t('saveFailed');
             }
         } catch (e) {
             console.error('Failed to save home profile:', e);
+            this.profileError = this.t('netFail');
         } finally {
             this.profileSaving = false;
         }
@@ -1691,6 +1685,7 @@
     async pauseSubscription() {
         if (this.pauseProcessing) return;
         this.pauseProcessing = true;
+        this.pauseError = '';
         try {
             const res = await fetch('/api/me/pause', {
                 method: 'POST',
@@ -1702,9 +1697,12 @@
             });
             if (res.ok) {
                 await this.loadProfile();
+            } else {
+                this.pauseError = this.t('pauseFail');
             }
         } catch (e) {
             console.error('Pause failed:', e);
+            this.pauseError = this.t('netFail');
         } finally {
             this.pauseProcessing = false;
         }
@@ -1713,6 +1711,7 @@
     async resumeSubscription() {
         if (this.resumeProcessing) return;
         this.resumeProcessing = true;
+        this.pauseError = '';
         try {
             const res = await fetch('/api/me/resume', {
                 method: 'POST',
@@ -1723,9 +1722,12 @@
             });
             if (res.ok) {
                 await this.loadProfile();
+            } else {
+                this.pauseError = this.t('resumeFail');
             }
         } catch (e) {
             console.error('Resume failed:', e);
+            this.pauseError = this.t('netFail');
         } finally {
             this.resumeProcessing = false;
         }
@@ -1766,8 +1768,8 @@
 
     updateRescheduleMonthLabel() {
         const [y, m] = (this.rescheduleCurrentMonth || '2026-01').split('-').map(Number);
-        const months = { et: ['Jaanuar', 'Veebruar', 'Märts', 'Aprill', 'Mai', 'Juuni', 'Juuli', 'August', 'September', 'Oktoober', 'November', 'Detsember'], en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] };
-        this.rescheduleCurrentMonthLabel = (months[this.lang] || months.et)[m - 1] + ' ' + y;
+        const label = new Intl.DateTimeFormat(this.locale(), { month: 'long', year: 'numeric' }).format(new Date(y, m - 1, 1));
+        this.rescheduleCurrentMonthLabel = label.charAt(0).toUpperCase() + label.slice(1);
     },
 
     async loadRescheduleSlots() {
@@ -1790,7 +1792,7 @@
                 this.rescheduleSlots = this.getDemoRescheduleSlots();
                 this.buildRescheduleCalendar();
             } else {
-                this.rescheduleError = this.lang === 'et' ? 'Aegade laadimine ebaõnnestus.' : 'Failed to load times.';
+                this.rescheduleError = this.t('slotsFail');
             }
         } finally {
             this.rescheduleSlotsLoading = false;
@@ -1891,23 +1893,19 @@
             await this.loadProfile();
             setTimeout(() => { this.closeReschedule(); }, 2000);
         } catch (e) {
-            this.rescheduleError = this.lang === 'et' ? 'Aja muutmine ebaõnnestus. Proovi uuesti.' : 'Reschedule failed. Please try again.';
+            this.rescheduleError = this.t('rescheduleFail');
         } finally {
             this.rescheduleProcessing = false;
         }
     },
 
     getPackageName(pkg) {
-        const names = {
-            once: this.lang === 'et' ? '1× kuus' : '1× month',
-            twice: this.lang === 'et' ? '2× kuus' : '2× month',
-            weekly: this.lang === 'et' ? '4× kuus' : '4× month',
-        };
+        const names = { once: this.t('pkgOnce'), twice: this.t('pkgTwice'), weekly: this.t('pkgWeekly') };
         if (names[pkg]) return names[pkg];
         // Partner-managed homes: describe the agreed rhythm from the schedule, not a package code
         const f = this.order?.schedule?.active !== false ? this.order?.schedule?.frequency : null;
         const rhythm = { weekly: names.weekly, biweekly: names.twice, monthly: names.once }[f];
-        return rhythm || (this.lang === 'et' ? 'Kokkuleppel' : 'As agreed');
+        return rhythm || this.t('pkgAgreed');
     },
 
     getSizeName(size) {
@@ -1953,7 +1951,22 @@
 
     get pastBookings() {
         const now = new Date().toISOString();
-        return this.bookings.filter(b => b.scheduledAt <= now || b.status === 'completed' || b.status === 'cancelled');
+        return this.bookings
+            .filter(b => b.scheduledAt <= now || b.status === 'completed' || b.status === 'cancelled')
+            .sort((a, b) => a.scheduledAt < b.scheduledAt ? 1 : -1);
+    },
+    /** The most recent visit that actually happened — shown under the next-thing card on Kodu */
+    get lastVisit() {
+        return this.pastBookings.find(b => b.status !== 'cancelled') || null;
+    },
+    lastVisitLine(b) {
+        if (!b) return '';
+        const who = this.showProvider ? (b.providerName || this.order?.provider?.name || '') : '';
+        return [this.t('doneOn', { date: this.formatDateLong(b.scheduledAt) }), this.visitLabel(b), who].filter(Boolean).join(' · ');
+    },
+    /** Requests that wait on the resident's own decision (a declined time, a reply to act on) — the only thing worth a badge */
+    get needsYou() {
+        return (this.extras.requests || []).filter(r => r.status === 'declined').length;
     },
 
     visitLabel(b) {
@@ -1963,14 +1976,14 @@
 
     formatDate(iso) {
         if (!iso) return '';
-        const opts = { weekday: 'long', day: 'numeric', month: 'long' };
+        const opts = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
         return window.SUKODA_TIME.formatDate(iso, this.locale(), opts);
     },
 
     formatDateShort(v) {
         if (!v) return '';
         const iso = v.length === 10 ? v + 'T12:00:00' : v;
-        return window.SUKODA_TIME.formatDate(iso, this.locale(), { weekday: 'short', day: 'numeric', month: 'short' });
+        return window.SUKODA_TIME.formatDate(iso, this.locale(), { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
     },
 
     /** Records and history carry the year: “14. märts 2026” — the folder outlives the season */
@@ -1996,9 +2009,9 @@
         return window.SUKODA_TIME.formatTime(iso, this.locale(), { hour: '2-digit', minute: '2-digit' });
     },
 }">
-    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[10000] focus:bg-accent focus:text-paper focus:px-4 focus:py-2 focus:text-sm focus:font-sans">Skip to main content</a>
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[10000] focus:bg-accent focus:text-paper focus:px-4 focus:py-2 focus:text-sm focus:font-sans" x-text="t('skipToContent')"></a>
 
-    <div class="max-w-[1440px] mx-auto bg-paper min-h-screen border-x border-[#E8E3DD]">
+    <div class="max-w-[1440px] mx-auto bg-paper min-h-screen border-x border-line">
 
         <!-- ═══════════════════════════════════════════════ -->
         <!-- LOADING STATE                                   -->
@@ -2016,9 +2029,9 @@
             <nav class="grid-line-b" aria-label="Main navigation">
                 <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12">
                     <a href="index.html" class="font-serif text-2xl md:text-3xl tracking-[0.08em] font-light">SUKODA</a>
-                    <div class="flex text-[11px] uppercase tracking-[0.16em] font-sans font-medium gap-2">
+                    <div class="flex text-xs uppercase tracking-[0.16em] font-sans font-medium gap-2">
                         <button @click="lang = 'et'; localStorage.setItem('sukoda_lang', 'et')" :class="lang === 'et' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">ET</button>
-                        <span class="text-[#D4CFC8]">/</span>
+                        <span class="text-muted-light">/</span>
                         <button @click="lang = 'en'; localStorage.setItem('sukoda_lang', 'en')" :class="lang === 'en' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">EN</button>
                         <span class="text-muted-light">/</span>
                         <button @click="lang = 'ru'; localStorage.setItem('sukoda_lang', 'ru')" :class="lang === 'ru' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">RU</button>
@@ -2033,26 +2046,27 @@
                     <a href="index.html" class="font-serif text-3xl md:text-4xl tracking-[0.08em] font-light inline-block mb-6">SUKODA</a>
                     <div class="accent-line mx-auto mb-8"></div>
 
-                    <h1 class="font-serif text-3xl md:text-4xl font-light mb-3" x-text="lang === 'et' ? 'Minu SUKODA' : 'My SUKODA'"></h1>
+                    <h1 class="font-serif text-3xl md:text-4xl font-light mb-3" x-text="t('loginTitle')"></h1>
 
                     <!-- Pre-send state -->
                     <div x-show="!loginSent">
-                        <p class="text-muted font-sans font-light text-sm mb-10 max-w-sm mx-auto leading-relaxed" x-text="lang === 'et' ? 'Sisesta oma e-post. Saadame sulle privaatse lingi oma SUKODA ruumi.' : 'Enter your email. We\'ll send you a private link to your SUKODA space.'"></p>
+                        <p class="text-muted font-sans font-light text-sm mb-10 max-w-sm mx-auto leading-relaxed" x-text="t('loginLead')"></p>
 
                         <form @submit.prevent="sendMagicLink()" class="text-left mb-8">
-                            <label class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans block mb-2" x-text="lang === 'et' ? 'E-post' : 'Email'"></label>
+                            <label class="eyebrow mb-2" for="login-email" x-text="t('emailLabel')"></label>
                             <input type="email"
+                                   id="login-email"
                                    x-model="loginEmail"
                                    required
-                                   :placeholder="lang === 'et' ? 'sinu@email.ee' : 'your@email.com'"
-                                   class="w-full bg-transparent border-b border-[#E8E3DD] focus:border-accent outline-none py-3 font-sans font-light text-sm transition-colors placeholder:text-[#D4CFC8]">
+                                   placeholder="nimi@näide.ee"
+                                   class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-3 font-sans font-light text-base transition-colors placeholder:text-line-strong">
 
                             <p x-show="loginError" x-cloak class="text-sm text-red-500 font-sans font-light mt-3" x-text="loginError"></p>
 
                             <button type="submit"
                                     :disabled="loginSending || !loginEmail"
-                                    class="w-full mt-8 bg-black text-paper px-8 py-4 text-xs uppercase tracking-[0.16em] font-sans hover:bg-accent transition-all duration-500 disabled:opacity-50">
-                                <span x-show="!loginSending" x-text="lang === 'et' ? 'Saada link' : 'Send link'"></span>
+                                    class="p-btn w-full mt-8 disabled:opacity-50">
+                                <span x-show="!loginSending" x-text="t('sendLink')"></span>
                                 <span x-show="loginSending" x-cloak>
                                     <svg class="w-5 h-5 animate-spin mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
                                 </span>
@@ -2067,15 +2081,15 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                             </svg>
                         </div>
-                        <p class="font-serif text-xl font-light mb-2" x-text="lang === 'et' ? 'Kontrolli oma e-posti. Link saadetud.' : 'Check your email. Link sent.'"></p>
-                        <p x-show="loginDesk" x-cloak class="text-muted font-sans font-light text-sm max-w-sm mx-auto" x-text="lang === 'et' ? 'See e-post kuulub teenusepakkuja töölauale — link avab sinu töölaua (sukoda.ee/haldus).' : 'This e-mail belongs to a provider desk — the link opens your desk (sukoda.ee/haldus).'"></p>
+                        <p class="font-serif text-xl font-light mb-2" x-text="t('loginSentTitle')"></p>
+                        <p x-show="loginDesk" x-cloak class="text-muted font-sans font-light text-sm max-w-sm mx-auto" x-text="t('loginDeskNote')"></p>
                     </div>
 
-                    <!-- No subscription CTA -->
-                    <div class="border-t border-[#E8E3DD] pt-8 mt-4">
+                    <!-- No home yet -->
+                    <div class="border-t border-line pt-8 mt-4">
                         <p class="text-muted font-sans font-light text-sm">
-                            <span x-text="lang === 'et' ? 'Sul pole veel tellimust?' : 'Don\'t have an order yet?'"></span>
-                            <a href="index.html#liitu" class="text-black font-medium hover:text-accent transition-colors ml-1" x-text="lang === 'et' ? 'Alusta siin' : 'Start here'"></a>
+                            <span x-text="t('loginNoHome')"></span>
+                            <a href="index.html#liitu" class="text-black underline underline-offset-4 hover:text-accent transition-colors ml-1" x-text="t('startHere')"></a>
                         </p>
                     </div>
                 </div>
@@ -2092,7 +2106,7 @@
                 <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12 gap-3 min-w-0">
                     <a href="index.html" class="font-serif text-xl md:text-3xl tracking-[0.08em] font-light shrink-0">SUKODA</a>
                     <div class="flex items-center gap-3 md:gap-5 min-w-0">
-                        <div class="flex text-[11px] uppercase tracking-[0.14em] font-sans gap-1.5 text-muted">
+                        <div class="flex text-xs uppercase tracking-[0.14em] font-sans gap-1.5 text-muted">
                             <button type="button" @click="lang = 'et'; localStorage.setItem('sukoda_lang', 'et')" :class="lang === 'et' ? 'text-black' : 'hover:text-black'" class="transition-colors">ET</button>
                             <span class="text-muted-light">/</span>
                             <button type="button" @click="lang = 'en'; localStorage.setItem('sukoda_lang', 'en')" :class="lang === 'en' ? 'text-black' : 'hover:text-black'" class="transition-colors">EN</button>
@@ -2117,19 +2131,20 @@
                         <img :src="brand?.image || ''" alt="" class="absolute inset-0 w-full h-full object-cover" loading="eager">
                         <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-6 py-4 flex items-end justify-between gap-4">
                             <p class="text-paper font-sans text-sm" x-text="order?.customerAddress || order?.address"></p>
-                            <p class="text-paper/80 text-[10px] uppercase tracking-[0.18em] font-sans" x-text="brand?.project"></p>
+                            <p class="eyebrow text-paper/80" x-text="brand?.project"></p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Tab navigation: the home portal — cleaning is one service among several -->
+            <!-- Tab navigation: four tabs, one home -->
             <div class="px-6 md:px-12 grid-line-b overflow-x-auto">
                 <div class="flex gap-8 md:gap-12 text-sm uppercase tracking-[0.14em] font-sans font-medium whitespace-nowrap">
                     <button type="button" @click="activeTab = 'overview'" :class="activeTab === 'overview' || activeTab === 'visits' ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black border-b-2 border-transparent'" class="py-4 transition-colors" x-text="t('tabKodu')"></button>
                     <button type="button" @click="activeTab = 'extras'" :class="activeTab === 'extras' ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black border-b-2 border-transparent'" class="py-4 transition-colors relative">
                         <span x-text="t('tabServices')"></span>
-                        <span x-show="awaitingRequests.length" x-cloak class="absolute top-2 -right-5 bg-accent text-white text-[10px] rounded-full w-[18px] h-[18px] flex items-center justify-center" x-text="awaitingRequests.length"></span>
+                        <!-- A dot only when a reply waits on the resident's own decision — not a counter -->
+                        <span x-show="needsYou" x-cloak class="absolute top-3 -right-3 w-2 h-2 rounded-full bg-accent" aria-hidden="true"></span>
                     </button>
                     <button type="button" @click="activeTab = 'folder'" :class="activeTab === 'folder' ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black border-b-2 border-transparent'" class="py-4 transition-colors" x-text="t('tabFolder')"></button>
                     <button type="button" @click="activeTab = 'mine'" :class="activeTab === 'mine' ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black border-b-2 border-transparent'" class="py-4 transition-colors" x-text="t('tabMine')"></button>
@@ -2161,20 +2176,26 @@
         <button type="button" class="text-sm font-sans mt-4 underline underline-offset-4" x-show="nextThing.action2" x-cloak @click="runNext(nextThing.kind2)" x-text="nextThing.action2"></button>
       </div>
     </article>
+    <!-- The last visit that happened: one line, then the calendar link -->
+    <div x-show="lastVisit && nextThing.kind !== 'welcome' && nextThing.kind !== 'loading'" x-cloak class="mt-8">
+        <p class="eyebrow" x-text="t('lastVisitLabel')"></p>
+        <p class="text-sm font-sans font-light mt-2" x-text="lastVisitLine(lastVisit)"></p>
+    </div>
     <button type="button" class="text-sm font-sans mt-6 underline underline-offset-4" x-show="nextThing.kind !== 'welcome' && nextThing.kind !== 'away' && !(nextThing.kind === 'visit' && nextThing.pending) && (upcomingBookings.length || pastBookings.length)" x-cloak @click="activeTab = 'visits'" x-text="t('seeCalendar')"></button>
     <form class="mt-10 border-t border-line pt-8" x-show="nextThing.kind !== 'welcome'" x-cloak @submit.prevent="askFolder()">
         <label class="eyebrow" for="ask-home" x-text="t('askHomeLead')"></label>
         <div class="flex flex-col sm:flex-row gap-3 mt-2">
             <input id="ask-home" type="text" x-model="askText" maxlength="200" :placeholder="t('askPh')" class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-line-strong">
-            <button type="submit" class="p-btn shrink-0" x-text="t('askLabel')"></button>
+            <button type="submit" class="p-btn shrink-0 disabled:opacity-50" :disabled="askSending || !(askText || '').trim()" x-text="t('askLabel')"></button>
         </div>
         <div x-show="askCard" x-cloak class="mt-4 border border-line p-4 text-left">
             <p class="font-serif text-2xl font-light leading-snug" x-show="askCard && askCard.fact" x-text="askCard && askCard.fact"></p>
             <p class="eyebrow mt-4" x-show="askCard && askCard.place" x-text="t('askIn')"></p>
             <p class="text-sm font-sans font-light mt-1" x-show="askCard && askCard.place" x-text="askCard && askCard.place"></p>
-            <p class="text-sm font-sans font-light" x-show="askCard && !askCard.fact" x-text="t('askEmpty')"></p>
+            <p class="text-sm font-sans font-light" x-show="askCard && !askCard.fact && !askCard.error" x-text="t('askEmpty')"></p>
+            <p class="text-sm text-red-500 font-sans font-light" x-show="askCard && askCard.error" x-text="askCard && askCard.error"></p>
             <button type="button" x-show="askCard && askCard.action === 'open'" class="p-btn mt-4" @click="openHref(askCard.place, askCard.href)" x-text="t('askOpen')"></button>
-            <button type="button" x-show="askCard && askCard.action === 'person'" class="p-btn mt-4" @click="sendAskToPerson()" x-text="t('askPerson')"></button>
+            <button type="button" x-show="askCard && askCard.action === 'person'" :disabled="askSending" class="p-btn mt-4 disabled:opacity-50" @click="sendAskToPerson()" x-text="askSending ? t('telliSending') : t('askPerson')"></button>
         </div>
     </form>
     <p x-show="brand?.emergencyPhone" x-cloak class="text-sm text-muted font-sans font-light mt-6">
@@ -2205,6 +2226,7 @@
                                 </div>
                                 <div x-show="upcomingBookings.length === 0" class="px-6 py-10">
                                     <p class="text-sm text-muted font-sans font-light" x-text="t('upcomingEmpty')"></p>
+                                    <button type="button" class="p-btn mt-5" @click="activeTab = 'extras'; openPaidClean()" x-text="t('orderCleanBtn')"></button>
                                 </div>
                                 <template x-for="booking in upcomingBookings" :key="booking.id">
                                     <div class="px-6 py-4 border-b border-line last:border-b-0 flex items-baseline justify-between gap-4">
@@ -2245,97 +2267,90 @@
                             </div>
 
                             <!-- Away periods: "we're not home" — cancels visits in range, schedule skips it, housekeeper is told -->
-                            <div x-show="order?.status === 'paid'" class="bg-white border border-[#E8E3DD]">
-                                <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-[#E8E3DD]">
-                                    <h2 class="p-h" x-text="lang === 'et' ? 'Oleme eemal' : 'We are away'"></h2>
-                                    <span x-show="awayNow" x-cloak class="inline-flex px-2.5 py-1 text-[10px] uppercase tracking-[0.15em] font-sans text-amber-700 bg-amber-50 rounded-full" x-text="lang === 'et' ? 'Praegu eemal' : 'Away now'"></span>
+                            <div x-show="order?.status === 'paid'" class="bg-white border border-line">
+                                <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-line">
+                                    <h2 class="p-h" x-text="t('awayCardTitle')"></h2>
+                                    <span x-show="awayNow" x-cloak class="eyebrow text-accent" x-text="t('awayNow')"></span>
                                 </div>
                                 <div class="p-6">
-                                    <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="lang === 'et' ? 'Märgi periood. Regulaarne koristus jääb vahele ja koduhooldaja saab teada.' : 'Mark the period. Regular cleaning is skipped and the housekeeper is told.'"></p>
+                                    <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="t('awayLead')"></p>
 
                                     <!-- Saved periods -->
-                                    <div x-show="extras.away?.length" x-cloak class="mt-5 border border-[#E8E3DD] divide-y divide-[#E8E3DD]">
+                                    <div x-show="extras.away?.length" x-cloak class="mt-5 border border-line divide-y divide-line">
                                         <template x-for="p in extras.away" :key="p.id">
-                                            <div class="flex items-center justify-between gap-4 px-4 py-3" :class="isAwayNow(p) ? 'bg-amber-50/60' : 'bg-cream/40'">
+                                            <div class="flex items-center justify-between gap-4 px-4 py-3 bg-cream/40">
                                                 <div class="min-w-0">
-                                                    <p class="text-sm font-sans" :class="isAwayNow(p) ? 'text-amber-800' : ''">
+                                                    <p class="text-sm font-sans">
                                                         <span x-text="formatDateShort(p.from)"></span><span x-show="p.to !== p.from"> – <span x-text="formatDateShort(p.to)"></span></span>
                                                     </p>
                                                     <p x-show="p.note" class="text-xs text-muted font-sans font-light truncate" x-text="p.note"></p>
                                                 </div>
-                                                <button @click="removeAway(p)" :disabled="awayProcessing" class="text-[11px] uppercase tracking-[0.15em] text-muted hover:text-black font-sans shrink-0 disabled:opacity-40" x-text="lang === 'et' ? 'Eemalda' : 'Remove'"></button>
+                                                <button @click="removeAway(p)" :disabled="awayProcessing" class="text-sm font-sans text-muted hover:text-black shrink-0 disabled:opacity-40" x-text="t('docRemove')"></button>
                                             </div>
                                         </template>
                                     </div>
 
                                     <div class="grid grid-cols-2 gap-3 mt-6">
                                         <div>
-                                            <label class="text-[11px] uppercase tracking-[0.15em] text-muted font-sans block mb-1" x-text="lang === 'et' ? 'Alates' : 'From'"></label>
-                                            <input type="date" x-model="awayFrom" :min="todayStr()" class="w-full border border-[#E8E3DD] bg-white px-3 py-2 text-sm font-sans font-light outline-none focus:border-accent">
+                                            <label class="eyebrow mb-1" for="away-from" x-text="t('fromLabel')"></label>
+                                            <input id="away-from" type="date" x-model="awayFrom" :min="todayStr()" class="w-full border border-line bg-white px-3 py-2 text-sm font-sans font-light outline-none focus:border-accent">
                                         </div>
                                         <div>
-                                            <label class="text-[11px] uppercase tracking-[0.15em] text-muted font-sans block mb-1" x-text="lang === 'et' ? 'Kuni' : 'Until'"></label>
-                                            <input type="date" x-model="awayTo" :min="awayFrom || todayStr()" class="w-full border border-[#E8E3DD] bg-white px-3 py-2 text-sm font-sans font-light outline-none focus:border-accent">
+                                            <label class="eyebrow mb-1" for="away-to" x-text="t('untilLabel')"></label>
+                                            <input id="away-to" type="date" x-model="awayTo" :min="awayFrom || todayStr()" class="w-full border border-line bg-white px-3 py-2 text-sm font-sans font-light outline-none focus:border-accent">
                                         </div>
                                     </div>
-                                    <input type="text" x-model="awayNote" maxlength="300" :placeholder="lang === 'et' ? 'Märkus koduhooldajale (valikuline)' : 'Note for your housekeeper (optional)'" class="w-full mt-3 border border-[#E8E3DD] bg-white px-3 py-2 text-sm font-sans font-light outline-none focus:border-accent placeholder:text-[#D4CFC8]">
+                                    <input type="text" x-model="awayNote" maxlength="300" :placeholder="t('awayNotePh')" :aria-label="t('awayNotePh')" class="w-full mt-3 border border-line bg-white px-3 py-2 text-sm font-sans font-light outline-none focus:border-accent placeholder:text-line-strong">
                                     <div class="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs font-sans">
-                                        <button type="button" @click="presetAwayMonth(1)" class="text-muted hover:text-black" x-text="lang === 'et' ? 'Terve järgmine kuu' : 'All of next month'"></button>
-                                        <button type="button" @click="presetAwayMonth(0)" class="text-muted hover:text-black" x-text="lang === 'et' ? 'Selle kuu lõpuni' : 'Rest of this month'"></button>
+                                        <button type="button" @click="presetAwayMonth(1)" class="text-muted hover:text-black" x-text="t('awayNextMonth')"></button>
+                                        <button type="button" @click="presetAwayMonth(0)" class="text-muted hover:text-black" x-text="t('awayThisMonth')"></button>
                                     </div>
-                                    <button type="button" @click="addAway()" :disabled="awayProcessing || !awayFrom" class="p-btn-2 w-full mt-5 disabled:opacity-40">
-                                        <span x-show="!awayProcessing" x-text="lang === 'et' ? 'Märgi eemalolek' : 'Save away period'"></span>
-                                        <span x-show="awayProcessing" x-cloak x-text="lang === 'et' ? 'Salvestan…' : 'Saving…'"></span>
+                                    <button type="button" @click="addAway()" :disabled="awayProcessing || !awayFrom" class="p-btn w-full mt-5 disabled:opacity-40">
+                                        <span x-show="!awayProcessing" x-text="t('awaySave')"></span>
+                                        <span x-show="awayProcessing" x-cloak x-text="t('docSaving')"></span>
                                     </button>
-                                    <p x-show="awayError" x-cloak class="text-xs text-red-500 font-sans mt-3" x-text="awayError"></p>
-                                    <p x-show="awayDone" x-cloak class="text-xs text-green-700 font-sans mt-3" x-text="awayDone"></p>
+                                    <p x-show="awayError" x-cloak class="text-sm text-red-500 font-sans font-light mt-3" x-text="awayError"></p>
+                                    <p x-show="awayDone" x-cloak class="text-sm font-sans font-light mt-3" x-text="awayDone"></p>
                                 </div>
                             </div>
 
-                            <!-- Pause / Resume section (SUKODA Stripe subscriptions only; partner-managed and developer homes agree pauses with their housekeeper) -->
+                            <!-- Pause / Resume section (SUKODA Stripe subscriptions only; partner-managed and developer homes agree pauses with their cleaner) -->
                             <div x-show="order?.status === 'paid' && order?.source !== 'manual' && !brand">
 
                                 <!-- Active state: show pause option -->
-                                <div x-show="!order?.pausedAt" class="border border-[#E8E3DD]">
-                                    <div class="flex items-center gap-3 px-6 py-4 border-b border-[#E8E3DD]">
-                                        <h2 class="p-h" x-text="lang === 'et' ? 'Peata tellimus' : 'Pause subscription'"></h2>
+                                <div x-show="!order?.pausedAt" class="border border-line">
+                                    <div class="flex items-center gap-3 px-6 py-4 border-b border-line">
+                                        <h2 class="p-h" x-text="t('pauseTitle')"></h2>
                                     </div>
                                     <div class="p-6">
-                                        <p class="text-sm text-muted font-sans font-light mb-4" x-text="lang === 'et' ? 'Saad tellimuse igal ajal peatada ja hiljem jätkata.' : 'You can pause your subscription at any time and resume later.'"></p>
+                                        <p class="text-sm text-muted font-sans font-light mb-4" x-text="t('pauseLead')"></p>
                                         <input type="text"
                                                x-model="pauseReason"
-                                               :placeholder="lang === 'et' ? 'Põhjus (valikuline)' : 'Reason (optional)'"
-                                               class="w-full bg-transparent border-b border-[#E8E3DD] focus:border-accent outline-none py-2 font-sans font-light text-sm transition-colors placeholder:text-[#D4CFC8] mb-5">
+                                               :placeholder="t('pauseReasonPh')"
+                                               :aria-label="t('pauseReasonPh')"
+                                               class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-2 font-sans font-light text-base transition-colors placeholder:text-line-strong mb-5">
                                         <button type="button" @click="pauseSubscription()"
                                                 :disabled="pauseProcessing"
                                                 class="p-btn-2 disabled:opacity-50">
-                                            <span x-show="!pauseProcessing" x-text="lang === 'et' ? 'Peata' : 'Pause'"></span>
-                                            <span x-show="pauseProcessing" x-cloak>
-                                                <svg class="w-4 h-4 animate-spin mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
-                                            </span>
+                                            <span x-show="!pauseProcessing" x-text="t('pauseBtn')"></span>
+                                            <span x-show="pauseProcessing" x-cloak x-text="t('docSaving')"></span>
                                         </button>
+                                        <p x-show="pauseError" x-cloak class="text-sm text-red-500 font-sans font-light mt-3" x-text="pauseError"></p>
                                     </div>
                                 </div>
 
                                 <!-- Paused state: show resume option -->
-                                <div x-show="order?.pausedAt" x-cloak class="bg-amber-50/50 border border-amber-200 p-6">
-                                    <div class="flex items-center gap-3 mb-4">
-                                        <svg class="w-5 h-5 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>
-                                        <p class="text-sm font-sans font-medium text-amber-700" x-text="lang === 'et' ? 'Tellimus on pausil' : 'Subscription is paused'"></p>
-                                    </div>
-                                    <p class="text-sm text-amber-700/80 font-sans font-light mb-2">
-                                        <span x-text="lang === 'et' ? 'Pausil alates ' : 'Paused since '"></span>
-                                        <span x-text="formatDate(order?.pausedAt)"></span>
-                                    </p>
-                                    <p class="text-sm text-amber-700/80 font-sans font-light mb-6" x-text="lang === 'et' ? 'Pausil olev tellimus jätkab tasumisega. Visiidid taastuvad pärast jätkamist.' : 'Your paused subscription continues billing. Visits will resume when you resume.'"></p>
+                                <div x-show="order?.pausedAt" x-cloak class="border border-line p-6">
+                                    <h2 class="p-h" x-text="t('pausedTitle')"></h2>
+                                    <p class="text-sm text-muted font-sans font-light mt-4" x-text="t('pausedSince', { date: formatDateLong(order?.pausedAt) })"></p>
+                                    <p class="text-sm text-muted font-sans font-light mt-2 mb-6" x-text="t('pausedBody')"></p>
                                     <button type="button" @click="resumeSubscription()"
                                             :disabled="resumeProcessing"
                                             class="p-btn disabled:opacity-50">
-                                        <span x-show="!resumeProcessing" x-text="lang === 'et' ? 'Jätka tellimust' : 'Resume subscription'"></span>
-                                        <span x-show="resumeProcessing" x-cloak>
-                                            <svg class="w-4 h-4 animate-spin mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
-                                        </span>
+                                        <span x-show="!resumeProcessing" x-text="t('resumeBtn')"></span>
+                                        <span x-show="resumeProcessing" x-cloak x-text="t('docSaving')"></span>
                                     </button>
+                                    <p x-show="pauseError" x-cloak class="text-sm text-red-500 font-sans font-light mt-3" x-text="pauseError"></p>
                                 </div>
                             </div>
                         </aside>
@@ -2355,15 +2370,15 @@
                         <div class="w-16 h-16 bg-accent rounded-full flex items-center justify-center mx-auto mb-6 animate-checkmark">
                             <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"></path></svg>
                         </div>
-                        <h3 class="font-serif text-2xl font-light mb-3" x-text="requestDone?.interest ? (lang === 'et' ? 'Aitäh, panime kirja' : 'Thank you, noted') : requestKind === 'question' ? (lang === 'et' ? 'Küsimus saadetud' : 'Question sent') : requestKind === 'issue' ? (lang === 'et' ? 'Pöördumine saadetud' : 'Report sent') : (lang === 'et' ? 'Soov saadetud' : 'Request sent')"></h3>
+                        <h3 class="font-serif text-2xl font-light mb-3" x-text="t(requestDone?.interest ? 'doneNoted' : requestKind === 'question' ? 'doneQuestion' : requestKind === 'issue' ? 'doneIssue' : 'doneRequest')"></h3>
                         <p class="text-sm text-muted font-sans font-light leading-relaxed max-w-sm mx-auto mb-2">
                             <span x-text="requestService?.name"></span>
                             <span x-show="requestDate && requestKind !== 'question'" x-text="' · ' + formatDateShort(requestDate)"></span>
                         </p>
                         <p class="text-sm text-muted font-sans font-light leading-relaxed max-w-sm mx-auto" x-text="requestDoneBody"></p>
                         <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-                            <button type="button" x-show="requestDone?.request?.id" @click="const id = requestDone.request.id; closeRequest(); openThread((extras.requests || []).find((x) => x.id === id))" class="p-btn" x-text="lang === 'et' ? 'Ava pöördumine' : 'Open the request'"></button>
-                            <button type="button" @click="closeRequest()" :class="requestDone?.request?.id ? 'p-btn-2' : 'p-btn'" x-text="lang === 'et' ? 'Selge' : 'Done'"></button>
+                            <button type="button" x-show="requestDone?.request?.id" @click="const id = requestDone.request.id; closeRequest(); openThread((extras.requests || []).find((x) => x.id === id))" class="p-btn" x-text="t('openIt')"></button>
+                            <button type="button" @click="closeRequest()" :class="requestDone?.request?.id ? 'p-btn-2' : 'p-btn'" x-text="t('gotIt')"></button>
                         </div>
                     </div>
 
@@ -2391,40 +2406,40 @@
                     <div x-show="requestService && !requestDone">
                         <div class="flex justify-between items-start mb-6">
                             <div class="min-w-0">
-                                <p class="flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-2">
+                                <p class="flex items-center gap-2 eyebrow mb-2">
                                     <span class="w-2 h-2 rounded-full shrink-0" :class="partnerDot(requestService?.category)"></span>
-                                    <span x-text="requestKind === 'question' ? (lang === 'et' ? 'Küsimus' : 'Question') : requestKind === 'issue' ? (lang === 'et' ? 'Pöördumine' : 'Report') : (lang === 'et' ? 'Soov' : 'Request')"></span>
+                                    <span x-text="requestNoun"></span>
                                     <span x-show="showProvider && partnerNameFor(requestService)" class="text-muted/70" x-text="'· ' + shortName(partnerNameFor(requestService))"></span>
                                 </p>
                                 <h3 id="request-modal-title" class="font-serif text-2xl font-light leading-tight" x-text="requestService?.name"></h3>
                             </div>
-                            <button type="button" @click="closeRequest()" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full transition-colors shrink-0 -mr-2 -mt-1">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            <button type="button" @click="closeRequest()" :aria-label="t('docClose')" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full transition-colors shrink-0 -mr-2 -mt-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                             </button>
                         </div>
                         <p class="text-sm text-muted font-sans font-light mb-7 leading-relaxed" x-text="requestService?.description"></p>
-                        <div x-show="requestService?.id !== 'other' && requestService?.id !== 'cleaning-note' && (requestPriceLine || requestPriceBlurb)" class="mb-7 bg-cream/40 border border-[#E8E3DD] p-4">
-                            <p class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans" x-text="lang === 'et' ? 'Hind' : 'Price'"></p>
+                        <div x-show="requestService?.id !== 'other' && requestService?.id !== 'cleaning-note' && (requestPriceLine || requestPriceBlurb)" class="mb-7 bg-cream/40 border border-line p-4">
+                            <p class="eyebrow" x-text="t('priceLabel')"></p>
                             <p x-show="requestPriceLine" class="font-sans text-sm mt-1.5" x-text="requestPriceLine"></p>
                             <p x-show="quoteLine" class="font-sans text-sm mt-2" x-text="quoteLine"></p>
-                            <p class="text-xs text-muted font-sans font-light mt-2 leading-relaxed" x-text="requestPriceBlurb"></p>
+                            <p class="text-sm text-muted font-sans font-light mt-2 leading-relaxed" x-text="requestPriceBlurb"></p>
                         </div>
 
                         <form @submit.prevent="submitRequest()" class="space-y-6">
-                            <p x-show="!isOrderable(requestService)" x-cloak class="bg-cream/60 border border-[#E8E3DD] p-4 text-sm text-muted font-sans font-light leading-relaxed" x-text="lang === 'et' ? 'Seda ei saa veel siit tellida — sinu kodul pole selles valdkonnas tegijat. Anna teada, et soovid seda, ja me otsime. Midagi ei tellita ega maksta.' : 'This cannot be ordered here yet — your home has no provider for it. Tell us you would like it and we will look. Nothing is ordered or charged.'"></p>
+                            <p x-show="!isOrderable(requestService)" x-cloak class="bg-cream/60 border border-line p-4 text-sm text-muted font-sans font-light leading-relaxed" x-text="t('notOrderable')"></p>
 
                             <!-- The words come first for an issue, a question — and for 'something else', where the note is the request -->
                             <div x-show="requestNeedsNote">
-                                <label class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans block mb-2" x-text="requestService?.id === 'other' ? (lang === 'et' ? 'Mis sa vajad?' : 'What do you need?') : requestService?.id === 'cleaning-note' ? (lang === 'et' ? 'Sinu sõnum' : 'Your message') : requestKind === 'question' ? (lang === 'et' ? 'Sinu küsimus' : 'Your question') : (lang === 'et' ? 'Mis ja kus?' : 'What and where?')"></label>
-                                <textarea x-model="requestNote" rows="4" maxlength="500" :placeholder="requestPlaceholder" class="w-full bg-white border border-[#E8E3DD] focus:border-accent outline-none p-4 font-sans font-light text-sm transition-colors placeholder:text-[#B8B2AA] resize-none"></textarea>
+                                <label class="eyebrow mb-2" for="request-note" x-text="t(requestService?.id === 'other' ? 'noteWhatNeed' : requestService?.id === 'cleaning-note' ? 'noteMessage' : requestKind === 'question' ? 'noteQuestion' : 'noteIssue')"></label>
+                                <textarea id="request-note" x-model="requestNote" rows="4" maxlength="500" :placeholder="requestPlaceholder" class="w-full bg-white border border-line focus:border-accent outline-none p-4 font-sans font-light text-base transition-colors placeholder:text-muted-light resize-none"></textarea>
                             </div>
 
                             <!-- Issue: how urgent, and who to call if it cannot wait -->
                             <div x-show="requestKind === 'issue' && isOrderable(requestService)">
-                                <label class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans block mb-3" x-text="lang === 'et' ? 'Kui kiire?' : 'How urgent?'"></label>
+                                <p class="eyebrow mb-3" x-text="t('urgencyLabel')"></p>
                                 <div class="grid grid-cols-2 gap-2">
-                                    <button type="button" @click="requestUrgent = false" :class="!requestUrgent ? 'bg-black text-paper border-black' : 'border-[#E8E3DD] hover:border-accent bg-white'" class="py-3 px-3 border text-center text-xs font-sans transition-colors" x-text="lang === 'et' ? 'Tavaline — ülevaatus sobival ajal' : 'Normal — inspection when it suits'"></button>
-                                    <button type="button" @click="requestUrgent = true" :class="requestUrgent ? 'bg-black text-paper border-black' : 'border-[#E8E3DD] hover:border-accent bg-white'" class="py-3 px-3 border text-center text-xs font-sans transition-colors" x-text="lang === 'et' ? 'Kiire — segab igapäevaelu' : 'Urgent — disrupts daily life'"></button>
+                                    <button type="button" @click="requestUrgent = false" :aria-pressed="!requestUrgent" :class="!requestUrgent ? 'bg-black text-paper border-black' : 'border-line hover:border-accent bg-white'" class="py-3 px-3 border text-center text-xs font-sans transition-colors" x-text="t('urgencyNormal')"></button>
+                                    <button type="button" @click="requestUrgent = true" :aria-pressed="requestUrgent" :class="requestUrgent ? 'bg-black text-paper border-black' : 'border-line hover:border-accent bg-white'" class="py-3 px-3 border text-center text-xs font-sans transition-colors" x-text="t('urgencyUrgent')"></button>
                                 </div>
                                 <!-- The 24h emergency line is the developer's own number; shown only when the brand has set one -->
                                 <p x-show="brand?.emergencyPhone" x-cloak class="text-xs text-muted font-sans font-light mt-3">
@@ -2435,52 +2450,50 @@
 
                             <!-- Time: required for a visit, optional for an issue, absent for a question -->
                             <div x-show="requestKind !== 'question' && isOrderable(requestService)">
-                                <label class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans block mb-2" x-text="requestKind === 'issue' ? (lang === 'et' ? 'Millal sobib ülevaatus?' : 'When suits an inspection?') : (lang === 'et' ? 'Millal sobib?' : 'When suits you?')"></label>
+                                <label class="eyebrow mb-2" for="request-date" x-text="t(requestKind === 'issue' ? 'whenInspection' : 'whenSuits')"></label>
                                 <div x-show="requestKind === 'issue'" class="grid grid-cols-2 gap-2">
-                                    <button type="button" @click="requestDate = ''" :class="!requestDate ? 'bg-black text-paper border-black' : 'border-[#E8E3DD] hover:border-accent bg-white'" class="py-3 px-3 border text-center text-xs font-sans transition-colors" x-text="lang === 'et' ? 'Esimesel võimalusel' : 'Earliest available'"></button>
-                                    <button type="button" @click="if (!requestDate) requestDate = minRequestDate" :class="requestDate ? 'bg-black text-paper border-black' : 'border-[#E8E3DD] hover:border-accent bg-white'" class="py-3 px-3 border text-center text-xs font-sans transition-colors" x-text="lang === 'et' ? 'Valin päeva' : 'I will pick a day'"></button>
+                                    <button type="button" @click="requestDate = ''" :aria-pressed="!requestDate" :class="!requestDate ? 'bg-black text-paper border-black' : 'border-line hover:border-accent bg-white'" class="py-3 px-3 border text-center text-xs font-sans transition-colors" x-text="t('earliest')"></button>
+                                    <button type="button" @click="if (!requestDate) requestDate = minRequestDate" :aria-pressed="!!requestDate" :class="requestDate ? 'bg-black text-paper border-black' : 'border-line hover:border-accent bg-white'" class="py-3 px-3 border text-center text-xs font-sans transition-colors" x-text="t('pickDay')"></button>
                                 </div>
-                                <input x-show="requestKind !== 'issue' || requestDate" type="date" x-model="requestDate" :min="requestDateMin" class="w-full bg-white border border-[#E8E3DD] focus:border-accent outline-none px-4 py-3 font-sans font-light text-sm" :class="requestKind === 'issue' ? 'mt-2' : ''">
-                                <p x-show="requestKind === 'visit' && requestService?.category === 'cleaning'" class="text-xs text-muted font-sans font-light mt-1.5" x-text="t('visitLead', { date: requestDateMin })"></p>
+                                <input id="request-date" x-show="requestKind !== 'issue' || requestDate" type="date" x-model="requestDate" :min="requestDateMin" class="w-full bg-white border border-line focus:border-accent outline-none px-4 py-3 font-sans font-light text-sm" :class="requestKind === 'issue' ? 'mt-2' : ''">
+                                <p x-show="requestKind === 'visit' && requestService?.category === 'cleaning'" class="text-xs text-muted font-sans font-light mt-1.5" x-text="t('visitLead', { date: formatDateLong(requestDateMin) })"></p>
                             </div>
                             <div x-show="requestKind !== 'question' && isOrderable(requestService)">
-                                <label class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans block mb-3" x-text="lang === 'et' ? 'Kellaaeg' : 'Time of day'"></label>
+                                <p class="eyebrow mb-3" x-text="t('orderTime')"></p>
                                 <div class="grid grid-cols-2 gap-2">
                                     <template x-for="w in timeWindowsFor(requestService)" :key="w.id">
-                                        <button type="button" @click="requestWindow = w.id" :class="requestWindow === w.id ? 'bg-black text-paper border-black' : 'border-[#E8E3DD] hover:border-accent bg-white'" class="py-3 px-3 border text-center text-xs font-sans transition-colors" x-text="w.label"></button>
+                                        <button type="button" @click="requestWindow = w.id" :aria-pressed="requestWindow === w.id" :class="requestWindow === w.id ? 'bg-black text-paper border-black' : 'border-line hover:border-accent bg-white'" class="py-3 px-3 border text-center text-xs font-sans transition-colors" x-text="w.label"></button>
                                     </template>
                                 </div>
                             </div>
 
                             <!-- Details for a visit (optional) -->
                             <div x-show="!requestNeedsNote">
-                                <label class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans block mb-2" x-text="lang === 'et' ? 'Täpsustus' : 'Details'"></label>
-                                <textarea x-model="requestNote" rows="3" maxlength="500" :placeholder="requestPlaceholder" class="w-full bg-white border border-[#E8E3DD] focus:border-accent outline-none p-4 font-sans font-light text-sm transition-colors placeholder:text-[#B8B2AA] resize-none"></textarea>
+                                <label class="eyebrow mb-2" for="request-details" x-text="t('detailsLabel')"></label>
+                                <textarea id="request-details" x-model="requestNote" rows="3" maxlength="500" :placeholder="requestPlaceholder" class="w-full bg-white border border-line focus:border-accent outline-none p-4 font-sans font-light text-base transition-colors placeholder:text-muted-light resize-none"></textarea>
                             </div>
 
                             <!-- How they get in this time — standing profile, I will be home, or a one-time note -->
                             <div x-show="requestKind !== 'question' && isOrderable(requestService)">
-                                <label class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans block mb-3" x-text="lang === 'et' ? 'Kuidas sel korral sisse saab?' : 'How do they get in this time?'"></label>
+                                <p class="eyebrow mb-3" x-text="t('accessLabel')"></p>
                                 <div class="grid gap-2">
-                                    <button type="button" x-show="homeProfile.access" @click="requestAccess = 'profile'" :class="requestAccess === 'profile' ? 'bg-black text-paper border-black' : 'border-[#E8E3DD] hover:border-accent bg-white'" class="py-3 px-4 border text-left text-xs font-sans transition-colors">
-                                        <span class="block" x-text="lang === 'et' ? 'Koduhooldaja juhis' : 'The housekeeper’s note'"></span>
+                                    <button type="button" x-show="homeProfile.access" @click="requestAccess = 'profile'" :aria-pressed="requestAccess === 'profile'" :class="requestAccess === 'profile' ? 'bg-black text-paper border-black' : 'border-line hover:border-accent bg-white'" class="py-3 px-4 border text-left text-xs font-sans transition-colors">
+                                        <span class="block" x-text="t('accessProfile')"></span>
                                         <span class="block mt-1 opacity-70 font-light leading-relaxed" x-text="homeProfile.access"></span>
                                     </button>
-                                    <button type="button" @click="requestAccess = 'home'" :class="requestAccess === 'home' ? 'bg-black text-paper border-black' : 'border-[#E8E3DD] hover:border-accent bg-white'" class="py-3 px-4 border text-left text-xs font-sans transition-colors" x-text="lang === 'et' ? 'Olen sel ajal kodus' : 'I will be home'"></button>
-                                    <button type="button" @click="requestAccess = 'note'" :class="requestAccess === 'note' ? 'bg-black text-paper border-black' : 'border-[#E8E3DD] hover:border-accent bg-white'" class="py-3 px-4 border text-left text-xs font-sans transition-colors" x-text="lang === 'et' ? 'Annan selleks korraks teise juhise' : 'A different note for this visit'"></button>
+                                    <button type="button" @click="requestAccess = 'home'" :aria-pressed="requestAccess === 'home'" :class="requestAccess === 'home' ? 'bg-black text-paper border-black' : 'border-line hover:border-accent bg-white'" class="py-3 px-4 border text-left text-xs font-sans transition-colors" x-text="t('accessHome')"></button>
+                                    <button type="button" @click="requestAccess = 'note'" :aria-pressed="requestAccess === 'note'" :class="requestAccess === 'note' ? 'bg-black text-paper border-black' : 'border-line hover:border-accent bg-white'" class="py-3 px-4 border text-left text-xs font-sans transition-colors" x-text="t('accessOther')"></button>
                                 </div>
-                                <textarea x-show="requestAccess === 'note'" x-model="requestAccessNote" rows="2" maxlength="400" :placeholder="lang === 'et' ? 'Nt: uksekood 8821# kuni reedeni. Võtit ei jäta.' : 'E.g.: door code 8821# until Friday. No key left.'" class="w-full mt-2 bg-white border border-[#E8E3DD] focus:border-accent outline-none p-3 font-sans font-light text-sm transition-colors placeholder:text-[#B8B2AA] resize-none"></textarea>
-                                <p class="text-xs text-muted font-sans font-light mt-2 leading-relaxed" x-text="requestService?.category === 'cleaning' || requestService?.id === 'flowers' ? (lang === 'et' ? 'See juhis on koduhooldajale. Kui oled ise kodus või kood on teine, vali allolev.' : 'This note is for the housekeeper. If you will be home, or the code is different, choose below.') : (lang === 'et' ? 'Koduhooldaja võti ei lähe automaatselt kaasa. Ütle, kas oled ise kohal või anna sellele visiidile oma juhis.' : 'The housekeeper’s key is not sent along automatically. Say if you will be there, or give a note for this visit.')"></p>
+                                <textarea x-show="requestAccess === 'note'" x-model="requestAccessNote" rows="2" maxlength="400" :placeholder="t('accessPh')" :aria-label="t('accessOther')" class="w-full mt-2 bg-white border border-line focus:border-accent outline-none p-3 font-sans font-light text-base transition-colors placeholder:text-muted-light resize-none"></textarea>
+                                <p x-show="!(requestService?.category === 'cleaning' || requestService?.id === 'flowers')" class="text-xs text-muted font-sans font-light mt-2 leading-relaxed" x-text="t('accessKeyNote')"></p>
                             </div>
 
                             <p x-show="requestError" x-cloak class="text-sm text-red-500 font-sans font-light" x-text="requestError"></p>
                             <div class="flex items-center justify-between gap-4 pt-2">
-                                <p class="text-xs text-muted font-sans font-light leading-relaxed" x-text="!isOrderable(requestService) ? (lang === 'et' ? 'Ainult huvi — ei kohusta millekski.' : 'Interest only — no commitment.') : requestService?.id === 'cleaning-note' ? (lang === 'et' ? 'Koduhooldaja vastab siia ja e-postiga.' : 'The housekeeper replies here and by e-mail.') : requestKind === 'question' ? (lang === 'et' ? 'Vastus tuleb kirjalikult ja jääb kodu juurde kirja.' : 'The answer comes in writing and stays on record.') : requestKind === 'issue' ? (lang === 'et' ? 'Garantii korras — tasuta. Saad kohe kinnituskirja.' : 'Under warranty — free. You get an instant confirmation.') : (lang === 'et' ? 'Saad kohe kinnituskirja. Lõplik aeg ja hind kinnitatakse vastuses.' : 'You get an instant confirmation. Final time and price are confirmed in the reply.')"></p>
+                                <p class="text-xs text-muted font-sans font-light leading-relaxed" x-text="t(!isOrderable(requestService) ? 'footInterest' : requestService?.id === 'cleaning-note' ? 'footCleaner' : requestKind === 'question' ? 'footQuestion' : requestKind === 'issue' ? 'footIssue' : 'footVisit')"></p>
                                 <button type="submit" :disabled="requestProcessing || (isOrderable(requestService) && requestNoteTooShort) || (requestKind === 'visit' && isOrderable(requestService) && !requestDate)" class="p-btn shrink-0 disabled:opacity-50">
-                                    <span x-show="!requestProcessing" x-text="!isOrderable(requestService) ? (lang === 'et' ? 'Soovin seda' : 'I would like this') : (lang === 'et' ? 'Saada ' : 'Send ') + requestNoun.toLowerCase()"></span>
-                                    <span x-show="requestProcessing" x-cloak>
-                                        <svg class="w-4 h-4 animate-spin mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
-                                    </span>
+                                    <span x-show="!requestProcessing" x-text="!isOrderable(requestService) ? t('wantThis') : requestKind === 'issue' ? t('reportProblem') : t('sendNoun', { noun: requestNoun.toLowerCase() })"></span>
+                                    <span x-show="requestProcessing" x-cloak x-text="t('telliSending')"></span>
                                 </button>
                             </div>
                         </form>
@@ -2493,59 +2506,57 @@
                 <div class="bg-paper w-full sm:max-w-lg max-h-[92vh] overflow-y-auto border border-[#E8E3DD] p-6 md:p-8 shadow-lg" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
                     <div class="flex justify-between items-start mb-6">
                         <div class="min-w-0">
-                            <p class="flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-2">
+                            <p class="flex items-center gap-2 eyebrow mb-2">
                                 <span class="w-2 h-2 rounded-full shrink-0" :class="partnerDot(viewRequest?.category)"></span>
                                 <span :class="viewRequest ? requestStatusColor(viewRequest.status).split(' ')[0] : ''" x-text="viewRequest ? requestStatusLabel(viewRequest.status, viewRequest) : ''"></span>
                                 <span x-show="showProvider && viewRequest?.providerName" class="text-muted/70 truncate" x-text="'· ' + shortName(viewRequest?.providerName)"></span>
                             </p>
                             <h3 id="thread-modal-title" class="font-serif text-2xl font-light leading-tight" x-text="viewRequest?.serviceName"></h3>
                         </div>
-                        <button type="button" @click="closeThread()" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full transition-colors shrink-0 -mr-2 -mt-1">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        <button type="button" @click="closeThread()" :aria-label="t('docClose')" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full transition-colors shrink-0 -mr-2 -mt-1">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                         </button>
                     </div>
-                    <dl class="grid grid-cols-2 gap-x-6 gap-y-3 pb-5 mb-5 border-b border-[#E8E3DD] text-sm font-sans">
+                    <dl class="grid grid-cols-2 gap-x-6 gap-y-3 pb-5 mb-5 border-b border-line text-sm font-sans">
                         <div>
-                            <dt class="text-[10px] uppercase tracking-[0.16em] text-muted mb-1" x-text="lang === 'et' ? 'Saadetud' : 'Sent'"></dt>
+                            <dt class="eyebrow mb-1" x-text="t('sentLabel')"></dt>
                             <dd class="font-light" x-text="formatMsgTime(viewRequest?.createdAt)"></dd>
                         </div>
                         <div x-show="viewRequest?.scheduledAt">
-                            <dt class="text-[10px] uppercase tracking-[0.16em] text-muted mb-1" x-text="lang === 'et' ? 'Kinnitatud aeg' : 'Confirmed time'"></dt>
+                            <dt class="eyebrow mb-1" x-text="t('confirmedTime')"></dt>
                             <dd class="font-light" x-text="formatMsgTime(viewRequest?.scheduledAt)"></dd>
                             <!-- A confirmed request is a visit now: change its time where visits are changed -->
-                            <button type="button" x-show="viewRequest?.status === 'confirmed' && bookingForRequest(viewRequest)" x-cloak @click="changeTime(bookingForRequest(viewRequest))" class="mt-1 text-[11px] uppercase tracking-[0.15em] font-sans text-accent hover:text-black transition-colors" x-text="lang === 'et' ? 'Muuda aega' : 'Change time'"></button>
+                            <button type="button" x-show="viewRequest?.status === 'confirmed' && bookingForRequest(viewRequest)" x-cloak @click="changeTime(bookingForRequest(viewRequest))" class="mt-1 text-sm font-sans underline underline-offset-4 hover:text-accent transition-colors" x-text="t('reschedule')"></button>
                         </div>
                         <div x-show="viewRequest?.price">
-                            <dt class="text-[10px] uppercase tracking-[0.16em] text-muted mb-1" x-text="lang === 'et' ? 'Hind' : 'Price'"></dt>
+                            <dt class="eyebrow mb-1" x-text="t('priceLabel')"></dt>
                             <dd class="font-light" x-text="viewRequest?.price"></dd>
                         </div>
                         <div x-show="viewRequest?.access" class="col-span-2">
-                            <dt class="text-[10px] uppercase tracking-[0.16em] text-muted mb-1" x-text="lang === 'et' ? 'Sissepääs sellel korral' : 'Access this time'"></dt>
+                            <dt class="eyebrow mb-1" x-text="t('accessThisTime')"></dt>
                             <dd class="font-light leading-relaxed" x-text="viewRequest?.access"></dd>
                         </div>
                     </dl>
                     <div class="space-y-4">
                         <template x-for="m in threadMessages" :key="m.id">
                             <div>
-                                <p class="text-[10px] uppercase tracking-[0.14em] font-sans text-muted mb-1">
-                                    <span x-text="m.by === 'client' ? (m.name || (lang === 'et' ? 'Sina' : 'You')) : (showProvider ? (m.name || viewRequest?.providerName || '') : 'SUKODA')"></span>
+                                <p class="eyebrow mb-1">
+                                    <span x-text="m.by === 'client' ? (m.name || t('youShort')) : (showProvider ? (m.name || viewRequest?.providerName || '') : 'SUKODA')"></span>
                                     <span x-show="m.at" x-text="' · ' + formatMsgTime(m.at)"></span>
                                 </p>
-                                <p class="text-sm font-sans font-light leading-relaxed whitespace-pre-line" :class="m.by === 'provider' ? 'bg-cream/50 border border-[#E8E3DD] p-3' : ''" x-text="m.text"></p>
+                                <p class="text-sm font-sans font-light leading-relaxed whitespace-pre-line" :class="m.by === 'provider' ? 'bg-cream/50 border border-line p-3' : ''" x-text="m.text"></p>
                             </div>
                         </template>
                     </div>
-                    <form x-show="canReplyTo(viewRequest)" class="mt-6 pt-5 border-t border-[#E8E3DD]" @submit.prevent="sendThread()">
-                        <label class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans block mb-2" x-text="lang === 'et' ? 'Lisa sõnum' : 'Add a message'"></label>
-                        <textarea x-model="threadText" rows="3" maxlength="1500" :placeholder="lang === 'et' ? 'Täpsustus, küsimus, uus info…' : 'A clarification, a question, new info…'" class="w-full bg-white border border-[#E8E3DD] focus:border-accent outline-none p-4 font-sans font-light text-sm transition-colors placeholder:text-[#B8B2AA] resize-none"></textarea>
+                    <form x-show="canReplyTo(viewRequest)" class="mt-6 pt-5 border-t border-line" @submit.prevent="sendThread()">
+                        <label class="eyebrow mb-2" for="thread-text" x-text="t('addMessage')"></label>
+                        <textarea id="thread-text" x-model="threadText" rows="3" maxlength="1500" :placeholder="t('threadPh')" class="w-full bg-white border border-line focus:border-accent outline-none p-4 font-sans font-light text-base transition-colors placeholder:text-muted-light resize-none"></textarea>
                         <p x-show="threadError" class="text-sm text-red-500 font-sans font-light mt-2" x-text="threadError"></p>
                         <div class="flex items-center justify-between gap-4 mt-3">
-                            <button type="button" x-show="viewRequest?.status === 'requested'" @click="cancelRequest(viewRequest).then((ok) => { if (ok) closeThread(); })" class="text-[11px] uppercase tracking-[0.15em] font-sans text-muted hover:text-black transition-colors" x-text="lang === 'et' ? 'Võta tagasi' : 'Withdraw'"></button>
+                            <button type="button" x-show="viewRequest?.status === 'requested'" @click="cancelRequest(viewRequest).then((ok) => { if (ok) closeThread(); })" class="text-sm font-sans text-muted hover:text-black transition-colors" x-text="t('withdraw')"></button>
                             <button type="submit" :disabled="!threadText.trim() || threadSending" class="p-btn ml-auto disabled:opacity-50">
-                                <span x-show="!threadSending" x-text="lang === 'et' ? 'Saada' : 'Send'"></span>
-                                <span x-show="threadSending" x-cloak>
-                                    <svg class="w-4 h-4 animate-spin mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
-                                </span>
+                                <span x-show="!threadSending" x-text="t('sendWord')"></span>
+                                <span x-show="threadSending" x-cloak x-text="t('telliSending')"></span>
                             </button>
                         </div>
                     </form>
@@ -2559,46 +2570,44 @@
                         <div class="w-16 h-16 bg-accent rounded-full flex items-center justify-center mx-auto mb-6 animate-checkmark">
                             <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"></path></svg>
                         </div>
-                        <h3 class="font-serif text-2xl font-light mb-3" x-text="lang === 'et' ? 'Soov saadetud' : 'Request sent'"></h3>
+                        <h3 class="font-serif text-2xl font-light mb-3" x-text="t('doneRequest')"></h3>
                         <p class="text-sm text-muted font-sans font-light max-w-sm mx-auto" x-text="proposeSentBody"></p>
                     </div>
                     <div x-show="!proposeSuccess">
                         <div class="flex justify-between items-center mb-6">
-                            <h3 id="propose-modal-title" class="font-serif text-xl font-light" x-text="lang === 'et' ? 'Soovi uut aega' : 'Propose a new time'"></h3>
-                            <button type="button" @click="closePropose()" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full transition-colors">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            <h3 id="propose-modal-title" class="font-serif text-xl font-light" x-text="t('proposeTitle')"></h3>
+                            <button type="button" @click="closePropose()" :aria-label="t('docClose')" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                             </button>
                         </div>
                         <p class="text-sm text-muted font-sans font-light mb-6">
-                            <span x-text="lang === 'et' ? 'Praegune aeg: ' : 'Current time: '"></span>
+                            <span x-text="t('currentTime')"></span>
                             <span class="capitalize text-black" x-text="formatDate(proposeBooking?.scheduledAt) + ', ' + formatTime(proposeBooking?.scheduledAt)"></span>.
                             <span x-text="proposeHintText"></span>
                         </p>
                         <form @submit.prevent="submitPropose()" class="space-y-6">
                             <div>
-                                <label class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans block mb-2" x-text="lang === 'et' ? 'Uus päev' : 'New day'"></label>
-                                <input type="date" x-model="proposeDate" :min="minRequestDate" required class="w-full bg-transparent border-b border-[#E8E3DD] focus:border-accent outline-none py-3 font-sans font-light text-sm">
+                                <label class="eyebrow mb-2" for="propose-date" x-text="t('newDay')"></label>
+                                <input id="propose-date" type="date" x-model="proposeDate" :min="minRequestDate" required class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-3 font-sans font-light text-sm">
                             </div>
                             <div>
-                                <label class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans block mb-3" x-text="lang === 'et' ? 'Kellaaeg' : 'Time of day'"></label>
+                                <p class="eyebrow mb-3" x-text="t('orderTime')"></p>
                                 <div class="grid grid-cols-3 gap-2">
                                     <template x-for="w in extras.timeWindows.filter(x => x.id !== 'with-visit')" :key="w.id">
-                                        <button type="button" @click="proposeWindow = w.id" :class="proposeWindow === w.id ? 'bg-black text-paper border-black' : 'border-[#E8E3DD] hover:border-accent'" class="py-3 px-2 border text-center text-xs font-sans font-light transition-colors" x-text="w.label"></button>
+                                        <button type="button" @click="proposeWindow = w.id" :aria-pressed="proposeWindow === w.id" :class="proposeWindow === w.id ? 'bg-black text-paper border-black' : 'border-line hover:border-accent'" class="py-3 px-2 border text-center text-xs font-sans font-light transition-colors" x-text="w.label"></button>
                                     </template>
                                 </div>
                             </div>
                             <div>
-                                <label class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans block mb-2" x-text="lang === 'et' ? 'Märkus' : 'Note'"></label>
-                                <input type="text" x-model="proposeNote" maxlength="300" :placeholder="lang === 'et' ? 'Valikuline' : 'Optional'" class="w-full bg-transparent border-b border-[#E8E3DD] focus:border-accent outline-none py-3 font-sans font-light text-sm placeholder:text-[#D4CFC8]">
+                                <label class="eyebrow mb-2" for="propose-note" x-text="t('noteLabel')"></label>
+                                <input id="propose-note" type="text" x-model="proposeNote" maxlength="300" :placeholder="t('proposeNotePh')" class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-3 font-sans font-light text-base placeholder:text-line-strong">
                             </div>
                             <p x-show="proposeError" x-cloak class="text-sm text-red-500 font-sans font-light" x-text="proposeError"></p>
                             <div class="flex gap-4 pt-2">
-                                <button type="button" @click="closePropose()" class="p-btn-2" x-text="lang === 'et' ? 'Loobu' : 'Cancel'"></button>
+                                <button type="button" @click="closePropose()" class="p-btn-2" x-text="t('docCancel')"></button>
                                 <button type="submit" :disabled="!proposeDate || proposeProcessing" class="p-btn flex-1 disabled:opacity-50">
-                                    <span x-show="!proposeProcessing" x-text="lang === 'et' ? 'Saada soov' : 'Send'"></span>
-                                    <span x-show="proposeProcessing" x-cloak>
-                                        <svg class="w-4 h-4 animate-spin mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
-                                    </span>
+                                    <span x-show="!proposeProcessing" x-text="t('sendWord')"></span>
+                                    <span x-show="proposeProcessing" x-cloak x-text="t('telliSending')"></span>
                                 </button>
                             </div>
                         </form>

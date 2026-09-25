@@ -7,41 +7,38 @@ add({
   factWater: { et: 'Vesi', en: 'Water', ru: 'Вода' },
   factPower: { et: 'Elekter', en: 'Electricity', ru: 'Электричество' },
   factWarranty: { et: 'Garantii lõpp', en: 'Warranty end', ru: 'Конец гарантии' },
-  addFile: { et: '+ Lisa fail', en: '+ Add a file', ru: '+ Добавьте файл' },
-  docChoose: { et: 'Vali fail — PDF või foto', en: 'Choose a file — PDF or photo', ru: 'Выберите файл — PDF или фото' },
-  docFileHint: { et: 'kuni 8 MB · või jäta tühjaks ja lisa link', en: 'up to 8 MB · or leave empty and add a link', ru: 'до 8 МБ · или оставьте пустым и добавьте ссылку' },
+  addFile: { et: '+ Lisa fail', en: '+ Add a file', ru: '+ Добавить файл' },
+  docChoose: { et: 'Vali fail, PDF või foto', en: 'Choose a file, PDF or photo', ru: 'Выберите файл, PDF или фото' },
+  docFileHint: { et: 'kuni 8 MB. Kui faili ei ole, lisa link.', en: 'up to 8 MB. If there is no file, add a link.', ru: 'до 8 МБ. Если файла нет, добавьте ссылку.' },
   docTitle: { et: 'Pealkiri', en: 'Title', ru: 'Название' },
-  docTitlePh: { et: 'nt Kodukindlustus 2026', en: 'e.g. Home insurance 2026', ru: 'напр. страховка дома 2026' },
+  docTitlePh: { et: 'nt Kodukindlustus 2026', en: 'e.g. Home insurance 2026', ru: 'напр. Страховка дома 2026' },
   docCategory: { et: 'Kategooria', en: 'Category', ru: 'Категория' },
-  docLink: { et: 'Link (kui faili pole)', en: 'Link (if there is no file)', ru: 'Ссылка (если файла нет)' },
-  docNote: { et: 'Märge', en: 'Note', ru: 'Заметка' },
-  docNotePh: { et: 'nt kehtib kuni 03.2028', en: 'e.g. valid until 03.2028', ru: 'напр. действует до 03.2028' },
+  docLink: { et: 'Link, kui faili ei ole', en: 'Link, if there is no file', ru: 'Ссылка, если файла нет' },
+  docNote: { et: 'Märkus', en: 'Note', ru: 'Заметка' },
+  docNotePh: { et: 'nt kehtib kuni 31.03.2028', en: 'e.g. valid until 31.03.2028', ru: 'напр. действует до 31.03.2028' },
   docSaving: { et: 'Salvestan…', en: 'Saving…', ru: 'Сохраняю…' },
-  docUpload: { et: 'Lisa fail', en: 'Add the file', ru: 'Добавьте файл' },
-  docAdd: { et: 'Lisa dokument', en: 'Add the document', ru: 'Добавьте документ' },
+  docUpload: { et: 'Lisa fail', en: 'Add the file', ru: 'Добавить файл' },
+  docAdd: { et: 'Lisa dokument', en: 'Add the document', ru: 'Добавить документ' },
   docCancel: { et: 'Loobu', en: 'Cancel', ru: 'Отмена' },
-  docRemove: { et: 'Eemalda', en: 'Remove', ru: 'Удалите' },
-  docOpen: { et: 'Ava', en: 'Open', ru: 'Откройте' },
-  docClose: { et: 'Sulge', en: 'Close', ru: 'Закройте' },
-  folderEmpty: { et: 'Dokumente veel ei ole. Lisa fail, kui sul on leping või juhend.', en: 'There are no documents yet. Add a file if you have a contract or a guide.', ru: 'Документов пока нет. Добавьте файл, если есть договор или инструкция.' },
-  docTooBig: { et: 'Fail on suurem kui 8 MB', en: 'File is larger than 8 MB', ru: 'Файл больше 8 МБ' },
-  docRemoveAsk: { et: 'Eemalda dokument nimekirjast?', en: 'Remove this document?', ru: 'Удалить документ из списка?' },
-  askLabel: { et: 'Küsi', en: 'Ask', ru: 'Спросите' },
+  docRemove: { et: 'Eemalda', en: 'Remove', ru: 'Удалить' },
+  docOpen: { et: 'Ava', en: 'Open', ru: 'Открыть' },
+  docClose: { et: 'Sulge', en: 'Close', ru: 'Закрыть' },
+  folderEmpty: { et: 'Dokumente veel ei ole. Lisa fail, kui sul on leping või juhend.', en: 'There are no documents yet. Add a file if you have a contract or a guide.', ru: 'Документов пока нет. Добавьте файл, если у вас есть договор или инструкция.' },
+  docTooBig: { et: 'Fail on suurem kui 8 MB. Vali väiksem fail või lisa link.', en: 'The file is larger than 8 MB. Choose a smaller file or add a link.', ru: 'Файл больше 8 МБ. Выберите файл поменьше или добавьте ссылку.' },
+  docFail: { et: 'Dokumenti ei õnnestunud salvestada. Proovi uuesti.', en: 'The document could not be saved. Try again.', ru: 'Не удалось сохранить документ. Попробуйте снова.' },
+  docRemoveAsk: { et: 'Eemaldad dokumendi kaustast?', en: 'Remove this document from the folder?', ru: 'Удалить документ из папки?' },
+  askLabel: { et: 'Küsi', en: 'Ask', ru: 'Спросить' },
   askHomeLead: { et: 'Küsi kodu kohta', en: 'Ask about the home', ru: 'Спросите о доме' },
-  askPh: { et: 'nt filtri mõõt', en: 'e.g. the filter size', ru: 'напр. размер фильтра' },
-  askEmpty: { et: 'Dokumentides seda ei ole.', en: 'This is not in the documents.', ru: 'В документах этого нет.' },
+  askPh: { et: 'nt ventilatsioonifiltri mõõt', en: 'e.g. the ventilation filter size', ru: 'напр. размер фильтра вентиляции' },
+  askEmpty: { et: 'Dokumentidest vastust ei leidnud.', en: 'The documents do not have the answer.', ru: 'В документах ответа нет.' },
   askIn: { et: 'Dokumendis', en: 'In the document', ru: 'В документе' },
   askPage: { et: 'lk {page}', en: 'p. {page}', ru: 'стр. {page}' },
-  askOpen: { et: 'Ava dokument', en: 'Open the document', ru: 'Откройте документ' },
-  askTechBtn: { et: 'Telli tehnik', en: 'Order a technician', ru: 'Закажите техника' },
-  askPerson: { et: 'Saada küsimus edasi', en: 'Send the question on', ru: 'Отправьте вопрос дальше' },
-  askSent: { et: 'Saadetud. Vastus tuleb siia.', en: 'Sent. The answer comes here.', ru: 'Отправлено. Ответ придёт сюда.' },
-  exportHome: { et: 'Laadi dokumendid alla', en: 'Download the documents', ru: 'Скачайте документы' },
-  exportPdfWaits: {
-    et: 'Passi PDF tuleb hiljem. Alla tuleb kodu, kinnitatud faktid ja ajalugu.',
-    en: 'The pass PDF comes later. This file is the home, the confirmed facts and the history.',
-    ru: 'PDF паспорта будет позже. Сейчас в файле дом, подтверждённые факты и история.',
-  },
+  askOpen: { et: 'Ava dokument', en: 'Open the document', ru: 'Открыть документ' },
+  askPerson: { et: 'Küsi inimeselt', en: 'Ask a person', ru: 'Спросить у специалиста' },
+  askSent: { et: 'Küsimus on saadetud. Vastus tuleb Kodu vaatesse.', en: 'The question is sent. The reply appears on the Home tab.', ru: 'Вопрос отправлен. Ответ появится на вкладке Дом.' },
+  askFailed: { et: 'Küsimus ei läinud teele. Proovi uuesti.', en: 'The question was not sent. Try again.', ru: 'Вопрос не отправился. Попробуйте снова.' },
+  askTooShort: { et: 'Kirjuta küsimus pikemalt, vähemalt paar sõna.', en: 'Write the question a little longer, at least a few words.', ru: 'Напишите вопрос подробнее, хотя бы несколько слов.' },
+  exportHome: { et: 'Laadi dokumendid alla', en: 'Download the documents', ru: 'Скачать документы' },
 });
 
 export const kaustHtml = `<div id="dokumendid" x-show="activeTab === 'folder'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="min-w-0 bg-white border border-line p-have">
@@ -71,15 +68,15 @@ export const kaustHtml = `<div id="dokumendid" x-show="activeTab === 'folder'" x
                                         </span>
                                         <input type="file" class="hidden" accept="application/pdf,image/jpeg,image/png,image/webp,image/heic" @change="onDocFile($event)">
                                     </label>
-                                    <label class="block"><span class="text-[10px] uppercase tracking-[0.15em] text-muted font-sans block mb-1" x-text="t('docTitle')"></span><input type="text" x-model="docForm.title" maxlength="120" :placeholder="t('docTitlePh')" class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-line-strong"></label>
-                                    <label class="block"><span class="text-[10px] uppercase tracking-[0.15em] text-muted font-sans block mb-1" x-text="t('docCategory')"></span>
+                                    <label class="block"><span class="eyebrow mb-1" x-text="t('docTitle')"></span><input type="text" x-model="docForm.title" maxlength="120" :placeholder="t('docTitlePh')" class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-line-strong"></label>
+                                    <label class="block"><span class="eyebrow mb-1" x-text="t('docCategory')"></span>
                                         <select x-model="docForm.category" class="w-full bg-transparent border-b border-line py-2 font-sans font-light text-base outline-none"><template x-for="c in documents.categories" :key="c.id"><option :value="c.id" x-text="c.label"></option></template></select></label>
-                                    <label class="block lg:col-span-2" x-show="!docFile"><span class="text-[10px] uppercase tracking-[0.15em] text-muted font-sans block mb-1" x-text="t('docLink')"></span><input type="url" x-model="docForm.url" placeholder="https://" class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-line-strong"></label>
-                                    <label class="block lg:col-span-2"><span class="text-[10px] uppercase tracking-[0.15em] text-muted font-sans block mb-1" x-text="t('docNote')"></span><input type="text" x-model="docForm.note" maxlength="300" :placeholder="t('docNotePh')" class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-line-strong"></label>
+                                    <label class="block lg:col-span-2" x-show="!docFile"><span class="eyebrow mb-1" x-text="t('docLink')"></span><input type="url" x-model="docForm.url" placeholder="https://" class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-line-strong"></label>
+                                    <label class="block lg:col-span-2"><span class="eyebrow mb-1" x-text="t('docNote')"></span><input type="text" x-model="docForm.note" maxlength="300" :placeholder="t('docNotePh')" class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-line-strong"></label>
                                 </div>
                                 <div class="flex items-center gap-4 mt-5">
                                     <button type="button" @click="addDocument()" :disabled="!docForm.title || docBusy" class="p-btn" x-text="docBusy ? t('docSaving') : (docFile ? t('docUpload') : t('docAdd'))"></button>
-                                    <button type="button" @click="docAdding = false; docFile = null" class="text-[11px] uppercase tracking-[0.15em] text-muted hover:text-black font-sans" x-text="t('docCancel')"></button>
+                                    <button type="button" @click="docAdding = false; docFile = null" class="text-sm font-sans text-muted hover:text-black" x-text="t('docCancel')"></button>
                                     <p x-show="docError" x-cloak class="text-sm text-red-500 font-sans font-light" x-text="docError"></p>
                                 </div>
                             </div>
@@ -87,7 +84,7 @@ export const kaustHtml = `<div id="dokumendid" x-show="activeTab === 'folder'" x
                             <div x-show="documents.items.length">
                                 <template x-for="group in documentsByCategory" :key="group.id">
                                     <div class="border-b border-line last:border-b-0">
-                                        <p class="px-6 pt-5 pb-1 text-[10px] uppercase tracking-[0.16em] text-muted font-sans" x-text="group.label"></p>
+                                        <p class="eyebrow px-6 pt-5 pb-1" x-text="group.label"></p>
                                         <div class="divide-y divide-line">
                                             <template x-for="d in group.items" :key="d.id">
                                                 <div class="px-6 py-3 flex items-center justify-between gap-4">
@@ -96,8 +93,8 @@ export const kaustHtml = `<div id="dokumendid" x-show="activeTab === 'folder'" x
                                                         <span x-show="d.note" class="block text-xs text-muted font-sans font-light truncate" x-text="d.note"></span>
                                                     </span>
                                                     <span class="flex items-center gap-4 shrink-0">
-                                                        <button type="button" x-show="d.source !== 'developer' && d.source !== 'building'" @click="removeDocument(d)" class="text-[10px] uppercase tracking-[0.14em] text-muted hover:text-black font-sans" x-text="t('docRemove')"></button>
-                                                        <button type="button" x-show="d.file || d.url" @click="openDoc(d)" class="text-[11px] uppercase tracking-[0.14em] font-sans text-muted hover:text-black" x-text="t('docOpen')"></button>
+                                                        <button type="button" x-show="d.source !== 'developer' && d.source !== 'building'" @click="removeDocument(d)" class="text-sm font-sans text-muted hover:text-black" x-text="t('docRemove')"></button>
+                                                        <button type="button" x-show="d.file || d.url" @click="openDoc(d)" class="text-sm font-sans underline underline-offset-4" x-text="t('docOpen')"></button>
                                                     </span>
                                                 </div>
                                             </template>
@@ -113,5 +110,5 @@ export const kaustHtml = `<div id="dokumendid" x-show="activeTab === 'folder'" x
                                 <p class="font-sans text-sm truncate" x-text="docPreview && docPreview.title"></p>
                                 <button type="button" class="p-btn-2 p-btn-sm shrink-0" @click="closeDoc()" x-text="t('docClose')"></button>
                             </div>
-                            <iframe class="flex-1 w-full min-h-0 border-0" :src="docPreview ? docPreview.href : ''" title=""></iframe>
+                            <iframe class="flex-1 w-full min-h-0 border-0" :src="docPreview ? docPreview.href : ''" :title="docPreview ? docPreview.title : ''"></iframe>
                         </div>`;

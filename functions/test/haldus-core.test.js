@@ -654,6 +654,22 @@ test('visit split never charges and keeps sponsor, resident and provider in bala
   assert.equal(core.visitWindowOpen(start, '2026-09-23T12:00:00.000Z', '2026-09-23T06:00:00.000Z'), false);
 });
 
+test('auto-place only on a free working day inside notice and hours', () => {
+  const base = {
+    preferredDate: '2026-10-13', // Tuesday
+    timeWindow: 'morning',
+    todayStr: '2026-09-25',
+    availability: { days: [1, 2, 3, 4, 5], hours: { start: '08:00', end: '17:00' }, leadDays: 14 },
+    awayPeriods: [],
+  };
+  assert.equal(core.canAutoPlaceVisit(base), true);
+  assert.equal(core.canAutoPlaceVisit({ ...base, preferredDate: '2026-10-10' }), false); // Saturday
+  assert.equal(core.canAutoPlaceVisit({ ...base, preferredDate: '2026-10-06' }), false); // inside 14-day notice
+  assert.equal(core.canAutoPlaceVisit({ ...base, awayPeriods: [{ from: '2026-10-12', to: '2026-10-16' }] }), false);
+  assert.equal(core.canAutoPlaceVisit({ ...base, timeWindow: 'with-visit' }), false);
+  assert.equal(core.weekdayOfDateStr('2026-10-13'), 2);
+});
+
 test('122 home previews stay balanced and uncharged', () => {
   for (let i = 0; i < 122; i++) {
     const split = core.splitVisitPayment({

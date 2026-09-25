@@ -161,6 +161,27 @@
         }
       },
       {
+        "source": "/api/me/homes",
+        "function": {
+          "functionId": "portalExtrasApi",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/me/homes/**",
+        "function": {
+          "functionId": "portalExtrasApi",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/me/handover",
+        "function": {
+          "functionId": "portalExtrasApi",
+          "region": "europe-west1"
+        }
+      },
+      {
         "source": "/api/admin/providers",
         "function": {
           "functionId": "adminProvidersApi",

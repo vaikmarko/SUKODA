@@ -51,7 +51,7 @@ test('unpaid line comes before a visit', () => {
 test('pending order is an unpaid line', () => {
   const card = pickNextThing(portal({ order: { status: 'pending', subscriptionStatus: null } }));
   assert.equal(card.kind, 'unpaid');
-  assert.equal(card.title, 'Tellimus on maksmata');
+  assert.equal(card.title, 'Makse on veel tegemata');
 });
 
 test('a reply the resident must act on comes before the visit', () => {
@@ -70,7 +70,7 @@ test('the next visit is the card when nothing needs a decision', () => {
   assert.equal(card.pending, false);
   assert.equal(card.title, 'teisipäev, 24. märts');
   assert.match(card.body, /Kristi/);
-  assert.match(card.body, /muuda seda/);
+  assert.match(card.body, /muuda aega/);
   assert.equal(card.action, 'Muuda aega');
 });
 
@@ -82,13 +82,25 @@ test('a pending new time opens the calendar', () => {
   assert.equal(card.action, 'Ava kalender');
 });
 
+test('a written reply is the card when there is no visit', () => {
+  const card = pickNextThing(portal({
+    extras: { requests: [{ id: 'a1', status: 'answered', kind: 'question', serviceName: 'Filtri mõõt' }], away: [] },
+  }));
+  assert.equal(card.kind, 'request');
+  assert.equal(card.refId, 'a1');
+  assert.equal(card.title, 'Filtri mõõt');
+  assert.equal(card.body, 'Vastus on kirjas. Ava ja loe.');
+  assert.equal(card.action, 'Ava vastus');
+});
+
 test('an unanswered question is the card when there is no visit', () => {
   const card = pickNextThing(portal({
     extras: { requests: [{ id: 'q1', status: 'requested', kind: 'question', serviceName: 'Kuidas filter käib' }], away: [] },
   }));
   assert.equal(card.kind, 'request');
   assert.equal(card.title, 'Kuidas filter käib');
-  assert.equal(card.action, 'Ava vastus');
+  assert.equal(card.action, 'Ava');
+  assert.doesNotMatch(card.body, /\bvestlus\b/);
 });
 
 test('a waiting question is a line under the visit, not a second card', () => {
@@ -106,10 +118,29 @@ test('an empty home profile asks for linens, flowers and access', () => {
   assert.equal(card.action, 'Täida');
 });
 
-test('calm empty state asks for one report', () => {
+test('calm empty state asks for one report when the home has a warranty service', () => {
+  const card = pickNextThing(portal({ extras: { requests: [], away: [], catalogue: [{ id: 'warranty-claim' }] } }));
+  assert.equal(card.kind, 'calm');
+  assert.equal(card.title, 'Järgmist visiiti ei ole plaanis');
+  assert.match(card.body, /tasuta/);
+  assert.equal(card.action, 'Teata probleemist');
+  assert.doesNotMatch(card.title + card.body, /ei oota sind miski/);
+});
+
+test('calm empty state points to Services when there is no warranty service', () => {
   const card = pickNextThing(portal({}));
   assert.equal(card.kind, 'calm');
-  assert.equal(card.action, 'Teata probleemist');
+  assert.doesNotMatch(card.body, /garantii/i);
+  assert.equal(card.action, 'Telli teenus');
+});
+
+test('no card uses jargon the resident should not see', () => {
+  const banned = /pöördumi|tellimus|tegija|kanal|sponsor|järelteenindus|koduhooldaja/i;
+  for (const [key, row] of Object.entries(dict)) {
+    assert.doesNotMatch(row.et || '', banned, key + '.et');
+    assert.ok(row.et && row.en && row.ru, key + ' has et, en and ru');
+    assert.doesNotMatch((row.et || '') + (row.en || '') + (row.ru || ''), /[!]/, key + ' has no exclamation mark');
+  }
 });
 
 test('away is the card only when nothing else is waiting', () => {
@@ -122,15 +153,16 @@ test('a standing gift is the first card, with a time to pick', () => {
   const card = pickNextThing(portal({ arcoCleanLine: 'Arco kingib esimese koristuse' }));
   assert.equal(card.kind, 'welcome');
   assert.equal(card.title, 'Vali esimene koristus');
-  assert.equal(card.body, 'Arco kingib esimese koristuse.');
+  assert.match(card.body, /^Arco kingib esimese koristuse\./);
+  assert.match(card.body, /maksta ei ole vaja/);
   assert.equal(card.action, 'Vali aeg');
   assert.equal(dict.welcomeTitle.en, 'Pick the first clean');
   assert.equal(dict.welcomeTitle.ru, 'Выберите первую уборку');
-  assert.equal(dict.welcomeBody.en, 'Arco gives the first clean.');
-  assert.equal(dict.welcomeBody.ru, 'Arco дарит первую уборку.');
+  assert.match(dict.welcomeBody.en, /^Arco gives the first clean\./);
+  assert.match(dict.welcomeBody.ru, /^Arco дарит первую уборку\./);
   assert.equal(dict.welcomeAction.et, 'Vali aeg');
   assert.equal(dict.welcomeAction.en, 'Pick a time');
-  assert.equal(dict.welcomeAction.ru, 'Выберите время');
+  assert.equal(dict.welcomeAction.ru, 'Выбрать время');
   assert.doesNotMatch(`${card.title} ${card.body} ${dict.welcomeTitle.en} ${dict.welcomeBody.en}`, /õnne|kaks tundi|congratulat|two hours/i);
 });
 

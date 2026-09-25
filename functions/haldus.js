@@ -185,25 +185,25 @@ module.exports = function createHaldus(deps) {
       addToCalendar: 'Lisa kalendrisse',
       google: 'Google Calendar',
       apple: 'Apple / Outlook',
-      portalNote: 'Kõik ajad, pöördumised ja dokumendid leiad oma koduportaalist. Kui aeg ei sobi või tahad midagi lisada, tee seda seal — nii jääb kõik kodu juurde.',
-      portalBtn: 'AVA PORTAAL',
+      portalNote: 'Ajad, soovid ja dokumendid on rakenduses. Kui aeg ei sobi või tahad midagi lisada, kirjuta rakenduses.',
+      portalBtn: 'AVA RAKENDUS',
       calTitle: 'SUKODA koristus',
       calTitleService: (s, brand) => `${brand || 'SUKODA'} · ${s}`,
 
       subjConfirmed: 'SUKODA | Sinu aeg on kinnitatud',
       confirmedTitle: 'Sinu aeg on kinnitatud',
-      confirmedIntro: (p) => (p ? `${p} tuleb sinu koju alltoodud ajal.` : 'Aeg on kirjas.'),
-      confirmedServiceIntro: (p, s) => (p ? `${p} kinnitas sinu soovi „${s}“.` : (s ? `„${s}“ on kirjas.` : 'Aeg on kirjas.')),
+      confirmedIntro: (p) => (p ? `${p} tuleb sinu koju. Aeg on allpool.` : 'Aeg on allpool.'),
+      confirmedServiceIntro: (p, s) => (p ? `${p} kinnitas sinu soovi „${s}“. Aeg on allpool.` : (s ? `„${s}“ on kinnitatud. Aeg on allpool.` : 'Aeg on allpool.')),
 
-      subjRescheduled: 'SUKODA | Sinu visiidi aeg on muudetud',
-      rescheduledTitle: 'Visiidi aeg on muudetud',
-      rescheduledIntro: (p) => (p ? `${p} muutis sinu visiidi aega.` : 'Visiidi aeg on muudetud.'),
+      subjRescheduled: 'SUKODA | Visiidi aeg muutus',
+      rescheduledTitle: 'Visiidi aeg muutus',
+      rescheduledIntro: (p) => (p ? `${p} muutis sinu visiidi aega. Uus aeg on allpool.` : 'Visiidi aeg muutus. Uus aeg on allpool.'),
       oldTime: 'Eelmine aeg',
       newTime: 'Uus aeg',
 
-      subjCancelled: 'SUKODA | Sinu visiit on tühistatud',
-      cancelledTitle: 'Visiit on tühistatud',
-      cancelledIntro: (p) => (p ? `${p} tühistas alltoodud visiidi.` : 'Visiit on tühistatud.'),
+      subjCancelled: 'SUKODA | Visiit jääb ära',
+      cancelledTitle: 'Visiit jääb ära',
+      cancelledIntro: (p) => (p ? `${p} tühistas visiidi. Aeg on allpool.` : 'Visiit jääb ära. Aeg on allpool.'),
       reason: 'Põhjus',
 
       subjReminder: 'SUKODA | Homme on koristus',
@@ -212,62 +212,64 @@ module.exports = function createHaldus(deps) {
       reminderTitleWarranty: 'Homme on garantiivisiit',
       subjReminderOther: (p) => (p ? `SUKODA | Homme tuleb ${p}` : 'SUKODA | Homme on visiit'),
       reminderTitleOther: (p) => (p ? `Homme tuleb ${p}` : 'Homme on visiit'),
-      reminderIntro: (p) => (p ? `Meeldetuletus: ${p} tuleb homme.` : 'Meeldetuletus homsest visiidist.'),
-      reminderAccess: 'Palun jäta koju ligipääs. Kui aeg ei sobi, muuda seda portaalis või kirjuta pöördumise juurde.',
+      reminderIntro: (p) => (p ? `${p} tuleb homme. Aeg on allpool.` : 'Homme on visiit. Aeg on allpool.'),
+      reminderAccess: 'Palun vaata, et koju saab sisse. Kui aeg ei sobi, muuda aega rakenduses.',
 
       subjSchedule: 'SUKODA | Sinu järgmised koristusajad',
       scheduleTitle: 'Sinu järgmised koristusajad',
-      scheduleIntro: (p) => (p ? `${p} pani paika järgmised ajad. Need on kõigil pere kontaktidel ühe klikiga kalendrisse lisatavad.` : 'Järgmised ajad on paigas.'),
-      scheduleNote: 'Kui mõni aeg ei sobi, muuda seda portaalis või kirjuta seal oma koduhooldajale.',
+      scheduleIntro: (p) => (p ? `${p} pani paika järgmised koristusajad. Iga aja saad ühe puutega kalendrisse lisada.` : 'Järgmised koristusajad on paigas. Iga aja saad ühe puutega kalendrisse lisada.'),
+      scheduleNote: 'Kui mõni aeg ei sobi, muuda aega rakenduses või kirjuta koduhooldajale.',
 
-      subjWelcome: 'SUKODA | Sinu kodu on avatud',
-      welcomeTitle: 'Sinu kodu on SUKODA-s',
-      welcomeIntro: (p) => (p ? `${p} lisas su kodu. Ava link — näed järgmist aega ja saad kirjutada, kui see ei sobi.` : 'Ava link — näed järgmist aega.'),
-      welcomeIntroPartner: (p) => (p ? `${p} lisas su kodu. Ava link — näed aegu ja saad kirjutada.` : 'Ava link — näed oma aegu.'),
-      welcomeBtn: 'Ava äpp',
-      welcomeContacts: 'Kui link ei avane, mine aadressile sukoda.ee/app ja sisesta sama e-post. Saadame kuuekohalise koodi.',
+      subjWelcome: 'SUKODA | Sinu kodu on valmis',
+      welcomeTitle: 'Sinu kodu on valmis',
+      welcomeIntro: (p) => (p ? `${p} lisas sinu kodu. Ava rakendus, vaata järgmist aega ja kirjuta, kui aeg ei sobi.` : 'Ava rakendus ja vaata järgmist aega.'),
+      welcomeIntroPartner: (p) => (p ? `${p} lisas sinu kodu. Ava rakendus ja vaata oma aegu.` : 'Ava rakendus ja vaata oma aegu.'),
+      welcomeIntroArco: 'ARCO Vara andis su kodu üle. Dokumendid, küsimused, garantii, remont ja koristus on ühes kohas. Ava rakendus.',
+      welcomeFirst: (when) => `Esimene kord on ${when}.`,
+      welcomeBtn: 'Ava rakendus',
+      welcomeContacts: 'Kui nupp ei avane, mine aadressile sukoda.ee/app ja sisesta sama e-posti aadress. Saadame sulle kuuekohalise koodi.',
 
       subjRequestReceived: (s) => `SUKODA | Soov vastu võetud: ${s}`,
       subjQuestionSent: (s) => `SUKODA | Küsimus saadetud: ${s}`,
-      subjIssueSent: (s) => `SUKODA | Pöördumine saadetud: ${s}`,
+      subjIssueSent: (s) => `SUKODA | Teade saadetud: ${s}`,
       requestReceivedTitle: 'Soov vastu võetud',
       questionSentTitle: 'Küsimus saadetud',
-      issueSentTitle: 'Pöördumine saadetud',
-      requestReceivedIntro: (p) => (p ? `Edastasime sinu soovi partnerile ${p}. Tavaliselt kinnitab ta aja sama päeva jooksul.` : 'Soov on kirjas.'),
-      questionSentIntro: (p) => (p ? `Sinu küsimus on nüüd meeskonnal ${p}. Vastus tuleb kirjalikult, tavaliselt sama tööpäeva jooksul.` : 'Küsimus on kirjas. Vastus tuleb siia.'),
-      issueSentIntro: (p) => (p ? `Edastasime sinu pöördumise partnerile ${p}. Garantiimeeskond kinnitab ülevaatuse aja tavaliselt 2 tööpäeva jooksul.` : 'Pöördumine on kirjas. Vastus tuleb siia.'),
+      issueSentTitle: 'Teade saadetud',
+      requestReceivedIntro: (p) => (p ? `${p} sai sinu soovi ja kinnitab aja tavaliselt sama päeva jooksul.` : 'Sinu soov on kirjas. Kinnitame aja tavaliselt sama päeva jooksul.'),
+      questionSentIntro: (p) => (p ? `${p} sai sinu küsimuse ja vastab kirjalikult, tavaliselt sama tööpäeva jooksul.` : 'Sinu küsimus on kirjas. Vastame kirjalikult, tavaliselt sama tööpäeva jooksul.'),
+      issueSentIntro: (p) => (p ? `${p} sai sinu teate ja pakub ülevaatuse aja tavaliselt 2 tööpäeva jooksul.` : 'Sinu teade on kirjas. Pakume ülevaatuse aja tavaliselt 2 tööpäeva jooksul.'),
       preferredDate: 'Soovitud päev',
       preferredTime: 'Soovitud aeg',
       asap: 'Esimesel võimalusel',
-      requestReceivedNote: 'E-kiri on teavitus. Kui tahad midagi lisada või täpsustada, kirjuta portaalis pöördumise juurde — nii jääb kogu vestlus kodu juurde.',
+      requestReceivedNote: 'Kui tahad midagi lisada, kirjuta rakenduses.',
 
-      subjRequestDeclined: (s) => `SUKODA | Soov „${s}“ vajab uut aega`,
-      requestDeclinedTitle: 'Vajame uut aega',
-      requestDeclinedIntro: (p) => (p ? `${p} ei saa kahjuks soovitud ajal. Ava pöördumine portaalis ja paku uut aega — nii jääb vestlus kodu juurde.` : 'Soovitud aeg kahjuks ei sobi. Ava pöördumine ja paku uus päev.'),
-      subjIssueReviewed: (s) => `SUKODA | Pöördumine vaadatud üle: ${s}`,
-      issueReviewedTitle: 'Pöördumine vaadatud üle',
-      issueReviewedIntro: (p) => (p ? `${p} vaatas sinu pöördumise üle. Kirjeldatud puudus ei kuulu kahjuks garantii alla — selgitus on allpool.` : 'Vaatasime pöördumise üle. Kirjeldatud puudus ei kuulu kahjuks garantii alla — selgitus on allpool.'),
-      issueReviewedNote: 'Kui soovid, tellime töö tasulisena — kirjuta portaalis selle pöördumise juurde, siis lepime aja kokku.',
+      subjRequestDeclined: (s) => `SUKODA | „${s}“ vajab uut aega`,
+      requestDeclinedTitle: 'Vali uus aeg',
+      requestDeclinedIntro: (p) => (p ? `${p} ei saa soovitud ajal tulla. Ava rakendus ja vali uus aeg.` : 'Soovitud aeg ei sobi. Ava rakendus ja vali uus aeg.'),
+      subjIssueReviewed: (s) => `SUKODA | Vastus sinu teatele: ${s}`,
+      issueReviewedTitle: 'Vastus sinu teatele',
+      issueReviewedIntro: (p) => (p ? `${p} vaatas sinu teate üle. Kirjeldatud puudus ei ole garantii all. Selgitus on allpool.` : 'Vaatasime sinu teate üle. Kirjeldatud puudus ei ole garantii all. Selgitus on allpool.'),
+      issueReviewedNote: 'Kui soovid, teeme töö tasulisena. Kirjuta rakenduses teate juurde ja lepime aja kokku.',
       message: 'Sõnum',
       explanation: 'Selgitus',
 
       subjCompleted: (s) => `SUKODA | Tehtud: ${s}`,
       completedTitle: 'Tehtud',
       completedIntro: (p, s) => (p ? `${p} märkis töö „${s}“ tehtuks.` : (s ? `„${s}“ on tehtud.` : 'Töö on tehtud.')),
-      completedNote: 'Kui midagi jääb, kirjuta pöördumise juurde.',
+      completedNote: 'Kui midagi jäi tegemata, kirjuta rakenduses töö juurde.',
 
       subjRequestCancelled: 'SUKODA | Soov tühistatud',
 
       subjAway: 'SUKODA | Eemalolek on kirjas',
       awayTitle: 'Eemalolek on kirjas',
-      awayIntro: (p, by) => (by === 'provider' && p ? `${p} märkis, et oled eemal. Sel ajal visiite ei toimu.` : (p ? `Andsime partnerile ${p} teada, et oled eemal. Sel ajal visiite ei toimu.` : 'Sel ajal visiite ei toimu.')),
+      awayIntro: (p, by) => (by === 'provider' && p ? `${p} märkis, et oled eemal. Sel ajal visiite ei ole.` : (p ? `${p} teab, et oled eemal. Sel ajal visiite ei ole.` : 'Sel ajal visiite ei ole.')),
       awayPeriod: 'Eemal',
-      awayCancelled: 'Tühistatud visiidid',
-      awayNone: 'Sellesse vahemikku ei jäänud ühtegi visiiti.',
-      awayResume: 'Pärast tagasitulekut jätkuvad ajad tavapäraselt. Kui plaanid muutuvad, saad eemaloleku portaalis eemaldada.',
+      awayCancelled: 'Ära jäävad visiidid',
+      awayNone: 'Sellesse aega ei jäänud ühtegi visiiti.',
+      awayResume: 'Kui oled tagasi, jätkuvad ajad tavapäraselt. Kui plaanid muutuvad, eemalda eemalolek rakenduses.',
       subjAwayRemoved: 'SUKODA | Eemalolek eemaldatud',
       awayRemovedTitle: 'Eemalolek eemaldatud',
-      awayRemovedIntro: (p) => (p ? `${p} teab, et oled siiski kodus. Taastatud ja eelseisvad ajad on allpool.` : 'Taastatud ja eelseisvad ajad on allpool.'),
+      awayRemovedIntro: (p) => (p ? `${p} teab, et oled siiski kodus. Sinu järgmised ajad on allpool.` : 'Sinu järgmised ajad on allpool.'),
     },
     en: {
       hello: (n) => (n ? `Hello, ${n}.` : 'Hello.'),
@@ -284,25 +286,25 @@ module.exports = function createHaldus(deps) {
       addToCalendar: 'Add to calendar',
       google: 'Google Calendar',
       apple: 'Apple / Outlook',
-      portalNote: 'All times, requests and documents live in your home portal. If a time does not suit or you want to add something, do it there — that way everything stays with the home.',
-      portalBtn: 'OPEN PORTAL',
+      portalNote: 'Times, requests and documents are in the app. If a time does not suit or you want to add something, write in the app.',
+      portalBtn: 'OPEN THE APP',
       calTitle: 'SUKODA cleaning',
       calTitleService: (s, brand) => `${brand || 'SUKODA'} · ${s}`,
 
       subjConfirmed: 'SUKODA | Your time is confirmed',
       confirmedTitle: 'Your time is confirmed',
-      confirmedIntro: (p) => (p ? `${p} will come to your home at the time below.` : 'The time is set.'),
-      confirmedServiceIntro: (p, s) => (p ? `${p} confirmed your request "${s}".` : (s ? `"${s}" is set.` : 'The time is set.')),
+      confirmedIntro: (p) => (p ? `${p} is coming to your home. The time is below.` : 'The time is below.'),
+      confirmedServiceIntro: (p, s) => (p ? `${p} confirmed your request "${s}". The time is below.` : (s ? `"${s}" is confirmed. The time is below.` : 'The time is below.')),
 
-      subjRescheduled: 'SUKODA | Your visit has been rescheduled',
-      rescheduledTitle: 'Visit rescheduled',
-      rescheduledIntro: (p) => (p ? `${p} changed the time of your visit.` : 'The visit time has changed.'),
+      subjRescheduled: 'SUKODA | Your visit time changed',
+      rescheduledTitle: 'Your visit time changed',
+      rescheduledIntro: (p) => (p ? `${p} changed the time of your visit. The new time is below.` : 'The visit time changed. The new time is below.'),
       oldTime: 'Previous time',
       newTime: 'New time',
 
-      subjCancelled: 'SUKODA | Your visit has been cancelled',
+      subjCancelled: 'SUKODA | Visit cancelled',
       cancelledTitle: 'Visit cancelled',
-      cancelledIntro: (p) => (p ? `${p} cancelled the visit below.` : 'The visit has been cancelled.'),
+      cancelledIntro: (p) => (p ? `${p} cancelled the visit. The time is below.` : 'The visit is cancelled. The time is below.'),
       reason: 'Reason',
 
       subjReminder: 'SUKODA | Cleaning tomorrow',
@@ -311,20 +313,22 @@ module.exports = function createHaldus(deps) {
       reminderTitleWarranty: 'Warranty visit tomorrow',
       subjReminderOther: (p) => (p ? `SUKODA | ${p} comes tomorrow` : 'SUKODA | Visit tomorrow'),
       reminderTitleOther: (p) => (p ? `${p} comes tomorrow` : 'Visit tomorrow'),
-      reminderIntro: (p) => (p ? `Reminder: ${p} is coming tomorrow.` : 'A reminder of tomorrow\'s visit.'),
-      reminderAccess: 'Please make sure we can access your home. If the time does not suit, change it in your portal or write on the request.',
+      reminderIntro: (p) => (p ? `${p} is coming tomorrow. The time is below.` : 'Your visit is tomorrow. The time is below.'),
+      reminderAccess: 'Please make sure we can get in. If the time does not suit, change it in the app.',
 
       subjSchedule: 'SUKODA | Your upcoming cleaning times',
       scheduleTitle: 'Your upcoming cleaning times',
-      scheduleIntro: (p) => (p ? `${p} scheduled the following visits. Every household contact can add them to a calendar with one click.` : 'The following visits are scheduled.'),
-      scheduleNote: 'If a time does not suit, change it in your portal or write to your housekeeper there.',
+      scheduleIntro: (p) => (p ? `${p} scheduled your next cleaning times. You can add each one to your calendar with one tap.` : 'Your next cleaning times are scheduled. You can add each one to your calendar with one tap.'),
+      scheduleNote: 'If a time does not suit, change it in the app or write to your housekeeper.',
 
-      subjWelcome: 'SUKODA | Your home is open',
-      welcomeTitle: 'Your home is in SUKODA',
-      welcomeIntro: (p) => (p ? `${p} added your home. Open the link — you will see the next time, and you can write if it does not suit.` : 'Open the link — you will see the next time.'),
-      welcomeIntroPartner: (p) => (p ? `${p} added your home. Open the link — you will see the times, and you can write.` : 'Open the link — you will see your times.'),
+      subjWelcome: 'SUKODA | Your home is ready',
+      welcomeTitle: 'Your home is ready',
+      welcomeIntro: (p) => (p ? `${p} added your home. Open the app, see the next time and write if it does not suit.` : 'Open the app and see the next time.'),
+      welcomeIntroPartner: (p) => (p ? `${p} added your home. Open the app and see your times.` : 'Open the app and see your times.'),
+      welcomeIntroArco: 'ARCO Vara has handed your home over. Documents, questions, warranty, repairs and cleaning are in one place. Open the app.',
+      welcomeFirst: (when) => `The first visit is ${when}.`,
       welcomeBtn: 'Open the app',
-      welcomeContacts: 'If the link does not open, go to sukoda.ee/app and enter the same e-mail. We send a six-digit code.',
+      welcomeContacts: 'If the button does not open, go to sukoda.ee/app and enter the same e-mail address. We will send you a six-digit code.',
 
       subjRequestReceived: (s) => `SUKODA | Request received: ${s}`,
       subjQuestionSent: (s) => `SUKODA | Question sent: ${s}`,
@@ -332,42 +336,42 @@ module.exports = function createHaldus(deps) {
       requestReceivedTitle: 'Request received',
       questionSentTitle: 'Question sent',
       issueSentTitle: 'Report sent',
-      requestReceivedIntro: (p) => (p ? `We passed your request to ${p}. A time is usually confirmed the same day.` : 'Your request is in.'),
-      questionSentIntro: (p) => (p ? `Your question is now with ${p}. The answer comes in writing, usually the same working day.` : 'Your question is in. The answer comes here.'),
-      issueSentIntro: (p) => (p ? `We passed your report to ${p}. The warranty team usually confirms an inspection time within 2 working days.` : 'Your report is in. The answer comes here.'),
+      requestReceivedIntro: (p) => (p ? `${p} received your request and usually confirms a time the same day.` : 'Your request is in. We usually confirm a time the same day.'),
+      questionSentIntro: (p) => (p ? `${p} received your question and replies in writing, usually the same working day.` : 'Your question is in. We reply in writing, usually the same working day.'),
+      issueSentIntro: (p) => (p ? `${p} received your report and usually offers an inspection time within 2 working days.` : 'Your report is in. We usually offer an inspection time within 2 working days.'),
       preferredDate: 'Preferred day',
       preferredTime: 'Preferred time',
       asap: 'As soon as possible',
-      requestReceivedNote: 'This e-mail is a notification. To add or clarify anything, write on the request in the portal — that way the whole conversation stays with the home.',
+      requestReceivedNote: 'If you want to add anything, write in the app.',
 
       subjRequestDeclined: (s) => `SUKODA | "${s}" needs a new time`,
-      requestDeclinedTitle: 'We need a new time',
-      requestDeclinedIntro: (p) => (p ? `Unfortunately ${p} cannot make the requested time. Open the request in your portal and propose a new time.` : 'The requested time does not work. Open the request and propose a new day.'),
-      subjIssueReviewed: (s) => `SUKODA | Report reviewed: ${s}`,
-      issueReviewedTitle: 'Report reviewed',
-      issueReviewedIntro: (p) => (p ? `${p} reviewed your report. The described defect is not covered by the warranty — the explanation is below.` : 'We reviewed the report. The described defect is not covered by the warranty — the explanation is below.'),
-      issueReviewedNote: 'If you wish, we can do the work as a paid job — write on this request in the portal and we agree on a time.',
+      requestDeclinedTitle: 'Pick a new time',
+      requestDeclinedIntro: (p) => (p ? `${p} cannot come at the requested time. Open the app and pick a new time.` : 'The requested time does not work. Open the app and pick a new time.'),
+      subjIssueReviewed: (s) => `SUKODA | Reply to your report: ${s}`,
+      issueReviewedTitle: 'Reply to your report',
+      issueReviewedIntro: (p) => (p ? `${p} reviewed your report. The described defect is not covered by the warranty. The explanation is below.` : 'We reviewed your report. The described defect is not covered by the warranty. The explanation is below.'),
+      issueReviewedNote: 'If you wish, we can do the work as a paid job. Write on the report in the app and we agree on a time.',
       message: 'Message',
       explanation: 'Explanation',
 
       subjCompleted: (s) => `SUKODA | Done: ${s}`,
       completedTitle: 'Done',
       completedIntro: (p, s) => (p ? `${p} marked "${s}" as done.` : (s ? `"${s}" is done.` : 'The work is done.')),
-      completedNote: 'If anything remains, write on the request.',
+      completedNote: 'If anything was left undone, write on the job in the app.',
 
       subjRequestCancelled: 'SUKODA | Request cancelled',
 
       subjAway: 'SUKODA | Away period saved',
       awayTitle: 'Away period saved',
-      awayIntro: (p, by) => (by === 'provider' && p ? `${p} noted that you are away. No visits will take place during this time.` : (p ? `We let ${p} know you are away. No visits will take place during this time.` : 'No visits will take place during this time.')),
+      awayIntro: (p, by) => (by === 'provider' && p ? `${p} noted that you are away. There are no visits during this time.` : (p ? `${p} knows you are away. There are no visits during this time.` : 'There are no visits during this time.')),
       // (EN keeps the same keys as ET; brand-specific wording is handled in wrap())
       awayPeriod: 'Away',
-      awayCancelled: 'Cancelled visits',
+      awayCancelled: 'Visits that will not take place',
       awayNone: 'No visits fell into this period.',
-      awayResume: 'Visits continue as usual after you return. If plans change, you can remove the away period in your portal.',
+      awayResume: 'When you are back, visits continue as usual. If plans change, remove the away period in the app.',
       subjAwayRemoved: 'SUKODA | Away period removed',
       awayRemovedTitle: 'Away period removed',
-      awayRemovedIntro: (p) => (p ? `${p} knows you are home after all. Restored and upcoming times are below.` : 'Restored and upcoming times are below.'),
+      awayRemovedIntro: (p) => (p ? `${p} knows you are home after all. Your next times are below.` : 'Your next times are below.'),
     },
     ru: {
       hello: (n) => (n ? `Здравствуйте, ${n}.` : 'Здравствуйте.'),
@@ -384,25 +388,25 @@ module.exports = function createHaldus(deps) {
       addToCalendar: 'Добавить в календарь',
       google: 'Google Calendar',
       apple: 'Apple / Outlook',
-      portalNote: 'Все время, обращения и документы находятся в портале вашего дома. Если время не подходит или вы хотите что-то добавить, сделайте это там — так всё останется при доме.',
-      portalBtn: 'ОТКРЫТЬ ПОРТАЛ',
+      portalNote: 'Время визитов, заявки и документы находятся в приложении. Если время не подходит или вы хотите что-то добавить, напишите в приложении.',
+      portalBtn: 'ОТКРЫТЬ ПРИЛОЖЕНИЕ',
       calTitle: 'Уборка SUKODA',
       calTitleService: (s, brand) => `${brand || 'SUKODA'} · ${s}`,
 
       subjConfirmed: 'SUKODA | Ваше время подтверждено',
       confirmedTitle: 'Ваше время подтверждено',
-      confirmedIntro: (p) => (p ? `${p} придёт к вам домой в указанное ниже время.` : 'Время назначено.'),
-      confirmedServiceIntro: (p, s) => (p ? `${p} подтверждает вашу заявку «${s}».` : (s ? `«${s}» назначено.` : 'Время назначено.')),
+      confirmedIntro: (p) => (p ? `${p} придёт к вам домой. Время указано ниже.` : 'Время указано ниже.'),
+      confirmedServiceIntro: (p, s) => (p ? `Ваша заявка «${s}» подтверждена (${p}). Время указано ниже.` : (s ? `«${s}» подтверждено. Время указано ниже.` : 'Время указано ниже.')),
 
-      subjRescheduled: 'SUKODA | Время визита изменено',
-      rescheduledTitle: 'Время визита изменено',
-      rescheduledIntro: (p) => (p ? `${p} меняет время вашего визита.` : 'Время визита изменено.'),
+      subjRescheduled: 'SUKODA | Время визита изменилось',
+      rescheduledTitle: 'Время визита изменилось',
+      rescheduledIntro: (p) => (p ? `Время вашего визита изменилось (${p}). Новое время указано ниже.` : 'Время визита изменилось. Новое время указано ниже.'),
       oldTime: 'Прежнее время',
       newTime: 'Новое время',
 
-      subjCancelled: 'SUKODA | Ваш визит отменён',
+      subjCancelled: 'SUKODA | Визит отменён',
       cancelledTitle: 'Визит отменён',
-      cancelledIntro: (p) => (p ? `${p} отменяет указанный ниже визит.` : 'Визит отменён.'),
+      cancelledIntro: (p) => (p ? `Визит отменён (${p}). Время указано ниже.` : 'Визит отменён. Время указано ниже.'),
       reason: 'Причина',
 
       subjReminder: 'SUKODA | Завтра уборка',
@@ -411,20 +415,22 @@ module.exports = function createHaldus(deps) {
       reminderTitleWarranty: 'Завтра гарантийный визит',
       subjReminderOther: (p) => (p ? `SUKODA | Завтра придёт ${p}` : 'SUKODA | Завтра визит'),
       reminderTitleOther: (p) => (p ? `Завтра придёт ${p}` : 'Завтра визит'),
-      reminderIntro: (p) => (p ? `Напоминание: ${p} придёт завтра.` : 'Напоминание о завтрашнем визите.'),
-      reminderAccess: 'Оставьте, пожалуйста, доступ в дом. Если время не подходит, измените его в портале или напишите в обращении.',
+      reminderIntro: (p) => (p ? `${p} придёт завтра. Время указано ниже.` : 'Завтра у вас визит. Время указано ниже.'),
+      reminderAccess: 'Пожалуйста, обеспечьте доступ в дом. Если время не подходит, измените его в приложении.',
 
       subjSchedule: 'SUKODA | Ваши ближайшие уборки',
       scheduleTitle: 'Ваши ближайшие уборки',
-      scheduleIntro: (p) => (p ? `${p} назначает следующие визиты. Контакты семьи могут добавить их в календарь одним нажатием.` : 'Следующие визиты назначены.'),
-      scheduleNote: 'Если время не подходит, измените его в портале или напишите там своему специалисту по дому.',
+      scheduleIntro: (p) => (p ? `${p} назначил(а) ближайшие уборки. Каждую можно добавить в календарь одним нажатием.` : 'Ближайшие уборки назначены. Каждую можно добавить в календарь одним нажатием.'),
+      scheduleNote: 'Если время не подходит, измените его в приложении или напишите специалисту по дому.',
 
-      subjWelcome: 'SUKODA | Ваш дом открыт',
-      welcomeTitle: 'Ваш дом в SUKODA',
-      welcomeIntro: (p) => (p ? `${p} добавил ваш дом. Откройте ссылку — вы увидите следующее время и сможете написать, если оно не подходит.` : 'Откройте ссылку — вы увидите следующее время.'),
-      welcomeIntroPartner: (p) => (p ? `${p} добавил ваш дом. Откройте ссылку — вы увидите время и сможете написать.` : 'Откройте ссылку — вы увидите своё время.'),
+      subjWelcome: 'SUKODA | Ваш дом готов',
+      welcomeTitle: 'Ваш дом готов',
+      welcomeIntro: (p) => (p ? `Ваш дом добавлен, ваш специалист по дому — ${p}. Откройте приложение, посмотрите ближайшее время и напишите, если оно не подходит.` : 'Откройте приложение и посмотрите ближайшее время.'),
+      welcomeIntroPartner: (p) => (p ? `Ваш дом добавлен, ваш контакт — ${p}. Откройте приложение и посмотрите своё время.` : 'Откройте приложение и посмотрите своё время.'),
+      welcomeIntroArco: 'ARCO Vara передала вам дом. Документы, вопросы, гарантия, ремонт и уборка — в одном месте. Откройте приложение.',
+      welcomeFirst: (when) => `Первый визит — ${when}.`,
       welcomeBtn: 'Открыть приложение',
-      welcomeContacts: 'Если ссылка не открывается, зайдите на sukoda.ee/app и введите ту же почту. Мы отправим шестизначный код.',
+      welcomeContacts: 'Если кнопка не открывается, зайдите на sukoda.ee/app и введите тот же адрес эл. почты. Мы отправим вам шестизначный код.',
 
       subjRequestReceived: (s) => `SUKODA | Заявка принята: ${s}`,
       subjQuestionSent: (s) => `SUKODA | Вопрос отправлен: ${s}`,
@@ -432,41 +438,41 @@ module.exports = function createHaldus(deps) {
       requestReceivedTitle: 'Заявка принята',
       questionSentTitle: 'Вопрос отправлен',
       issueSentTitle: 'Обращение отправлено',
-      requestReceivedIntro: (p) => (p ? `Мы передали вашу заявку партнёру ${p}. Обычно время подтверждают в тот же день.` : 'Заявка записана.'),
-      questionSentIntro: (p) => (p ? `Ваш вопрос теперь у команды ${p}. Ответ придёт письменно, обычно в тот же рабочий день.` : 'Вопрос записан. Ответ придёт сюда.'),
-      issueSentIntro: (p) => (p ? `Мы передали ваше обращение партнёру ${p}. Обычно время осмотра подтверждают в течение 2 рабочих дней.` : 'Обращение записано. Ответ придёт сюда.'),
+      requestReceivedIntro: (p) => (p ? `${p} получил(а) вашу заявку и обычно подтверждает время в тот же день.` : 'Ваша заявка записана. Обычно мы подтверждаем время в тот же день.'),
+      questionSentIntro: (p) => (p ? `${p} получил(а) ваш вопрос и ответит письменно, обычно в тот же рабочий день.` : 'Ваш вопрос записан. Мы ответим письменно, обычно в тот же рабочий день.'),
+      issueSentIntro: (p) => (p ? `${p} получил(а) ваше обращение и обычно предлагает время осмотра в течение 2 рабочих дней.` : 'Ваше обращение записано. Обычно мы предлагаем время осмотра в течение 2 рабочих дней.'),
       preferredDate: 'Желаемый день',
       preferredTime: 'Желаемое время',
       asap: 'При первой возможности',
-      requestReceivedNote: 'Это письмо — уведомление. Если хотите что-то добавить или уточнить, напишите в портале у обращения — так весь разговор останется при доме.',
+      requestReceivedNote: 'Если хотите что-то добавить, напишите в приложении.',
 
-      subjRequestDeclined: (s) => `SUKODA | «${s}» нужно новое время`,
-      requestDeclinedTitle: 'Нужно новое время',
-      requestDeclinedIntro: (p) => (p ? `К сожалению, ${p} не может прийти в желаемое время. Откройте обращение в портале и предложите новое время.` : 'Желаемое время не подходит. Откройте обращение и предложите новый день.'),
-      subjIssueReviewed: (s) => `SUKODA | Обращение рассмотрено: ${s}`,
-      issueReviewedTitle: 'Обращение рассмотрено',
-      issueReviewedIntro: (p) => (p ? `${p} рассмотрел ваше обращение. Описанный недостаток не входит в гарантию — пояснение ниже.` : 'Мы рассмотрели обращение. Описанный недостаток не входит в гарантию — пояснение ниже.'),
-      issueReviewedNote: 'Если хотите, закажем работу платно — напишите у этого обращения в портале, и мы согласуем время.',
+      subjRequestDeclined: (s) => `SUKODA | «${s}»: нужно новое время`,
+      requestDeclinedTitle: 'Выберите новое время',
+      requestDeclinedIntro: (p) => (p ? `${p} не может прийти в желаемое время. Откройте приложение и выберите новое время.` : 'Желаемое время не подходит. Откройте приложение и выберите новое время.'),
+      subjIssueReviewed: (s) => `SUKODA | Ответ на ваше обращение: ${s}`,
+      issueReviewedTitle: 'Ответ на ваше обращение',
+      issueReviewedIntro: (p) => (p ? `${p} рассмотрел(а) ваше обращение. Описанный недостаток не входит в гарантию. Пояснение ниже.` : 'Мы рассмотрели ваше обращение. Описанный недостаток не входит в гарантию. Пояснение ниже.'),
+      issueReviewedNote: 'Если хотите, мы выполним работу платно. Напишите в приложении, и мы согласуем время.',
       message: 'Сообщение',
       explanation: 'Пояснение',
 
       subjCompleted: (s) => `SUKODA | Сделано: ${s}`,
       completedTitle: 'Сделано',
-      completedIntro: (p, s) => (p ? `${p} отмечает работу «${s}» выполненной.` : (s ? `Работа «${s}» выполнена.` : 'Работа выполнена.')),
-      completedNote: 'Если что-то осталось, напишите у обращения.',
+      completedIntro: (p, s) => (p ? `Работа «${s}» выполнена (${p}).` : (s ? `Работа «${s}» выполнена.` : 'Работа выполнена.')),
+      completedNote: 'Если что-то осталось несделанным, напишите в приложении.',
 
       subjRequestCancelled: 'SUKODA | Заявка отменена',
 
       subjAway: 'SUKODA | Отсутствие записано',
       awayTitle: 'Отсутствие записано',
-      awayIntro: (p, by) => (by === 'provider' && p ? `${p} отмечает, что вас не будет дома. В это время визитов не будет.` : (p ? `Мы сообщили партнёру ${p}, что вас не будет дома. В это время визитов не будет.` : 'В это время визитов не будет.')),
+      awayIntro: (p, by) => (by === 'provider' && p ? `${p} отметил(а), что вас не будет дома. В это время визитов не будет.` : (p ? `${p} знает, что вас не будет дома. В это время визитов не будет.` : 'В это время визитов не будет.')),
       awayPeriod: 'Отсутствие',
-      awayCancelled: 'Отменённые визиты',
-      awayNone: 'В этот период визитов не было.',
-      awayResume: 'После возвращения визиты продолжатся как обычно. Если планы изменятся, отсутствие можно убрать в портале.',
+      awayCancelled: 'Визиты, которые не состоятся',
+      awayNone: 'На это время визитов не было.',
+      awayResume: 'Когда вы вернётесь, визиты продолжатся как обычно. Если планы изменятся, уберите отсутствие в приложении.',
       subjAwayRemoved: 'SUKODA | Отсутствие снято',
       awayRemovedTitle: 'Отсутствие снято',
-      awayRemovedIntro: (p) => (p ? `${p} знает, что вы всё же дома. Восстановленное и предстоящее время ниже.` : 'Восстановленное и предстоящее время ниже.'),
+      awayRemovedIntro: (p) => (p ? `${p} знает, что вы всё же дома. Ваши ближайшие визиты указаны ниже.` : 'Ваши ближайшие визиты указаны ниже.'),
     },
   };
 
@@ -504,12 +510,12 @@ module.exports = function createHaldus(deps) {
   function brandFrom(order) {
     const b = brandOf(order);
     if (!b) return undefined;
-    const role = core.pick({ et: 'järelteenindus', en: 'after-sales', ru: 'послепродажный сервис' }, langOf(order));
+    const role = core.pick({ et: 'garantiimeeskond', en: 'warranty team', ru: 'гарантийная команда' }, langOf(order));
     return `${b.name} ${role} <tere@sukoda.ee>`;
   }
   function brandHeader(brand, lang) {
     const line = brand.project ? `${brand.name} · ${brand.project}` : brand.name;
-    const by = core.pick({ et: 'portaali pakub SUKODA', en: 'portal by SUKODA', ru: 'портал от SUKODA' }, lang);
+    const by = core.pick({ et: 'rakendust pakub SUKODA', en: 'app by SUKODA', ru: 'приложение от SUKODA' }, lang);
     return `
     <div style="padding:44px 40px 36px;text-align:center;border-bottom:1px solid #E8E3DD;">
       <h1 style="color:#2C2824;font-size:24px;margin:0 0 8px 0;font-family:Georgia,'Times New Roman',serif;font-weight:300;letter-spacing:1px;">${escapeHtml(line)}</h1>
@@ -518,7 +524,7 @@ module.exports = function createHaldus(deps) {
     </div>`;
   }
   function brandFooter(brand, lang) {
-    const by = core.pick({ et: 'PORTAALI PAKUB', en: 'PORTAL BY', ru: 'ПОРТАЛ ОТ' }, lang);
+    const by = core.pick({ et: 'RAKENDUST PAKUB', en: 'APP BY', ru: 'ПРИЛОЖЕНИЕ ОТ' }, lang);
     return `
     <div style="padding:32px 40px 28px;text-align:center;border-top:1px solid #E8E3DD;">
       <p style="color:#2C2824;font-size:16px;margin:0 0 6px 0;font-family:Georgia,'Times New Roman',serif;font-weight:300;letter-spacing:2px;">${escapeHtml(brand.name)}</p>
@@ -714,11 +720,14 @@ module.exports = function createHaldus(deps) {
   }
 
   /** `role` = the inviting partner's category; anything but cleaning gets the neutral intro */
-  function welcomeEmail({ order, providerName, portalUrl, lang, role = 'cleaning' }) {
+  function welcomeEmail({ order, providerName, portalUrl, lang, role = 'cleaning', firstWhen }) {
     const tt = t(lang);
     providerName = faceOf(order, providerName);
     const name = firstName(primaryName(order));
-    const intro = role === 'cleaning' ? tt.welcomeIntro(providerName) : tt.welcomeIntroPartner(providerName);
+    let intro = !providerName
+      ? tt.welcomeIntroArco
+      : (role === 'cleaning' ? tt.welcomeIntro(providerName) : tt.welcomeIntroPartner(providerName));
+    if (firstWhen) intro = `${intro} ${tt.welcomeFirst(firstWhen)}`;
     const html = wrap(
       H2(tt.welcomeTitle) + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(intro)}`)
       + `<div style="text-align:center;margin:32px 0;"><a href="${portalUrl}" style="display:inline-block;background:#111111;color:#FFFFFF;padding:16px 40px;text-decoration:none;font-size:11px;text-transform:uppercase;letter-spacing:3px;font-weight:500;">${tt.welcomeBtn}</a></div>`
@@ -776,13 +785,13 @@ module.exports = function createHaldus(deps) {
     if (removed) {
       return {
         subject: `SUKODA | ${who} on siiski kodus`,
-        html: providerWrap('Eemalolek tühistatud', `Tere, ${escapeHtml(greetName(provider))}. ${escapeHtml(who)} eemaldas eemaloleku ${escapeHtml(periodLabel(period, 'et'))}. Varem tühistatud ajad on taastatud ja graafik jätkub. Vaata oma kalendrit halduses.`, ''),
+        html: providerWrap('Klient on siiski kodus', `Tere, ${escapeHtml(greetName(provider))}. ${escapeHtml(who)} on ${escapeHtml(periodLabel(period, 'et'))} siiski kodus. Ära jäänud ajad on tagasi kalendris.`, ''),
       };
     }
     return {
       subject: `SUKODA | ${who} on eemal ${periodShort(period)}`,
-      html: providerWrap('Klient on eemal', `Tere, ${escapeHtml(greetName(provider))}. ${escapeHtml(who)} (${escapeHtml(primaryAddress(order) || '')}) andis teada, et on eemal <strong style="color:#2C2824;font-weight:400;">${escapeHtml(periodLabel(period, 'et'))}</strong>.${period.note ? ` Märkus: „${escapeHtml(period.note)}“.` : ''} Sel ajal visiite ei toimu — allolevad ajad on tühistatud ja graafik jätab selle vahemiku vahele.`,
-        rows ? `<ul style="list-style:none;padding:0;margin:0;background:#FFFFFF;padding:12px 28px;border-left:2px solid #B8976A;">${rows}</ul>` : `<p style="color:#8A8578;font-size:14px;">Sellesse vahemikku ei jäänud ühtegi visiiti.</p>`),
+      html: providerWrap('Klient on eemal', `Tere, ${escapeHtml(greetName(provider))}. ${escapeHtml(who)} (${escapeHtml(primaryAddress(order) || '')}) on eemal <strong style="color:#2C2824;font-weight:400;">${escapeHtml(periodLabel(period, 'et'))}</strong>.${period.note ? ` Märkus: „${escapeHtml(period.note)}“.` : ''} Need ajad jäävad ära ja graafik jätkub pärast eemalolekut.`,
+        rows ? `<ul style="list-style:none;padding:0;margin:0;background:#FFFFFF;padding:12px 28px;border-left:2px solid #B8976A;">${rows}</ul>` : `<p style="color:#8A8578;font-size:14px;">Sellesse aega ei jäänud ühtegi visiiti.</p>`),
     };
   }
 
@@ -805,7 +814,7 @@ module.exports = function createHaldus(deps) {
     const kindLabel = kind === 'question'
       ? core.pick({ et: 'Küsimus', en: 'Question', ru: 'Вопрос' }, lang)
       : kind === 'issue'
-        ? core.pick({ et: 'Pöördumine', en: 'Report', ru: 'Обращение' }, lang)
+        ? core.pick({ et: 'Teade', en: 'Report', ru: 'Обращение' }, lang)
         : tt.service;
     const noteLabel = kind === 'question'
       ? core.pick({ et: 'Sinu küsimus', en: 'Your question', ru: 'Ваш вопрос' }, lang)
@@ -874,17 +883,17 @@ module.exports = function createHaldus(deps) {
     const kind = requestKind(request);
     const title = kind === 'question'
       ? core.pick({ et: 'Vastus sinu küsimusele', en: 'An answer to your question', ru: 'Ответ на ваш вопрос' }, lang)
-      : core.pick({ et: 'Vastus sinu pöördumisele', en: 'A reply to your report', ru: 'Ответ на ваше обращение' }, lang);
+      : core.pick({ et: 'Vastus', en: 'Reply', ru: 'Ответ' }, lang);
     const yours = kind === 'question'
       ? core.pick({ et: 'Sinu küsimus', en: 'Your question', ru: 'Ваш вопрос' }, lang)
       : kind === 'issue'
-        ? core.pick({ et: 'Sinu pöördumine', en: 'Your report', ru: 'Ваше обращение' }, lang)
+        ? core.pick({ et: 'Sinu teade', en: 'Your report', ru: 'Ваше обращение' }, lang)
         : core.pick({ et: 'Sinu soov', en: 'Your request', ru: 'Ваша заявка' }, lang);
     const asked = lastClientText(request);
     const who = providerName || '';
     const replied = who
-      ? core.pick({ et: `${who} vastas.`, en: `${who} replied.`, ru: `${who} ответил.` }, lang)
-      : core.pick({ et: 'Vastus on kirjas.', en: 'The reply is here.', ru: 'Ответ здесь.' }, lang);
+      ? core.pick({ et: `${who} vastas. Vastus on allpool.`, en: `${who} replied. The reply is below.`, ru: `Ответ от ${who} указан ниже.` }, lang)
+      : core.pick({ et: 'Vastus on allpool.', en: 'The reply is below.', ru: 'Ответ указан ниже.' }, lang);
     const html = wrap(
       H2(title) + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(replied)}`)
       + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border-left:2px solid #B8976A;">
@@ -893,12 +902,12 @@ module.exports = function createHaldus(deps) {
           ${asked ? ROW(yours, escapeHtml(asked).replace(/\n/g, '<br>')) : ''}
           ${ROW(core.pick({ et: 'Vastus', en: 'Answer', ru: 'Ответ' }, lang), escapeHtml(message).replace(/\n/g, '<br>'))}
         </div>`
-      + P(core.pick({ et: 'Ära vasta sellele kirjale. Kirjuta portaalis.', en: 'Do not reply to this e-mail. Write in the portal.', ru: 'Не отвечайте на это письмо. Напишите в портале.' }, lang), 'font-size:13px;color:#6B6560;')
+      + P(core.pick({ et: 'Sellele kirjale ei saa vastata. Kirjuta rakenduses.', en: 'You cannot reply to this e-mail. Write in the app.', ru: 'На это письмо нельзя ответить. Напишите в приложении.' }, lang), 'font-size:13px;color:#6B6560;')
       + portalBlock(lang, requestUrl(requestId)),
       lang, brandOf(order),
     );
     return {
-      subject: brandSubject(order, core.pick({ et: `SUKODA | Vastus: ${svc}`, en: `SUKODA | Answer: ${svc}`, ru: `SUKODA | Ответ: ${svc}` }, lang)),
+      subject: brandSubject(order, core.pick({ et: `SUKODA | Vastus: ${svc}`, en: `SUKODA | Reply: ${svc}`, ru: `SUKODA | Ответ: ${svc}` }, lang)),
       html,
       push: push.message({ type: 'request_status', lang, title, body: replied, url: requestUrl(requestId) }),
     };
@@ -916,7 +925,7 @@ module.exports = function createHaldus(deps) {
       + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border-left:2px solid #B8976A;">
           ${LABEL(tt.service)}
           <p style="margin:0;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
-          ${title ? ROW(core.pick({ et: 'Sinu pöördumine', en: 'Your request', ru: 'Ваше обращение' }, lang), escapeHtml(title)) : ''}
+          ${title ? ROW(core.pick({ et: 'Sinu soov', en: 'Your request', ru: 'Ваша заявка' }, lang), escapeHtml(title)) : ''}
           ${note ? ROW(tt.note, escapeHtml(note).replace(/\n/g, '<br>')) : ''}
         </div>`
       + P(tt.completedNote) + portalBlock(lang, requestUrl(requestId)),
@@ -935,9 +944,9 @@ module.exports = function createHaldus(deps) {
   // ============================================================
   const FLOWER_LEAD_DAYS = [1, 2, 3];
   const FLOWER_PICKUP = {
-    partner: { et: 'Koduhooldaja võtab teel kaasa', en: 'Housekeeper picks up on the way', ru: 'Специалист по дому заберёт по пути' },
-    customer: { et: 'Tellija võtab ise', en: 'Customer picks up', ru: 'Вы заберёте сами' },
-    delivery: { et: 'Pood toob koju enne visiiti', en: 'Shop delivers before the visit', ru: 'Магазин привезёт домой до визита' },
+    partner: { et: 'Koduhooldaja toob kimbu kaasa', en: 'The housekeeper brings the bouquet along', ru: 'Специалист по дому принесёт букет с собой' },
+    customer: { et: 'Tellija võtab kimbu ise poest', en: 'The customer collects the bouquet from the shop', ru: 'Заказчик забирает букет в магазине сам' },
+    delivery: { et: 'Pood toob kimbu koju enne visiiti', en: 'The shop delivers the bouquet before the visit', ru: 'Магазин привезёт букет домой до визита' },
   };
 
   function flowerSettings(order, florist) {
@@ -997,11 +1006,11 @@ module.exports = function createHaldus(deps) {
         </div>`;
     }).join('');
     const intro = many
-      ? `Tere${florist?.name ? ', ' + escapeHtml(firstName(florist.name)) : ''}! Järgmisteks koduvisiitideks on vaja ${items.length} kimpu. Iga kimbu juures on silt, kellele see läheb, ja aeg, milleks see peab valmis olema.`
-      : `Tere${florist?.name ? ', ' + escapeHtml(firstName(florist.name)) : ''}! Järgmiseks koduvisiidiks on vaja ühte kimpu.`;
+      ? `Tere${florist?.name ? ', ' + escapeHtml(firstName(florist.name)) : ''}. Järgmisteks koduvisiitideks on vaja ${items.length} kimpu. Iga kimbu juures on kirjas nimi sildile ja aeg, mil kimp peab valmis olema.`
+      : `Tere${florist?.name ? ', ' + escapeHtml(firstName(florist.name)) : ''}. Järgmiseks koduvisiidiks on vaja ühte kimpu. Nimi sildile ja valmimise aeg on allpool.`;
     const html = wrap(
       H2(many ? 'Lilletellimused' : 'Lilletellimus') + P(intro) + rows
-      + P('Arveldus vastavalt teie kokkuleppele. Kui midagi on vaja täpsustada, vasta sellele kirjale. See tellimus saadeti automaatselt SUKODA koduportaalist; kui visiit tühistatakse, saad eraldi kirja.', 'font-size:12px;'),
+      + P('Arve käib teie kokkuleppe järgi. Kui midagi on vaja täpsustada, vasta sellele kirjale. Kui visiit jääb ära, saadame eraldi kirja.', 'font-size:12px;'),
       'et',
     );
     const when = dates.length === 1 ? periodShort({ from: dates[0], to: dates[0] }) : periodShort({ from: dates[0], to: dates[dates.length - 1] });
@@ -1023,7 +1032,7 @@ module.exports = function createHaldus(deps) {
     const when = periodShort({ from: dates[0], to: dates[dates.length - 1] });
     return {
       subject: items.length > 1 ? `SUKODA | Lilled kaasa — ${items.length} kimpu, ${when}` : `SUKODA | Lilled kaasa — ${primaryName(items[0].order)}, ${when}`,
-      html: providerWrap('Lilled on tellitud', items.length > 1 ? `Poest on tellitud ${items.length} kimpu; igal on silt kliendi nimega. Võta teel kaasa.` : 'Kimp on poest tellitud, sildil on kliendi nimi. Võta teel kaasa.', body),
+      html: providerWrap('Lilled on tellitud', items.length > 1 ? `Poest on tellitud ${items.length} kimpu. Igal kimbul on silt kliendi nimega. Võta kimbud teel kaasa.` : 'Kimp on poest tellitud. Sildil on kliendi nimi. Võta kimp teel kaasa.', body),
     };
   }
 
@@ -1033,7 +1042,7 @@ module.exports = function createHaldus(deps) {
     const when = `${formatWhen(start, 'et')}, ${formatTime(start)}`;
     return {
       subject: `SUKODA | Lilletellimus tühistatud — ${name}, ${periodShort({ from: tallinnDateStr(start), to: tallinnDateStr(start) })}`,
-      html: wrap(H2('Lilletellimus tühistatud') + P(`${escapeHtml(name)} visiit <strong style="color:#2C2824;font-weight:400;text-transform:capitalize;">${escapeHtml(when)}</strong> jääb ära, seega kimpu selleks ajaks ei ole vaja. Vabandame lühikese ette teatamise pärast.`), 'et'),
+      html: wrap(H2('Lilletellimus tühistatud') + P(`Kliendi ${escapeHtml(name)} visiit <strong style="color:#2C2824;font-weight:400;text-transform:capitalize;">${escapeHtml(when)}</strong> jääb ära. Kimpu selleks ajaks ei ole vaja. Vabandame hilise teate pärast.`), 'et'),
     };
   }
 
@@ -1061,14 +1070,14 @@ module.exports = function createHaldus(deps) {
       html: wrap(
         H2(core.pick({ et: 'Lilled on tellitud', en: 'Flowers are ordered', ru: 'Цветы заказаны' }, lang))
         + P(core.pick({
-          et: `Saatsime poele ${escapeHtml(shop)} tellimuse visiidiks <span style="text-transform:capitalize;">${escapeHtml(when)}</span>.${pref} ${pickup}.`,
-          en: `We sent ${escapeHtml(shop)} the order for the visit on <span style="text-transform:capitalize;">${escapeHtml(when)}</span>.${pref} ${pickup}.`,
-          ru: `Мы отправили магазину ${escapeHtml(shop)} заказ к визиту <span style="text-transform:capitalize;">${escapeHtml(when)}</span>.${pref} ${pickup}.`,
+          et: `Tellisime poest ${escapeHtml(shop)} lilled visiidiks <span style="text-transform:capitalize;">${escapeHtml(when)}</span>.${pref} ${pickup}.`,
+          en: `We ordered flowers from ${escapeHtml(shop)} for the visit on <span style="text-transform:capitalize;">${escapeHtml(when)}</span>.${pref} ${pickup}.`,
+          ru: `Мы заказали цветы в магазине ${escapeHtml(shop)} к визиту <span style="text-transform:capitalize;">${escapeHtml(when)}</span>.${pref} ${pickup}.`,
         }, lang))
         + P(core.pick({
-          et: 'Lillede eelistust saad muuta portaalis Minu kodu → Lillede eelistus.',
-          en: 'Change your flower preference in the portal under My home → Flower preference.',
-          ru: 'Предпочтение по цветам можно изменить в портале: Мой дом → Предпочтение по цветам.',
+          et: 'Lillede eelistust saad muuta rakenduses.',
+          en: 'You can change your flower preference in the app.',
+          ru: 'Предпочтения по цветам можно изменить в приложении.',
         }, lang), 'font-size:12px;')
         + portalBlock(lang),
         lang,
@@ -1167,7 +1176,7 @@ module.exports = function createHaldus(deps) {
   function providerMagicLinkEmail(url) {
     return {
       subject: 'SUKODA Töölaud | Sinu sisenemislink',
-      html: providerWrap('Sinu sisenemislink', 'Kliki nupule, et siseneda oma SUKODA töölauale. Link kehtib 30 päeva.', '', { href: url, label: 'AVA TÖÖLAUD' }),
+      html: providerWrap('Sinu sisenemislink', 'Vajuta nupule ja sisene oma töölauale. Link kehtib 30 päeva.', '', { href: url, label: 'AVA TÖÖLAUD' }),
     };
   }
 
@@ -1178,18 +1187,18 @@ module.exports = function createHaldus(deps) {
     const isReschedule = request.type === 'reschedule';
     const kind = isReschedule ? 'visit' : core.serviceKind(request.serviceId);
     const who = escapeHtml(primaryName(order) || 'Klient');
-    const title = isReschedule ? 'Klient soovib aega muuta' : kind === 'question' ? 'Uus küsimus' : kind === 'issue' ? 'Uus pöördumine' : (placed ? 'Aeg on kalendris' : 'Uus soov kliendilt');
+    const title = isReschedule ? 'Klient soovib aega muuta' : kind === 'question' ? 'Uus küsimus' : kind === 'issue' ? 'Uus teade' : (placed ? 'Aeg on kalendris' : 'Uus soov');
     const intro = isReschedule
-      ? `${who} soovib olemasoleva visiidi aega muuta. Kinnita uus aeg töölaual — kõik pere kontaktid saavad kohe uue kalendrikutse.`
+      ? `${who} soovib visiidi aega muuta. Kinnita uus aeg töölaual. Pere saab uue kalendrikutse kohe.`
       : kind === 'question'
-        ? `${who} küsib. Vasta töölaual — vastus jõuab kliendile portaali ja e-postiga.`
+        ? `${who} küsib. Vasta töölaual. Klient näeb vastust rakenduses.`
         : kind === 'issue'
-          ? `${who} kirjeldas puudust. Paku töölaual ülevaatuse aeg või vasta kirjalikult — klient näeb seda portaalis.`
+          ? `${who} kirjeldas puudust. Paku töölaual ülevaatuse aeg või vasta kirjalikult.`
           : placed
-            ? `${who} tellis aja. See on juba kalendris. Kui tund ei sobi, muuda seda töölaual.`
-            : `${who} soovib teenust. Kinnita aeg või vasta töölaual — klient näeb seda portaalis.`;
-    // Subject: what and who, without repeating the kind when the service name already says it ("Pöördumine: Garantiipöördumine")
-    const subjectLead = isReschedule ? 'Aja muutmise soov' : kind === 'question' ? 'Küsimus' : kind === 'issue' ? (/pöördumin/i.test(svc) ? svc : `Pöördumine: ${svc}`) : `Uus soov: ${svc}`;
+            ? `${who} tellis aja ja aeg on juba kalendris. Kui aeg ei sobi, muuda aega töölaual.`
+            : `${who} soovib teenust. Kinnita aeg või vasta töölaual.`;
+    // Subject: what and who, without repeating the kind when the service name already says it
+    const subjectLead = isReschedule ? 'Aja muutmise soov' : kind === 'question' ? 'Küsimus' : kind === 'issue' ? (/pöördumin/i.test(svc) ? svc : `Teade: ${svc}`) : `Uus soov: ${svc}`;
     return {
       subject: `SUKODA | ${subjectLead} — ${primaryName(order) || primaryEmail(order)}`,
       push: push.message({
@@ -1205,7 +1214,7 @@ module.exports = function createHaldus(deps) {
           ${request.urgent ? ROW('Kiirus', 'Kiire — segab igapäevaelu') : ''}
           ${request.access ? ROW('Sissepääs sellel korral', escapeHtml(request.access)) : ''}
           ${request.note ? ROW(kind === 'question' ? 'Küsimus' : kind === 'issue' ? 'Kirjeldus' : 'Märkus', escapeHtml(request.note)) : ''}
-          ${request.payment?.status === 'paid' ? ROW('Makse', escapeHtml(`${euroLabel(request.payment.residentCents) || ''} on juba käes`.trim())) : ''}
+          ${request.payment?.status === 'paid' ? ROW('Makse', escapeHtml(`${euroLabel(request.payment.residentCents) || ''} on juba makstud`.trim())) : ''}
           ${ROW('Aadress', escapeHtml(primaryAddress(order) || '-'))}
           ${ROW('Kontakt', `${escapeHtml(primaryEmail(order))}${order.customer?.phone ? ' · ' + escapeHtml(order.customer.phone) : ''}`)}
         </div>`,
@@ -1216,8 +1225,8 @@ module.exports = function createHaldus(deps) {
   function providerDigestEmail({ provider, skipped }) {
     const rows = skipped.map((s) => `<li style="padding:8px 0;border-bottom:1px solid #E8E3DD;color:#8A8578;font-size:14px;"><strong style="color:#2C2824;font-weight:400;">${escapeHtml(s.customerName)}</strong> — ${escapeHtml(s.date)} (${escapeHtml(s.holiday)})</li>`).join('');
     return {
-      subject: 'SUKODA | Riigipühale langevad koristusajad',
-      html: providerWrap('Vajab sinu otsust', `Tere, ${escapeHtml(greetName(provider))}. Järgmised graafiku ajad langevad riigipühale, seega me ei lisanud neid automaatselt. Lisa käsitsi, kui soovid neil päevadel siiski tulla, või lepi kliendiga uus aeg.`,
+      subject: 'SUKODA | Koristusajad langevad riigipühale',
+      html: providerWrap('Vajab sinu otsust', `Tere, ${escapeHtml(greetName(provider))}. Need ajad langevad riigipühale ja me ei pannud neid kalendrisse. Lisa aeg käsitsi, kui tuled sel päeval siiski, või lepi kliendiga kokku uus aeg.`,
         `<ul style="list-style:none;padding:0;margin:0;background:#FFFFFF;padding:12px 28px;border-left:2px solid #B8976A;">${rows}</ul>`),
     };
   }
@@ -1455,9 +1464,15 @@ module.exports = function createHaldus(deps) {
       const holiday = core.holidayName(dateStr);
       if (holiday) { skipped.push({ date: dateStr, holiday }); continue; }
       const start = new Date(tallinnLocalDateTimeToISOString(dateStr, schedule.time));
+      const durationMin = schedule.durationMin || core.SIZE_DEFAULT_DURATION[order.size] || 180;
+      const end = new Date(start.getTime() + durationMin * 60000);
+      if (provider?.id) {
+        const busy = await findConflicts(provider.id, start, end);
+        if (busy.length) { skipped.push({ date: dateStr, holiday: 'aeg on juba võetud' }); continue; }
+      }
       const booking = await createVisit({
         order, orderId, provider, start,
-        durationMin: schedule.durationMin || core.SIZE_DEFAULT_DURATION[order.size] || 180,
+        durationMin,
         note: schedule.note || '',
         source: 'schedule',
         scheduleOccurrence: dateStr,
@@ -1473,7 +1488,7 @@ module.exports = function createHaldus(deps) {
    */
   async function rescheduleVisit({ provider, ref, booking, order, start, durationMin, note, force, notify = true, by = 'provider' }) {
     if (!['scheduled', 'confirmed'].includes(booking.status)) return { error: 'Seda visiiti ei saa enam muuta', status: 400 };
-    if (start < new Date()) return { error: 'Uus aeg on möödas', status: 400 };
+    if (start < new Date()) return { error: 'Uus aeg on juba möödas. Vali aeg tulevikus.', status: 400 };
     const oldStart = toDate(booking.scheduledAt);
     const oldEnd = toDate(booking.endTime);
     const dur = Number.isInteger(Number(durationMin)) && Number(durationMin) >= 15
@@ -1649,16 +1664,16 @@ module.exports = function createHaldus(deps) {
     const lines = moves.map((m) => `${escapeHtml(m.from)} → ${escapeHtml(m.to)}${m.time ? ` ${escapeHtml(m.time)}` : ''}`).join('<br>');
     return {
       subject: core.pick({
-        et: 'SUKODA | Visiit liikus',
-        en: 'SUKODA | The visit moved',
-        ru: 'SUKODA | Визит перенесён',
+        et: 'SUKODA | Visiidi aeg muutus',
+        en: 'SUKODA | Your visit time changed',
+        ru: 'SUKODA | Время визита изменилось',
       }, L),
       html: wrap(
-        H2(core.pick({ et: 'Visiit liikus', en: 'The visit moved', ru: 'Визит перенесён' }, L))
+        H2(core.pick({ et: 'Visiidi aeg muutus', en: 'Your visit time changed', ru: 'Время визита изменилось' }, L))
         + P(core.pick({
-          et: `${who} on eemal ${range}. Sinu visiit on nüüd hiljem. Kui aeg ei sobi, muuda seda portaalis.`,
-          en: `${who} is away ${range}. Your visit is later. Change it in the portal if the time does not suit.`,
-          ru: `${who} отсутствует ${range}. Ваш визит теперь позже. Если время не подходит, измените его в портале.`,
+          et: `${who} on eemal ${range}. Sinu visiit liikus edasi. Uus aeg on allpool. Kui aeg ei sobi, muuda aega rakenduses.`,
+          en: `${who} is away ${range}. Your visit moved to a later date. The new time is below. If it does not suit, change it in the app.`,
+          ru: `${who} отсутствует ${range}. Ваш визит перенесён на более поздний срок. Новое время указано ниже. Если оно не подходит, измените его в приложении.`,
         }, L))
         + P(lines),
         L,
@@ -1679,11 +1694,11 @@ module.exports = function createHaldus(deps) {
       html: wrap(
         H2(core.pick({ et: 'Ei saanud sisse', en: 'Could not get in', ru: 'Не удалось войти' }, L))
         + P(core.pick({
-          et: `${who} ei saanud sisse. Uus aeg on ${when}. Kui see ei sobi, muuda seda portaalis.`,
-          en: `${who} could not get in. The new time is ${when}. Change it in the portal if it does not suit.`,
-          ru: `${who} не смог войти. Новое время — ${when}. Если оно не подходит, измените его в портале.`,
+          et: `${who} ei saanud koju sisse. Uus aeg on ${when}. Kui aeg ei sobi, muuda aega rakenduses.`,
+          en: `${who} could not get into your home. The new time is ${when}. If it does not suit, change it in the app.`,
+          ru: `${who} не смог(ла) попасть в дом. Новое время: ${when}. Если оно не подходит, измените его в приложении.`,
         }, L))
-        + `<div style="text-align:center;margin:32px 0;"><a href="${PORTAL_URL}" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">${core.pick({ et: 'Ava kodu', en: 'Open the home', ru: 'Откройте дом' }, L)}</a></div>`,
+        + `<div style="text-align:center;margin:32px 0;"><a href="${PORTAL_URL}" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">${core.pick({ et: 'Ava rakendus', en: 'Open the app', ru: 'Открыть приложение' }, L)}</a></div>`,
         L,
       ),
     };
@@ -1753,20 +1768,20 @@ module.exports = function createHaldus(deps) {
   /** The door did not open. Offer the same time tomorrow. No charge. */
   async function markNoEntry({ provider, bookingId }) {
     const acc = await accessBooking(provider, bookingId);
-    if (!acc) return { error: { et: 'Visiiti ei leitud.', en: 'Visit not found.' }, status: 404 };
+    if (!acc) return { error: { et: 'Visiiti ei leitud.', en: 'Visit not found.', ru: 'Визит не найден.' }, status: 404 };
     const { ref, booking, order } = acc;
     if (!['scheduled', 'confirmed'].includes(booking.status)) {
-      return { error: { et: 'Seda visiiti ei saa enam muuta.', en: 'This visit can no longer be changed.' }, status: 400 };
+      return { error: { et: 'Seda visiiti ei saa enam muuta.', en: 'This visit can no longer be changed.', ru: 'Этот визит уже нельзя изменить.' }, status: 400 };
     }
     const when = toDate(booking.scheduledAt);
-    if (!when) return { error: { et: 'Aeg puudub.', en: 'The time is missing.' }, status: 400 };
+    if (!when) return { error: { et: 'Vali uus aeg.', en: 'Pick a new time.', ru: 'Выберите новое время.' }, status: 400 };
     const time = clockOf(when);
     const nextDate = core.toDateStr(core.addDays(core.parseDateStr(tallinnDateStr(when)), 1));
     const start = new Date(tallinnLocalDateTimeToISOString(nextDate, time));
     const result = await rescheduleVisit({
       provider, ref, booking, order, start, force: true, notify: false, by: 'provider',
     });
-    if (result.error) return { error: { et: 'Uut aega ei saanud panna.', en: 'Could not set a new time.' }, status: result.status || 400 };
+    if (result.error) return { error: { et: 'Uut aega ei saanud salvestada. Proovi uuesti.', en: 'Could not save the new time. Try again.', ru: 'Не удалось сохранить новое время. Попробуйте снова.' }, status: result.status || 400 };
     await ref.update({ noEntryAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
     let mailed = false;
     try {
@@ -2007,7 +2022,7 @@ module.exports = function createHaldus(deps) {
     if (toSide === 'provider') {
       return {
         subject: `SUKODA | Sõnum: ${requestName(request, 'et')} — ${primaryName(order) || primaryEmail(order)}`,
-        html: providerWrap('Klient kirjutas', `${escapeHtml(fromName || primaryName(order) || 'Klient')} lisas pöördumisele „${escapeHtml(requestName(request, 'et'))}“ sõnumi. Vasta töölaual — vastus jõuab kliendile portaali ja e-postiga.`,
+        html: providerWrap('Klient kirjutas', `${escapeHtml(fromName || primaryName(order) || 'Klient')} saatis sõnumi teemal „${escapeHtml(requestName(request, 'et'))}“. Vasta töölaual. Klient näeb vastust rakenduses.`,
           `<div style="background:#FFFFFF;padding:20px 24px;border-left:2px solid #B8976A;margin:16px 0;font-size:14px;line-height:1.6;color:#2C2824;">${escapeHtml(text).replace(/\n/g, '<br>')}</div>`,
           { href: `${HALDUS_URL}?tab=requests`, label: 'AVA TÖÖLAUD' }),
       };
@@ -2015,9 +2030,9 @@ module.exports = function createHaldus(deps) {
     const tt = t(lang);
     const who = fromName || core.pick({ et: 'Meeskond', en: 'The team', ru: 'Команда' }, lang);
     const wrote = core.pick({
-      et: `${who} kirjutas sinu pöördumisele.`,
-      en: `${who} wrote on your request.`,
-      ru: `${who} пишет по вашему обращению.`,
+      et: `${who} saatis sulle sõnumi. Sõnum on allpool.`,
+      en: `${who} sent you a message. The message is below.`,
+      ru: `Вам сообщение от ${who}. Текст указан ниже.`,
     }, lang);
     const html = wrap(
       H2(title) + P(`${tt.hello(escapeHtml(firstName(primaryName(order))))} ${escapeHtml(wrote)}`)
@@ -2026,7 +2041,7 @@ module.exports = function createHaldus(deps) {
           <p style="margin:0 0 16px;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
           <p style="margin:0;font-size:14px;line-height:1.6;color:#2C2824;">${escapeHtml(text).replace(/\n/g, '<br>')}</p>
         </div>`
-      + P(core.pick({ et: 'Ära vasta sellele kirjale. Kirjuta portaalis.', en: 'Do not reply to this e-mail. Write in the portal.', ru: 'Не отвечайте на это письмо. Напишите в портале.' }, lang), 'font-size:13px;color:#6B6560;')
+      + P(core.pick({ et: 'Sellele kirjale ei saa vastata. Kirjuta rakenduses.', en: 'You cannot reply to this e-mail. Write in the app.', ru: 'На это письмо нельзя ответить. Напишите в приложении.' }, lang), 'font-size:13px;color:#6B6560;')
       + portalBlock(lang, requestUrl(requestId)),
       lang,
       brandOf(order),
@@ -2112,7 +2127,7 @@ module.exports = function createHaldus(deps) {
       subject: `SUKODA | Pakett ${p.name} on aktiivne`,
       html: wrap(
         H2(`Pakett ${p.name}`)
-        + P(`${escapeHtml(provider.name)}, sinu töölaual on nüüd pakett <strong style="color:#2C2824;font-weight:normal;">${p.name}</strong> — ${p.price} €/kuus, ${p.homes ? `kuni ${p.homes} kodu` : 'piiramatult kodusid'}. Arve tuleb igal kuul e-postile; tühistada saad igal ajal töölaual, muutus jõustub perioodi lõpus.`)
+        + P(`${escapeHtml(provider.name)}, sinu töölaual on nüüd pakett <strong style="color:#2C2824;font-weight:normal;">${p.name}</strong>: ${p.price} €/kuus, ${p.homes ? `kuni ${p.homes} kodu` : 'piiramatult kodusid'}. Arve tuleb iga kuu e-postile. Paketi saad igal ajal töölaual lõpetada; pakett kehtib siis kuu lõpuni.`)
         + `<div style="text-align:center;margin:32px 0;"><a href="${HALDUS_URL}?tab=account" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">Ava töölaud</a></div>`,
         'et',
       ),
@@ -2121,10 +2136,10 @@ module.exports = function createHaldus(deps) {
 
   function planEndedEmail({ provider }) {
     return {
-      subject: 'SUKODA | Pakett lõppes — töölaud on tasuta paketis',
+      subject: 'SUKODA | Töölaud on nüüd tasuta paketis',
       html: wrap(
         H2('Tasuta pakett')
-        + P(`${escapeHtml(provider.name)}, sinu tasuline pakett on lõppenud ja töölaud on nüüd tasuta paketis: kuni ${core.PROVIDER_PLANS.free.homes} kodu. Olemasolevad kliendid, ajad ja andmed jäävad alles — uusi kodusid saad lisada, kui neid on alla piiri või valid paketi uuesti.`)
+        + P(`${escapeHtml(provider.name)}, sinu tasuline pakett lõppes ja töölaud on nüüd tasuta paketis: kuni ${core.PROVIDER_PLANS.free.homes} kodu. Kliendid, ajad ja andmed jäävad alles. Uue kodu saad lisada, kui kodusid on alla ${core.PROVIDER_PLANS.free.homes} või kui valid paketi uuesti.`)
         + `<div style="text-align:center;margin:32px 0;"><a href="${HALDUS_URL}?tab=account" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">Ava töölaud</a></div>`,
         'et',
       ),
@@ -2137,7 +2152,7 @@ module.exports = function createHaldus(deps) {
       subject: `SUKODA | Arve ${invoice.number || ''} · ${amount} €`,
       html: wrap(
         H2('Arve tasutud')
-        + P(`${escapeHtml(provider.name)}, SUKODA Töölaua kuumakse ${amount} € on tasutud. Arve raamatupidamisele on siin.`)
+        + P(`${escapeHtml(provider.name)}, töölaua kuumakse ${amount} € on tasutud. Arve on allpool.`)
         + `<div style="text-align:center;margin:32px 0;">${invoice.invoice_pdf ? `<a href="${invoice.invoice_pdf}" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">Laadi arve (PDF)</a>` : ''}${invoice.hosted_invoice_url ? `<p style="margin:16px 0 0 0;"><a href="${invoice.hosted_invoice_url}" style="color:#B8976A;font-size:13px;">Vaata arvet veebis</a></p>` : ''}</div>`,
         'et',
       ),
@@ -2219,9 +2234,9 @@ module.exports = function createHaldus(deps) {
     const phone = str(b.phone, 40);
     const address = str(b.address, 500);
     const size = core.ORDER_SIZES.includes(b.size) ? b.size : 'medium';
-    const lang = b.lang === 'en' ? 'en' : 'et';
+    const lang = core.langOf({ lang: b.lang });
     if (!name) throw new HomeError(400, { error: 'Nimi on kohustuslik' });
-    if (!core.isValidEmail(email)) throw new HomeError(400, { error: 'Korrektne e-post on kohustuslik' });
+    if (!core.isValidEmail(email)) throw new HomeError(400, { error: 'E-posti aadress ei ole õige' });
     if (!address) throw new HomeError(400, { error: 'Aadress on kohustuslik' });
 
     // Plan cap: stated up front, enforced here, nowhere else
@@ -2255,7 +2270,7 @@ module.exports = function createHaldus(deps) {
     if (mine) throw new HomeError(409, { error: 'See klient on juba sinu nimekirjas', code: 'ALREADY_MINE', orderId: mine.id });
     if (!dupSnap.empty && !b.force) {
       throw new HomeError(409, {
-        error: 'Sellel e-postil on juba SUKODA tellimus. Kui oled kindel, et see on uus klient, salvesta uuesti kinnitusega.',
+        error: 'Selle e-posti aadressiga kodu on SUKODA-s juba olemas. Kui see on kindlasti uus klient, salvesta uuesti ja kinnita.',
         code: 'EXISTING_ORDER',
       });
     }
@@ -2296,28 +2311,32 @@ module.exports = function createHaldus(deps) {
     const ref = await db.collection('orders').add(orderData);
     const orderId = ref.id;
 
-    // Welcome + portal access for the customer
+    // Schedule first so the welcome can name the first visit.
+    let created = [];
+    let skipped = [];
+    if (schedule) {
+      const r = await syncSchedule({ orderId, order: orderData, provider });
+      created = r.created; skipped = r.skipped;
+    }
+
     let welcomeSent = false;
     let portalUrl = null;
     if (sendWelcome) {
       try {
         portalUrl = await issueClientToken(ref);
-        await sendEmail({ to: email, ...welcomeEmail({ order: orderData, providerName: provider.name, portalUrl, lang }), replyTo: providerReplyTo(provider) });
+        const first = created[0];
+        const firstWhen = first
+          ? `${formatDate(first.scheduledAt, lang)}, ${formatTime(first.scheduledAt)}`
+          : '';
+        await sendEmail({ to: email, ...welcomeEmail({ order: orderData, providerName: provider.name, portalUrl, lang, firstWhen }), replyTo: providerReplyTo(provider) });
         welcomeSent = true;
       } catch (e) {
         console.error('Welcome email failed (non-fatal):', e);
       }
     }
 
-    // Generate schedule occurrences + one summary email
-    let created = [];
-    let skipped = [];
-    if (schedule) {
-      const r = await syncSchedule({ orderId, order: orderData, provider });
-      created = r.created; skipped = r.skipped;
-      if (created.length) {
-        await notifyOrder(orderData, scheduleEmail({ order: orderData, bookings: created, providerName: provider.name, lang }), { replyTo: PORTAL_REPLY_TO });
-      }
+    if (created.length) {
+      await notifyOrder(orderData, scheduleEmail({ order: orderData, bookings: created, providerName: provider.name, lang }), { replyTo: PORTAL_REPLY_TO });
     }
 
     // Keep the operator informed
@@ -2409,7 +2428,7 @@ module.exports = function createHaldus(deps) {
       if (!found || !isPhysicalCard(found.card)) { errors.push({ code, error: 'Koodi ei leitud' }); continue; }
       const state = cardState(found.card);
       if (state === 'used') { errors.push({ code, error: 'Kaart on juba kasutatud' }); continue; }
-      if (state === 'assigned') { errors.push({ code, error: found.card.assignedProviderId === provider.id ? 'Juba sellel partneril' : `Juba määratud: ${found.card.assignedProviderName || 'teine partner'}` }); continue; }
+      if (state === 'assigned') { errors.push({ code, error: found.card.assignedProviderId === provider.id ? 'Kaart on juba sinu nimel' : `Kaart on juba partneril ${found.card.assignedProviderName || 'teine partner'}` }); continue; }
       batch.update(found.ref, stamp);
       assigned.push(code);
     }
@@ -2452,7 +2471,7 @@ module.exports = function createHaldus(deps) {
     return {
       subject: `SUKODA | Uus kodu kutsekaardiga: ${name}`,
       html: providerWrap('Uus kodu kutsekaardiga',
-        `Tere, ${escapeHtml(greetName(provider))}. Keegi sisestas sinu kutsekaardi koodi ja tema kodu on nüüd sinu töölaual. Klient sai portaali lingi. Ava töölaud ja lisa graafik — siis saab ta kalendrikutsed kohe.`,
+        `Tere, ${escapeHtml(greetName(provider))}. ${escapeHtml(name)} sisestas sinu kutsekaardi koodi. Kodu on nüüd sinu töölaual ja klient sai rakenduse lingi. Ava töölaud ja lisa graafik, siis saab klient kalendrikutsed kohe.`,
         `<div style="background:#FFFFFF;padding:28px;border-left:2px solid #B8976A;">
           ${LABEL('Kodu')}
           <p style="margin:0;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(name)}</p>
@@ -2488,7 +2507,7 @@ module.exports = function createHaldus(deps) {
     const found = await findCardByCode(code);
     if (found?.card?.welcomeRedeemedAt) return res.status(409).json({ state: 'used', error: 'See kaart on juba kasutatud' });
     if (!str(b.name, 200)) return res.status(400).json({ error: 'Nimi on kohustuslik' });
-    if (!core.isValidEmail(core.normalizeEmail(b.email))) return res.status(400).json({ error: 'Korrektne e-post on kohustuslik' });
+    if (!core.isValidEmail(core.normalizeEmail(b.email))) return res.status(400).json({ error: 'E-posti aadress ei ole õige' });
     if (!str(b.address, 500)) return res.status(400).json({ error: 'Aadress on kohustuslik' });
     const weekday = Number(b.weekday);
     if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6) return res.status(400).json({ error: 'Vali koristuse päev' });
@@ -2505,7 +2524,7 @@ module.exports = function createHaldus(deps) {
       contacts.push({ name: str(b.contact2.name, 120), email: core.normalizeEmail(b.contact2.email), notify: true });
     }
     const contactsCheck = core.sanitizeContacts(contacts);
-    if (contactsCheck.error) return res.status(400).json({ error: 'Teise kontakti e-post ei ole korrektne' });
+    if (contactsCheck.error) return res.status(400).json({ error: 'Teise kontakti e-posti aadress ei ole õige' });
 
     const cardRef = found?.ref || null;
     const claimedAt = Timestamp.fromDate(new Date());
@@ -2554,7 +2573,7 @@ module.exports = function createHaldus(deps) {
     } catch (e) {
       if (cardRef) await cardRef.update({ welcomeRedeemedAt: FieldValue.delete(), usedAt: FieldValue.delete(), usedByEmail: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() }).catch(() => {});
       if (e instanceof HomeError) {
-        if (e.status === 409) return res.status(409).json({ state: 'already', error: 'Sellel e-postil on juba kodu. Sisene portaali oma e-postiga.', code: e.body.code });
+        if (e.status === 409) return res.status(409).json({ state: 'already', error: 'Selle e-posti aadressiga on kodu juba olemas. Sisene rakendusse sama aadressiga.', code: e.body.code });
         return res.status(e.status).json(e.body);
       }
       throw e;
@@ -2616,13 +2635,13 @@ module.exports = function createHaldus(deps) {
       if (code === WELCOME_CODE) return redeemWelcome(req, res, code);
       if (b.consent !== true) return res.status(400).json({ error: 'Nõustu tingimustega, et jätkata' });
       const v = await validateCard(code);
-      if (v.state !== 'invite') return res.status(409).json({ state: v.state, error: 'Kaarti ei saa kasutada' });
+      if (v.state !== 'invite') return res.status(409).json({ state: v.state, error: 'Seda kaarti ei saa kasutada' });
       const provider = v.providerDoc;
       const cardRef = v.found.ref;
 
       // Cheap checks before touching the card
       if (!str(b.name, 200)) return res.status(400).json({ error: 'Nimi on kohustuslik' });
-      if (!core.isValidEmail(core.normalizeEmail(b.email))) return res.status(400).json({ error: 'Korrektne e-post on kohustuslik' });
+      if (!core.isValidEmail(core.normalizeEmail(b.email))) return res.status(400).json({ error: 'E-posti aadress ei ole õige' });
       if (!str(b.address, 500)) return res.status(400).json({ error: 'Aadress on kohustuslik' });
 
       // Household: one optional second contact ("kes veel saab teavitusi")
@@ -2631,13 +2650,13 @@ module.exports = function createHaldus(deps) {
         contacts.push({ name: str(b.contact2.name, 120), email: core.normalizeEmail(b.contact2.email), notify: true });
       }
       const contactsCheck = core.sanitizeContacts(contacts);
-      if (contactsCheck.error) return res.status(400).json({ error: 'Teise kontakti e-post ei ole korrektne' });
+      if (contactsCheck.error) return res.status(400).json({ error: 'Teise kontakti e-posti aadress ei ole õige' });
 
       // Already a home with this provider → no duplicate, point to the portal instead (card stays unused)
       const email = core.normalizeEmail(b.email);
       const dup = await db.collection('orders').where('customer.email', '==', email).where('status', 'in', ['paid', 'cancelling']).limit(3).get();
       if (dup.docs.some((d) => d.data().providerId === provider.id)) {
-        return res.status(409).json({ state: 'already', error: 'Sellel e-postil on juba kodu selle koduhooldaja juures. Sisene portaali oma e-postiga.', code: 'ALREADY_MINE' });
+        return res.status(409).json({ state: 'already', error: 'Selle e-posti aadressiga on kodu selle koduhooldaja juures juba olemas. Sisene rakendusse sama aadressiga.', code: 'ALREADY_MINE' });
       }
 
       // Claim the card first so two people cannot use the same code at once
@@ -2676,7 +2695,7 @@ module.exports = function createHaldus(deps) {
         // Release the card again — nothing was created
         await cardRef.update({ usedAt: FieldValue.delete(), usedByEmail: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() }).catch(() => {});
         if (e instanceof HomeError) {
-          if (e.status === 409) return res.status(409).json({ state: 'already', error: 'Sellel e-postil on juba kodu selle koduhooldaja juures. Sisene portaali oma e-postiga.', code: e.body.code });
+          if (e.status === 409) return res.status(409).json({ state: 'already', error: 'Selle e-posti aadressiga on kodu selle koduhooldaja juures juba olemas. Sisene rakendusse sama aadressiga.', code: e.body.code });
           return res.status(e.status).json(e.body);
         }
         throw e;
@@ -2730,7 +2749,7 @@ module.exports = function createHaldus(deps) {
    */
   async function markVisitDone({ provider, visitId, note }) {
     const acc = await accessBooking(provider, visitId);
-    if (!acc) return { status: 404, body: { error: { et: 'Visiiti ei leitud', en: 'Visit not found' } } };
+    if (!acc) return { status: 404, body: { error: { et: 'Visiiti ei leitud', en: 'Visit not found', ru: 'Визит не найден' } } };
     const { ref, orderRef, role } = acc;
     const today = todayTallinnStr();
     let outcome;
@@ -2774,9 +2793,9 @@ module.exports = function createHaldus(deps) {
       });
     } catch (e) {
       console.error('visit done failed:', visitId, e);
-      return { status: 500, body: { error: { et: 'Visiiti ei õnnestunud tehtuks märkida. Proovi uuesti.', en: 'Could not mark the visit done. Try again.' } } };
+      return { status: 500, body: { error: { et: 'Visiiti ei õnnestunud tehtuks märkida. Proovi uuesti.', en: 'Could not mark the visit done. Try again.', ru: 'Не удалось отметить визит выполненным. Попробуйте снова.' } } };
     }
-    if (outcome.missing) return { status: 404, body: { error: { et: 'Visiiti ei leitud', en: 'Visit not found' } } };
+    if (outcome.missing) return { status: 404, body: { error: { et: 'Visiiti ei leitud', en: 'Visit not found', ru: 'Визит не найден' } } };
     if (outcome.already) return { status: 200, body: { success: true, already: true, rhythm: [] } };
     if (outcome.cancelled) return { status: 400, body: { error: { et: 'Tühistatud visiiti ei saa tehtuks märkida.', en: 'A cancelled visit cannot be marked done.', ru: 'Отменённый визит нельзя отметить выполненным.' } } };
     if (outcome.future) return { status: 400, body: { error: { et: 'Tulevast visiiti ei saa veel tehtuks märkida.', en: 'A future visit cannot be marked done yet.', ru: 'Будущий визит ещё нельзя отметить выполненным.' } } };
@@ -2836,9 +2855,9 @@ module.exports = function createHaldus(deps) {
       ru: 'SUKODA | Код для входа',
     }, L);
     const intro = core.pick({
-      et: 'Kirjuta see kood rakendusse. See kehtib 10 minutit.',
-      en: 'Enter this code in the app. It is valid for 10 minutes.',
-      ru: 'Введите этот код в приложении. Он действует 10 минут.',
+      et: 'Sisesta see kood rakendusse. Kood kehtib 10 minutit.',
+      en: 'Enter this code in the app. The code is valid for 10 minutes.',
+      ru: 'Введите этот код в приложении. Код действует 10 минут.',
     }, L);
     return { subject, html: wrap(H2(escapeHtml(code)) + P(intro), L) };
   }
@@ -2914,7 +2933,7 @@ module.exports = function createHaldus(deps) {
       const planId = String(req.body?.plan || '');
       const plan = core.SELF_SERVE_PLANS.includes(planId) ? core.PROVIDER_PLANS[planId] : null;
       if (!plan) return res.status(400).json({ error: 'Vali pakett' });
-      if (core.effectivePlan(provider) === 'enterprise') return res.status(400).json({ error: 'Partnerlepinguga töölaual arveldus käib lepingu järgi — pakette ei ole vaja valida.' });
+      if (core.effectivePlan(provider) === 'enterprise') return res.status(400).json({ error: 'Sinu töölaud käib partnerlepingu järgi. Paketti ei ole vaja valida.' });
       const stripe = getStripe();
       const live = provider.planSubscriptionId && core.PLAN_ACTIVE_STATUSES.includes(provider.planStatus);
       if (plan.id === 'free') {
@@ -2951,7 +2970,7 @@ module.exports = function createHaldus(deps) {
     'POST /api/haldus/billing/resume': async (req, res) => {
       const provider = await authenticateProvider(req);
       if (!provider) return res.status(401).json({ error: 'Unauthorized' });
-      if (!provider.planSubscriptionId) return res.status(400).json({ error: 'Aktiivset paketti pole' });
+      if (!provider.planSubscriptionId) return res.status(400).json({ error: 'Sul ei ole praegu tasulist paketti' });
       const sub = await getStripe().subscriptions.update(provider.planSubscriptionId, { cancel_at_period_end: false });
       await db.collection('providers').doc(provider.id).update({ ...subscriptionFields(sub), updatedAt: FieldValue.serverTimestamp() });
       res.status(200).json({ success: true });
@@ -2974,7 +2993,7 @@ module.exports = function createHaldus(deps) {
     'POST /api/haldus/login/code': async (req, res) => {
       if (!checkRateLimit(req, res, 'login-code', 5, 300000)) return;
       const email = core.normalizeEmail(req.body?.email);
-      const badMail = { error: { et: 'Kirjuta e-post.', en: 'Enter an e-mail.', ru: 'Укажите эл. почту.' } };
+      const badMail = { error: { et: 'Sisesta e-posti aadress.', en: 'Enter your e-mail address.', ru: 'Введите адрес эл. почты.' } };
       if (!core.isValidEmail(email)) return res.status(400).json(badMail);
       const rl = db.collection('rateLimits').doc(`login_code_${sha256(email)}`);
       const rlDoc = await rl.get();
@@ -3007,7 +3026,7 @@ module.exports = function createHaldus(deps) {
       if (!checkRateLimit(req, res, 'login-verify', 10, 300000)) return;
       const email = core.normalizeEmail(req.body?.email);
       const code = String(req.body?.code ?? '').trim();
-      const fail = { error: { et: 'Kood ei sobi. Kontrolli kirja või küsi uus.', en: 'That code does not work. Check the e-mail or ask for a new one.', ru: 'Код не подошёл. Проверьте письмо или запросите новый.' } };
+      const fail = { error: { et: 'Kood ei kehti. Kontrolli numbreid või küsi uus kood.', en: 'The code is not valid. Check the digits or ask for a new code.', ru: 'Код не подходит. Проверьте цифры или запросите новый код.' } };
       if (!core.isValidEmail(email) || !/^\d{6}$/.test(code)) return res.status(401).json(fail);
       const ref = db.collection('loginCodes').doc(sha256(email));
       let audience = null;
@@ -3039,8 +3058,8 @@ module.exports = function createHaldus(deps) {
         const desk = audience.mismatch === 'desk';
         return res.status(409).json({
           error: desk
-            ? { et: 'See e-post avab töölaua. Ava Töölaud.', en: 'This e-mail opens the desk. Open Töölaud.', ru: 'Эта почта открывает рабочий стол. Откройте Töölaud.' }
-            : { et: 'See e-post avab kodu. Ava SUKODA.', en: 'This e-mail opens the home. Open SUKODA.', ru: 'Эта почта открывает дом. Откройте SUKODA.' },
+            ? { et: 'See e-posti aadress kuulub töölauale. Sisene rakenduses Töölaud.', en: 'This e-mail address belongs to the desk. Sign in through the Töölaud app.', ru: 'Этот адрес эл. почты относится к рабочему столу. Войдите через приложение Töölaud.' }
+            : { et: 'See e-posti aadress kuulub kodule. Sisene rakenduses SUKODA.', en: 'This e-mail address belongs to a home. Sign in through the SUKODA app.', ru: 'Этот адрес эл. почты относится к дому. Войдите через приложение SUKODA.' },
         });
       }
       const target = await findLoginTarget(email);
@@ -3056,9 +3075,9 @@ module.exports = function createHaldus(deps) {
       if (!sub) {
         return res.status(400).json({
           error: {
-            et: 'Teavitust ei õnnestunud salvestada.',
-            en: 'Could not save the notification.',
-            ru: 'Не удалось сохранить уведомление.',
+            et: 'Teavitusi ei saanud sisse lülitada. Proovi uuesti.',
+            en: 'Could not turn on notifications. Try again.',
+            ru: 'Не удалось включить уведомления. Попробуйте снова.',
           },
         });
       }
@@ -3084,7 +3103,7 @@ module.exports = function createHaldus(deps) {
     'POST /api/haldus/magic-link': async (req, res) => {
       if (!checkRateLimit(req, res, 'haldus-magic', 5, 300000)) return;
       const email = core.normalizeEmail(req.body?.email);
-      if (!core.isValidEmail(email)) return res.status(400).json({ error: 'Invalid email' });
+      if (!core.isValidEmail(email)) return res.status(400).json({ error: 'E-posti aadress ei ole õige' });
 
       const rl = db.collection('rateLimits').doc(`haldus_magic_${sha256(email)}`);
       const rlDoc = await rl.get();
@@ -3115,7 +3134,7 @@ module.exports = function createHaldus(deps) {
       const name = str(b.name, 120);
       const email = core.normalizeEmail(b.email);
       if (!name) return res.status(400).json({ error: 'Nimi on kohustuslik' });
-      if (!core.isValidEmail(email)) return res.status(400).json({ error: 'Korrektne e-post on kohustuslik' });
+      if (!core.isValidEmail(email)) return res.status(400).json({ error: 'E-posti aadress ei ole õige' });
       const services = (Array.isArray(b.services) ? b.services : []).filter((s) => Object.keys(core.SERVICE_CATEGORIES).includes(s) || s === 'other');
 
       const dup = await db.collection('providers').where('email', '==', email).limit(1).get();
@@ -3150,7 +3169,7 @@ module.exports = function createHaldus(deps) {
       const b = req.body || {};
       const partnerEmail = core.normalizeEmail(b.partnerEmail);
       const email = core.normalizeEmail(b.email);
-      if (!core.isValidEmail(partnerEmail) || !core.isValidEmail(email)) return res.status(400).json({ error: 'Korrektsed e-postid on kohustuslikud' });
+      if (!core.isValidEmail(partnerEmail) || !core.isValidEmail(email)) return res.status(400).json({ error: 'Kontrolli mõlemat e-posti aadressi' });
       const partnerName = str(b.partnerName, 120);
       const name = str(b.name, 120);
       const who = name || email;
@@ -3160,11 +3179,11 @@ module.exports = function createHaldus(deps) {
         replyTo: email,
         subject: `SUKODA | ${who} kutsub sind oma koduportaali`,
         html: wrap(
-          H2(`Tere${partnerName ? ', ' + escapeHtml(firstName(partnerName)) : ''}!`)
-          + P(`${escapeHtml(who)} kasutab SUKODA koduportaali ja soovib, et tema kodu ajad, kalendrikutsed ja soovid liiguksid edaspidi selle kaudu — otse sinult, ilma SMS-ideta.`)
-          + P('SUKODA Töölaud on sinu tööriist: lisad kliendi, määrad ajad või korduva graafiku, ja klient ning tema pere saavad kalendrikutsed, muudatused ja meeldetuletused ise. Kliendi soovid jõuavad sinuni ja sa kinnitad aja ühe klikiga. Alustamine on tasuta ja võtab kaks minutit.')
+          H2(`Tere${partnerName ? ', ' + escapeHtml(firstName(partnerName)) : ''}.`)
+          + P(`${escapeHtml(who)} kasutab SUKODA rakendust ja soovib, et koristusajad, kalendrikutsed ja soovid liiguksid edaspidi rakenduse kaudu otse sinult.`)
+          + P('Töölaual lisad kliendi ja paned paika ajad või korduva graafiku. Klient ja tema pere saavad kalendrikutsed, muudatused ja meeldetuletused ise. Kliendi soovid jõuavad sinuni ja sa kinnitad aja ühe puutega. Alustamine on tasuta ja võtab kaks minutit.')
           + `<div style="text-align:center;margin:32px 0;"><a href="${url}" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">Ava oma töölaud</a></div>`
-          + P(`Kui sul on küsimusi, vasta sellele kirjale — see jõuab otse kutsujale (${escapeHtml(who)}). SUKODA kohta: tere@sukoda.ee.`, 'font-size:12px;'),
+          + P(`Kui sul on küsimusi, vasta sellele kirjale. Vastus jõuab otse kutsujale (${escapeHtml(who)}). SUKODA kohta küsi: tere@sukoda.ee.`, 'font-size:12px;'),
           'et',
         ),
       });
@@ -3179,14 +3198,14 @@ module.exports = function createHaldus(deps) {
 
     'POST /api/haldus/auth/validate': async (req, res) => {
       const token = String(req.body?.token || '');
-      if (token.length < 32) return res.status(400).json({ error: 'Invalid token' });
+      if (token.length < 32) return res.status(400).json({ error: 'Link ei kehti. Küsi uus sisenemislink.' });
       const snap = await db.collection('providers').where('sessionTokenHash', '==', sha256(token)).limit(1).get();
-      if (snap.empty) return res.status(401).json({ error: 'Invalid or expired token' });
+      if (snap.empty) return res.status(401).json({ error: 'Link ei kehti või on aegunud. Küsi uus sisenemislink.' });
       const doc = snap.docs[0];
       const p = doc.data();
-      if (p.status === 'disabled') return res.status(401).json({ error: 'Disabled' });
+      if (p.status === 'disabled') return res.status(401).json({ error: 'Konto on suletud. Kirjuta tere@sukoda.ee.' });
       const exp = toDate(p.sessionTokenExpiresAt);
-      if (exp && exp < new Date()) return res.status(401).json({ error: 'Token expired' });
+      if (exp && exp < new Date()) return res.status(401).json({ error: 'Link on aegunud. Küsi uus sisenemislink.' });
       const newExp = new Date();
       newExp.setDate(newExp.getDate() + TOKEN_DAYS);
       await doc.ref.update({ sessionTokenExpiresAt: Timestamp.fromDate(newExp), lastLoginAt: FieldValue.serverTimestamp() });
@@ -3374,10 +3393,10 @@ module.exports = function createHaldus(deps) {
       if (b.phone != null) update.phone = str(b.phone, 40);
       if (b.notifyEmail != null) {
         const e = core.normalizeEmail(b.notifyEmail);
-        if (e && !core.isValidEmail(e)) return res.status(400).json({ error: 'Invalid notifyEmail' });
+        if (e && !core.isValidEmail(e)) return res.status(400).json({ error: 'Teavituste e-posti aadress ei ole õige' });
         update.notifyEmail = e;
       }
-      if (update.name === '') return res.status(400).json({ error: 'Name required' });
+      if (update.name === '') return res.status(400).json({ error: 'Nimi on kohustuslik' });
       await db.collection('providers').doc(provider.id).update(update);
       res.status(200).json({ success: true });
     },
@@ -3392,13 +3411,13 @@ module.exports = function createHaldus(deps) {
       const b = req.body || {};
       const access = await accessOrder(provider, b.orderId);
       if (!access) return res.status(404).json({ error: 'Klienti ei leitud' });
-      if (access.role !== 'cleaning') return res.status(403).json({ error: 'Ainult kodu koristuspartner saab lilli seadistada' });
+      if (access.role !== 'cleaning') return res.status(403).json({ error: 'Lilli saab seadistada ainult kodu koduhooldaja' });
       const { ref, order } = access;
 
       const floristId = str(b.floristId, 64) || floristIdFor(order, provider);
       const florist = await loadProvider(floristId);
       const auto = b.auto === true;
-      if (auto && !(florist && providerReplyTo(florist))) return res.status(400).json({ error: 'Vali lillepood — tal peab olema e-post, kuhu tellimus läheb' });
+      if (auto && !(florist && providerReplyTo(florist))) return res.status(400).json({ error: 'Vali lillepood, kellel on e-posti aadress tellimuse jaoks' });
 
       const flowers = {
         auto,
@@ -3452,7 +3471,7 @@ module.exports = function createHaldus(deps) {
       // Only the housekeeper's role edits the home itself; other partners keep their own notes and nothing else
       const canEditHome = acc.role === 'cleaning' || order.providerId === provider.id;
       if (!canEditHome) {
-        if (b.providerNotes == null) return res.status(403).json({ error: 'Kodu andmeid haldab koduhooldaja. Saad muuta ainult oma märkmeid.' });
+        if (b.providerNotes == null) return res.status(403).json({ error: 'Kodu andmeid muudab koduhooldaja. Sina saad muuta ainult oma märkmeid.' });
         await ref.update({ [`providerNotesBy.${provider.id}`]: str(b.providerNotes, 1000), updatedAt: FieldValue.serverTimestamp() });
         const fresh = await ref.get();
         return res.status(200).json({ success: true, customer: serializeCustomer(ref.id, fresh.data(), acc.role, provider.id) });
@@ -3467,7 +3486,7 @@ module.exports = function createHaldus(deps) {
       if (b.additionalInfo != null) { customer.additionalInfo = str(b.additionalInfo, 1000); touchedCustomer = true; }
       if (b.email != null && order.source === 'manual') {
         const e = core.normalizeEmail(b.email);
-        if (!core.isValidEmail(e)) return res.status(400).json({ error: 'Vigane e-post' });
+        if (!core.isValidEmail(e)) return res.status(400).json({ error: 'E-posti aadress ei ole õige' });
         customer.email = e; touchedCustomer = true;
       }
       if (touchedCustomer) {
@@ -3475,7 +3494,7 @@ module.exports = function createHaldus(deps) {
         update.customer = customer;
       }
       if (b.size != null) {
-        if (!core.ORDER_SIZES.includes(b.size)) return res.status(400).json({ error: 'Vigane suurus' });
+        if (!core.ORDER_SIZES.includes(b.size)) return res.status(400).json({ error: 'Vali kodu suurus' });
         update.size = b.size;
       }
       if (b.contacts != null) {
@@ -3560,7 +3579,7 @@ module.exports = function createHaldus(deps) {
       const { ref, order } = acc;
       if (acc.role !== 'cleaning' && order.providerId !== provider.id) return res.status(403).json({ error: 'Kodu saab arhiveerida ainult koduhooldaja või SUKODA.' });
       if (order.source !== 'manual') {
-        return res.status(400).json({ error: 'SUKODA kaudu tellinud klienti saab lõpetada ainult SUKODA. Kirjuta tere@sukoda.ee.' });
+        return res.status(400).json({ error: 'See klient tuli SUKODA kaudu ja tema kodu lõpetab SUKODA. Kirjuta tere@sukoda.ee.' });
       }
       const upcoming = await upcomingBookingsForOrder(ref.id);
       for (const u of upcoming) {
@@ -3580,10 +3599,10 @@ module.exports = function createHaldus(deps) {
       if (!acc) return res.status(404).json({ error: 'Klienti ei leitud' });
       // A fresh link replaces the household's live session, so only the housekeeper who created the home may send it
       if (acc.role !== 'cleaning' || acc.order.source !== 'manual') {
-        return res.status(403).json({ error: 'Portaali lingi saab uuesti saata ainult kodu loonud koduhooldaja. Klient saab uue lingi ka ise portaalist oma e-postiga.' });
+        return res.status(403).json({ error: 'Rakenduse lingi saab uuesti saata ainult kodu lisanud koduhooldaja. Klient saab uue lingi ka ise, kui sisestab rakenduses oma e-posti aadressi.' });
       }
       const email = primaryEmail(acc.order);
-      if (!core.isValidEmail(email)) return res.status(400).json({ error: 'Kliendil pole e-posti' });
+      if (!core.isValidEmail(email)) return res.status(400).json({ error: 'Kliendil ei ole e-posti aadressi' });
       const portalUrl = await issueClientToken(acc.ref);
       await sendCustomerMail(acc.order, welcomeEmail({ order: acc.order, providerName: provider.name, portalUrl, lang: langOf(acc.order), role: acc.role }), { to: email, replyTo: providerReplyTo(provider) });
       res.status(200).json({ success: true, inviteUrl: portalUrl });
@@ -3655,25 +3674,25 @@ module.exports = function createHaldus(deps) {
       const acc = await accessOrder(provider, b.orderId);
       if (!acc) return res.status(404).json({ error: 'Klienti ei leitud' });
       const { ref, order } = acc;
-      if (order.status !== 'paid') return res.status(400).json({ error: 'Klient ei ole aktiivne' });
+      if (order.status !== 'paid') return res.status(400).json({ error: 'See kodu ei ole aktiivne' });
 
       let start;
-      try { start = new Date(tallinnLocalDateTimeToISOString(b.date, b.time)); } catch { return res.status(400).json({ error: 'Vigane kuupäev või aeg' }); }
+      try { start = new Date(tallinnLocalDateTimeToISOString(b.date, b.time)); } catch { return res.status(400).json({ error: 'Kuupäev või kellaaeg ei ole õige' }); }
       const durationMin = Number.isInteger(Number(b.durationMin)) ? Math.min(600, Math.max(15, Number(b.durationMin))) : (order.schedule?.durationMin || core.SIZE_DEFAULT_DURATION[order.size] || 180);
       const end = new Date(start.getTime() + durationMin * 60000);
       const serviceId = b.serviceId && core.getService(b.serviceId) ? b.serviceId : null;
       // A partner may only add visits of its own trade; the bare "Tavakoristus" (no serviceId) is the housekeeper's
       const visitCat = serviceId ? core.getService(serviceId).category : 'cleaning';
       if (visitCat !== acc.role || !providerServices(provider).includes(visitCat)) {
-        return res.status(403).json({ error: 'Saad lisada ainult oma valdkonna visiite' });
+        return res.status(403).json({ error: 'Saad lisada ainult oma teenuse visiite' });
       }
       const markCompleted = b.completed === true;
 
-      if (!markCompleted && start < new Date()) return res.status(400).json({ error: 'Aeg on möödas. Möödunud visiidi saad lisada „tehtud“ märkega.' });
-      if (markCompleted && start > new Date()) return res.status(400).json({ error: 'Tehtud visiit ei saa olla tulevikus' });
+      if (!markCompleted && start < new Date()) return res.status(400).json({ error: 'See aeg on juba möödas. Möödunud visiidi saad lisada märkega „tehtud“.' });
+      if (markCompleted && start > new Date()) return res.status(400).json({ error: 'Tehtud visiit ei saa olla tulevikus. Vali möödunud aeg.' });
 
       if (!markCompleted) {
-        if (core.isDateAway(order.awayPeriods, b.date) && !b.force) return res.status(409).json({ error: 'Klient on sel päeval eemal', code: 'AWAY', conflicts: [] });
+        if (core.isDateAway(order.awayPeriods, b.date) && !b.force) return res.status(409).json({ error: 'Klient on sel päeval eemal. Vali teine päev või kinnita aeg siiski.', code: 'AWAY', conflicts: [] });
         const conflicts = await slotConflicts(provider.id, ref.id, start, end);
         if (conflicts.length && !b.force) return res.status(409).json({ error: conflictError(conflicts), code: 'CONFLICT', conflicts });
       }
@@ -3703,7 +3722,7 @@ module.exports = function createHaldus(deps) {
       const { ref, booking, order } = acc;
 
       let start;
-      try { start = new Date(tallinnLocalDateTimeToISOString(b.date, b.time)); } catch { return res.status(400).json({ error: 'Vigane kuupäev või aeg' }); }
+      try { start = new Date(tallinnLocalDateTimeToISOString(b.date, b.time)); } catch { return res.status(400).json({ error: 'Kuupäev või kellaaeg ei ole õige' }); }
       const result = await rescheduleVisit({ provider, ref, booking, order, start, durationMin: b.durationMin, note: b.note, force: b.force, notify: b.notify !== false });
       if (result.error) return res.status(result.status).json(result);
       res.status(200).json({ success: true, booking: serializeBooking(ref.id, result.updated) });
@@ -3716,7 +3735,7 @@ module.exports = function createHaldus(deps) {
       const acc = await accessBooking(provider, b.bookingId);
       if (!acc) return res.status(404).json({ error: 'Visiiti ei leitud' });
       const { ref, booking, order } = acc;
-      if (!['scheduled', 'confirmed'].includes(booking.status)) return res.status(400).json({ error: 'Visiit ei ole aktiivne' });
+      if (!['scheduled', 'confirmed'].includes(booking.status)) return res.status(400).json({ error: 'See visiit on juba tehtud või tühistatud' });
 
       if (booking.calBookingUid) {
         try { await calService.cancelBooking(booking.calBookingUid, 'Cancelled by provider'); } catch (e) { console.error('Cal.com cancel failed:', e); }
@@ -3763,7 +3782,7 @@ module.exports = function createHaldus(deps) {
 
     'POST /api/haldus/visits/:id/done': async (req, res) => {
       const provider = await authenticateProvider(req);
-      if (!provider) return res.status(401).json({ error: { et: 'Logi uuesti sisse.', en: 'Sign in again.' } });
+      if (!provider) return res.status(401).json({ error: { et: 'Sisene uuesti.', en: 'Sign in again.', ru: 'Войдите ещё раз.' } });
       const note = req.body && req.body.note != null ? str(req.body.note, 500) : null;
       const result = await markVisitDone({ provider, visitId: req.visitId, note: note || null });
       res.status(result.status).json(result.body);
@@ -3771,7 +3790,7 @@ module.exports = function createHaldus(deps) {
 
     'POST /api/haldus/visits/missed': async (req, res) => {
       const provider = await authenticateProvider(req);
-      if (!provider) return res.status(401).json({ error: { et: 'Logi uuesti sisse.', en: 'Sign in again.' } });
+      if (!provider) return res.status(401).json({ error: { et: 'Sisene uuesti.', en: 'Sign in again.', ru: 'Войдите ещё раз.' } });
       const result = await markNoEntry({ provider, bookingId: req.body?.bookingId });
       if (result.error) return res.status(result.status).json({ error: result.error });
       res.status(result.status).json(result.body);
@@ -3779,7 +3798,7 @@ module.exports = function createHaldus(deps) {
 
     'POST /api/haldus/away': async (req, res) => {
       const provider = await authenticateProvider(req);
-      if (!provider) return res.status(401).json({ error: { et: 'Logi uuesti sisse.', en: 'Sign in again.' } });
+      if (!provider) return res.status(401).json({ error: { et: 'Sisene uuesti.', en: 'Sign in again.', ru: 'Войдите ещё раз.' } });
       const result = await applyProviderAway({ provider, input: req.body || {} });
       if (result.error) return res.status(result.status).json({ error: result.error });
       res.status(result.status).json(result.body);
@@ -3803,19 +3822,19 @@ module.exports = function createHaldus(deps) {
       const reqDoc = await reqRef.get();
       if (!reqDoc.exists || reqDoc.data().providerId !== provider.id) return res.status(404).json({ error: 'Soovi ei leitud' });
       const request = reqDoc.data();
-      if (!['requested'].includes(request.status)) return res.status(400).json({ error: 'Soov on juba käsitletud' });
+      if (!['requested'].includes(request.status)) return res.status(400).json({ error: 'Sellele soovile on juba vastatud' });
       const acc = await accessOrder(provider, request.orderId);
       if (!acc) return res.status(404).json({ error: 'Klienti ei leitud' });
       const { order } = acc;
 
       let start;
-      try { start = new Date(tallinnLocalDateTimeToISOString(b.date, b.time)); } catch { return res.status(400).json({ error: 'Vigane kuupäev või aeg' }); }
-      if (start < new Date()) return res.status(400).json({ error: 'Aeg on möödas' });
+      try { start = new Date(tallinnLocalDateTimeToISOString(b.date, b.time)); } catch { return res.status(400).json({ error: 'Kuupäev või kellaaeg ei ole õige' }); }
+      if (start < new Date()) return res.status(400).json({ error: 'See aeg on juba möödas. Vali aeg tulevikus.' });
 
       // Reschedule request → move the existing visit instead of creating a new one
       if (request.type === 'reschedule') {
         const target = await accessBooking(provider, request.targetBookingId);
-        if (!target) return res.status(404).json({ error: 'Algset visiiti ei leitud (võib olla tühistatud)' });
+        if (!target) return res.status(404).json({ error: 'Algset visiiti ei leitud. Visiit võib olla tühistatud.' });
         const result = await rescheduleVisit({ provider, ref: target.ref, booking: target.booking, order, start, durationMin: b.durationMin, force: b.force, notify: true });
         if (result.error) return res.status(result.status).json(result);
         // The ask was "move my visit" — once moved it is done. The visit itself carries the new time; nothing stays open.
@@ -3856,15 +3875,17 @@ module.exports = function createHaldus(deps) {
       const b = req.body || {};
       const reqRef = db.collection('serviceRequests').doc(docId(b.requestId));
       const reqDoc = await reqRef.get();
-      if (!reqDoc.exists || reqDoc.data().providerId !== provider.id) return res.status(404).json({ error: 'Pöördumist ei leitud' });
-      if (reqDoc.data().status === 'cancelled') return res.status(400).json({ error: 'Pöördumine on tühistatud — sellele ei saa enam kirjutada' });
+      if (!reqDoc.exists || reqDoc.data().providerId !== provider.id) return res.status(404).json({ error: 'Soovi ei leitud' });
+      if (reqDoc.data().status === 'cancelled') return res.status(400).json({ error: 'Klient tühistas selle soovi. Sõnumit ei saa enam saata.' });
       const text = str(b.text, 1500);
       if (text.length < 2) return res.status(400).json({ error: 'Kirjuta sõnum' });
       const acc = await accessOrder(provider, reqDoc.data().orderId);
       if (!acc) return res.status(404).json({ error: 'Klienti ei leitud' });
       await appendRequestMessage(reqRef, { by: 'provider', name: provider.name, text });
-      // A written reply on an open request answers it; a follow-up on a handled one keeps its state
-      if (reqDoc.data().status === 'requested') await reqRef.update({ status: 'answered', providerMessage: text.slice(0, 300), answeredAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
+      // A written reply answers a question. A visit stays open so the time can still be confirmed.
+      if (reqDoc.data().status === 'requested' && requestKind(reqDoc.data()) !== 'visit') {
+        await reqRef.update({ status: 'answered', providerMessage: text.slice(0, 300), answeredAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
+      }
       await sendCustomerMail(acc.order, requestMessageEmail({ toSide: 'client', order: acc.order, request: reqDoc.data(), requestId: reqRef.id, fromName: provider.name, text, lang: langOf(acc.order) }), { replyTo: PORTAL_REPLY_TO });
       const fresh = await reqRef.get();
       res.status(200).json({ success: true, request: serializeRequest(reqRef.id, fresh.data()) });
@@ -3879,12 +3900,17 @@ module.exports = function createHaldus(deps) {
       const reqDoc = await reqRef.get();
       if (!reqDoc.exists || reqDoc.data().providerId !== provider.id) return res.status(404).json({ error: 'Soovi ei leitud' });
       const request = reqDoc.data();
-      if (request.status !== 'requested') return res.status(400).json({ error: 'Soov on juba käsitletud' });
+      if (request.status !== 'requested') return res.status(400).json({ error: 'Sellele soovile on juba vastatud' });
       const message = str(b.message, 1500);
       if (message.length < 2) return res.status(400).json({ error: 'Kirjuta vastus' });
       const acc = await accessOrder(provider, request.orderId);
       if (!acc) return res.status(404).json({ error: 'Klienti ei leitud' });
-      await reqRef.update({ status: 'answered', providerMessage: message.slice(0, 300), answeredAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
+      const visitStillOpen = requestKind(request) === 'visit';
+      if (visitStillOpen) {
+        await reqRef.update({ providerMessage: message.slice(0, 300), updatedAt: FieldValue.serverTimestamp() });
+      } else {
+        await reqRef.update({ status: 'answered', providerMessage: message.slice(0, 300), answeredAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
+      }
       await appendRequestMessage(reqRef, { by: 'provider', name: provider.name, text: message });
       await sendCustomerMail(acc.order, requestAnsweredEmail({ order: acc.order, request, requestId: reqRef.id, providerName: provider.name, message, lang: langOf(acc.order) }), { replyTo: PORTAL_REPLY_TO });
       res.status(200).json({ success: true });
@@ -3898,7 +3924,7 @@ module.exports = function createHaldus(deps) {
       const reqDoc = await reqRef.get();
       if (!reqDoc.exists || reqDoc.data().providerId !== provider.id) return res.status(404).json({ error: 'Soovi ei leitud' });
       const request = reqDoc.data();
-      if (request.status !== 'requested') return res.status(400).json({ error: 'Soov on juba käsitletud' });
+      if (request.status !== 'requested') return res.status(400).json({ error: 'Sellele soovile on juba vastatud' });
       const acc = await accessOrder(provider, request.orderId);
       if (!acc) return res.status(404).json({ error: 'Klienti ei leitud' });
       const message = str(b.message, 600);
@@ -4039,8 +4065,8 @@ module.exports = function createHaldus(deps) {
     const idx = items.findIndex((it) => it.id === String(b.itemId || ''));
     const canAssignProvider = !!order.providerId;
     if (b.action === 'add') {
-      if (items.length >= core.MAX_MAINTENANCE_ITEMS) return { error: et ? `Kuni ${core.MAX_MAINTENANCE_ITEMS} kirjet` : `Up to ${core.MAX_MAINTENANCE_ITEMS} items`, status: 400 };
-      if (b.catalogId && items.some((it) => it.catalogId === b.catalogId)) return { error: et ? 'See on juba nimekirjas' : 'Already on the list', status: 400 };
+      if (items.length >= core.MAX_MAINTENANCE_ITEMS) return { error: et ? `Nimekirjas võib olla kuni ${core.MAX_MAINTENANCE_ITEMS} tööd` : `The list can hold up to ${core.MAX_MAINTENANCE_ITEMS} jobs`, status: 400 };
+      if (b.catalogId && items.some((it) => it.catalogId === b.catalogId)) return { error: et ? 'See töö on juba nimekirjas' : 'This job is already on the list', status: 400 };
       // The provider adds what she does herself; the household adds its own unless it says otherwise
       const doneBy = by === 'provider' ? (b.doneBy === 'home' ? 'home' : 'provider') : (b.doneBy === 'provider' && canAssignProvider ? 'provider' : 'home');
       const r = core.sanitizeMaintenanceItem({ ...b, doneBy }, today);
@@ -4048,7 +4074,7 @@ module.exports = function createHaldus(deps) {
       items.push(r.item);
       return { items };
     }
-    if (idx < 0) return { error: et ? 'Kirjet ei leitud' : 'Item not found', status: 404 };
+    if (idx < 0) return { error: et ? 'Tööd ei leitud' : 'Job not found', status: 404 };
     if (b.action === 'done') {
       const r = core.completeMaintenanceItem(items[idx], b.date, today);
       if (r.error) return { error: r.error, status: 400 };
@@ -4059,7 +4085,7 @@ module.exports = function createHaldus(deps) {
       const it = { ...items[idx] };
       if (b.intervalMonths != null) {
         const interval = Number(b.intervalMonths);
-        if (!core.MAINTENANCE_INTERVALS.includes(interval)) return { error: et ? 'Vali sagedus' : 'Choose an interval', status: 400 };
+        if (!core.MAINTENANCE_INTERVALS.includes(interval)) return { error: et ? 'Vali, kui tihti töö tuleb teha' : 'Choose how often the job repeats', status: 400 };
         it.intervalMonths = interval;
         if (it.lastDoneAt) it.nextDueAt = core.toDateStr(core.addMonths(core.parseDateStr(it.lastDoneAt), interval));
       }
@@ -4089,14 +4115,14 @@ module.exports = function createHaldus(deps) {
         + P(core.pick({
           et: `${who} märkis tehtuks: <strong style="color:#2C2824;font-weight:normal;">${safeName}</strong> · ${safeWhen}.`,
           en: `${who} marked as done: <strong style="color:#2C2824;font-weight:normal;">${safeName}</strong> · ${safeWhen}.`,
-          ru: `${who} отмечает выполненным: <strong style="color:#2C2824;font-weight:normal;">${safeName}</strong> · ${safeWhen}.`,
+          ru: `Выполнено (${who}): <strong style="color:#2C2824;font-weight:normal;">${safeName}</strong> · ${safeWhen}.`,
         }, lang))
         + P(core.pick({
-          et: `Järgmine kord umbes ${escapeHtml(nextLabel)}. Sina ei pea midagi tegema — see on kirjas sinu kodu hooldusrütmis.`,
-          en: `Next time around ${escapeHtml(nextLabel)}. Nothing for you to do — it is recorded in your home's upkeep rhythm.`,
-          ru: `Следующий раз примерно ${escapeHtml(nextLabel)}. Вам ничего делать не нужно — это записано в ритме ухода за домом.`,
+          et: `Järgmine kord on umbes ${escapeHtml(nextLabel)}. Sina ei pea midagi tegema, kodu rütm liikus edasi.`,
+          en: `The next time is around ${escapeHtml(nextLabel)}. Nothing for you to do, the home rhythm moved on.`,
+          ru: `Следующий раз примерно ${escapeHtml(nextLabel)}. Вам ничего делать не нужно, ритм дома сдвинулся дальше.`,
         }, lang))
-        + `<div style="text-align:center;margin:32px 0;"><a href="${PORTAL_URL}" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">${core.pick({ et: 'Ava minu kodu', en: 'Open my home', ru: 'Открыть мой дом' }, lang)}</a></div>`,
+        + `<div style="text-align:center;margin:32px 0;"><a href="${PORTAL_URL}" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">${core.pick({ et: 'Ava rakendus', en: 'Open the app', ru: 'Открыть приложение' }, lang)}</a></div>`,
         lang,
       ),
     };
@@ -4137,17 +4163,17 @@ module.exports = function createHaldus(deps) {
       et: {
         subject: 'SUKODA | Tehtud',
         intro: (who) => `${who} märkis visiidi tehtuks.`,
-        moved: 'Need read liikusid sinu kodu hooldusrütmis edasi. Sina ei pea midagi tegema.',
+        moved: 'Need tööd liikusid kodu rütmis edasi. Sina ei pea midagi tegema.',
       },
       en: {
         subject: 'SUKODA | Done',
-        intro: (who) => `${who} marked the visit done.`,
-        moved: 'These moved forward in your home upkeep. Nothing for you to do.',
+        intro: (who) => `${who} marked the visit as done.`,
+        moved: 'These jobs moved on in the home rhythm. Nothing for you to do.',
       },
       ru: {
         subject: 'SUKODA | Сделано',
-        intro: (who) => `${who} отметил визит выполненным.`,
-        moved: 'Эти пункты сдвинулись в ритме ухода за домом. Вам ничего делать не нужно.',
+        intro: (who) => `Визит выполнен (${who}).`,
+        moved: 'Эти дела сдвинулись дальше в ритме дома. Вам ничего делать не нужно.',
       },
     }[L];
     const tt = t(L);
@@ -4177,29 +4203,29 @@ module.exports = function createHaldus(deps) {
       </div>`).join('');
     const n = entries.length;
     const one = n === 1 ? `${core.maintenanceName(entries[0].item, lang)} · ${primaryName(entries[0].order)}` : '';
-    const deskTitle = core.pick({ et: 'Hooldusrütm su klientide kodudes', en: 'Upkeep at your clients\' homes', ru: 'Ритм ухода в домах клиентов' }, lang);
+    const deskTitle = core.pick({ et: 'Kodu rütm sinu klientide kodudes', en: 'Home rhythm at your clients\' homes', ru: 'Ритм дома у ваших клиентов' }, lang);
     const deskBody = core.pick({
-      et: `${provider.name || ''}, need asjad, mille oled võtnud enda peale, on järgmise kahe nädala jooksul aeg teha. Kui tehtud, märgi töölaual.`,
-      en: `${provider.name || ''}, these are the things you took on, due within two weeks. When done, tick them on the desk.`,
-      ru: `${provider.name || ''}, эти дела, которые вы взяли на себя, нужно сделать в ближайшие две недели. Когда сделаете, отметьте на рабочем столе.`,
+      et: `${provider.name || ''}, need tööd on sinu peal ja tähtaeg on järgmise kahe nädala sees. Kui töö on tehtud, märgi töölaual.`,
+      en: `${provider.name || ''}, these jobs are yours and are due within the next two weeks. When a job is done, tick it on the desk.`,
+      ru: `${provider.name || ''}, эти дела за вами, срок в ближайшие две недели. Когда дело сделано, отметьте на рабочем столе.`,
     }, lang);
     return {
       subject: core.pick({
-        et: `SUKODA | Hooldus ees: ${n === 1 ? one : `${n} asja su klientide kodudes`}`,
-        en: `SUKODA | Upkeep due: ${n === 1 ? one : `${n} things in your clients' homes`}`,
-        ru: `SUKODA | Срок ухода: ${n === 1 ? one : `${n} ${core.ruPlural(n, 'дело', 'дела', 'дел')} в домах клиентов`}`,
+        et: `SUKODA | Kodu rütm: ${n === 1 ? one : `${n} tööd klientide kodudes`}`,
+        en: `SUKODA | Home rhythm: ${n === 1 ? one : `${n} jobs at your clients' homes`}`,
+        ru: `SUKODA | Ритм дома: ${n === 1 ? one : `${n} ${core.ruPlural(n, 'дело', 'дела', 'дел')} у ваших клиентов`}`,
       }, lang),
       push: push.message({ type: 'rhythm_due', lang, title: deskTitle, body: deskBody, url: `${HALDUS_URL}?tab=customers`, audience: 'provider' }),
       html: wrap(
-        H2(core.pick({ et: 'Hooldusrütm su klientide kodudes', en: 'Upkeep at your clients\' homes', ru: 'Ритм ухода в домах клиентов' }, lang))
+        H2(core.pick({ et: 'Kodu rütm sinu klientide kodudes', en: 'Home rhythm at your clients\' homes', ru: 'Ритм дома у ваших клиентов' }, lang))
         + P(core.pick({
-          et: `${escapeHtml(provider.name)}, need asjad, mille oled võtnud enda peale, on järgmise kahe nädala jooksul aeg teha. Kui tehtud, märgi töölaual — klient saab sellest ühe rea teate.`,
-          en: `${escapeHtml(provider.name)}, these are the things you took on, due within two weeks. When done, tick them on the desk — the client gets one line.`,
-          ru: `${escapeHtml(provider.name)}, эти дела, которые вы взяли на себя, нужно сделать в ближайшие две недели. Когда сделаете, отметьте на рабочем столе — клиент получит одну строку.`,
+          et: `${escapeHtml(provider.name)}, need tööd on sinu peal ja tähtaeg on järgmise kahe nädala sees. Kui töö on tehtud, märgi töölaual. Klient saab sellest ühe rea teate.`,
+          en: `${escapeHtml(provider.name)}, these jobs are yours and are due within the next two weeks. When a job is done, tick it on the desk. The client gets a one-line notice.`,
+          ru: `${escapeHtml(provider.name)}, эти дела за вами, срок в ближайшие две недели. Когда дело сделано, отметьте на рабочем столе. Клиент получит короткое уведомление.`,
         }, lang))
         + `<div style="background:#FFFFFF;padding:8px 28px 12px;margin-bottom:28px;border-left:2px solid #B8976A;">${rows}</div>`
         + `<div style="text-align:center;margin:32px 0;"><a href="${HALDUS_URL}?tab=customers" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">${core.pick({ et: 'Ava töölaud', en: 'Open the desk', ru: 'Открыть рабочий стол' }, lang)}</a></div>`
-        + P(core.pick({ et: 'Iga kirje kohta üks meeldetuletus.', en: 'One reminder per item.', ru: 'Одно напоминание на каждую запись.' }, lang), 'font-size:12px;'),
+        + P(core.pick({ et: 'Iga töö kohta tuleb üks meeldetuletus.', en: 'You get one reminder per job.', ru: 'По каждому делу приходит одно напоминание.' }, lang), 'font-size:12px;'),
         lang,
       ),
     };
@@ -4244,11 +4270,11 @@ module.exports = function createHaldus(deps) {
       ru: `SUKODA | Дом ваш — ${address || name}`,
     }, L);
     const body = core.pick({
-      et: `${escapeHtml(name)} andis sulle kodu${address ? ` ${escapeHtml(address)}` : ''}. Ava link ja logi sisse. Dokumendid, rütm ja visiidid on alles.`,
-      en: `${escapeHtml(name)} handed you the home${address ? ` at ${escapeHtml(address)}` : ''}. Open the link and sign in. Documents, the rhythm and the visits are still there.`,
-      ru: `${escapeHtml(name)} передал вам дом${address ? ` ${escapeHtml(address)}` : ''}. Откройте ссылку и войдите. Документы, ритм и визиты на месте.`,
+      et: `${escapeHtml(name)} andis kodu${address ? ` ${escapeHtml(address)}` : ''} sulle üle. Ava rakendus ja sisene oma e-posti aadressiga. Dokumendid, kodu rütm ja visiidid on alles.`,
+      en: `${escapeHtml(name)} handed the home${address ? ` at ${escapeHtml(address)}` : ''} over to you. Open the app and sign in with your e-mail address. The documents, the home rhythm and the visits are still there.`,
+      ru: `${escapeHtml(name)} передал(а) вам дом${address ? ` ${escapeHtml(address)}` : ''}. Откройте приложение и войдите со своим адресом эл. почты. Документы, ритм дома и визиты сохранены.`,
     }, L);
-    const button = core.pick({ et: 'Ava kodu', en: 'Open the home', ru: 'Откройте дом' }, L);
+    const button = core.pick({ et: 'Ava rakendus', en: 'Open the app', ru: 'Открыть приложение' }, L);
     return {
       subject,
       html: wrap(
@@ -4303,11 +4329,11 @@ module.exports = function createHaldus(deps) {
   /** Store an uploaded file for a home and return the document entry to push onto order.documents */
   async function storeHomeFile({ orderId, body, source, sourceName }) {
     const contentType = String(body.contentType || '');
-    if (!DOC_FILE_TYPES[contentType]) return { error: 'Lubatud on PDF ja pildid (JPG, PNG, WEBP, HEIC)' };
+    if (!DOC_FILE_TYPES[contentType]) return { error: 'Lisa PDF või pilt (JPG, PNG, WEBP, HEIC)' };
     const base64 = String(body.data || '').replace(/^data:[^;]+;base64,/, '');
     const buf = Buffer.from(base64, 'base64');
     if (!buf.length) return { error: 'Fail on tühi' };
-    if (buf.length > DOC_FILE_MAX_BYTES) return { error: 'Fail on suurem kui 8 MB' };
+    if (buf.length > DOC_FILE_MAX_BYTES) return { error: 'Fail on suurem kui 8 MB. Lisa väiksem fail.' };
     const r = core.sanitizeDocument({ ...body, url: '' });
     if (r.error) return { error: r.error };
     const doc = r.document;
@@ -4331,28 +4357,28 @@ module.exports = function createHaldus(deps) {
     }).join('');
     const n = items.length;
     const one = core.maintenanceName(items[0], lang);
-    const rhythmTitle = core.pick({ et: 'Kodu hooldusrütm', en: 'Home upkeep', ru: 'Ритм ухода за домом' }, lang);
-    const rhythmBody = n === 1 ? one : core.pick({ et: `${n} asja sel kuul`, en: `${n} things this month`, ru: `${n} ${core.ruPlural(n, 'дело', 'дела', 'дел')} в этом месяце` }, lang);
+    const rhythmTitle = core.pick({ et: 'Kodu rütm', en: 'Home rhythm', ru: 'Ритм дома' }, lang);
+    const rhythmBody = n === 1 ? one : core.pick({ et: `${n} tööd sel kuul`, en: `${n} jobs this month`, ru: `${n} ${core.ruPlural(n, 'дело', 'дела', 'дел')} в этом месяце` }, lang);
     return {
       subject: core.pick({
-        et: `SUKODA | Kodu hooldus: ${n === 1 ? one : `${n} asja sel kuul`}`,
-        en: `SUKODA | Home upkeep: ${n === 1 ? one : `${n} things this month`}`,
-        ru: `SUKODA | Уход за домом: ${n === 1 ? one : `${n} ${core.ruPlural(n, 'дело', 'дела', 'дел')} в этом месяце`}`,
+        et: `SUKODA | Kodu rütm: ${n === 1 ? one : `${n} tööd sel kuul`}`,
+        en: `SUKODA | Home rhythm: ${n === 1 ? one : `${n} jobs this month`}`,
+        ru: `SUKODA | Ритм дома: ${n === 1 ? one : `${n} ${core.ruPlural(n, 'дело', 'дела', 'дел')} в этом месяце`}`,
       }, lang),
       push: push.message({ type: 'rhythm_due', lang, title: rhythmTitle, body: rhythmBody, url: PORTAL_URL }),
       html: wrap(
-        H2(core.pick({ et: 'Kodu hooldusrütm', en: 'Home upkeep', ru: 'Ритм ухода за домом' }, lang))
+        H2(core.pick({ et: 'Kodu rütm', en: 'Home rhythm', ru: 'Ритм дома' }, lang))
         + P(core.pick({
-          et: `${escapeHtml(primaryAddress(order) || 'Sinu kodu')} — need asjad on järgmise kahe nädala jooksul aeg üle vaadata. Tee ise ja märgi portaalis tehtuks, või telli tegija sealt samast.`,
-          en: `${escapeHtml(primaryAddress(order) || 'Your home')} — these are due within the next two weeks. Do them yourself and tick them off in the portal, or order someone from the same place.`,
-          ru: `${escapeHtml(primaryAddress(order) || 'Ваш дом')} — эти дела нужно проверить в ближайшие две недели. Сделайте сами и отметьте в портале, или закажите исполнителя там же.`,
+          et: `${escapeHtml(primaryAddress(order) || 'Sinu kodu')}: need tööd on järgmise kahe nädala sees aeg teha. Tee ise ja märgi rakenduses tehtuks või telli töö rakendusest.`,
+          en: `${escapeHtml(primaryAddress(order) || 'Your home')}: these jobs are due within the next two weeks. Do them yourself and tick them off in the app, or order the job in the app.`,
+          ru: `${escapeHtml(primaryAddress(order) || 'Ваш дом')}: эти дела нужно сделать в ближайшие две недели. Сделайте сами и отметьте в приложении или закажите работу в приложении.`,
         }, lang))
         + `<div style="background:#FFFFFF;padding:8px 28px 12px;margin-bottom:28px;border-left:2px solid #B8976A;">${rows}</div>`
-        + `<div style="text-align:center;margin:32px 0;"><a href="${PORTAL_URL}" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">${core.pick({ et: 'Ava minu kodu', en: 'Open my home', ru: 'Открыть мой дом' }, lang)}</a></div>`
+        + `<div style="text-align:center;margin:32px 0;"><a href="${PORTAL_URL}" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">${core.pick({ et: 'Ava rakendus', en: 'Open the app', ru: 'Открыть приложение' }, lang)}</a></div>`
         + P(core.pick({
-          et: 'Meeldetuletus tuleb iga kirje kohta üks kord. Sageduse saad portaalis muuta või kirje eemaldada.',
-          en: 'One reminder per item. Change the interval or remove the item in the portal.',
-          ru: 'Напоминание по каждой записи приходит один раз. Интервал можно изменить или запись убрать в портале.',
+          et: 'Iga töö kohta tuleb üks meeldetuletus. Sagedust saad rakenduses muuta või töö nimekirjast eemaldada.',
+          en: 'You get one reminder per job. Change how often it repeats or remove the job in the app.',
+          ru: 'По каждому делу приходит одно напоминание. Частоту можно изменить или убрать дело из списка в приложении.',
         }, lang), 'font-size:12px;'),
         lang,
       ),
@@ -4469,7 +4495,14 @@ module.exports = function createHaldus(deps) {
 
   async function finishRequest({ order, orderId, provider, svc, kind, ref, request, lang, price }) {
     let placed = false;
-    if (!core.providerBroughtHome(order) && kind === 'visit' && request.preferredDate && provider?.id && core.windowStartTime(request.timeWindow)) {
+    if (!core.providerBroughtHome(order) && kind === 'visit' && request.preferredDate && provider?.id && core.windowStartTime(request.timeWindow)
+      && core.canAutoPlaceVisit({
+        preferredDate: request.preferredDate,
+        timeWindow: request.timeWindow,
+        todayStr: todayTallinnStr(),
+        availability: provider.availability,
+        awayPeriods: provider.awayPeriods,
+      })) {
       try {
         const start = new Date(tallinnLocalDateTimeToISOString(request.preferredDate, core.windowStartTime(request.timeWindow)));
         const durationMin = svc?.durationMin || 120;
@@ -4667,7 +4700,7 @@ module.exports = function createHaldus(deps) {
       const b = req.body || {};
       let docs = Array.isArray(order.documents) ? [...order.documents] : [];
       if (b.action === 'add') {
-        if (docs.length >= core.MAX_DOCUMENTS) return res.status(400).json({ error: lang === 'et' ? `Kuni ${core.MAX_DOCUMENTS} dokumenti` : `Up to ${core.MAX_DOCUMENTS} documents` });
+        if (docs.length >= core.MAX_DOCUMENTS) return res.status(400).json({ error: lang === 'et' ? `Kausta mahub kuni ${core.MAX_DOCUMENTS} dokumenti` : `The folder can hold up to ${core.MAX_DOCUMENTS} documents` });
         const r = core.sanitizeDocument(b);
         if (r.error) return res.status(400).json({ error: r.error });
         docs.push(r.document);
@@ -4675,7 +4708,7 @@ module.exports = function createHaldus(deps) {
         const gone = docs.find((d) => d.id === String(b.documentId || ''));
         if (!gone) return res.status(404).json({ error: lang === 'et' ? 'Dokumenti ei leitud' : 'Document not found' });
         // The handover folder is the developer's record of the home — the household cannot delete it
-        if (gone.source === 'developer') return res.status(403).json({ error: lang === 'et' ? 'Arendaja dokumente saab eemaldada ainult arendaja' : 'Only the developer can remove the developer\'s documents' });
+        if (gone.source === 'developer') return res.status(403).json({ error: lang === 'et' ? 'Selle dokumendi lisas arendaja ja eemaldada saab selle ainult arendaja' : 'The developer added this document and only the developer can remove it' });
         docs = docs.filter((d) => d !== gone);
         if (gone.file?.path) await docsBucket().file(gone.file.path).delete({ ignoreNotFound: true }).catch((e) => console.warn('doc file delete', e.message));
       } else {
@@ -4693,7 +4726,7 @@ module.exports = function createHaldus(deps) {
       const { orderId, order } = auth;
       const lang = langOf(order);
       const docs = Array.isArray(order.documents) ? [...order.documents] : [];
-      if (docs.length >= core.MAX_DOCUMENTS) return res.status(400).json({ error: lang === 'et' ? `Kuni ${core.MAX_DOCUMENTS} dokumenti` : `Up to ${core.MAX_DOCUMENTS} documents` });
+      if (docs.length >= core.MAX_DOCUMENTS) return res.status(400).json({ error: lang === 'et' ? `Kausta mahub kuni ${core.MAX_DOCUMENTS} dokumenti` : `The folder can hold up to ${core.MAX_DOCUMENTS} documents` });
       const r = await storeHomeFile({ orderId, body: req.body || {}, source: 'home', sourceName: auth.viewer?.name || primaryName(order) || '' });
       if (r.error) return res.status(400).json({ error: r.error });
       docs.push(r.document);
@@ -4767,7 +4800,7 @@ module.exports = function createHaldus(deps) {
       const auth = await authenticateClient(req);
       if (!auth) return res.status(401).json({ error: 'Unauthorized' });
       const { orderId, order } = auth;
-      if (order.status !== 'paid') return res.status(400).json({ error: langOf(order) === 'et' ? 'Tellimus ei ole aktiivne' : 'Order is not active' });
+      if (order.status !== 'paid') return res.status(400).json({ error: langOf(order) === 'et' ? 'Sinu kodu ei ole praegu aktiivne. Kirjuta tere@sukoda.ee.' : 'Your home is not active right now. Write to tere@sukoda.ee.' });
       const provider = await loadProvider(order.providerId);
       const r = await addAwayPeriod({ orderRef: db.collection('orders').doc(orderId), order, input: req.body || {}, provider, by: 'customer' });
       if (r.error) return res.status(r.status || 400).json({ error: r.error });
@@ -4902,7 +4935,7 @@ module.exports = function createHaldus(deps) {
 
       const svc = core.getService(b.serviceId);
       if (!svc) return res.status(400).json({ error: 'Unknown service' });
-      if (order.status !== 'paid') return res.status(400).json({ error: lang === 'et' ? 'Tellimus ei ole aktiivne' : 'Order is not active' });
+      if (order.status !== 'paid') return res.status(400).json({ error: lang === 'et' ? 'Sinu kodu ei ole praegu aktiivne. Kirjuta tere@sukoda.ee.' : 'Your home is not active right now. Write to tere@sukoda.ee.' });
 
       let preferredDate = null;
       if (b.preferredDate) {
@@ -4910,8 +4943,8 @@ module.exports = function createHaldus(deps) {
         if (!d) return res.status(400).json({ error: 'Invalid preferredDate' });
         const today = todayTallinnStr(0);
         const max = todayTallinnStr(120);
-        if (b.preferredDate < today) return res.status(400).json({ error: lang === 'et' ? 'Kuupäev on möödas' : 'Date is in the past' });
-        if (b.preferredDate > max) return res.status(400).json({ error: lang === 'et' ? 'Vali kuupäev järgmise 4 kuu sees' : 'Pick a date within the next 4 months' });
+        if (b.preferredDate < today) return res.status(400).json({ error: lang === 'et' ? 'See päev on juba möödas. Vali päev tulevikus.' : 'That day has already passed. Pick a day in the future.' });
+        if (b.preferredDate > max) return res.status(400).json({ error: lang === 'et' ? 'Vali päev järgmise 4 kuu sees' : 'Pick a day within the next 4 months' });
         preferredDate = b.preferredDate;
       }
       const timeWindow = core.TIME_WINDOWS[b.timeWindow] ? b.timeWindow : 'any';
@@ -4919,11 +4952,11 @@ module.exports = function createHaldus(deps) {
       const access = str(b.access, 400);
       const urgent = b.urgent === true;
       const kind = svc.kind || 'visit';
-      if ((svc.id === 'other' || kind !== 'visit') && note.length < 5) return res.status(400).json({ error: lang === 'et' ? (kind === 'question' ? 'Kirjuta palun oma küsimus' : 'Kirjelda palun, mis ja kus') : (kind === 'question' ? 'Please write your question' : 'Please describe what and where') });
+      if ((svc.id === 'other' || kind !== 'visit') && note.length < 5) return res.status(400).json({ error: lang === 'et' ? (kind === 'question' ? 'Kirjuta oma küsimus' : 'Kirjelda, mis on katki ja kus') : (kind === 'question' ? 'Write your question' : 'Describe what is wrong and where') });
       if (kind === 'question') preferredDate = null;
 
       const openSnap = await db.collection('serviceRequests').where('orderId', '==', orderId).where('status', '==', 'requested').get();
-      if (openSnap.size >= MAX_OPEN_REQUESTS) return res.status(429).json({ error: lang === 'et' ? 'Sul on juba mitu ootel soovi. Oota kinnitust või tühista mõni.' : 'You already have several pending requests.' });
+      if (openSnap.size >= MAX_OPEN_REQUESTS) return res.status(429).json({ error: lang === 'et' ? 'Sul on juba mitu vastuseta soovi. Oota vastust või tühista mõni soov.' : 'You already have several open requests. Wait for a reply or cancel one of them.' });
 
       const routes = await routeRequest(order);
       const category = effectiveCategory(svc, routes);
@@ -4947,9 +4980,9 @@ module.exports = function createHaldus(deps) {
         const earliest = core.earliestBookableDate(todayTallinnStr(), provider?.availability?.leadDays);
         if (earliest && preferredDate < earliest) {
           return res.status(400).json({ error: core.pick({
-            et: `Esimene vaba päev on ${earliest}.`,
-            en: `The first open day is ${earliest}.`,
-            ru: `Первый свободный день — ${earliest}.`,
+            et: `Esimene vaba päev on ${earliest}. Vali see päev või hilisem.`,
+            en: `The first open day is ${earliest}. Pick that day or a later one.`,
+            ru: `Первый свободный день: ${earliest}. Выберите этот день или более поздний.`,
           }, lang) });
         }
       }
@@ -4961,9 +4994,9 @@ module.exports = function createHaldus(deps) {
       const ownClient = core.providerBroughtHome(order);
       if (!ownClient && quote.unpriced && kind === 'visit') {
         return res.status(400).json({ error: core.pick({
-          et: 'Sellel teenusel ei ole veel hinda.',
-          en: 'This service does not have a price yet.',
-          ru: 'У этой услуги ещё нет цены.',
+          et: 'Sellel teenusel ei ole veel hinda. Kirjuta soov „Muu soov“ alt ja saadame hinnapakkumise.',
+          en: 'This service does not have a price yet. Send it under “Something else” and we will reply with a quote.',
+          ru: 'У этой услуги ещё нет цены. Отправьте запрос через «Другое пожелание», и мы пришлём смету.',
         }, lang) });
       }
       const charge = core.chargeBeforeDispatch({
@@ -5063,19 +5096,19 @@ module.exports = function createHaldus(deps) {
       const bookingDoc = await bookingRef.get();
       if (!bookingDoc.exists || bookingDoc.data().orderId !== orderId) return res.status(404).json({ error: 'Booking not found' });
       const booking = bookingDoc.data();
-      if (!['scheduled', 'confirmed'].includes(booking.status)) return res.status(400).json({ error: lang === 'et' ? 'Seda visiiti ei saa enam muuta' : 'This visit can no longer be changed' });
+      if (!['scheduled', 'confirmed'].includes(booking.status)) return res.status(400).json({ error: lang === 'et' ? 'Seda visiiti ei saa enam muuta. Visiit on tehtud või tühistatud.' : 'This visit can no longer be changed. It is done or cancelled.' });
       const providerId = booking.providerId || order.providerId || null;
-      if (!providerId) return res.status(400).json({ error: lang === 'et' ? 'Sellel visiidil pole koduhooldajat määratud. Kirjuta tere@sukoda.ee.' : 'No provider is assigned to this visit. Contact tere@sukoda.ee.' });
+      if (!providerId) return res.status(400).json({ error: lang === 'et' ? 'Sellel visiidil ei ole veel koduhooldajat. Kirjuta tere@sukoda.ee.' : 'This visit has no housekeeper yet. Write to tere@sukoda.ee.' });
 
       const d = core.parseDateStr(b.preferredDate);
       if (!d) return res.status(400).json({ error: 'Invalid preferredDate' });
-      if (b.preferredDate < todayTallinnStr(0)) return res.status(400).json({ error: lang === 'et' ? 'Kuupäev on möödas' : 'Date is in the past' });
+      if (b.preferredDate < todayTallinnStr(0)) return res.status(400).json({ error: lang === 'et' ? 'See päev on juba möödas. Vali päev tulevikus.' : 'That day has already passed. Pick a day in the future.' });
       const timeWindow = core.TIME_WINDOWS[b.timeWindow] && b.timeWindow !== 'with-visit' ? b.timeWindow : 'any';
 
       // One open reschedule request per visit
       const open = await db.collection('serviceRequests').where('orderId', '==', orderId).where('status', '==', 'requested').get();
       if (open.docs.some((x) => x.data().type === 'reschedule' && x.data().targetBookingId === bookingRef.id)) {
-        return res.status(409).json({ error: lang === 'et' ? 'Sellel visiidil on juba aja muutmise soov ootel' : 'A reschedule request for this visit is already pending' });
+        return res.status(409).json({ error: lang === 'et' ? 'Sa oled sellele visiidile juba uut aega küsinud. Oota vastust.' : 'You have already asked for a new time for this visit. Wait for the reply.' });
       }
 
       const provider = await loadProvider(providerId);
@@ -5126,7 +5159,7 @@ module.exports = function createHaldus(deps) {
       const text = str(req.body?.text, 1500);
       if (text.length < 2) return res.status(400).json({ error: langOf(order) === 'et' ? 'Kirjuta sõnum' : 'Write a message' });
       const r = doc.data();
-      if (r.status === 'cancelled') return res.status(400).json({ error: langOf(order) === 'et' ? 'See pöördumine on tühistatud' : 'This request is cancelled' });
+      if (r.status === 'cancelled') return res.status(400).json({ error: langOf(order) === 'et' ? 'See soov on tühistatud. Sõnumit ei saa enam saata.' : 'This request is cancelled. You cannot send a message any more.' });
       const name = auth.viewer?.name || primaryName(order) || '';
       const msg = await appendRequestMessage(ref, { by: 'client', name, text });
       // A follow-up on an answered or declined request puts it back on the partner's desk
@@ -5148,7 +5181,7 @@ module.exports = function createHaldus(deps) {
       const doc = await ref.get();
       if (!doc.exists || doc.data().orderId !== orderId) return res.status(404).json({ error: 'Not found' });
       const r = doc.data();
-      if (r.status !== 'requested') return res.status(400).json({ error: langOf(order) === 'et' ? 'Kinnitatud soovi tühistamiseks kirjuta pöördumise juurde — meeskond tühistab aja' : 'To cancel a confirmed request, write on the request — the team will cancel the time' });
+      if (r.status !== 'requested') return res.status(400).json({ error: langOf(order) === 'et' ? 'See aeg on juba kinnitatud. Kirjuta soovi juurde ja koduhooldaja tühistab aja.' : 'This time is already confirmed. Write on the request and the housekeeper cancels the time.' });
       await ref.update({ status: 'cancelled', cancelledAt: FieldValue.serverTimestamp(), cancelledBy: 'client', updatedAt: FieldValue.serverTimestamp() });
       const provider = await loadProvider(r.providerId);
       const to = providerReplyTo(provider) || NOTIFICATION_EMAIL;
@@ -5207,7 +5240,7 @@ module.exports = function createHaldus(deps) {
       const name = str(b.name, 120);
       const email = core.normalizeEmail(b.email);
       if (!name) return res.status(400).json({ error: 'Nimi on kohustuslik' });
-      if (!core.isValidEmail(email)) return res.status(400).json({ error: 'Korrektne e-post on kohustuslik' });
+      if (!core.isValidEmail(email)) return res.status(400).json({ error: 'E-posti aadress ei ole õige' });
       const dup = await db.collection('providers').where('email', '==', email).limit(1).get();
       if (!dup.empty) return res.status(409).json({ error: 'Selle e-postiga partner on juba olemas', providerId: dup.docs[0].id });
       const services = Array.isArray(b.services) ? b.services.filter((s) => Object.keys(core.SERVICE_CATEGORIES).includes(s) || s === 'other') : ['cleaning'];

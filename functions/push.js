@@ -25,9 +25,9 @@ function visitTomorrow(vars) {
   const p = vars.providerName || '';
   const category = vars.category || 'cleaning';
   const intro = {
-    et: p ? `Meeldetuletus: ${p} tuleb homme.` : 'Meeldetuletus sinu homsest visiidist.',
-    en: p ? `Reminder: ${p} is coming tomorrow.` : "A reminder of tomorrow's visit.",
-    ru: p ? `Напоминание: ${p} придёт завтра.` : 'Напоминание о завтрашнем визите.',
+    et: p ? `${p} tuleb homme. Aeg on allpool.` : 'Homme on visiit. Aeg on allpool.',
+    en: p ? `${p} is coming tomorrow. The time is below.` : 'Your visit is tomorrow. The time is below.',
+    ru: p ? `${p} придёт завтра. Время указано ниже.` : 'Завтра у вас визит. Время указано ниже.',
   };
   if (category === 'warranty') {
     return {
@@ -64,9 +64,9 @@ function newRequest(vars) {
         ru: `SUKODA | Просьба перенести время — ${name}`,
       },
       body: {
-        et: `${name} soovib olemasoleva visiidi aega muuta. Kinnita uus aeg töölaual — kõik pere kontaktid saavad kohe uue kalendrikutse.`,
-        en: `${name} wants to change an existing visit. Confirm the new time on the desk — every household contact gets a new calendar invite.`,
-        ru: `${name} хочет перенести существующий визит. Подтвердите новое время на рабочем столе — все контакты семьи сразу получат приглашение в календарь.`,
+        et: `${name} soovib visiidi aega muuta. Kinnita uus aeg töölaual. Pere saab uue kalendrikutse kohe.`,
+        en: `${name} wants to change the visit time. Confirm the new time on the desk. The household gets a new calendar invite right away.`,
+        ru: `${name} хочет перенести визит. Подтвердите новое время на рабочем столе. Семья сразу получит новое приглашение в календарь.`,
       },
     };
   }
@@ -74,14 +74,14 @@ function newRequest(vars) {
     return {
       title: { et: `SUKODA | Küsimus — ${name}`, en: `SUKODA | Question — ${name}`, ru: `SUKODA | Вопрос — ${name}` },
       body: {
-        et: `${name} küsib. Vasta töölaual — vastus jõuab kliendile portaali ja e-postiga.`,
-        en: `${name} is asking. Reply on the desk — the answer reaches the client in the portal and by e-mail.`,
-        ru: `${name} спрашивает. Ответьте на рабочем столе — ответ дойдёт клиенту в портал и на почту.`,
+        et: `${name} küsib. Vasta töölaual. Klient näeb vastust rakenduses.`,
+        en: `${name} has a question. Reply on the desk. The client sees the reply in the app.`,
+        ru: `${name} задаёт вопрос. Ответьте на рабочем столе. Клиент увидит ответ в приложении.`,
       },
     };
   }
   if (kind === 'issue') {
-    const lead = /pöördumin/i.test(service) ? service : `Pöördumine: ${service}`;
+    const lead = /pöördumin/i.test(service) ? service : `Teade: ${service}`;
     return {
       title: {
         et: `SUKODA | ${lead} — ${name}`,
@@ -89,9 +89,9 @@ function newRequest(vars) {
         ru: `SUKODA | Обращение: ${service} — ${name}`,
       },
       body: {
-        et: `${name} kirjeldas puudust. Paku töölaual ülevaatuse aeg või vasta kirjalikult — klient näeb seda portaalis.`,
-        en: `${name} described a defect. Offer an inspection time on the desk or reply in writing — the client sees it in the portal.`,
-        ru: `${name} описал недостаток. Предложите на рабочем столе время осмотра или ответьте письменно — клиент увидит это в портале.`,
+        et: `${name} kirjeldas puudust. Paku töölaual ülevaatuse aeg või vasta kirjalikult.`,
+        en: `${name} described a defect. Offer an inspection time on the desk or reply in writing.`,
+        ru: `${name} описал(а) недостаток. Предложите на рабочем столе время осмотра или ответьте письменно.`,
       },
     };
   }
@@ -102,9 +102,9 @@ function newRequest(vars) {
       ru: `SUKODA | Новая заявка: ${service} — ${name}`,
     },
     body: {
-      et: `${name} soovib teenust. Kinnita aeg või vasta töölaual — klient näeb seda portaalis.`,
-      en: `${name} wants a service. Confirm a time or reply on the desk — the client sees it in the portal.`,
-      ru: `${name} хочет услугу. Подтвердите время или ответьте на рабочем столе — клиент увидит это в портале.`,
+      et: `${name} soovib teenust. Kinnita aeg või vasta töölaual.`,
+      en: `${name} wants a service. Confirm a time or reply on the desk.`,
+      ru: `${name} хочет заказать услугу. Подтвердите время или ответьте на рабочем столе.`,
     },
   };
 }

@@ -9,13 +9,13 @@ test('five notification types, missing language is Estonian', () => {
   assert.deepEqual(push.TYPES, ['morning', 'new_request', 'visit_tomorrow', 'rhythm_due', 'request_status']);
   const tomorrow = push.text('visit_tomorrow', undefined, {});
   assert.equal(tomorrow.title, 'SUKODA | Homme on koristus');
-  assert.equal(tomorrow.body, 'Meeldetuletus sinu homsest visiidist.');
+  assert.equal(tomorrow.body, 'Homme on visiit. Aeg on allpool.');
   assert.equal(push.text('visit_tomorrow', 'de', {}).title, 'SUKODA | Homme on koristus');
 });
 
 test('visit tomorrow uses the reminder e-mail subject and opening line', () => {
   assert.equal(push.text('visit_tomorrow', 'en', { providerName: 'Mari' }).title, 'SUKODA | Cleaning tomorrow');
-  assert.equal(push.text('visit_tomorrow', 'en', { providerName: 'Mari' }).body, 'Reminder: Mari is coming tomorrow.');
+  assert.equal(push.text('visit_tomorrow', 'en', { providerName: 'Mari' }).body, 'Mari is coming tomorrow. The time is below.');
   assert.equal(push.text('visit_tomorrow', 'ru', { category: 'warranty' }).title, 'SUKODA | Завтра гарантийный визит');
   assert.equal(push.text('visit_tomorrow', 'et', { category: 'handyman', providerName: 'Kalle' }).title, 'SUKODA | Homme tuleb Kalle');
 });
@@ -25,7 +25,7 @@ test('request status, new request and upkeep repeat the e-mail subject', () => {
   assert.equal(push.text('request_status', 'et', { status: 'completed', service: 'Aknad', providerName: 'Mari' }).body, 'Mari märkis töö „Aknad“ tehtuks.');
   assert.equal(push.text('request_status', 'en', { status: 'declined', service: 'Windows' }).title, 'SUKODA | "Windows" needs a new time');
   assert.equal(push.text('new_request', 'et', { service: 'Süvapuhastus', name: 'Anna' }).title, 'SUKODA | Uus soov: Süvapuhastus — Anna');
-  assert.equal(push.text('new_request', 'et', { service: 'Süvapuhastus', name: 'Anna' }).body, 'Anna soovib teenust. Kinnita aeg või vasta töölaual — klient näeb seda portaalis.');
+  assert.equal(push.text('new_request', 'et', { service: 'Süvapuhastus', name: 'Anna' }).body, 'Anna soovib teenust. Kinnita aeg või vasta töölaual.');
   assert.equal(push.text('rhythm_due', 'ru', { count: 2 }).title, 'SUKODA | Уход за домом: 2 дела в этом месяце');
   assert.equal(push.text('rhythm_due', 'ru', { count: 5 }).title, 'SUKODA | Уход за домом: 5 дел в этом месяце');
   assert.match(push.text('new_request', 'ru', { name: 'Anna', service: 'Уборка' }).body, /на рабочем столе/);
