@@ -140,7 +140,10 @@ window.SUKODA_TIME = {
 };
 
 window.Alpine = Alpine;
-Alpine.start();
+// The resident portal fills SUKODA_MINU.dict in the same module graph.
+// Starting here, during that import, paints raw keys. The microtask runs
+// after the page module has merged the dictionary.
+queueMicrotask(() => Alpine.start());
 
 let ticking = false;
 function updateScrollProgress() {
@@ -174,13 +177,23 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 });
 
-window.addEventListener('load', () => {
+function hidePreloader() {
   const preloader = document.getElementById('preloader');
-  if (!preloader) return;
+  if (!preloader || preloader.dataset.done) return;
+  preloader.dataset.done = '1';
+  const reveal = () => preloader.classList.add('hidden');
   if (sessionStorage.getItem('sukoda_visited')) {
-    preloader.classList.add('hidden');
-  } else {
-    sessionStorage.setItem('sukoda_visited', '1');
-    setTimeout(() => preloader.classList.add('hidden'), 400);
+    reveal();
+    return;
   }
-});
+  sessionStorage.setItem('sukoda_visited', '1');
+  setTimeout(reveal, 400);
+}
+
+// Do not wait for window "load": consent-gated analytics keep that event
+// open, and the cover stays up until Facebook and Analytics finish.
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', hidePreloader);
+} else {
+  hidePreloader();
+}

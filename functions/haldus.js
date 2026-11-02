@@ -236,6 +236,10 @@ module.exports = function createHaldus(deps) {
       questionSentTitle: 'Küsimus saadetud',
       issueSentTitle: 'Teade saadetud',
       requestReceivedIntro: (p) => (p ? `${p} sai sinu soovi ja kinnitab aja tavaliselt sama päeva jooksul.` : 'Sinu soov on kirjas. Kinnitame aja tavaliselt sama päeva jooksul.'),
+      subjRescheduleSent: 'SUKODA | Uus aeg on kinnitamisel',
+      rescheduleSentTitle: 'Uus aeg on kinnitamisel',
+      rescheduleSentIntro: () => 'Senine aeg jääb ära. Uus aeg on kinnitamisel.',
+      droppedTime: 'Jääb ära',
       questionSentIntro: (p) => (p ? `${p} sai sinu küsimuse ja vastab kirjalikult, tavaliselt sama tööpäeva jooksul.` : 'Sinu küsimus on kirjas. Vastame kirjalikult, tavaliselt sama tööpäeva jooksul.'),
       issueSentIntro: (p) => (p ? `${p} sai sinu teate ja pakub ülevaatuse aja tavaliselt 2 tööpäeva jooksul.` : 'Sinu teade on kirjas. Pakume ülevaatuse aja tavaliselt 2 tööpäeva jooksul.'),
       preferredDate: 'Soovitud päev',
@@ -337,6 +341,10 @@ module.exports = function createHaldus(deps) {
       questionSentTitle: 'Question sent',
       issueSentTitle: 'Report sent',
       requestReceivedIntro: (p) => (p ? `${p} received your request and usually confirms a time the same day.` : 'Your request is in. We usually confirm a time the same day.'),
+      subjRescheduleSent: 'SUKODA | A new time is waiting for confirmation',
+      rescheduleSentTitle: 'A new time is waiting for confirmation',
+      rescheduleSentIntro: () => 'The previous time is cancelled. The new time is waiting for confirmation.',
+      droppedTime: 'Cancelled',
       questionSentIntro: (p) => (p ? `${p} received your question and replies in writing, usually the same working day.` : 'Your question is in. We reply in writing, usually the same working day.'),
       issueSentIntro: (p) => (p ? `${p} received your report and usually offers an inspection time within 2 working days.` : 'Your report is in. We usually offer an inspection time within 2 working days.'),
       preferredDate: 'Preferred day',
@@ -439,6 +447,10 @@ module.exports = function createHaldus(deps) {
       questionSentTitle: 'Вопрос отправлен',
       issueSentTitle: 'Обращение отправлено',
       requestReceivedIntro: (p) => (p ? `${p} получил(а) вашу заявку и обычно подтверждает время в тот же день.` : 'Ваша заявка записана. Обычно мы подтверждаем время в тот же день.'),
+      subjRescheduleSent: 'SUKODA | Новое время ждёт подтверждения',
+      rescheduleSentTitle: 'Новое время ждёт подтверждения',
+      rescheduleSentIntro: () => 'Прежнее время отменяется. Новое время ждёт подтверждения.',
+      droppedTime: 'Отменяется',
       questionSentIntro: (p) => (p ? `${p} получил(а) ваш вопрос и ответит письменно, обычно в тот же рабочий день.` : 'Ваш вопрос записан. Мы ответим письменно, обычно в тот же рабочий день.'),
       issueSentIntro: (p) => (p ? `${p} получил(а) ваше обращение и обычно предлагает время осмотра в течение 2 рабочих дней.` : 'Ваше обращение записано. Обычно мы предлагаем время осмотра в течение 2 рабочих дней.'),
       preferredDate: 'Желаемый день',
@@ -821,9 +833,10 @@ module.exports = function createHaldus(deps) {
       : kind === 'issue'
         ? core.pick({ et: 'Kirjeldus', en: 'Description', ru: 'Описание' }, lang)
         : tt.note;
-    const title = kind === 'question' ? tt.questionSentTitle : kind === 'issue' ? tt.issueSentTitle : tt.requestReceivedTitle;
-    const intro = kind === 'question' ? tt.questionSentIntro(providerName) : kind === 'issue' ? tt.issueSentIntro(providerName) : tt.requestReceivedIntro(providerName);
-    const subject = kind === 'question' ? tt.subjQuestionSent(svc) : kind === 'issue' ? tt.subjIssueSent(svc) : tt.subjRequestReceived(svc);
+    const isReschedule = request.type === 'reschedule';
+    const title = isReschedule ? tt.rescheduleSentTitle : kind === 'question' ? tt.questionSentTitle : kind === 'issue' ? tt.issueSentTitle : tt.requestReceivedTitle;
+    const intro = isReschedule ? tt.rescheduleSentIntro() : kind === 'question' ? tt.questionSentIntro(providerName) : kind === 'issue' ? tt.issueSentIntro(providerName) : tt.requestReceivedIntro(providerName);
+    const subject = isReschedule ? tt.subjRescheduleSent : kind === 'question' ? tt.subjQuestionSent(svc) : kind === 'issue' ? tt.subjIssueSent(svc) : tt.subjRequestReceived(svc);
     const when = request.preferredDate ? formatWhen(core.parseDateStr(request.preferredDate), lang) : tt.asap;
     const target = toDate(request.targetScheduledAt);
     // The access note (door code, key holder) stays in the portal — never echoed into plain e-mail
@@ -832,9 +845,9 @@ module.exports = function createHaldus(deps) {
       + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border-left:2px solid #B8976A;">
           ${LABEL(kindLabel)}
           <p style="margin:0;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
-          ${target ? ROW(tt.oldTime, `${escapeHtml(formatWhen(target, lang))}, ${escapeHtml(formatTime(target))}`) : ''}
+          ${target ? ROW(isReschedule ? tt.droppedTime : tt.oldTime, `${escapeHtml(formatWhen(target, lang))}, ${escapeHtml(formatTime(target))}`) : ''}
           ${kind !== 'question' ? ROW(tt.preferredDate, escapeHtml(when)) : ''}
-          ${kind !== 'question' && request.timeWindow ? ROW(tt.preferredTime, escapeHtml(core.timeWindowLabel(request.timeWindow, lang))) : ''}
+          ${kind !== 'question' && core.requestedTimeLabel(request.preferredTime, request.timeWindow, lang) ? ROW(tt.preferredTime, escapeHtml(core.requestedTimeLabel(request.preferredTime, request.timeWindow, lang))) : ''}
           ${request.note ? ROW(noteLabel, escapeHtml(request.note)) : ''}
         </div>`
       + P(tt.requestReceivedNote) + portalBlock(lang, requestUrl(requestId)),
@@ -1187,9 +1200,9 @@ module.exports = function createHaldus(deps) {
     const isReschedule = request.type === 'reschedule';
     const kind = isReschedule ? 'visit' : core.serviceKind(request.serviceId);
     const who = escapeHtml(primaryName(order) || 'Klient');
-    const title = isReschedule ? 'Klient soovib aega muuta' : kind === 'question' ? 'Uus küsimus' : kind === 'issue' ? 'Uus teade' : (placed ? 'Aeg on kalendris' : 'Uus soov');
+    const title = isReschedule ? 'Uus aeg on kinnitamisel' : kind === 'question' ? 'Uus küsimus' : kind === 'issue' ? 'Uus teade' : (placed ? 'Aeg on kalendris' : 'Uus soov');
     const intro = isReschedule
-      ? `${who} soovib visiidi aega muuta. Kinnita uus aeg töölaual. Pere saab uue kalendrikutse kohe.`
+      ? `${who} tühistas senise aja ja palus uue. Kinnita see töölaual.`
       : kind === 'question'
         ? `${who} küsib. Vasta töölaual. Klient näeb vastust rakenduses.`
         : kind === 'issue'
@@ -1198,7 +1211,7 @@ module.exports = function createHaldus(deps) {
             ? `${who} tellis aja ja aeg on juba kalendris. Kui aeg ei sobi, muuda aega töölaual.`
             : `${who} soovib teenust. Kinnita aeg või vasta töölaual.`;
     // Subject: what and who, without repeating the kind when the service name already says it
-    const subjectLead = isReschedule ? 'Aja muutmise soov' : kind === 'question' ? 'Küsimus' : kind === 'issue' ? (/pöördumin/i.test(svc) ? svc : `Teade: ${svc}`) : `Uus soov: ${svc}`;
+    const subjectLead = isReschedule ? 'Uus aeg on kinnitamisel' : kind === 'question' ? 'Küsimus' : kind === 'issue' ? (/pöördumin/i.test(svc) ? svc : `Teade: ${svc}`) : `Uus soov: ${svc}`;
     return {
       subject: `SUKODA | ${subjectLead} — ${primaryName(order) || primaryEmail(order)}`,
       push: push.message({
@@ -1208,9 +1221,9 @@ module.exports = function createHaldus(deps) {
         `<div style="background:#FFFFFF;padding:28px;border-left:2px solid #B8976A;">
           ${LABEL(isReschedule ? 'Visiit' : kind === 'question' ? 'Teema' : 'Teenus')}
           <p style="margin:0;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
-          ${target ? ROW('Praegune aeg', `${escapeHtml(formatWhen(target, 'et'))}, ${escapeHtml(formatTime(target))}`) : ''}
+          ${target ? ROW(isReschedule ? 'Jääb ära' : 'Praegune aeg', `${escapeHtml(formatWhen(target, 'et'))}, ${escapeHtml(formatTime(target))}`) : ''}
           ${kind !== 'question' ? ROW('Soovitud päev', escapeHtml(when)) : ''}
-          ${kind !== 'question' && request.timeWindow ? ROW('Soovitud aeg', escapeHtml(core.timeWindowLabel(request.timeWindow, 'et'))) : ''}
+          ${kind !== 'question' && core.requestedTimeLabel(request.preferredTime, request.timeWindow, 'et') ? ROW('Soovitud aeg', escapeHtml(core.requestedTimeLabel(request.preferredTime, request.timeWindow, 'et'))) : ''}
           ${request.urgent ? ROW('Kiirus', 'Kiire — segab igapäevaelu') : ''}
           ${request.access ? ROW('Sissepääs sellel korral', escapeHtml(request.access)) : ''}
           ${request.note ? ROW(kind === 'question' ? 'Küsimus' : kind === 'issue' ? 'Kirjeldus' : 'Märkus', escapeHtml(request.note)) : ''}
@@ -1487,7 +1500,7 @@ module.exports = function createHaldus(deps) {
    * reminder reset and customer notification. Returns { updated } or { error, status, ... }.
    */
   async function rescheduleVisit({ provider, ref, booking, order, start, durationMin, note, force, notify = true, by = 'provider' }) {
-    if (!['scheduled', 'confirmed'].includes(booking.status)) return { error: 'Seda visiiti ei saa enam muuta', status: 400 };
+    if (!core.visitCanMove(booking)) return { error: 'Seda visiiti ei saa enam muuta', status: 400 };
     if (start < new Date()) return { error: 'Uus aeg on juba möödas. Vali aeg tulevikus.', status: 400 };
     const oldStart = toDate(booking.scheduledAt);
     const oldEnd = toDate(booking.endTime);
@@ -1526,15 +1539,56 @@ module.exports = function createHaldus(deps) {
       providerId: provider.id,
       providerName: provider.name || null,
       status: 'scheduled',
+      heldForReschedule: false,
+      cancelReason: FieldValue.delete(),
+      cancelledAt: FieldValue.delete(),
+      cancelledBy: FieldValue.delete(),
       ...(reminderReset ? { reminderSent: false } : {}),
       ...(note != null ? { note: str(note, 500) } : {}),
       ...calUpdate,
       updatedAt: FieldValue.serverTimestamp(),
     });
 
-    const updated = { ...booking, scheduledAt: start, endTime: end, providerId: provider.id, providerName: provider.name || null, status: 'scheduled' };
+    const updated = { ...booking, scheduledAt: start, endTime: end, providerId: provider.id, providerName: provider.name || null, status: 'scheduled', heldForReschedule: false };
     if (notify) await sendVisitNotification('rescheduled', { order, booking: updated, provider, oldStart });
     return { updated };
+  }
+
+  /** The old visit stops being a visit. Returns true only when this call released it. */
+  async function releaseVisitForNewTime(ref, booking) {
+    if (!booking || !['scheduled', 'confirmed'].includes(booking.status)) return false;
+    if (booking.calBookingUid) {
+      try { await calService.cancelBooking(booking.calBookingUid, 'Resident asked for a new time'); }
+      catch (e) { console.error('Cal.com release failed:', e); }
+    }
+    await ref.update({
+      status: 'cancelled',
+      heldForReschedule: true,
+      cancelReason: 'Uus aeg on kinnitamisel',
+      cancelledBy: 'client',
+      cancelledAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    return true;
+  }
+
+  /** Requests opened before the old time was released: drop the visit once, and tell the cleaner once. */
+  async function releaseOpenReschedules(reqSnap, order) {
+    const pending = (reqSnap?.docs || []).filter((d) => {
+      const r = d.data();
+      return r.type === 'reschedule' && r.status === 'requested' && r.targetBookingId;
+    });
+    for (const d of pending) {
+      const request = d.data();
+      const ref = db.collection('bookings').doc(String(request.targetBookingId));
+      const doc = await ref.get();
+      if (!doc.exists) continue;
+      const released = await releaseVisitForNewTime(ref, doc.data());
+      if (!released) continue;
+      const provider = await loadProvider(request.providerId);
+      const to = providerReplyTo(provider) || NOTIFICATION_EMAIL;
+      await sendEmail({ to, ...providerNewRequestEmail({ order, request }) });
+    }
   }
 
   async function upcomingBookingsForOrder(orderId) {
@@ -1907,6 +1961,7 @@ module.exports = function createHaldus(deps) {
         ? { auto: o.flowers?.auto === true, leadDays: FLOWER_LEAD_DAYS.includes(o.flowers?.leadDays) ? o.flowers.leadDays : 2, floristId: o.floristId || null, budget: o.flowers?.budget || '', note: o.flowers?.note || '' }
         : null,
       lang: langOf(o),
+      billing: o.billing || null,
       createdAt: tsToIso(o.createdAt),
       totalVisits: o.totalVisits || 0,
     };
@@ -1984,6 +2039,7 @@ module.exports = function createHaldus(deps) {
       category: r.category,
       kind: r.type === 'reschedule' ? 'visit' : core.serviceKind(r.serviceId),
       preferredDate: r.preferredDate || null,
+      preferredTime: core.parseClock(r.preferredTime) || null,
       timeWindow: r.timeWindow || null,
       note: r.note || '',
       addons: Array.isArray(r.addons) ? r.addons : [],
@@ -3339,7 +3395,9 @@ module.exports = function createHaldus(deps) {
         .map(({ doc, role }) => serializeCustomer(doc.id, doc.data(), role, provider.id))
         .sort((a, b) => a.name.localeCompare(b.name, 'et'));
 
-      const [bookingSnap, requestSnap, inviteCards] = await Promise.all([
+      const ownIds = new Set(orders.filter(({ doc }) => core.providerBroughtHome(doc.data())).map(({ doc }) => doc.id));
+      const invoiceSince = new Date(Date.now() - 62 * 24 * 3600 * 1000);
+      const [bookingSnap, requestSnap, inviteCards, invoiceSnap] = await Promise.all([
         db.collection('bookings')
           .where('providerId', '==', provider.id)
           .where('scheduledAt', '>=', Timestamp.fromDate(from))
@@ -3352,11 +3410,31 @@ module.exports = function createHaldus(deps) {
           .limit(100)
           .get(),
         loadProviderCards(provider.id),
+        db.collection('bookings')
+          .where('providerId', '==', provider.id)
+          .where('scheduledAt', '>=', Timestamp.fromDate(invoiceSince))
+          .orderBy('scheduledAt', 'asc')
+          .get(),
       ]);
 
       const bookings = bookingSnap.docs
         .filter((d) => orderIds.has(d.data().orderId))
         .map((d) => serializeBooking(d.id, d.data()));
+      const nowKey = core.tallinnMonthKey(new Date().toISOString());
+      const invoice = core.invoiceSummary(invoiceSnap.docs.map((d) => {
+        const b = d.data();
+        return {
+          id: d.id,
+          orderId: b.orderId || null,
+          customerName: b.customerName || '',
+          serviceName: b.serviceId ? core.serviceName(b.serviceId, 'et') : '',
+          kind: b.kind || (b.serviceId ? 'extra' : 'regular'),
+          price: b.price || null,
+          status: b.status,
+          scheduledAt: tsToIso(b.scheduledAt),
+          paymentCents: Number(b.payment?.providerCents) || 0,
+        };
+      }).filter((row) => ownIds.has(row.orderId)), { months: [core.shiftMonthKey(nowKey, -1), nowKey] });
       const requests = requestSnap.docs.filter((d) => d.data().status !== 'awaiting_payment').map((d) => serializeRequest(d.id, d.data()));
 
       // Florists the partner can pick as "my flower shop" (shared curated list)
@@ -3368,6 +3446,7 @@ module.exports = function createHaldus(deps) {
         florists,
         customers,
         bookings,
+        invoice,
         requests,
         range: { from: fromStr, to: toStr },
         // Visit types for the desk: only things that become a visit (written questions and messages never do)
@@ -4605,6 +4684,7 @@ module.exports = function createHaldus(deps) {
         db.collection('serviceRequests').where('orderId', '==', orderId).orderBy('createdAt', 'desc').limit(30).get(),
         db.collection('serviceInterests').where('orderId', '==', orderId).get(),
       ]);
+      try { await releaseOpenReschedules(reqSnap, order); } catch (e) { console.error('releaseOpenReschedules failed', e); }
       const florist = await loadProvider(floristIdFor(order, provider));
       const routes = await routeRequest(order);
       // Everyone who comes to this home, one entry per category with a named partner
@@ -4955,26 +5035,41 @@ module.exports = function createHaldus(deps) {
       if ((svc.id === 'other' || kind !== 'visit') && note.length < 5) return res.status(400).json({ error: lang === 'et' ? (kind === 'question' ? 'Kirjuta oma küsimus' : 'Kirjelda, mis on katki ja kus') : (kind === 'question' ? 'Write your question' : 'Describe what is wrong and where') });
       if (kind === 'question') preferredDate = null;
 
-      const openSnap = await db.collection('serviceRequests').where('orderId', '==', orderId).where('status', '==', 'requested').get();
-      if (openSnap.size >= MAX_OPEN_REQUESTS) return res.status(429).json({ error: lang === 'et' ? 'Sul on juba mitu vastuseta soovi. Oota vastust või tühista mõni soov.' : 'You already have several open requests. Wait for a reply or cancel one of them.' });
-
       const routes = await routeRequest(order);
       const category = effectiveCategory(svc, routes);
       const providerId = routes[category] || null;
-      if (!providerId) {
-        // No partner for this category yet: record interest so SUKODA learns demand; the customer is told nothing is booked
-        const existing = await db.collection('serviceInterests').where('orderId', '==', orderId).where('serviceId', '==', svc.id).limit(1).get();
-        if (existing.empty) {
-          await db.collection('serviceInterests').add({ orderId, serviceId: svc.id, category, note, customerName: primaryName(order) || '', customerEmail: primaryEmail(order), address: primaryAddress(order), city: order.customer?.city || '', lang, createdAt: FieldValue.serverTimestamp() });
+      if (!providerId && kind === 'visit') {
+        // No partner yet: this is interest, not a booking. The household is told the service is not here.
+        const serviceName = core.serviceName(svc.id, 'et');
+        const when = preferredDate
+          ? [formatWhen(core.parseDateStr(preferredDate), 'et'), timeWindow && timeWindow !== 'any' ? core.timeWindowLabel(timeWindow, 'et') : ''].filter(Boolean).join(', ')
+          : '';
+        const summary = core.interestSummary({ serviceName, note, when });
+        const existing = await db.collection('serviceInterests').where('orderId', '==', orderId).limit(20).get();
+        const match = existing.docs.find((d) => d.data().serviceId === svc.id) || null;
+        const row = {
+          orderId, serviceId: svc.id, category, note, preferredDate: preferredDate || null, timeWindow,
+          customerName: primaryName(order) || '', customerEmail: primaryEmail(order), address: primaryAddress(order), city: order.customer?.city || '', lang,
+        };
+        const prevNote = match ? String(match.data().note || '') : null;
+        if (!match) {
+          await db.collection('serviceInterests').add({ ...row, createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
+        } else {
+          await match.ref.update({ ...row, updatedAt: FieldValue.serverTimestamp() });
+        }
+        if (!match || (note && note !== prevNote)) {
           const who = escapeHtml(primaryName(order) || primaryEmail(order));
           await sendEmail({
             to: NOTIFICATION_EMAIL,
-            subject: `SUKODA | Huvi: ${core.serviceName(svc.id, 'et')} — ${primaryName(order) || primaryEmail(order)}`,
-            html: wrap(H2('Huvi lisateenuse vastu') + P(`${who} (${escapeHtml(primaryAddress(order) || '')}) soovib tulevikus: <strong>${escapeHtml(core.serviceName(svc.id, 'et'))}</strong>.${note ? ' Märkus: ' + escapeHtml(note) : ''}`) + P('Selles kategoorias pole kodul veel partnerit. Kui leiad tegija, määra ta admin-konsoolis ja anna kliendile teada.', 'font-size:12px;'), 'et'),
+            subject: `SUKODA | Huvi: ${serviceName} — ${primaryName(order) || primaryEmail(order)}`,
+            html: wrap(H2('Huvi teenuse vastu') + P(`${who} (${escapeHtml(primaryAddress(order) || '')}). ${escapeHtml(summary)}`) + P('Seda teenust kodul veel ei ole. Kui leiad tegija, määra ta admin-konsoolis ja anna kliendile teada.', 'font-size:12px;'), 'et'),
           });
         }
         return res.status(200).json({ success: true, interest: true, serviceId: svc.id });
       }
+
+      const openSnap = await db.collection('serviceRequests').where('orderId', '==', orderId).where('status', '==', 'requested').get();
+      if (openSnap.size >= MAX_OPEN_REQUESTS) return res.status(429).json({ error: lang === 'et' ? 'Sul on juba mitu vastuseta soovi. Oota vastust või tühista mõni soov.' : 'You already have several open requests. Wait for a reply or cancel one of them.' });
       const provider = await loadProvider(providerId);
       if (preferredDate && kind === 'visit' && svc.category === 'cleaning' && !urgent) {
         const earliest = core.earliestBookableDate(todayTallinnStr(), provider?.availability?.leadDays);
@@ -5096,14 +5191,18 @@ module.exports = function createHaldus(deps) {
       const bookingDoc = await bookingRef.get();
       if (!bookingDoc.exists || bookingDoc.data().orderId !== orderId) return res.status(404).json({ error: 'Booking not found' });
       const booking = bookingDoc.data();
-      if (!['scheduled', 'confirmed'].includes(booking.status)) return res.status(400).json({ error: lang === 'et' ? 'Seda visiiti ei saa enam muuta. Visiit on tehtud või tühistatud.' : 'This visit can no longer be changed. It is done or cancelled.' });
+      if (!core.visitCanMove(booking)) return res.status(400).json({ error: lang === 'et' ? 'Seda visiiti ei saa enam muuta. Visiit on tehtud või tühistatud.' : 'This visit can no longer be changed. It is done or cancelled.' });
       const providerId = booking.providerId || order.providerId || null;
       if (!providerId) return res.status(400).json({ error: lang === 'et' ? 'Sellel visiidil ei ole veel koduhooldajat. Kirjuta tere@sukoda.ee.' : 'This visit has no housekeeper yet. Write to tere@sukoda.ee.' });
 
       const d = core.parseDateStr(b.preferredDate);
       if (!d) return res.status(400).json({ error: 'Invalid preferredDate' });
       if (b.preferredDate < todayTallinnStr(0)) return res.status(400).json({ error: lang === 'et' ? 'See päev on juba möödas. Vali päev tulevikus.' : 'That day has already passed. Pick a day in the future.' });
-      const timeWindow = core.TIME_WINDOWS[b.timeWindow] && b.timeWindow !== 'with-visit' ? b.timeWindow : 'any';
+      const preferredTime = core.parseClock(b.preferredTime);
+      const timeWindow = preferredTime
+        ? core.windowForClock(preferredTime)
+        : (core.TIME_WINDOWS[b.timeWindow] && b.timeWindow !== 'with-visit' ? b.timeWindow : '');
+      if (!preferredTime && !timeWindow) return res.status(400).json({ error: core.pick({ et: 'Vali kellaaeg.', en: 'Pick a time.', ru: 'Выберите время.' }, lang) });
 
       // One open reschedule request per visit
       const open = await db.collection('serviceRequests').where('orderId', '==', orderId).where('status', '==', 'requested').get();
@@ -5127,7 +5226,8 @@ module.exports = function createHaldus(deps) {
         // A partner visit (warranty call, handyman) keeps its own category so the desk and the portal colour it right
         category: core.getService(booking.serviceId)?.category || 'cleaning',
         preferredDate: b.preferredDate,
-        timeWindow,
+        ...(preferredTime ? { preferredTime } : {}),
+        timeWindow: timeWindow || 'any',
         note: str(b.note, 500),
         status: 'requested',
         lang,
@@ -5137,6 +5237,7 @@ module.exports = function createHaldus(deps) {
       };
       const ref = await db.collection('serviceRequests').add(data);
       const request = { ...data, createdAt: new Date() };
+      await releaseVisitForNewTime(bookingRef, booking);
 
       await sendCustomerMail(order, requestReceivedEmail({ order, request, requestId: ref.id, providerName: provider?.name || '', lang }), { replyTo: PORTAL_REPLY_TO });
       const providerMail = providerNewRequestEmail({ order, request });

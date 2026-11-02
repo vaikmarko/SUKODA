@@ -130,6 +130,22 @@ test('serviceKind defaults to visit; question/issue kinds are explicit', () => {
   assert.equal(core.windowStartTime('afternoon'), '12:00');
   assert.equal(core.windowStartTime('any'), '09:00');
   assert.equal(core.windowStartTime('with-visit'), '');
+  assert.equal(core.parseClock('15:00'), '15:00');
+  assert.equal(core.parseClock('9:00'), '');
+  assert.equal(core.parseClock('15:00–17:00'), '');
+  assert.equal(core.windowForClock('15:00'), 'afternoon');
+  assert.equal(core.windowForClock('09:30'), 'morning');
+  assert.equal(core.windowForClock('18:00'), 'any');
+  assert.equal(core.visitCanMove({ status: 'scheduled' }), true);
+  assert.equal(core.visitCanMove({ status: 'confirmed' }), true);
+  assert.equal(core.visitCanMove({ status: 'cancelled', heldForReschedule: true }), true);
+  assert.equal(core.visitCanMove({ status: 'cancelled' }), false);
+  assert.equal(core.visitCanMove({ status: 'completed', heldForReschedule: true }), false);
+  assert.equal(core.visitCanMove(null), false);
+  assert.equal(core.interestSummary({ serviceName: 'Pisiremont', note: 'Kraan tilgub', when: '19. november, pärastlõuna' }), 'Soovib teenust „Pisiremont“. Soovitud aeg: 19. november, pärastlõuna. Kraan tilgub');
+  assert.equal(core.interestSummary({ serviceName: 'Aknad ja rõdu' }), 'Soovib teenust „Aknad ja rõdu“.');
+  assert.equal(core.requestedTimeLabel('15:00', 'any', 'et'), '15:00');
+  assert.equal(core.requestedTimeLabel('', 'morning', 'et'), 'Hommik (9–12)');
   assert.equal(core.providerBroughtHome({ createdBy: 'provider:kristi' }), true);
   assert.equal(core.providerBroughtHome({ createdBy: 'invite:card1' }), true);
   assert.equal(core.providerBroughtHome({ inviteCardId: 'card1' }), true);
@@ -139,6 +155,35 @@ test('serviceKind defaults to visit; question/issue kinds are explicit', () => {
   assert.equal(core.providerBroughtHome({ billing: 'provider', source: 'manual' }), true);
   assert.equal(core.providerBroughtHome({ source: 'stripe', providerName: 'Kristi Kask' }), false);
   assert.equal(core.providerBroughtHome(null), false);
+});
+
+test('parseEuroCents reads a typed price and leaves a range or an agreement alone', () => {
+  assert.equal(core.parseEuroCents('45 €'), 4500);
+  assert.equal(core.parseEuroCents('45'), 4500);
+  assert.equal(core.parseEuroCents('45,50 €'), 4550);
+  assert.equal(core.parseEuroCents('45.5'), 4550);
+  assert.equal(core.parseEuroCents('alates 45 €'), null);
+  assert.equal(core.parseEuroCents('kokkuleppel'), null);
+  assert.equal(core.parseEuroCents('hinnas sees'), null);
+  assert.equal(core.parseEuroCents(''), null);
+});
+
+test('invoiceSummary groups finished own-client work and keeps app payments out', () => {
+  const summary = core.invoiceSummary([
+    { id: 'a', orderId: 'home-1', customerName: 'Mari', serviceName: 'Aknad ja rõdu', kind: 'extra', price: '45 €', status: 'completed', scheduledAt: '2026-10-14T07:00:00.000Z' },
+    { id: 'b', orderId: 'home-1', customerName: 'Mari', serviceName: '', kind: 'regular', price: null, status: 'completed', scheduledAt: '2026-10-20T07:00:00.000Z' },
+    { id: 'c', orderId: 'home-2', customerName: 'Jaan', serviceName: 'Pisiremont', kind: 'extra', price: '60 €', status: 'completed', scheduledAt: '2026-11-02T08:00:00.000Z' },
+    { id: 'd', orderId: 'home-2', customerName: 'Jaan', serviceName: 'Aknad', kind: 'extra', price: '25 €', status: 'scheduled', scheduledAt: '2026-11-03T08:00:00.000Z' },
+    { id: 'e', orderId: 'home-3', customerName: 'Stripe', serviceName: 'Koristus', kind: 'extra', price: '80 €', status: 'completed', scheduledAt: '2026-10-10T07:00:00.000Z', paymentCents: 5600 },
+  ], { months: ['2026-10', '2026-11'] });
+  assert.equal(summary.months.length, 2);
+  assert.equal(summary.months[0].month, '2026-10');
+  assert.equal(summary.months[0].cents, 4500);
+  assert.equal(summary.months[0].homes[0].unpriced, 1);
+  assert.equal(summary.months[0].homes[0].lines[0].name, 'Aknad ja rõdu');
+  assert.equal(summary.months[1].cents, 6000);
+  assert.equal(summary.months[1].homes[0].customerName, 'Jaan');
+  assert.equal(summary.months[1].homes[0].lines.length, 1);
 });
 
 // ------------------------------------------------------------

@@ -326,7 +326,7 @@
                                         </div>
                                         <p class="text-sm font-sans font-light mt-3 leading-relaxed" x-text="lastThreadText(r)"></p>
                                         <p class="text-xs text-muted font-sans font-light mt-2" x-show="r.kind !== 'question'">
-                                            <span x-text="r.preferredDate ? t('wishDate', { date: fmtDateLong(r.preferredDate) }) : t('earliest')"></span><span x-show="r.urgent" x-text="' · ' + t('urgent')"></span>
+                                            <span x-text="r.preferredDate ? t('wishDate', { date: fmtDateLong(r.preferredDate) }) : t('earliest')"></span><span x-show="r.preferredTime" x-text="' · ' + r.preferredTime"></span><span x-show="r.urgent" x-text="' · ' + t('urgent')"></span>
                                         </p>
                                         <p x-show="r.access" class="text-xs text-muted font-sans font-light mt-1"><span x-text="t('access') + ': '"></span><span x-text="r.access"></span></p>
                                         <template x-if="threadMessages(r).length > 1">
@@ -431,7 +431,33 @@
                             <p x-show="!invoices.length" class="text-sm text-muted font-sans font-light" x-text="t('noInvoices')"></p>
                         </div>
 
-                        <div>
+                        <div x-show="hasOwnClients">
+                            <p class="eyebrow" x-text="t('invoiceTitle')"></p>
+                            <p class="text-sm text-muted font-sans font-light mt-2" x-text="invoice.months.length ? t('invoiceOwn') : t('invoiceEmpty')"></p>
+                            <template x-for="block in invoice.months" :key="block.month">
+                                <div class="mt-6">
+                                    <div class="flex items-baseline justify-between gap-4">
+                                        <p class="font-sans" x-text="invoiceMonthLabel(block.month)"></p>
+                                        <p class="font-serif text-2xl font-light" x-show="block.cents" x-text="euroLabel(block.cents)"></p>
+                                    </div>
+                                    <div class="bg-white border border-line divide-y divide-line mt-3">
+                                        <template x-for="home in block.homes" :key="home.orderId">
+                                            <div class="px-5 py-4">
+                                                <div class="flex items-baseline justify-between gap-4">
+                                                    <p class="text-sm font-sans" x-text="home.customerName"></p>
+                                                    <p class="font-serif font-light" x-text="home.cents ? euroLabel(home.cents) : t('agreedPrice')"></p>
+                                                </div>
+                                                <template x-for="line in home.lines" :key="line.id">
+                                                    <p class="text-sm text-muted font-sans font-light mt-1" x-text="invoiceLine(line)"></p>
+                                                </template>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <div x-show="earnedCents > 0 || !hasOwnClients">
                             <p class="eyebrow" x-text="t('earned')"></p>
                             <p class="font-serif text-2xl font-light mt-2" x-text="earnedLabel()"></p>
                             <p class="text-sm text-muted font-sans font-light mt-2" x-text="t('earnedWait')"></p>
@@ -599,7 +625,11 @@
                                 </select>
                             </div>
                         </div>
-                        <div x-show="!visitModal.bookingId && visitModal.serviceId"><label class="h-label" for="visit-price" x-text="t('priceClientOpt')"></label><input id="visit-price" type="text" x-model="visitModal.price" placeholder="45 €" class="h-input"></div>
+                        <div x-show="!visitModal.bookingId && visitModal.serviceId">
+                            <label class="h-label" for="visit-price" x-text="t('priceClientOpt')"></label>
+                            <input id="visit-price" type="text" x-model="visitModal.price" placeholder="45 €" class="h-input">
+                            <p x-show="ownClientOrder(visitModal.orderId)" class="text-xs text-muted font-light mt-2" x-text="t('priceToInvoice')"></p>
+                        </div>
                         <div><label class="h-label" for="visit-note" x-text="t('noteSelf')"></label><input id="visit-note" type="text" x-model="visitModal.note" :placeholder="t('noteSelfPh')" class="h-input"></div>
                         <div x-show="!visitModal.completed"><label class="h-label" for="visit-msg" x-text="t('messageClient')"></label><input id="visit-msg" type="text" x-model="visitModal.customerNote" :placeholder="t('visitMsgPh')" class="h-input"></div>
                         <div x-show="holidayName(visitModal.date)" class="text-xs text-red-500 font-light"><span x-text="t('isHoliday')"></span> <span x-text="holidayName(visitModal.date)"></span></div>
@@ -923,6 +953,22 @@
                             </div>
                         </div>
 
+                        <div x-show="homeInvoice(detail.customer?.id).length">
+                            <p class="h-label" x-text="t('invoiceForClient')"></p>
+                            <p class="text-sm text-muted font-light mt-1 mb-3" x-text="t('invoiceOwn')"></p>
+                            <template x-for="block in homeInvoice(detail.customer?.id)" :key="block.month">
+                                <div class="mb-4">
+                                    <div class="flex items-baseline justify-between gap-4">
+                                        <p class="text-sm font-sans" x-text="invoiceMonthLabel(block.month)"></p>
+                                        <p class="font-serif font-light" x-text="block.cents ? euroLabel(block.cents) : t('agreedPrice')"></p>
+                                    </div>
+                                    <template x-for="line in block.lines" :key="line.id">
+                                        <p class="text-sm text-muted font-light mt-1" x-text="invoiceLine(line)"></p>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+
                         <!-- Upcoming visits -->
                         <div>
                             <div class="flex items-center justify-between mb-3">
@@ -968,7 +1014,11 @@
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div><label class="h-label" for="confirm-dur" x-text="t('durationLabel')"></label><select id="confirm-dur" x-model.number="confirmModal.durationMin" class="h-select"><template x-for="d in durationOptions" :key="d"><option :value="d" x-text="d + ' ' + t('minutes')"></option></template></select></div>
-                            <div x-show="confirmModal.request?.type !== 'reschedule' && !termsIncluded(confirmModal.request)"><label class="h-label" for="confirm-price" x-text="t('priceLabel')"></label><input id="confirm-price" type="text" x-model="confirmModal.price" placeholder="45 €" class="h-input"></div>
+                            <div x-show="confirmModal.request?.type !== 'reschedule' && !termsIncluded(confirmModal.request)">
+                                <label class="h-label" for="confirm-price" x-text="t('priceLabel')"></label>
+                                <input id="confirm-price" type="text" x-model="confirmModal.price" placeholder="45 €" class="h-input">
+                                <p x-show="ownClientRequest(confirmModal.request)" class="text-xs text-muted font-light mt-2" x-text="t('priceToInvoice')"></p>
+                            </div>
                             <div x-show="confirmModal.request?.type !== 'reschedule' && termsIncluded(confirmModal.request)"><p class="h-label" x-text="t('priceLabel')"></p><p class="text-sm font-light pt-2" x-text="confirmModal.request?.kind === 'issue' || confirmModal.request?.category === 'warranty' ? t('warrantyFree') : t('includedPrice')"></p></div>
                         </div>
                         <div><label class="h-label" for="confirm-msg" x-text="t('messageClient')"></label><input id="confirm-msg" type="text" x-model="confirmModal.message" class="h-input" :placeholder="isCleaningProvider ? t('msgPhClean') : t('msgPhVisit')"></div>
@@ -1275,7 +1325,13 @@
             earliest: { et: 'Klient soovib esimesel võimalusel', en: 'The client asks for the earliest time' },
             urgent: { et: 'Kiire', en: 'Urgent' },
             confirmTime: { et: 'Kinnita aeg', en: 'Confirm a time' },
-            confirmLead: { et: 'Pakume esimese vaba aja. Muuda, kui sobib teine.', en: 'We suggest the first free time. Change it if another suits.' },
+            confirmLead: { et: 'Sina määrad aja. Kui töö ei ole kokkuleppes, kirjuta hind.', en: 'You set the time. If the work is not in the agreement, write the price.' },
+            priceToInvoice: { et: 'Hind läheb kuu kokkuvõttesse, kui märgid töö tehtuks. Arve saadad ise.', en: 'The price goes into the month’s summary once you mark the work done. You send the invoice.' },
+            invoiceTitle: { et: 'Klientidele arvele', en: 'To invoice to clients' },
+            invoiceForClient: { et: 'Arvele', en: 'To invoice' },
+            invoiceOwn: { et: 'Need summad on sinu ja kliendi vahel. Saada arve ise.', en: 'These sums stay between you and the client. Send the invoice yourself.' },
+            invoiceEmpty: { et: 'Kui kinnitad töö, kirjuta hind. Tehtud töö koguneb siia.', en: 'When you confirm the work, write the price. Finished work gathers here.' },
+            agreedPrice: { et: 'hind kokkuleppel', en: 'price as agreed' },
             reply: { et: 'Vasta', en: 'Reply' },
             decline: { et: 'Ütle ära', en: 'Decline' },
             notWarranty: { et: 'Ei kuulu garantiisse', en: 'Not under warranty' },
@@ -1444,7 +1500,7 @@
             loginEmail: '', loginSending: false, loginSent: false, loginPortal: false, loginError: '',
             globalError: '', toast: '', refreshing: false,
 
-            provider: null, customers: [], bookings: [], requests: [], catalogue: [], florists: [], maintenanceCatalogue: [],
+            provider: null, customers: [], bookings: [], requests: [], invoice: { months: [] }, catalogue: [], florists: [], maintenanceCatalogue: [],
             billing: { plan: 'free', planName: 'Tasuta', homes: 0, limit: 3, plans: [], hasSubscription: false, cancelAtPeriodEnd: false, periodEnd: null, status: null }, billingBusy: false, billingError: '', invoices: [], inviteCards: [],
             earnedCents: null,
             availForm: { leadDays: 14, maxPerDay: 4, days: [1, 2, 3, 4, 5], hours: { start: '08:00', end: '17:00' }, districtsText: '', priceNote: '' }, availSaving: false, availError: '',
@@ -1533,7 +1589,7 @@
                     if (res.status === 401) { this.logout(); return; }
                     if (!res.ok) throw new Error('load failed');
                     const d = await res.json();
-                    this.provider = d.provider; this.customers = d.customers; this.bookings = d.bookings; this.requests = d.requests; this.catalogue = d.catalogue; this.florists = d.florists || []; this.maintenanceCatalogue = d.maintenanceCatalogue || []; this.maintenanceIntervals = d.maintenanceIntervals || this.maintenanceIntervals;
+                    this.provider = d.provider; this.customers = d.customers; this.bookings = d.bookings; this.requests = d.requests; this.invoice = d.invoice || { months: [] }; this.catalogue = d.catalogue; this.florists = d.florists || []; this.maintenanceCatalogue = d.maintenanceCatalogue || []; this.maintenanceIntervals = d.maintenanceIntervals || this.maintenanceIntervals;
                     if (d.billing) this.billing = d.billing;
                     this.inviteCards = d.inviteCards || [];
                     this.profileForm = { name: d.provider.name || '', businessName: d.provider.businessName || '', phone: d.provider.phone || '', notifyEmail: d.provider.notifyEmail || '' };
@@ -2305,6 +2361,34 @@
                     if (res.ok) this.earnedCents = Number(d.cents) || 0;
                 } catch (e) { this.earnedCents = 0; }
             },
+            get hasOwnClients() {
+                return (this.customers || []).some((c) => c.billing === 'provider' || c.source === 'manual');
+            },
+            ownClientOrder(orderId) {
+                const c = (this.customers || []).find((x) => x.id === orderId);
+                return !!(c && (c.billing === 'provider' || c.source === 'manual'));
+            },
+            ownClientRequest(request) { return !!(request && this.ownClientOrder(request.orderId)); },
+            euroLabel(cents) {
+                return ((Number(cents) || 0) / 100).toFixed(2).replace('.', ',') + ' €';
+            },
+            invoiceMonthLabel(month) {
+                if (!month) return '';
+                return T().formatDate(`${month}-01T12:00:00`, this.lang === 'en' ? 'en-GB' : 'et-EE', { month: 'long', year: 'numeric' });
+            },
+            invoiceLine(line) {
+                const name = line.name || this.t('svcSignCleaning');
+                const price = line.cents ? (line.price || this.euroLabel(line.cents)) : this.t('agreedPrice');
+                return [this.fmtDateShort(line.at), name, price].filter(Boolean).join(' · ');
+            },
+            homeInvoice(orderId) {
+                const out = [];
+                for (const block of (this.invoice?.months || [])) {
+                    const home = (block.homes || []).find((h) => h.orderId === orderId);
+                    if (home) out.push({ month: block.month, cents: home.cents, lines: home.lines });
+                }
+                return out;
+            },
             get allWeekdayChoices() {
                 const labels = this.lang === 'en' ? ['M', 'T', 'W', 'T', 'F', 'S', 'S'] : ['E', 'T', 'K', 'N', 'R', 'L', 'P'];
                 return [1, 2, 3, 4, 5, 6, 7].map((n, i) => ({ n, label: labels[i] }));
@@ -2430,26 +2514,13 @@
             },
 
             // ---------- requests ----------
-            /** First day on or after `start` that is a working day, not a public holiday and not yet full */
-            firstFreeDay(start) {
-                const days = this.availForm.days.length ? this.availForm.days : [1, 2, 3, 4, 5];
-                const max = Number(this.availForm.maxPerDay) || 4;
-                let date = start;
-                for (let i = 0; i < 60; i++) {
-                    const [y, m, d] = date.split('-').map(Number);
-                    let dow = new Date(Date.UTC(y, m - 1, d, 12)).getUTCDay(); if (dow === 0) dow = 7;
-                    const busy = this.liveBookings.filter((b) => this.dateOf(b.scheduledAt) === date).length;
-                    if (days.includes(dow) && !this.holidayName(date) && busy < max) return date;
-                    date = T().shiftDateString(date, 1);
-                }
-                return start;
-            },
             openConfirmRequest(r) {
                 const svc = this.catalogue.find((s) => s.id === r.serviceId);
-                const tw = { morning: '10:00', afternoon: '13:00' }[r.timeWindow] || '10:00';
-                let date = r.preferredDate || T().shiftDateString(this.todayStr, 2);
+                const asked = /^([01]\d|2[0-3]):[0-5]\d$/.test(r.preferredTime || '') ? r.preferredTime : '';
+                if (asked && !this.timeOptions.includes(asked)) this.timeOptions = this.timeOptions.concat(asked).sort();
+                const tw = asked || ({ morning: '10:00', afternoon: '13:00' }[r.timeWindow] || '10:00');
+                let date = r.preferredDate || T().shiftDateString(this.todayStr, 1);
                 if (date < this.todayStr) date = T().shiftDateString(this.todayStr, 1);
-                date = this.firstFreeDay(date);
                 let dur = r.type === 'reschedule' && r.targetBookingId ? (() => { const b = this.bookings.find((x) => x.id === r.targetBookingId); return b ? Math.round((new Date(b.endTime) - new Date(b.scheduledAt)) / 60000) : 180; })() : (svc?.durationMin || 60);
                 if (!this.durationOptions.includes(dur)) dur = 60;
                 const includedPrice = this.termsIncluded(r) && r.kind !== 'issue' && r.category !== 'warranty' ? this.t('termsIncluded') : '';

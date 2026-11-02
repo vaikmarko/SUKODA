@@ -36,7 +36,7 @@
     })();
     </script>
     <script src="/push.js"></script>
-    <script src="/assets/js/minu/kodu.js?v=13"></script>
+    <script src="/assets/js/minu/kodu.js?v=17"></script>
     <script type="module" src="/assets/js/minu/mount.js"></script>
     <script type="module" src="/assets/js/main.js"></script>
 </head>
@@ -84,6 +84,7 @@
             if (r) this.openThread(r);
             return;
         }
+        if (use === 'calendar') { this.activeTab = 'visits'; return; }
         if (n.kind === 'visit') {
             if (n.pending) { this.activeTab = 'visits'; return; }
             const b = (this.upcomingBookings || []).find((x) => x.id === n.refId);
@@ -93,7 +94,7 @@
         if (n.kind === 'away') { this.activeTab = 'visits'; return; }
         if (n.kind === 'profile') { this.activeTab = 'mine'; this.profileEditing = true; return; }
         if (n.kind === 'calm') {
-            const s = (this.extras.catalogue || []).find((x) => x.id === 'warranty-claim');
+            const s = !this.showProvider && (this.extras.catalogue || []).find((x) => x.id === 'warranty-claim');
             if (s) this.openRequest(s);
             else this.activeTab = 'extras';
         }
@@ -148,7 +149,7 @@
     // Partner-managed visit: propose a new time (provider confirms)
     proposeBooking: null,
     proposeDate: '',
-    proposeWindow: 'any',
+    proposeTime: '',
     proposeNote: '',
     proposeProcessing: false,
     proposeError: '',
@@ -601,6 +602,25 @@
         const lines = (this.telliQuote && this.telliQuote.lines) || [];
         return lines.some((line) => line && !line.covered && this.isFloorPrice(line.hint));
     },
+    get upkeepSuggestions() {
+        const list = this.maintenance.suggestions || [];
+        if (!this.showProvider) return list;
+        return list.filter((item) => item.id !== 'warranty-inspection' && item.id !== 'sealant-check');
+    },
+    get telliServiceId() {
+        return { warranty: 'warranty-claim', fix: 'small-repairs', flowers: 'flowers', windows: 'windows' }[this.telliOpen] || 'extra-clean';
+    },
+    /** No partner for this service yet: the press records interest, it does not book a visit. */
+    get telliGathering() {
+        if (!this.telliOpen || this.telliOpen === 'warranty') return false;
+        const service = this.serviceById(this.telliServiceId);
+        return !!service && !this.isOrderable(service);
+    },
+    get telliNoted() {
+        if (!this.telliGathering) return false;
+        if (this.telliDone) return true;
+        return (this.extras.interests || []).includes(this.telliServiceId);
+    },
     get telliButtonLabel() {
         if (this.telliOpen === 'warranty' || this.telliPanel === 'warranty') return this.t('sendWarranty');
         if (this.showProvider || this.quoteHasFloor) return this.t('confirmOrder');
@@ -800,7 +820,7 @@
         } catch (e) { /* the price lines stay as written */ }
     },
     async submitTelli() {
-        if (this.telliBusy || !this.telliDate) return;
+        if (this.telliBusy || (!this.telliGathering && !this.telliDate)) return;
         const panel = this.telliOpen || this.telliPanel;
         const words = (this.telliNote || '').trim();
         if ((panel === 'fix' || panel === 'warranty') && words.length < 5 && !(panel === 'warranty' && this.telliPhotoName)) return;
@@ -828,7 +848,7 @@
                 headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + this.token },
                 body: JSON.stringify({
                     serviceId,
-                    preferredDate: this.telliDate,
+                    preferredDate: this.telliGathering ? null : this.telliDate,
                     timeWindow: this.telliWindow || 'any',
                     note,
                     access: (this.homeProfile.access || '').trim() || this.t('telliHome'),
@@ -983,12 +1003,7 @@
         return name ? this.t('visitNamed', { name }) : this.t('visitIn');
     },
     get proposeSentBody() {
-        const name = this.showProvider ? (this.shortName(this.proposeBooking?.providerName) || this.providerFace) : '';
-        return name ? this.t('proposeNamed', { name }) : this.t('proposeQuiet');
-    },
-    get proposeHintText() {
-        const name = this.showProvider ? (this.shortName(this.proposeBooking?.providerName) || this.providerFace) : '';
-        return name ? this.t('proposeHintNamed', { name }) : this.t('proposeHint');
+        return this.t('proposeQuiet');
     },
     nextLabel(item) {
         const d = new Date(item.nextDueAt + 'T12:00:00');
@@ -1529,6 +1544,15 @@
             this.requestProcessing = false;
         }
     },
+    askedLabel(request) {
+        if (!request || !request.preferredDate) return '';
+        const raw = String(request.preferredDate);
+        const iso = raw.length === 10 ? raw + 'T12:00:00' : raw;
+        return request.preferredTime ? this.formatDate(iso) + ' ' + request.preferredTime : this.formatDate(iso);
+    },
+    get pendingReschedules() {
+        return (this.extras.requests || []).filter((r) => r.type === 'reschedule' && r.status === 'requested');
+    },
     /** Withdraw a request. Returns true only when it was actually withdrawn, so the caller knows whether to close the thread. */
     async cancelRequest(r) {
         if (!confirm(this.t('withdrawAsk'))) return false;
@@ -1594,8 +1618,12 @@
     // ---- Propose new time (partner visits) ----
     openPropose(booking) {
         this.proposeBooking = booking;
-        this.proposeDate = '';
-        this.proposeWindow = 'any';
+        const when = booking && booking.scheduledAt;
+        const parts = when ? window.SUKODA_TIME.getDateParts(when) : null;
+        const pad = (n) => String(n).padStart(2, '0');
+        const date = parts ? `${parts.year}-${pad(parts.month)}-${pad(parts.day)}` : '';
+        this.proposeDate = date && date >= this.minRequestDate ? date : this.minRequestDate;
+        this.proposeTime = parts ? `${pad(parts.hour)}:${pad(parts.minute)}` : '';
         this.proposeNote = '';
         this.proposeError = '';
         this.proposeSuccess = false;
@@ -1604,14 +1632,14 @@
         this.proposeBooking = null;
     },
     async submitPropose() {
-        if (!this.proposeBooking || !this.proposeDate || this.proposeProcessing) return;
+        if (!this.proposeBooking || !this.proposeDate || !this.proposeTime || this.proposeProcessing) return;
         this.proposeProcessing = true;
         this.proposeError = '';
         try {
             const res = await fetch('/api/me/requests/reschedule', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
-                body: JSON.stringify({ bookingId: this.proposeBooking.id, preferredDate: this.proposeDate, timeWindow: this.proposeWindow, note: this.proposeNote }),
+                body: JSON.stringify({ bookingId: this.proposeBooking.id, preferredDate: this.proposeDate, preferredTime: this.proposeTime, note: this.proposeNote }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'failed');
@@ -1945,14 +1973,14 @@
     get upcomingBookings() {
         const now = new Date().toISOString();
         return this.bookings
-            .filter(b => (b.status === 'confirmed' || b.status === 'scheduled') && b.scheduledAt > now)
+            .filter(b => (b.status === 'confirmed' || b.status === 'scheduled') && b.scheduledAt > now && !this.pendingRescheduleIds.includes(b.id))
             .sort((a, b) => a.scheduledAt < b.scheduledAt ? -1 : 1);
     },
 
     get pastBookings() {
         const now = new Date().toISOString();
         return this.bookings
-            .filter(b => b.scheduledAt <= now || b.status === 'completed' || b.status === 'cancelled')
+            .filter(b => (b.scheduledAt <= now || b.status === 'completed' || b.status === 'cancelled') && !(b.status === 'cancelled' && b.scheduledAt > now))
             .sort((a, b) => a.scheduledAt < b.scheduledAt ? 1 : -1);
     },
     /** The most recent visit that actually happened — shown under the next-thing card on Kodu */
@@ -2224,7 +2252,13 @@
                                 <div class="px-6 py-4 border-b border-line">
                                     <h2 class="p-h"><span x-text="t('upcomingTitle')"></span></h2>
                                 </div>
-                                <div x-show="upcomingBookings.length === 0" class="px-6 py-10">
+                                <template x-for="request in pendingReschedules" :key="request.id">
+                                    <div class="px-6 py-4 border-b border-line">
+                                        <p class="font-sans" x-text="askedLabel(request)"></p>
+                                        <p class="text-sm text-muted font-sans font-light mt-1" x-text="t('pendingTitle') + '. ' + t('pendingDroppedShort')"></p>
+                                    </div>
+                                </template>
+                                <div x-show="upcomingBookings.length === 0 && pendingReschedules.length === 0" class="px-6 py-10">
                                     <p class="text-sm text-muted font-sans font-light" x-text="t('upcomingEmpty')"></p>
                                     <button type="button" class="p-btn mt-5" @click="activeTab = 'extras'; openPaidClean()" x-text="t('orderCleanBtn')"></button>
                                 </div>
@@ -2232,10 +2266,9 @@
                                     <div class="px-6 py-4 border-b border-line last:border-b-0 flex items-baseline justify-between gap-4">
                                         <div class="min-w-0">
                                             <p class="font-sans" x-text="formatDate(booking.scheduledAt)"></p>
-                                            <p class="text-sm text-muted font-sans font-light mt-1 truncate" x-text="[formatTime(booking.scheduledAt), visitLabel(booking)].filter(Boolean).join(' · ')"></p>
+                                            <p class="text-sm text-muted font-sans font-light mt-1 truncate" x-text="[formatTime(booking.scheduledAt), visitLabel(booking), booking.price].filter(Boolean).join(' · ')"></p>
                                         </div>
-                                        <p x-show="pendingRescheduleIds.includes(booking.id)" class="text-sm text-muted font-sans font-light shrink-0" x-text="t('pending')"></p>
-                                        <button type="button" x-show="!pendingRescheduleIds.includes(booking.id)" class="text-sm font-sans underline underline-offset-4 shrink-0" @click="changeTime(booking)" x-text="t('reschedule')"></button>
+                                        <button type="button" class="text-sm font-sans underline underline-offset-4 shrink-0" @click="changeTime(booking)" x-text="t('reschedule')"></button>
                                     </div>
                                 </template>
                             </div>
@@ -2246,7 +2279,7 @@
                                     <template x-for="booking in pastBookings" :key="booking.id">
                                         <div class="py-3 border-b border-line flex items-baseline justify-between gap-4">
                                             <p class="text-sm font-sans" x-text="formatDate(booking.scheduledAt)"></p>
-                                            <p class="text-sm text-muted font-sans font-light truncate" x-text="visitLabel(booking)"></p>
+                                            <p class="text-sm text-muted font-sans font-light truncate" x-text="[visitLabel(booking), booking.price].filter(Boolean).join(' · ')"></p>
                                         </div>
                                     </template>
                                 </div>
@@ -2581,9 +2614,7 @@
                             </button>
                         </div>
                         <p class="text-sm text-muted font-sans font-light mb-6">
-                            <span x-text="t('currentTime')"></span>
-                            <span class="capitalize text-black" x-text="formatDate(proposeBooking?.scheduledAt) + ', ' + formatTime(proposeBooking?.scheduledAt)"></span>.
-                            <span x-text="proposeHintText"></span>
+                            <span class="capitalize text-black" x-text="formatDate(proposeBooking?.scheduledAt) + ', ' + formatTime(proposeBooking?.scheduledAt)"></span><span x-text="t('dropsAway')"></span>
                         </p>
                         <form @submit.prevent="submitPropose()" class="space-y-6">
                             <div>
@@ -2591,12 +2622,8 @@
                                 <input id="propose-date" type="date" x-model="proposeDate" :min="minRequestDate" required class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-3 font-sans font-light text-sm">
                             </div>
                             <div>
-                                <p class="eyebrow mb-3" x-text="t('orderTime')"></p>
-                                <div class="grid grid-cols-3 gap-2">
-                                    <template x-for="w in extras.timeWindows.filter(x => x.id !== 'with-visit')" :key="w.id">
-                                        <button type="button" @click="proposeWindow = w.id" :aria-pressed="proposeWindow === w.id" :class="proposeWindow === w.id ? 'bg-black text-paper border-black' : 'border-line hover:border-accent'" class="py-3 px-2 border text-center text-xs font-sans font-light transition-colors" x-text="w.label"></button>
-                                    </template>
-                                </div>
+                                <label class="eyebrow mb-2" for="propose-time" x-text="t('orderTime')"></label>
+                                <input id="propose-time" type="time" x-model="proposeTime" step="60" required class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-3 font-sans font-light text-base">
                             </div>
                             <div>
                                 <label class="eyebrow mb-2" for="propose-note" x-text="t('noteLabel')"></label>
@@ -2605,7 +2632,7 @@
                             <p x-show="proposeError" x-cloak class="text-sm text-red-500 font-sans font-light" x-text="proposeError"></p>
                             <div class="flex gap-4 pt-2">
                                 <button type="button" @click="closePropose()" class="p-btn-2" x-text="t('docCancel')"></button>
-                                <button type="submit" :disabled="!proposeDate || proposeProcessing" class="p-btn flex-1 disabled:opacity-50">
+                                <button type="submit" :disabled="!proposeDate || !proposeTime || proposeProcessing" class="p-btn flex-1 disabled:opacity-50">
                                     <span x-show="!proposeProcessing" x-text="t('sendWord')"></span>
                                     <span x-show="proposeProcessing" x-cloak x-text="t('telliSending')"></span>
                                 </button>

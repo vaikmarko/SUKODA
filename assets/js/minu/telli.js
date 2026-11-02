@@ -47,7 +47,7 @@ add({
   giftCovers: { et: 'Selle koristuse eest maksma ei pea.', en: 'You do not pay for this clean.', ru: 'За эту уборку платить не нужно.' },
   giftNote: { et: 'Arco kingib esimese koristuse.', en: 'Arco gives the first clean.', ru: 'Arco дарит первую уборку.' },
   telliSent: { et: 'Soov on saadetud. Kui aeg on kinnitatud, näed aega Sinu teenuste all.', en: 'Your request is sent. Once the time is confirmed, you will see it under Your services.', ru: 'Заявка отправлена. Когда время подтвердят, вы увидите его в разделе «Ваши услуги».' },
-  telliSentNamed: { et: '{name} kinnitab aja. Kinnitus tuleb siia.', en: '{name} confirms the time. The confirmation comes here.', ru: '{name} подтвердит время. Подтверждение придёт сюда.' },
+  telliSentNamed: { et: '{name} kinnitab aja ja hinna. Arve tuleb temalt.', en: '{name} confirms the time and the price. The invoice comes from them.', ru: '{name} подтвердит время и цену. Счёт придёт от них.' },
   orderWarrantySent: { et: 'Probleem on saadetud. Vastus tuleb siia, Sinu teenuste alla.', en: 'The problem is sent. The reply comes here, under Your services.', ru: 'Проблема отправлена. Ответ придёт сюда, в раздел «Ваши услуги».' },
   telliSending: { et: 'Saadan…', en: 'Sending…', ru: 'Отправляю…' },
   telliFailed: { et: 'Saatmine ei õnnestunud. Proovi uuesti.', en: 'Sending did not work. Try again.', ru: 'Отправить не удалось. Попробуйте снова.' },
@@ -58,7 +58,9 @@ add({
   warrantyFree: { et: 'Tasuta', en: 'Free', ru: 'Бесплатно' },
   photoAdd: { et: 'Lisa foto', en: 'Add a photo', ru: 'Добавить фото' },
   photoAttached: { et: 'Foto on kaasas.', en: 'The photo is attached.', ru: 'Фото приложено.' },
-  noted: { et: 'Panime soovi kirja. Kui see teenus sinu kodule avaneb, anname ise teada.', en: 'We noted your wish. If this service opens for your home, we will let you know.', ru: 'Мы записали ваше пожелание. Если эта услуга откроется для вашего дома, мы сообщим.' },
+  noted: { et: 'Huvi on kirjas. Seda teenust veel ei ole. Anname teada, kui see avaneb.', en: 'Your interest is noted. This service is not here yet. We will tell you when it opens.', ru: 'Интерес записан. Этой услуги пока нет. Мы сообщим, когда она появится.' },
+  gatherLead: { et: 'Seda teenust veel ei ole. Kui soovid, paneme huvi kirja.', en: 'This service is not here yet. If you want it, we note your interest.', ru: 'Этой услуги пока нет. Если она вам нужна, мы запишем интерес.' },
+  wantIt: { et: 'Soovin', en: 'I want this', ru: 'Хочу' },
   noPrice: { et: 'Sellel teenusel ei ole veel hinda, seepärast ei saa seda praegu tellida.', en: 'This service has no price yet, so it cannot be ordered right now.', ru: 'У этой услуги пока нет цены, поэтому заказать её сейчас нельзя.' },
   paidBack: { et: 'Makse õnnestus. Aeg on näha Kodu vaates.', en: 'Payment done. The time is shown on the Home tab.', ru: 'Оплата прошла. Время видно на вкладке Дом.' },
   payCancelled: { et: 'Makse jäi pooleli. Koristust ei tellitud, proovi uuesti.', en: 'The payment was not completed. The clean was not ordered, try again.', ru: 'Оплата не завершена. Уборка не заказана, попробуйте снова.' },
@@ -103,7 +105,9 @@ function dayFields() {
                 </div>`;
 }
 
-const whenFields = dayFields();
+const whenFields = `<div x-show="!telliGathering">${dayFields()}</div>`;
+const gatherLead = `<p x-show="telliGathering && !telliNoted" x-cloak class="text-sm text-muted font-sans font-light mb-4" x-text="t('gatherLead')"></p>`;
+const gatherDone = `<p x-show="telliNoted" x-cloak class="text-sm font-sans font-light" x-text="t('noted')"></p>`;
 
 export const telliHtml = `<div x-show="activeTab === 'extras'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
     <div class="max-w-xl min-w-0">
@@ -134,9 +138,13 @@ export const telliHtml = `<div x-show="activeTab === 'extras'" x-transition:ente
                     <span class="block text-sm text-muted font-sans font-light mt-1" x-text="addonText('flowers')"></span>
                 </button>
                 <form x-show="telliOpen === 'flowers'" x-cloak class="pb-6" @submit.prevent="submitTelli()">
+                    ${gatherLead}
+                    <div x-show="!telliNoted">
                     ${choiceButtons}
                     ${whenFields}
-                    <button type="submit" :disabled="telliBusy || !telliDate || (flowerMode === 'tone' && (flowerTone || '').trim().length < 2) || (telliQuote && telliQuote.unpriced)" class="p-btn w-full mt-6 disabled:opacity-40" x-text="telliBusy ? t('telliSending') : telliButtonLabel"></button>
+                    <button type="submit" :disabled="telliBusy || (!telliGathering && (!telliDate || (flowerMode === 'tone' && (flowerTone || '').trim().length < 2) || (telliQuote && telliQuote.unpriced)))" class="p-btn w-full mt-6 disabled:opacity-40" x-text="telliBusy ? t('telliSending') : (telliGathering ? t('wantIt') : telliButtonLabel)"></button>
+                    </div>
+                    ${gatherDone}
                 </form>
             </div>
 
@@ -149,8 +157,12 @@ export const telliHtml = `<div x-show="activeTab === 'extras'" x-transition:ente
                     <span class="block text-sm text-muted font-sans font-light mt-1" x-text="addonText('windows')"></span>
                 </button>
                 <form x-show="telliOpen === 'windows'" x-cloak class="pb-6" @submit.prevent="submitTelli()">
+                    ${gatherLead}
+                    <div x-show="!telliNoted">
                     ${whenFields}
-                    <button type="submit" :disabled="telliBusy || !telliDate || (telliQuote && telliQuote.unpriced)" class="p-btn w-full mt-6 disabled:opacity-40" x-text="telliBusy ? t('telliSending') : telliButtonLabel"></button>
+                    <button type="submit" :disabled="telliBusy || (!telliGathering && (!telliDate || (telliQuote && telliQuote.unpriced)))" class="p-btn w-full mt-6 disabled:opacity-40" x-text="telliBusy ? t('telliSending') : (telliGathering ? t('wantIt') : telliButtonLabel)"></button>
+                    </div>
+                    ${gatherDone}
                 </form>
             </div>
 
@@ -163,17 +175,19 @@ export const telliHtml = `<div x-show="activeTab === 'extras'" x-transition:ente
                     <span class="block text-sm text-muted font-sans font-light mt-1" x-text="addonText('extra-clean')"></span>
                 </button>
                 <form x-show="telliOpen === 'clean'" x-cloak class="pb-6" @submit.prevent="submitTelli()">
-                    <p class="eyebrow" x-show="!arcoCleanLine && !telliPay" x-text="t('rhythmLabel')"></p>
-                    <div class="grid grid-cols-2 gap-2 mt-2" x-show="!arcoCleanLine && !telliPay">
+                    ${gatherLead}
+                    <div x-show="!telliNoted">
+                    <p class="eyebrow" x-show="!telliGathering && !arcoCleanLine && !telliPay" x-text="t('rhythmLabel')"></p>
+                    <div class="grid grid-cols-2 gap-2 mt-2" x-show="!telliGathering && !arcoCleanLine && !telliPay">
                         <button type="button" @click="telliRhythm = 'once'" :class="telliRhythm === 'once' ? 'bg-black text-paper border-black' : 'border-line bg-white'" class="py-3 border text-sm font-sans" x-text="t('rhythmOnce')"></button>
                         <button type="button" @click="telliRhythm = 'weekly'" :class="telliRhythm === 'weekly' ? 'bg-black text-paper border-black' : 'border-line bg-white'" class="py-3 border text-sm font-sans" x-text="t('rhythmWeek')"></button>
                         <button type="button" @click="telliRhythm = 'biweekly'" :class="telliRhythm === 'biweekly' ? 'bg-black text-paper border-black' : 'border-line bg-white'" class="py-3 border text-sm font-sans" x-text="t('rhythmTwo')"></button>
                         <button type="button" @click="telliRhythm = 'monthly'" :class="telliRhythm === 'monthly' ? 'bg-black text-paper border-black' : 'border-line bg-white'" class="py-3 border text-sm font-sans" x-text="t('rhythmMonth')"></button>
                     </div>
-                    <p x-show="telliQuote && !telliQuote.unpriced && !telliQuote.cardRequired && telliRhythm === 'once'" class="text-sm text-muted font-sans font-light mt-3" x-text="t('giftCovers')"></p>
-                    <p x-show="telliRhythm !== 'once'" x-cloak class="text-sm text-muted font-sans font-light mt-3" x-text="t('rhythmHint')"></p>
+                    <p x-show="!telliGathering && telliQuote && !telliQuote.unpriced && !telliQuote.cardRequired && telliRhythm === 'once'" class="text-sm text-muted font-sans font-light mt-3" x-text="t('giftCovers')"></p>
+                    <p x-show="!telliGathering && telliRhythm !== 'once'" x-cloak class="text-sm text-muted font-sans font-light mt-3" x-text="t('rhythmHint')"></p>
                     ${whenFields}
-                    <div class="mt-6 border-t border-line">
+                    <div class="mt-6 border-t border-line" x-show="!telliGathering">
                         <template x-for="row in telliAddonRows" :key="row.id">
                             <button type="button" @click="toggleTelliAddon(row.id)" class="w-full py-3 border-b border-line text-left">
                                 <span class="flex items-baseline justify-between gap-4">
@@ -187,12 +201,14 @@ export const telliHtml = `<div x-show="activeTab === 'extras'" x-transition:ente
                     <div x-show="telliAddons.flowers" x-cloak class="mt-4">
                         ${choiceButtons}
                     </div>
-                    <p x-show="telliSumAmount && !quoteHasFloor && !showProvider" class="font-serif text-4xl font-light mt-6" x-text="telliSumAmount"></p>
-                    <p x-show="telliQuote && !telliQuote.unpriced && !telliQuote.cardRequired" x-cloak class="text-sm text-muted font-sans font-light mt-2" x-text="t('giftCovers')"></p>
-                    <button type="submit" :disabled="telliBusy || !telliDate || (telliQuote && telliQuote.unpriced) || (telliAddons.flowers && flowerMode === 'tone' && (flowerTone || '').trim().length < 2)" class="p-btn w-full mt-6 disabled:opacity-40">
-                        <span x-show="!telliBusy" x-text="telliButtonLabel"></span>
+                    <p x-show="!telliGathering && telliSumAmount && !quoteHasFloor && !showProvider" class="font-serif text-4xl font-light mt-6" x-text="telliSumAmount"></p>
+                    <p x-show="!telliGathering && telliQuote && !telliQuote.unpriced && !telliQuote.cardRequired" x-cloak class="text-sm text-muted font-sans font-light mt-2" x-text="t('giftCovers')"></p>
+                    <button type="submit" :disabled="telliBusy || (!telliGathering && (!telliDate || (telliQuote && telliQuote.unpriced) || (telliAddons.flowers && flowerMode === 'tone' && (flowerTone || '').trim().length < 2)))" class="p-btn w-full mt-6 disabled:opacity-40">
+                        <span x-show="!telliBusy" x-text="telliGathering ? t('wantIt') : telliButtonLabel"></span>
                         <span x-show="telliBusy" x-cloak x-text="t('telliSending')"></span>
                     </button>
+                    </div>
+                    ${gatherDone}
                 </form>
             </div>
 
@@ -205,14 +221,18 @@ export const telliHtml = `<div x-show="activeTab === 'extras'" x-transition:ente
                     <span class="block text-sm text-muted font-sans font-light mt-1" x-text="t('fixLead')"></span>
                 </button>
                 <form x-show="telliOpen === 'fix'" x-cloak class="pb-6" @submit.prevent="submitTelli()">
+                    ${gatherLead}
+                    <div x-show="!telliNoted">
                     <label class="eyebrow" for="telli-note-fix" x-text="t('orderNote')"></label>
                     <textarea id="telli-note-fix" x-model="telliNote" rows="4" maxlength="500" :placeholder="t('orderNotePhFix')" class="w-full mt-2 bg-white border border-line focus:border-accent outline-none p-4 font-sans font-light text-base placeholder:text-line-strong resize-none"></textarea>
                     ${whenFields}
-                    <button type="submit" :disabled="telliBusy || !telliDate || (telliNote || '').trim().length < 5 || (telliQuote && telliQuote.unpriced)" class="p-btn w-full mt-6 disabled:opacity-40" x-text="telliBusy ? t('telliSending') : telliButtonLabel"></button>
+                    <button type="submit" :disabled="telliBusy || (telliNote || '').trim().length < 5 || (!telliGathering && (!telliDate || (telliQuote && telliQuote.unpriced)))" class="p-btn w-full mt-6 disabled:opacity-40" x-text="telliBusy ? t('telliSending') : (telliGathering ? t('wantIt') : telliButtonLabel)"></button>
+                    </div>
+                    ${gatherDone}
                 </form>
             </div>
 
-            <div class="border-b border-line">
+            <div class="border-b border-line" x-show="!showProvider">
                 <button type="button" class="w-full py-4 text-left" @click="setTelliOpen('warranty')">
                     <span class="flex items-baseline justify-between gap-4">
                         <span class="font-sans text-base" x-text="t('reportProblem')"></span>
@@ -233,9 +253,9 @@ export const telliHtml = `<div x-show="activeTab === 'extras'" x-transition:ente
                 </form>
             </div>
         </div>
-        <p x-show="telliQuote && telliQuote.unpriced && telliOpen && telliOpen !== 'warranty'" x-cloak class="text-sm text-muted font-sans font-light mt-3" x-text="t('noPrice')"></p>
+        <p x-show="telliQuote && telliQuote.unpriced && !telliGathering && telliOpen && telliOpen !== 'warranty'" x-cloak class="text-sm text-muted font-sans font-light mt-3" x-text="t('noPrice')"></p>
         <p x-show="telliError" x-cloak class="text-sm text-red-500 font-sans font-light mt-3" x-text="telliError"></p>
-        <p x-show="telliDone" x-cloak class="text-sm font-sans font-light mt-3" x-text="telliDone"></p>
+        <p x-show="telliDone && !telliGathering" x-cloak class="text-sm font-sans font-light mt-3" x-text="telliDone"></p>
 
         <div x-show="pastRequests.length" x-cloak class="mt-8">
             <button type="button" @click="showPastOrders = !showPastOrders" class="eyebrow" x-text="showPastOrders ? t('hideIt') : t('orderPast')"></button>

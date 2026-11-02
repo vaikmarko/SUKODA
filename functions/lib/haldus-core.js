@@ -456,6 +456,51 @@ function windowStartTime(key) {
   return (w && w.from) || '';
 }
 
+/** '15:00' or ''. Rejects ranges and loose text so a reschedule is one clock time. */
+function parseClock(value) {
+  const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(String(value || '').trim());
+  return match ? `${match[1]}:${match[2]}` : '';
+}
+
+/** Bucket a concrete time into a window, for readers that still store a window. */
+function windowForClock(clock) {
+  const time = parseClock(clock);
+  if (!time) return '';
+  const minutes = Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
+  if (minutes < 12 * 60) return 'morning';
+  if (minutes < 17 * 60) return 'afternoon';
+  return 'any';
+}
+
+/**
+ * A live visit can be moved. A visit the resident already released, while a new
+ * time waits for confirmation, can be moved too. A visit cancelled for any other
+ * reason cannot.
+ */
+function visitCanMove(booking) {
+  if (!booking) return false;
+  if (booking.status === 'scheduled' || booking.status === 'confirmed') return true;
+  return booking.status === 'cancelled' && booking.heldForReschedule === true;
+}
+
+/** One sentence for the desk: which service, which day, what they wrote. */
+function interestSummary({ serviceName, note, when }) {
+  const name = String(serviceName || '').trim();
+  const bits = [`Soovib teenust „${name}“.`];
+  const day = String(when || '').trim();
+  if (day) bits.push(`Soovitud aeg: ${day}.`);
+  const text = String(note || '').trim();
+  if (text) bits.push(text);
+  return bits.join(' ');
+}
+
+/** The time a resident asked for: the clock if they set one, otherwise the window label. */
+function requestedTimeLabel(preferredTime, timeWindow, lang) {
+  const clock = parseClock(preferredTime);
+  if (clock) return clock;
+  return timeWindowLabel(timeWindow, lang);
+}
+
 /**
  * The resident sees the person who brought them. A developer or SUKODA home
  * stays one service; we do not replace the provider the household already has.
@@ -1175,6 +1220,79 @@ function earnedCents(rows) {
   return (rows || []).reduce((sum, row) => sum + Math.max(0, Math.round(Number(row?.providerCents) || 0)), 0);
 }
 
+/** A price the cleaner typed, such as "45 €" or "45,50". A range or "kokkuleppel" is not a sum. */
+function parseEuroCents(value) {
+  const text = String(value || '').trim().toLowerCase().replace(/\s+/g, '');
+  if (!text) return null;
+  if (/alates|from|от|kokkulep|договор|hinnas|included|вцене|в цене/.test(text)) return null;
+  const cleaned = text.replace(/€/g, '').replace(/eur$/, '');
+  if (!/^\d+(?:[.,]\d{1,2})?$/.test(cleaned)) return null;
+  const n = Number(cleaned.replace(',', '.'));
+  if (!Number.isFinite(n) || n <= 0 || n > 10000) return null;
+  return Math.round(n * 100);
+}
+
+function tallinnMonthKey(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Tallinn', year: 'numeric', month: '2-digit' }).format(d).slice(0, 7);
+}
+
+function shiftMonthKey(month, delta) {
+  const m = /^(\d{4})-(\d{2})$/.exec(String(month || ''));
+  if (!m) return '';
+  const date = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1 + Number(delta || 0), 1));
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+/**
+ * Finished work the cleaner bills herself, grouped by month and home.
+ * A typed price adds to the sum. A visit without one stays on the list as agreed.
+ * Rows already paid in the app (paymentCents) stay out, so the two money paths do not mix.
+ */
+function invoiceSummary(rows, options) {
+  const months = Array.isArray(options?.months) ? options.months.filter(Boolean) : null;
+  const byMonth = new Map();
+  for (const row of rows || []) {
+    if (!row || row.status !== 'completed') continue;
+    if (Number(row.paymentCents) > 0) continue;
+    const month = tallinnMonthKey(row.scheduledAt);
+    if (!month) continue;
+    if (months && !months.includes(month)) continue;
+    const cents = parseEuroCents(row.price);
+    if (!byMonth.has(month)) byMonth.set(month, new Map());
+    const homes = byMonth.get(month);
+    const key = row.orderId || row.customerName || 'home';
+    if (!homes.has(key)) {
+      homes.set(key, { orderId: row.orderId || null, customerName: row.customerName || '', lines: [], cents: 0, unpriced: 0 });
+    }
+    const home = homes.get(key);
+    if (row.customerName) home.customerName = row.customerName;
+    home.lines.push({
+      id: row.id || null,
+      at: row.scheduledAt,
+      name: row.serviceName || '',
+      kind: row.kind || 'regular',
+      cents: cents || null,
+      price: cents ? String(row.price).trim() : null,
+    });
+    if (cents) home.cents += cents;
+    else home.unpriced += 1;
+  }
+  const order = months || [...byMonth.keys()].sort();
+  const out = [];
+  for (const month of order) {
+    const homes = byMonth.get(month);
+    if (!homes) continue;
+    const list = [...homes.values()].map((h) => {
+      h.lines.sort((a, b) => String(a.at).localeCompare(String(b.at)));
+      return h;
+    }).sort((a, b) => a.customerName.localeCompare(b.customerName, 'et'));
+    out.push({ month, cents: list.reduce((s, h) => s + h.cents, 0), homes: list });
+  }
+  return { months: out };
+}
+
 const RESIDENT_RHYTHMS = new Set(['once', 'weekly', 'biweekly', 'monthly']);
 
 /** A standing clean the resident asked for. Anything else is not a rhythm. */
@@ -1431,6 +1549,10 @@ module.exports = {
   sponsorRemainingCents,
   splitVisitPayment,
   earnedCents,
+  parseEuroCents,
+  tallinnMonthKey,
+  shiftMonthKey,
+  invoiceSummary,
   RESIDENT_RHYTHMS,
   residentRhythm,
   earliestBookableDate,
@@ -1478,6 +1600,11 @@ module.exports = {
   TIME_WINDOWS,
   timeWindowLabel,
   windowStartTime,
+  parseClock,
+  windowForClock,
+  requestedTimeLabel,
+  visitCanMove,
+  interestSummary,
   providerBroughtHome,
   MAX_CONTACTS,
   normalizeEmail,

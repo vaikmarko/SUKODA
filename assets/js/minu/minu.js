@@ -236,10 +236,10 @@ export const minuHtml = `<div x-show="activeTab === 'mine'" x-transition:enter="
 
                             <p x-show="!maintenance.items.length && extrasLoaded" class="text-sm text-muted font-sans font-light" x-text="t('nothingYet')"></p>
 
-                            <div x-show="maintenance.suggestions.length">
+                            <div x-show="upkeepSuggestions.length">
                                 <button type="button" @click="maintShowSuggestions = !maintShowSuggestions" x-show="maintenance.items.length" class="text-sm font-sans text-muted hover:text-black" x-text="maintShowSuggestions ? (t('hideIt')) : (t('addShort'))"></button>
                                 <div x-show="maintShowSuggestions || !maintenance.items.length" x-cloak>
-                                    <template x-for="s in maintenance.suggestions" :key="s.id">
+                                    <template x-for="s in upkeepSuggestions" :key="s.id">
                                         <button type="button" @click="addSuggestion(s)" :disabled="!!maintBusy" class="w-full text-left py-3 border-b border-line flex items-baseline justify-between gap-4 disabled:opacity-50 hover:border-black transition-colors">
                                             <span class="font-sans text-sm font-light" x-text="s.name"></span>
                                             <span class="text-xs text-muted font-sans font-light shrink-0" x-text="intervalLabel(s.intervalMonths)"></span>

@@ -27,7 +27,9 @@ Object.assign(dict, {
   replyReadyBody: { et: 'Vastus on kirjas. Ava ja loe.', en: 'The reply is here. Open it and read.', ru: 'Ответ здесь. Откройте и прочитайте.' },
   alsoWaiting: { et: 'Vastus on veel tulemata: {name}.', en: 'Still waiting for a reply: {name}.', ru: 'Ответ ещё не пришёл: {name}.' },
   pendingTitle: { et: 'Uus aeg on kinnitamisel', en: 'A new time is waiting for confirmation', ru: 'Новое время ждёт подтверждения' },
-  pendingBody: { et: 'Praegu kehtib aeg {when}. Kinnitus uue aja kohta tuleb siia.', en: 'For now the time is {when}. The confirmation of the new time comes here.', ru: 'Пока действует время {when}. Подтверждение нового времени придёт сюда.' },
+  pendingDropped: { et: '{asked}. Senine aeg jääb ära.', en: '{asked}. The previous time is cancelled.', ru: '{asked}. Прежнее время отменяется.' },
+  pendingDroppedShort: { et: 'Senine aeg jääb ära.', en: 'The previous time is cancelled.', ru: 'Прежнее время отменяется.' },
+  dropsAway: { et: ' jääb ära.', en: ' is cancelled.', ru: ' отменяется.' },
   seeCalendar: { et: 'Ava kalender', en: 'Open the calendar', ru: 'Открыть календарь' },
   reschedule: { et: 'Muuda aega', en: 'Change the time', ru: 'Изменить время' },
   visitDo: { et: 'Kui aeg ei sobi, muuda aega.', en: 'If the time does not suit, change the time.', ru: 'Если время не подходит, измените время.' },
@@ -83,10 +85,8 @@ Object.assign(dict, {
   questionNamed: { et: '{name} vastab kirjalikult. Vastus tuleb siia.', en: '{name} answers in writing. The reply comes here.', ru: '{name} ответит письменно. Ответ придёт сюда.' },
   issueNamed: { et: '{name} vaatab probleemi üle. Vastus tuleb siia.', en: '{name} reviews the problem. The reply comes here.', ru: '{name} рассмотрит проблему. Ответ придёт сюда.' },
   visitNamed: { et: '{name} kinnitab aja. Kinnitus tuleb siia.', en: '{name} confirms the time. The confirmation comes here.', ru: '{name} подтвердит время. Подтверждение придёт сюда.' },
-  proposeQuiet: { et: 'Uus aeg kinnitatakse siin ja kõik pere kontaktid saavad uue kalendrikutse.', en: 'The new time is confirmed here and every household contact gets an updated invite.', ru: 'Новое время подтверждается здесь, и все контакты семьи получат приглашение.' },
-  proposeNamed: { et: '{name} kinnitab uue aja ja kõik pere kontaktid saavad uue kalendrikutse.', en: '{name} confirms the new time and every household contact gets an updated invite.', ru: '{name} подтвердит новое время, и все контакты семьи получат приглашение.' },
-  proposeHint: { et: 'Paku sobiv päev.', en: 'Suggest a day.', ru: 'Предложите день.' },
-  proposeHintNamed: { et: 'Paku sobiv päev. {name} kinnitab täpse kellaaja.', en: 'Suggest a day. {name} confirms the exact time.', ru: 'Предложите день. {name} подтвердит точное время.' },
+  proposeQuiet: { et: 'Uus aeg on kinnitamisel. Senine aeg jääb ära.', en: 'The new time is waiting for confirmation. The previous time is cancelled.', ru: 'Новое время ждёт подтверждения. Прежнее время отменяется.' },
+  proposeNamed: { et: 'Uus aeg on kinnitamisel. Senine aeg jääb ära.', en: 'The new time is waiting for confirmation. The previous time is cancelled.', ru: 'Новое время ждёт подтверждения. Прежнее время отменяется.' },
 });
 
 const FAILED_SUB = new Set(['past_due', 'unpaid', 'incomplete', 'incomplete_expired']);
@@ -118,6 +118,14 @@ function reqTitle(vm, r) {
   return r.serviceNameEn || r.serviceName || vm.t('replyTitle');
 }
 
+function askedWhen(vm, request) {
+  if (!request || !request.preferredDate) return '';
+  const raw = String(request.preferredDate);
+  const iso = raw.length === 10 ? raw + 'T12:00:00' : raw;
+  const date = vm.formatDate(iso);
+  return request.preferredTime ? date + ' ' + request.preferredTime : date;
+}
+
 function thenVisit(vm) {
   const visit = (vm.upcomingBookings || [])[0];
   if (!visit) return '';
@@ -140,7 +148,6 @@ function pickNextThing(vm) {
   const t = (key, vars) => vm.t(key, vars);
   const requests = (vm.extras && vm.extras.requests) || [];
   const upcoming = vm.upcomingBookings || [];
-  const pendingIds = vm.pendingRescheduleIds || [];
   const pay = unpaidKind(vm.order);
 
   if (pay) {
@@ -155,6 +162,21 @@ function pickNextThing(vm) {
       action: t('checkAgain'),
       action2: '',
       thenLine: thenVisit(vm),
+    };
+  }
+
+  const pendingReq = vm.extrasLoaded && requests.find((r) => r.type === 'reschedule' && r.status === 'requested');
+  if (pendingReq) {
+    const asked = askedWhen(vm, pendingReq);
+    return {
+      kind: 'visit',
+      refId: pendingReq.targetBookingId || '',
+      pending: true,
+      eyebrow: t('nextEyebrow'),
+      title: t('pendingTitle'),
+      body: asked ? t('pendingDropped', { asked }) : t('pendingDroppedShort'),
+      action: '',
+      thenLine: '',
     };
   }
 
@@ -189,21 +211,18 @@ function pickNextThing(vm) {
 
   const visit = upcoming[0];
   if (visit) {
-    const pendingTime = pendingIds.includes(visit.id);
-    const when = vm.formatDate(visit.scheduledAt) + (vm.formatTime(visit.scheduledAt) ? ' ' + vm.formatTime(visit.scheduledAt) : '');
-    const who = vm.showProvider ? (visit.providerName || (vm.order && vm.order.provider && vm.order.provider.name) || '') : '';
-    const bits = [vm.formatTime(visit.scheduledAt), vm.visitLabel(visit), who].filter(Boolean).join(' · ');
-    let body = pendingTime ? t('pendingBody', { when }) : (bits ? bits + '. ' + t('visitDo') : t('visitDo'));
-    if (!pendingTime && awayCovers(vm.extras && vm.extras.away, dayOf(visit.scheduledAt))) body += ' ' + t('visitAway');
+    const whenBits = [vm.formatTime(visit.scheduledAt), vm.visitLabel(visit), vm.showProvider ? (visit.providerName || (vm.order && vm.order.provider && vm.order.provider.name) || '') : ''].filter(Boolean).join(' · ');
+    let body = whenBits ? whenBits + '. ' + t('visitDo') : t('visitDo');
+    if (awayCovers(vm.extras && vm.extras.away, dayOf(visit.scheduledAt))) body += ' ' + t('visitAway');
     const waiting = vm.extrasLoaded && waitingQuestion(requests);
     return {
       kind: 'visit',
       refId: visit.id,
-      pending: pendingTime,
+      pending: false,
       eyebrow: t('nextEyebrow'),
-      title: pendingTime ? t('pendingTitle') : vm.formatDate(visit.scheduledAt),
+      title: vm.formatDate(visit.scheduledAt),
       body,
-      action: pendingTime ? t('seeCalendar') : t('reschedule'),
+      action: t('reschedule'),
       thenLine: waiting ? t('alsoWaiting', { name: reqTitle(vm, waiting) }) : '',
     };
   }
@@ -279,8 +298,8 @@ function pickNextThing(vm) {
     }
   }
 
-  // A home without a warranty service (no developer behind it) is pointed to Services instead
-  const canReport = ((vm.extras && vm.extras.catalogue) || []).some((s) => s && s.id === 'warranty-claim');
+  // Cristelle's own clients have no builder warranty. Developer homes still report a defect.
+  const canReport = !vm.showProvider && ((vm.extras && vm.extras.catalogue) || []).some((s) => s && s.id === 'warranty-claim');
   return {
     kind: 'calm',
     refId: '',
