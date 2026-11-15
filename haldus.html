@@ -76,18 +76,12 @@
                             <button type="submit" :disabled="loginSending || !loginEmail" class="p-btn w-full mt-8" x-text="loginSending ? t('sending') : t('sendLink')"></button>
                         </form>
                     </div>
-                    <!-- Self-serve onboarding: open a desk and enter the 6-digit code right here -->
+                    <!-- Self-serve onboarding: 2 fields + trade, 6-digit code right here -->
                     <div x-show="!loginSent && signupMode && !signupCodeMode" x-cloak>
-                        <p class="text-muted font-sans font-light text-sm mb-8 max-w-sm mx-auto leading-relaxed" x-text="t('signupLead')"></p>
+                        <p class="text-muted font-sans font-light text-sm mb-8 max-w-sm mx-auto" x-text="t('signupLead')"></p>
                         <form @submit.prevent="signup()" class="text-left mb-8 space-y-5">
-                            <div class="grid sm:grid-cols-2 gap-4">
-                                <div><label class="h-label" x-text="t('nameLabel')"></label><input type="text" x-model="signupForm.name" required autocomplete="name" class="h-input font-sans"></div>
-                                <div><label class="h-label" x-text="t('companyOpt')"></label><input type="text" x-model="signupForm.businessName" autocomplete="organization" class="h-input font-sans"></div>
-                            </div>
-                            <div class="grid sm:grid-cols-2 gap-4">
-                                <div><label class="h-label" x-text="t('emailLabel')"></label><input type="email" x-model="signupForm.email" required autocomplete="email" class="h-input font-sans"></div>
-                                <div><label class="h-label" x-text="t('phoneOpt')"></label><input type="tel" x-model="signupForm.phone" autocomplete="tel" class="h-input font-sans"></div>
-                            </div>
+                            <div><label class="h-label" x-text="t('nameLabel')"></label><input type="text" x-model="signupForm.name" required autocomplete="name" class="h-input font-sans"></div>
+                            <div><label class="h-label" x-text="t('emailLabel')"></label><input type="email" x-model="signupForm.email" required autocomplete="email" class="h-input font-sans"></div>
                             <div>
                                 <p class="h-label" x-text="t('offerLabel')"></p>
                                 <div class="flex flex-wrap gap-2 mt-1">
@@ -96,10 +90,9 @@
                                     </template>
                                 </div>
                             </div>
-                            <div><label class="h-label" x-text="t('areaLabel')"></label><input type="text" x-model="signupForm.city" :placeholder="t('areaPh')" class="h-input font-sans"></div>
                             <p x-show="loginError" x-cloak class="text-sm text-accent font-sans font-light" x-text="loginError"></p>
                             <button type="submit" :disabled="loginSending || !signupForm.name || !signupForm.email" class="p-btn w-full" x-text="loginSending ? t('opening') : t('openDesk')"></button>
-                            <p class="text-xs text-muted font-sans font-light leading-relaxed" x-text="t('signupPricing')"></p>
+                            <p class="text-xs text-muted font-sans font-light text-center" x-text="t('signupPricing')"></p>
                         </form>
                     </div>
                     <!-- Instant 6-digit code step after signup -->
@@ -1198,7 +1191,7 @@
             sendLink: { et: 'Saada link', en: 'Send the link' },
             sending: { et: 'Saadan…', en: 'Sending…' },
             signupTitle: { et: 'Ava oma töölaud', en: 'Open your desk' },
-            signupLead: { et: 'Lisa oma kliendid ja ajad. Iga klient saab äpi, kalendrikutsed ja automaatsed meeldetuletused. Kood tuleb kohe e-postile.', en: 'Add your clients and times. Each client gets the app, calendar invites and automatic reminders. The code arrives by e-mail at once.' },
+            signupLead: { et: '6-kohaline sisenemiskood tuleb kohe e-postile.', en: 'Your 6-digit sign-in code arrives immediately.' },
             codeTitle: { et: 'Sisesta kood', en: 'Enter the code' },
             codeSentLead: { et: 'Saatsime 6-kohalise koodi aadressile {email}. Kirjuta kood siia või vajuta kirjas olevale nupule.', en: 'We sent a 6-digit code to {email}. Enter the code here or tap the button in the e-mail.' },
             codeLabel: { et: '6-kohaline kood', en: '6-digit code' },
@@ -1220,7 +1213,7 @@
             areaPh: { et: 'Tallinn, Viimsi', en: 'Tallinn, Viimsi' },
             openDesk: { et: 'Ava töölaud', en: 'Open the desk' },
             opening: { et: 'Avan…', en: 'Opening…' },
-            signupPricing: { et: 'Tasuta kuni 3 kodu. Rohkem kodusid: Standard 19 €/kuus (kuni 20 kodu) või Stuudio 39 €/kuus (piiramatult). Kuu kaupa, lõpetatav igal ajal. Klient ei maksa töölaua eest midagi.', en: 'Free for up to 3 homes. More homes: Standard 19 €/month (up to 20 homes) or Stuudio 39 €/month (unlimited). Monthly, cancel any time. The client never pays for the desk.' },
+            signupPricing: { et: 'Kuni 3 kodu tasuta · edasi alates 19 € kuus.', en: 'Up to 3 homes free · then from 19 € a month.' },
             linkSent: { et: 'Link on saadetud. Ava oma e-post.', en: 'The link is sent. Open your e-mail.' },
             linkIsHome: { et: 'See e-post kuulub kodule, mitte töölauale. Link avab sinu koduportaali.', en: 'This e-mail belongs to a home, not a desk. The link opens your home portal.' },
             linkMissing: { et: 'Kui kirja ei tule, vaata rämpsposti või kirjuta', en: 'If no e-mail arrives, check spam or write to' },
@@ -1300,7 +1293,7 @@
             searchHomes: { et: 'Otsi nime või aadressi järgi', en: 'Search by name or address' },
             addClient: { et: 'Lisa klient', en: 'Add a client' },
             addClientTitle: { et: 'Lisa klient', en: 'Add a client' },
-            addClientLead: { et: 'Kirjuta kliendi nimi, aadress ja millal sa käid. Klient saab lingi ja avab äpi.', en: 'Enter the client’s name, address and when you come. The client gets a link and opens the app.' },
+            addClientLead: { et: 'Klient saab sisenemislingi ja kalendrikutsed automaatselt.', en: 'The client receives their portal link and calendar invites automatically.' },
             nameReq: { et: 'Nimi', en: 'Name' },
             emailReq: { et: 'E-post', en: 'E-mail' },
             phoneOpt: { et: 'Telefon (valikuline)', en: 'Phone (optional)' },
@@ -1316,10 +1309,10 @@
             cleanPriceOpt: { et: 'Koristuse hind (valikuline)', en: 'Cleaning price (optional)' },
             visitPriceOpt: { et: 'Visiidi hind (valikuline)', en: 'Visit price (optional)' },
             schedFlex: { et: 'Kokkuleppel (lisan ajad ise)', en: 'On request (add times manually)' },
-            quickInviteBanner: { et: 'Ei taha kliendi andmeid ise trükkida? Saada talle oma kutselink ja ta täidab andmed ise.', en: 'Prefer not to type client details yourself? Send them your invite link and they fill it in.' },
+            quickInviteBanner: { et: 'Või jaga kutselinki — klient täidab andmed ise.', en: 'Or share your invite link — the client fills in their details.' },
             shareInviteBtn: { et: 'Jaga kutselinki', en: 'Share invite link' },
-            digitalInviteTitle: { et: 'Sinu digitaalne kutselink ja QR-kood', en: 'Your digital invite link and QR code' },
-            digitalInviteLead: { et: 'Saada see link kliendile sõnumiga või näita QR-koodi telefoni ekraanilt. Klient avab lingi, sisestab oma kodu andmed ja ilmub kohe sinu kodude nimekirja.', en: 'Send this link to a client in a message or show the QR code on your phone screen. The client opens the link, enters their home details and appears right under your homes.' },
+            digitalInviteTitle: { et: 'Sinu kutselink ja QR-kood', en: 'Your invite link and QR code' },
+            digitalInviteLead: { et: 'Jaga linki sõnumiga või näita QR-koodi telefoni ekraanilt.', en: 'Share the link in a message or show the QR code on your screen.' },
             showQr: { et: 'Näita QR-koodi', en: 'Show QR code' },
             hideQr: { et: 'Peida QR-kood', en: 'Hide QR code' },
             scanQrHint: { et: 'Klient suunab telefoni kaamera ekraanile ja avab oma kodu.', en: 'The client points their phone camera at the screen to open their home.' },
@@ -1328,7 +1321,7 @@
             markInvoiced: { et: 'Märgi saadetuks', en: 'Mark invoiced' },
             invoiceSentDone: { et: 'Arve saadetud', en: 'Invoiced' },
             openNewClientsLabel: { et: 'Võtan vastu ka uusi kliente oma piirkonnas', en: 'I also accept new clients in my area' },
-            openNewClientsHint: { et: 'Sinu nimi, piirkond, püsikodude arv ja hinnakiri on nähtavad peredele, kes valivad äpis spetsialisti. Kokkulepe ja kogu tasu jäävad 100% sinu kätte.', en: 'Your name, area, recurring home count and prices become visible to households choosing a specialist in the app. Every agreement and 100% of your fee stay directly with you.' },
+            openNewClientsHint: { et: 'Nähtav sinu piirkonna peredele · 100% tasust jääb sinule.', en: 'Visible to households in your area · 100% of fees stay yours.' },
             bioLabel: { et: 'Lühitutvustus (valikuline)', en: 'Short introduction (optional)' },
             bioPh: { et: 'nt Põhjalik ja rahulik koduhooldaja, 6 a kogemust, oma vahendid kaasas', en: 'e.g. Thorough and calm housekeeper, 6 years of experience, own supplies' },
             awayRemovedProvider: { et: 'Eemalolek on eemaldatud.', en: 'The away period is removed.' },
