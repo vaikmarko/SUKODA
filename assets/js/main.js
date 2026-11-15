@@ -184,13 +184,7 @@ function hidePreloader() {
   const preloader = document.getElementById('preloader');
   if (!preloader || preloader.dataset.done) return;
   preloader.dataset.done = '1';
-  const reveal = () => preloader.classList.add('hidden');
-  if (sessionStorage.getItem('sukoda_visited')) {
-    reveal();
-    return;
-  }
-  sessionStorage.setItem('sukoda_visited', '1');
-  setTimeout(reveal, 120);
+  preloader.classList.add('hidden');
 }
 
 // Do not wait for window "load": consent-gated analytics keep that event
