@@ -36,7 +36,8 @@ add({
   lastDoneField: { et: 'Viimati tehtud', en: 'Last done', ru: 'Последний раз' },
   reminderMail: { et: 'Saada mulle meeldetuletus e-postiga kaks nädalat enne tähtaega.', en: 'Send me an e-mail reminder two weeks before the due date.', ru: 'Присылать мне напоминание по почте за две недели до срока.' },
   whoNotified: { et: 'Kes saab teateid', en: 'Who gets the notices', ru: 'Кто получает уведомления' },
-  whoElse: { et: 'Lisa pereliikmed, kes peavad aegadest teada saama. Iga lisatud inimene saab samad teated ja kalendrikutsed.', en: 'Add the household members who should know the times. Each added person gets the same notices and calendar invites.', ru: 'Добавьте членов семьи, которым нужно знать о времени. Каждый добавленный человек получает те же уведомления и приглашения в календарь.' },
+  whoElse: { et: 'Lisa pereliikmed, kes tegelevad kodu ja koristajaga. Iga lisatud inimene saab samad teated ning avab rakenduse oma e-postiga aadressil sukoda.ee/app, et aegu vaadata, lisateenuseid tellida ja tagasisidet jätta.', en: 'Add the household members who deal with the home and the cleaner. Each added person gets the same notices and opens the app with their own e-mail at sukoda.ee/app to see times, order extras and leave feedback.', ru: 'Добавьте членов семьи, которые занимаются домом и уборкой. Каждый добавленный человек получает те же уведомления и открывает приложение со своей эл. почтой на sukoda.ee/app, чтобы смотреть время, заказывать допуслуги и оставлять отзывы.' },
+  ownerBadge: { et: 'Omanik', en: 'Owner', ru: 'Владелец' },
   newPerson: { et: 'Uus inimene', en: 'New person', ru: 'Новый человек' },
   sameTimes: { et: 'Saab samad teated', en: 'Gets the same notices', ru: 'Получает те же уведомления' },
   household: { et: 'Pere', en: 'Household', ru: 'Семья' },
@@ -160,9 +161,9 @@ export const minuHtml = `<div x-show="activeTab === 'mine'" x-transition:enter="
                                 <div class="mt-8 pt-6 border-t border-line">
                                     <p class="eyebrow" x-text="t('langLabel')"></p>
                                     <div class="flex gap-4 mt-3 text-sm font-sans">
-                                        <button type="button" @click="lang = 'et'; localStorage.setItem('sukoda_lang', 'et')" :class="lang === 'et' ? 'text-black' : 'text-muted'" class="py-2 min-w-11">ET</button>
-                                        <button type="button" @click="lang = 'en'; localStorage.setItem('sukoda_lang', 'en')" :class="lang === 'en' ? 'text-black' : 'text-muted'" class="py-2 min-w-11">EN</button>
-                                        <button type="button" @click="lang = 'ru'; localStorage.setItem('sukoda_lang', 'ru')" :class="lang === 'ru' ? 'text-black' : 'text-muted'" class="py-2 min-w-11">RU</button>
+                                        <button type="button" @click="setPortalLang('et')" :class="lang === 'et' ? 'text-black' : 'text-muted'" class="py-2 min-w-11">ET</button>
+                                        <button type="button" @click="setPortalLang('en')" :class="lang === 'en' ? 'text-black' : 'text-muted'" class="py-2 min-w-11">EN</button>
+                                        <button type="button" @click="setPortalLang('ru')" :class="lang === 'ru' ? 'text-black' : 'text-muted'" class="py-2 min-w-11">RU</button>
                                     </div>
                                 </div>
                             </div>
@@ -289,19 +290,19 @@ export const minuHtml = `<div x-show="activeTab === 'mine'" x-transition:enter="
                                         <p class="truncate" x-text="order?.customerName"></p>
                                         <p class="text-sm text-muted font-light truncate"><span x-text="order?.customerEmail"></span><span x-show="order?.customerPhone" x-text="' · ' + order?.customerPhone"></span></p>
                                     </div>
-                                    <span class="eyebrow shrink-0" x-text="t('youShort')"></span>
+                                    <span class="eyebrow shrink-0" x-text="viewer && viewer.primary === false ? t('ownerBadge') : t('youShort')"></span>
                                 </div>
                                 <template x-for="(c, i) in contacts" :key="c.id || ('new-' + i)">
                                     <div class="border border-line bg-white p-4">
-                                        <div class="flex items-center gap-4 mb-4">
+                                        <div class="flex items-center gap-4" :class="(!viewer || viewer.primary) ? 'mb-4' : ''">
                                             <div class="w-10 h-10 rounded-full bg-cream text-black flex items-center justify-center text-sm shrink-0" x-text="(c.name || '?').charAt(0)"></div>
                                             <div class="min-w-0 flex-1">
                                                 <p class="truncate font-sans" x-text="c.name || (t('newPerson'))"></p>
-                                                <p class="text-sm text-muted font-light truncate" x-text="t('sameTimes')"></p>
+                                                <p class="text-sm text-muted font-light truncate" x-text="(!viewer || viewer.primary) ? t('sameTimes') : [c.email, c.phone].filter(Boolean).join(' · ')"></p>
                                             </div>
-                                            <span class="eyebrow shrink-0" x-text="c.role === 'tenant' ? t('tenantOn') : t('household')"></span>
+                                            <span class="eyebrow shrink-0" x-text="(viewer && !viewer.primary && c.email && viewer.email && c.email.toLowerCase() === viewer.email.toLowerCase()) ? t('youShort') : (c.role === 'tenant' ? t('tenantOn') : t('household'))"></span>
                                         </div>
-                                        <div class="grid sm:grid-cols-2 gap-4">
+                                        <div class="grid sm:grid-cols-2 gap-4" x-show="!viewer || viewer.primary">
                                             <label class="block">
                                                 <span class="eyebrow mb-1" x-text="t('nameLabel')"></span>
                                                 <input type="text" x-model="c.name" :placeholder="t('namePh')" class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-line-strong">

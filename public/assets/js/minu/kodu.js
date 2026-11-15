@@ -51,6 +51,9 @@ Object.assign(dict, {
   pastTitle: { et: 'Tehtud visiidid', en: 'Past visits', ru: 'Прошедшие визиты' },
   lastVisitLabel: { et: 'Viimane visiit', en: 'Last visit', ru: 'Последний визит' },
   doneOn: { et: 'Tehtud {date}', en: 'Done {date}', ru: 'Сделано {date}' },
+  feedbackAction: { et: 'Jäta tagasiside või märkus', en: 'Leave feedback or a note', ru: 'Оставить отзыв или заметку' },
+  leaveFeedback: { et: 'Tagasiside', en: 'Feedback', ru: 'Отзыв' },
+  writeCleaner: { et: 'Kirjuta koristajale', en: 'Write to the cleaner', ru: 'Написать уборщику' },
   standingTitle: { et: 'Püsikoristus', en: 'Standing clean', ru: 'Постоянная уборка' },
   allClearTitle: { et: 'Järgmist visiiti ei ole plaanis', en: 'No visit is planned', ru: 'Визитов пока не запланировано' },
   allClearBody: { et: 'Kui kodus on midagi katki, teata probleemist. Garantii ajal on ülevaatus tasuta.', en: 'If something at home is broken, report the problem. During the warranty the inspection is free.', ru: 'Если дома что-то сломалось, сообщите о проблеме. В гарантийный срок осмотр бесплатный.' },
@@ -166,16 +169,17 @@ function pickNextThing(vm) {
   }
 
   const pendingReq = vm.extrasLoaded && requests.find((r) => r.type === 'reschedule' && r.status === 'requested');
-  if (pendingReq) {
-    const asked = askedWhen(vm, pendingReq);
+  const pendingId = (pendingReq && pendingReq.targetBookingId) || ((vm.pendingRescheduleIds || [])[0] || '');
+  if (pendingReq || pendingId) {
+    const asked = pendingReq ? askedWhen(vm, pendingReq) : '';
     return {
       kind: 'visit',
-      refId: pendingReq.targetBookingId || '',
+      refId: pendingId,
       pending: true,
       eyebrow: t('nextEyebrow'),
       title: t('pendingTitle'),
       body: asked ? t('pendingDropped', { asked }) : t('pendingDroppedShort'),
-      action: '',
+      action: t('seeCalendar'),
       thenLine: '',
     };
   }

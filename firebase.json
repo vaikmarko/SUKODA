@@ -147,6 +147,13 @@
         }
       },
       {
+        "source": "/api/me/lang",
+        "function": {
+          "functionId": "portalExtrasApi",
+          "region": "europe-west1"
+        }
+      },
+      {
         "source": "/api/me/away",
         "function": {
           "functionId": "portalExtrasApi",

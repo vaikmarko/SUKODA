@@ -657,6 +657,21 @@ function resolveRecipients(order) {
   return out;
 }
 
+/**
+ * Everyone who should hear about a request update: all household notifying
+ * recipients plus the specific family member who submitted the request (even if
+ * their routine visit notifications are turned off).
+ */
+function resolveRequestRecipients(order, request) {
+  const out = resolveRecipients(order);
+  const seen = new Set(out.map((r) => r.email));
+  const extraEmail = normalizeEmail(request?.submittedBy?.email || request?.authorEmail || '');
+  if (extraEmail && isValidEmail(extraEmail) && !seen.has(extraEmail)) {
+    out.push({ email: extraEmail, name: String(request?.submittedBy?.name || '').trim() });
+  }
+  return out;
+}
+
 // ------------------------------------------------------------
 // Recurring schedule → occurrences
 // ------------------------------------------------------------
@@ -704,6 +719,7 @@ function sanitizeSchedule(input) {
     return { error: 'Kestus peab olema 30 kuni 600 minutit' };
   }
 
+  const price = String(input.price || '').trim().slice(0, 60);
   return {
     schedule: {
       active: true,
@@ -713,6 +729,7 @@ function sanitizeSchedule(input) {
       time,
       durationMin,
       note: String(input.note || '').slice(0, 300),
+      ...(price ? { price } : {}),
     },
   };
 }
@@ -1335,6 +1352,21 @@ function canAutoPlaceVisit({ preferredDate, timeWindow, todayStr, availability, 
   return true;
 }
 
+/** Extra services a cleaner can offer (and price) for her homes. */
+const CLEANER_EXTRA_IDS = [
+  'windows',
+  'deep-clean',
+  'fridge-oven',
+  'appliance-care',
+  'linens',
+  'ironing',
+  'laundry',
+  'rugs',
+  'away-care',
+  'flowers',
+  'extra-clean',
+];
+
 function sanitizeAvailability(input) {
   const rawDays = Array.isArray(input?.days) ? input.days : [1, 2, 3, 4, 5];
   const days = [...new Set(rawDays.map((d) => Number(d)).filter((d) => d >= 1 && d <= 7))].sort((a, b) => a - b);
@@ -1344,6 +1376,16 @@ function sanitizeAvailability(input) {
   const end = /^\d{2}:\d{2}$/.test(String(input?.hours?.end || '')) ? String(input.hours.end) : '17:00';
   const districts = (Array.isArray(input?.districts) ? input.districts : [])
     .map((s) => String(s || '').trim()).filter(Boolean).slice(0, 12);
+  const offeredExtras = Array.isArray(input?.offeredExtras)
+    ? [...new Set(input.offeredExtras.map((id) => String(id || '')).filter((id) => CLEANER_EXTRA_IDS.includes(id)))]
+    : [...CLEANER_EXTRA_IDS];
+  const extraPrices = {};
+  if (input?.extraPrices && typeof input.extraPrices === 'object') {
+    for (const id of CLEANER_EXTRA_IDS) {
+      const val = String(input.extraPrices[id] || '').trim().slice(0, 40);
+      if (val) extraPrices[id] = val;
+    }
+  }
   return {
     days: days.length ? days : [1, 2, 3, 4, 5],
     hours: { start, end },
@@ -1351,7 +1393,60 @@ function sanitizeAvailability(input) {
     maxPerDay: Number.isInteger(max) ? Math.min(12, Math.max(1, max)) : 4,
     districts,
     priceNote: String(input?.priceNote || '').trim().slice(0, 240),
+    offeredExtras,
+    extraPrices,
   };
+}
+
+function cleanerOffersExtra(availability, serviceId) {
+  const id = String(serviceId || '');
+  if (!CLEANER_EXTRA_IDS.includes(id)) return true;
+  if (!Array.isArray(availability?.offeredExtras)) return true;
+  return availability.offeredExtras.includes(id);
+}
+
+function cleanerExtraPrice(availability, serviceId) {
+  const id = String(serviceId || '');
+  if (!availability?.extraPrices || typeof availability.extraPrices !== 'object') return '';
+  return String(availability.extraPrices[id] || '').trim();
+}
+
+/**
+ * Category → providerId for a home. If no separate florist is linked on the home
+ * (or as the cleaner's default), the home's cleaner handles flower requests herself
+ * whenever she offers flowers.
+ */
+function resolveServiceRoutes(order, provider) {
+  const out = {};
+  for (const [cat, def] of Object.entries(SERVICE_CATEGORIES)) {
+    out[cat] = (order && order[def.orderField]) || null;
+  }
+  if (!out.flowers) {
+    if (provider?.defaultFloristId) {
+      out.flowers = provider.defaultFloristId;
+    } else if (order?.providerId && cleanerOffersExtra(provider?.availability, 'flowers')) {
+      out.flowers = order.providerId;
+    }
+  }
+  return out;
+}
+
+/**
+ * Whether a requested visit date is allowed. Attaching an extra to an already
+ * scheduled visit (`with-visit` or matching an upcoming visit date on the home)
+ * bypasses the new-booking notice window (`leadDays`), because the cleaner is
+ * already coming to this home on that day.
+ */
+function isDateAllowedForRequest({ preferredDate, timeWindow, todayStr, leadDays, category, kind, urgent, upcomingVisitDates }) {
+  if (!preferredDate || (kind || 'visit') !== 'visit' || urgent) return true;
+  if (todayStr && preferredDate < todayStr) return false;
+  if (timeWindow === 'with-visit') return true;
+  if (Array.isArray(upcomingVisitDates) && upcomingVisitDates.includes(preferredDate)) return true;
+  if (category === 'cleaning') {
+    const earliest = earliestBookableDate(todayStr, leadDays);
+    if (earliest && preferredDate < earliest) return false;
+  }
+  return true;
 }
 
 function visitWindowOpen(scheduledAt, endTime, now, windowMs = 2 * 60 * 60 * 1000) {
@@ -1558,7 +1653,12 @@ module.exports = {
   earliestBookableDate,
   weekdayOfDateStr,
   canAutoPlaceVisit,
+  CLEANER_EXTRA_IDS,
   sanitizeAvailability,
+  cleanerOffersExtra,
+  cleanerExtraPrice,
+  resolveServiceRoutes,
+  isDateAllowedForRequest,
   visitWindowOpen,
   warrantyUntilDate,
   giftSpent,
@@ -1611,6 +1711,7 @@ module.exports = {
   isValidEmail,
   sanitizeContacts,
   resolveRecipients,
+  resolveRequestRecipients,
   viewerRole,
   withoutOwnership,
   homesForEmail,

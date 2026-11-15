@@ -326,7 +326,7 @@
                                         </div>
                                         <p class="text-sm font-sans font-light mt-3 leading-relaxed" x-text="lastThreadText(r)"></p>
                                         <p class="text-xs text-muted font-sans font-light mt-2" x-show="r.kind !== 'question'">
-                                            <span x-text="r.preferredDate ? t('wishDate', { date: fmtDateLong(r.preferredDate) }) : t('earliest')"></span><span x-show="r.preferredTime" x-text="' · ' + r.preferredTime"></span><span x-show="r.urgent" x-text="' · ' + t('urgent')"></span>
+                                            <span x-text="r.preferredDate ? t('wishDate', { date: fmtDateLong(r.preferredDate) }) : t('earliest')"></span><span x-show="r.preferredTime" x-text="' · ' + r.preferredTime"></span><span x-show="!r.preferredTime && r.timeWindow === 'with-visit'" x-text="' · ' + t('withVisitTag')"></span><span x-show="r.urgent" x-text="' · ' + t('urgent')"></span>
                                         </p>
                                         <p x-show="r.access" class="text-xs text-muted font-sans font-light mt-1"><span x-text="t('access') + ': '"></span><span x-text="r.access"></span></p>
                                         <template x-if="threadMessages(r).length > 1">
@@ -466,6 +466,13 @@
                         <form class="border-t border-line pt-6" @submit.prevent="saveProviderAway()">
                             <p class="eyebrow" x-text="t('awayTitle')"></p>
                             <p class="text-sm text-muted font-sans font-light mt-2" x-text="t('awayBody')"></p>
+                            <div x-show="provider?.awayPeriods?.length" x-cloak class="mt-4 border border-line divide-y divide-line bg-white">
+                                <template x-for="ap in (provider?.awayPeriods || [])" :key="ap.id">
+                                    <div class="px-4 py-2.5 text-sm font-sans font-light">
+                                        <span x-text="fmtDateShort(ap.from)"></span><span x-show="ap.to && ap.to !== ap.from" x-text="' – ' + fmtDateShort(ap.to)"></span>
+                                    </div>
+                                </template>
+                            </div>
                             <div class="grid sm:grid-cols-2 gap-4 mt-4">
                                 <label class="block">
                                     <span class="h-label" x-text="t('awayFrom')"></span>
@@ -517,7 +524,22 @@
                                     <input type="text" class="h-input" maxlength="240" x-model="availForm.priceNote" :placeholder="t('priceNotePh')">
                                 </label>
                             </div>
-                            <button type="submit" class="p-btn mt-4" :disabled="availSaving" x-text="availSaving ? t('savingProfile') : t('saveAvail')"></button>
+                            <div x-show="isCleaningProvider && cleanerExtraRows.length" class="mt-8 pt-6 border-t border-line">
+                                <p class="eyebrow" x-text="t('extrasOfferTitle')"></p>
+                                <p class="text-sm text-muted font-sans font-light mt-1 mb-4" x-text="t('extrasOfferLead')"></p>
+                                <div class="bg-white border border-line divide-y divide-line">
+                                    <template x-for="ex in cleanerExtraRows" :key="ex.id">
+                                        <div class="px-4 py-3 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3">
+                                            <label class="flex items-center gap-3 cursor-pointer min-w-0 flex-1">
+                                                <input type="checkbox" class="accent-black" :checked="availForm.offeredExtras.includes(ex.id)" @change="toggleOfferedExtra(ex.id)">
+                                                <span class="text-sm font-sans font-light truncate" x-text="lang === 'en' ? (ex.nameEn || ex.name) : ex.name"></span>
+                                            </label>
+                                            <input x-show="availForm.offeredExtras.includes(ex.id)" type="text" maxlength="40" :placeholder="ex.priceHint || '45 €'" :aria-label="(lang === 'en' ? (ex.nameEn || ex.name) : ex.name) + ' ' + t('priceLabel')" x-model="availForm.extraPrices[ex.id]" class="h-input sm:w-36 text-sm sm:text-right py-1.5">
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                            <button type="submit" class="p-btn mt-5" :disabled="availSaving" x-text="availSaving ? t('savingProfile') : t('saveAvail')"></button>
                             <p x-show="availError" x-cloak class="text-sm text-red-500 font-sans font-light mt-3" x-text="availError"></p>
                         </form>
 
@@ -618,7 +640,7 @@
                                 <select id="visit-duration" x-model.number="visitModal.durationMin" class="h-select"><template x-for="d in durationOptions" :key="d"><option :value="d" x-text="d + ' ' + t('minutes')"></option></template></select>
                             </div>
                             <div x-show="!visitModal.bookingId"><label class="h-label" for="visit-type" x-text="t('visitType')"></label>
-                                <select id="visit-type" x-model="visitModal.serviceId" class="h-select" :required="!isCleaningProvider">
+                                <select id="visit-type" x-model="visitModal.serviceId" @change="if (!visitModal.price && visitModal.serviceId && availForm.extraPrices[visitModal.serviceId]) visitModal.price = availForm.extraPrices[visitModal.serviceId]" class="h-select" :required="!isCleaningProvider">
                                     <option x-show="isCleaningProvider" value="" x-text="t('regularClean')"></option>
                                     <option x-show="!isCleaningProvider" value="" disabled x-text="t('pickVisitType')"></option>
                                     <template x-for="s in catalogue" :key="s.id"><option :value="s.id" x-text="s.name"></option></template>
@@ -735,6 +757,27 @@
                         <p class="text-sm font-light" x-text="firstVisitLine()"></p>
 
                         <div>
+                            <label class="h-label" x-text="t('cleanPriceOpt')"></label>
+                            <input type="text" x-model="customerModal.form.price" maxlength="40" placeholder="65 €" class="h-input">
+                            <p class="text-xs text-muted font-light mt-1.5" x-text="t('priceToInvoice')"></p>
+                        </div>
+
+                        <div>
+                            <button type="button" x-show="!customerModal.form.showContact2" @click="customerModal.form.showContact2 = true" class="h-link h-link-accent" x-text="t('addFamilyMember')"></button>
+                            <div x-show="customerModal.form.showContact2" x-cloak class="space-y-3 border border-line bg-white p-4">
+                                <div class="flex items-center justify-between">
+                                    <p class="h-label mb-0" x-text="t('familyMemberTitle')"></p>
+                                    <button type="button" @click="customerModal.form.showContact2 = false; customerModal.form.contact2 = { name: '', email: '' }" class="text-xs text-muted hover:text-black" x-text="t('remove')"></button>
+                                </div>
+                                <p class="text-xs text-muted font-light" x-text="t('familyMemberHint')"></p>
+                                <div class="grid sm:grid-cols-2 gap-4">
+                                    <div><label class="h-label" x-text="t('nameLabel')"></label><input type="text" x-model="customerModal.form.contact2.name" class="h-input"></div>
+                                    <div><label class="h-label" x-text="t('emailLabel')"></label><input type="email" x-model="customerModal.form.contact2.email" class="h-input"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
                             <p class="h-label" x-text="t('whatLabel')"></p>
                             <p class="text-sm text-muted font-light mb-3" x-text="t('whatLead')"></p>
                             <div class="flex flex-wrap gap-2">
@@ -813,6 +856,9 @@
                                     </div>
                                     <div><label class="h-label" for="sched-dur" x-text="t('durationLabel')"></label>
                                         <select id="sched-dur" x-model.number="detail.scheduleForm.durationMin" class="h-select"><template x-for="d in durationOptions" :key="d"><option :value="d" x-text="d + ' ' + t('minutes')"></option></template></select>
+                                    </div>
+                                    <div class="sm:col-span-2"><label class="h-label" for="sched-price" x-text="t('cleanPriceOpt')"></label>
+                                        <input id="sched-price" type="text" x-model="detail.scheduleForm.price" maxlength="40" placeholder="65 €" class="h-input">
                                     </div>
                                     <p class="sm:col-span-2 text-xs text-muted font-light" x-text="schedulePreview(detail.scheduleForm)"></p>
                                 </div>
@@ -1182,6 +1228,10 @@
             rhythmLabel: { et: 'Kui tihti', en: 'How often' },
             dayLabel: { et: 'Nädalapäev', en: 'Weekday' },
             firstVisit: { et: 'Esimene kord on {when} kell {time}. Kestus {hours} tundi.', en: 'The first visit is {when} at {time}. It takes {hours} hours.' },
+            cleanPriceOpt: { et: 'Koristuse hind (valikuline)', en: 'Cleaning price (optional)' },
+            addFamilyMember: { et: '+ Lisa teine pereliige', en: '+ Add another household member' },
+            familyMemberTitle: { et: 'Teine pereliige', en: 'Second household member' },
+            familyMemberHint: { et: 'Saab samad teated ja avab rakenduse oma e-postiga, et jätta tagasisidet ja tellida lisateenuseid.', en: 'Gets the same notices and opens the app with their own e-mail to leave feedback and order extras.' },
             holidaySkip: { et: 'See päev on riigipüha. Esimene visiit liigub järgmisele korrale.', en: 'That day is a public holiday. The first visit moves to the next one.' },
             whatLabel: { et: 'Lisaks koristusele', en: 'Besides the clean' },
             whatLead: { et: 'Märgi, mida sa selles kodus veel teed. Tavakoristus on juba graafikus.', en: 'Mark what else you do at this home. The regular clean is already on the schedule.' },
@@ -1322,6 +1372,7 @@
             wishesWaiting: { et: 'Ootab sinu vastust', en: 'Waiting for your reply' },
             wishesNone: { et: 'Uusi soove pole. Kliendi uus soov ilmub siia.', en: 'No new wishes. A client’s new wish appears here.' },
             wishDate: { et: 'Klient soovib {date}', en: 'The client asks for {date}' },
+            withVisitTag: { et: 'koos koristusega', en: 'with the clean' },
             earliest: { et: 'Klient soovib esimesel võimalusel', en: 'The client asks for the earliest time' },
             urgent: { et: 'Kiire', en: 'Urgent' },
             confirmTime: { et: 'Kinnita aeg', en: 'Confirm a time' },
@@ -1443,7 +1494,9 @@
             districtsLabel: { et: 'Linnaosad', en: 'Districts' },
             priceNoteLabel: { et: 'Hinnad (klient näeb)', en: 'Prices (the client sees)' },
             priceNotePh: { et: '1–2 tuba 45 €, 3 tuba 60 €, aknad 25 €', en: '1–2 rooms 45 €, 3 rooms 60 €, windows 25 €' },
-            saveAvail: { et: 'Salvesta tööaeg', en: 'Save the working time' },
+            extrasOfferTitle: { et: 'Lisateenused ja hinnad', en: 'Extra services and prices' },
+            extrasOfferLead: { et: 'Märgi lisateenused, mida sinu kliendid saavad äpis tellida, ja kirjuta soovi korral oma hind.', en: 'Tick the extra services your clients can order in the app, and write your price if you wish.' },
+            saveAvail: { et: 'Salvesta tööaeg ja teenused', en: 'Save working time and services' },
             availSaved: { et: 'Tööaeg on salvestatud.', en: 'The working time is saved.' },
             buildingTitle: { et: 'Maja', en: 'Building' },
             buildingName: { et: 'Maja nimi või aadress', en: 'Building name or address' },
@@ -1503,7 +1556,16 @@
             provider: null, customers: [], bookings: [], requests: [], invoice: { months: [] }, catalogue: [], florists: [], maintenanceCatalogue: [],
             billing: { plan: 'free', planName: 'Tasuta', homes: 0, limit: 3, plans: [], hasSubscription: false, cancelAtPeriodEnd: false, periodEnd: null, status: null }, billingBusy: false, billingError: '', invoices: [], inviteCards: [],
             earnedCents: null,
-            availForm: { leadDays: 14, maxPerDay: 4, days: [1, 2, 3, 4, 5], hours: { start: '08:00', end: '17:00' }, districtsText: '', priceNote: '' }, availSaving: false, availError: '',
+            availForm: {
+                leadDays: 14,
+                maxPerDay: 4,
+                days: [1, 2, 3, 4, 5],
+                hours: { start: '08:00', end: '17:00' },
+                districtsText: '',
+                priceNote: '',
+                offeredExtras: ['windows', 'deep-clean', 'fridge-oven', 'appliance-care', 'linens', 'ironing', 'laundry', 'rugs', 'away-care', 'flowers', 'extra-clean'],
+                extraPrices: {},
+            }, availSaving: false, availError: '',
             buildingForm: { name: '', warranty: 'desk', building: 'desk' }, buildingSaving: false,
             handoverForm: { buildingId: '', apartment: '', buyerName: '', buyerEmail: '', keysAt: '' }, handoverSaving: false,
             handoverCode: '',
@@ -1539,7 +1601,7 @@
 
             visitModal: { open: false, orderId: '', bookingId: null, customerName: '', currentStart: null, date: '', time: '10:00', durationMin: 180, serviceId: '', price: '', note: '', customerNote: '', notify: true, force: false, conflicts: [], error: '', saving: false, completed: false },
             // `form` starts with the real shape so Alpine never evaluates customerModal.form.* against null on load
-            customerModal: { open: false, saving: false, error: '', existingWarning: '', upgrade: false, done: null, form: { name: '', email: '', phone: '', address: '', size: 'medium', frequency: 'biweekly', weekday: 2, time: '10:00', services: [], force: false } },
+            customerModal: { open: false, saving: false, error: '', existingWarning: '', upgrade: false, done: null, form: { name: '', email: '', phone: '', address: '', size: 'medium', frequency: 'biweekly', weekday: 2, time: '10:00', price: '', services: [], showContact2: false, contact2: { name: '', email: '' }, force: false } },
             msgModal: { open: false, title: '', subtitle: '', hint: '', placeholder: '', button: '', danger: false, required: true, text: '', error: '', saving: false, submit() {} },
             detail: { open: false, customer: null, inviteUrl: '', sendingLink: false, editSchedule: false, scheduleForm: {}, contactsForm: [], editContacts: false, notes: '', notesDirty: false, saving: false, error: '', editAway: false, awayForm: { from: '', to: '', note: '' }, editFlowers: false, flowersForm: { auto: false, floristId: '', leadDays: 2, note: '', budget: '' }, maintAdding: false, maintForm: { name: '', intervalMonths: 6 } },
             confirmModal: { open: false, request: null, date: '', time: '10:00', durationMin: 60, price: '', message: '', force: false, conflicts: [], error: '', saving: false },
@@ -1593,6 +1655,17 @@
                     if (d.billing) this.billing = d.billing;
                     this.inviteCards = d.inviteCards || [];
                     this.profileForm = { name: d.provider.name || '', businessName: d.provider.businessName || '', phone: d.provider.phone || '', notifyEmail: d.provider.notifyEmail || '' };
+                    const av = d.provider.availability || {};
+                    this.availForm = {
+                        leadDays: Number.isInteger(av.leadDays) ? av.leadDays : 14,
+                        maxPerDay: Number.isInteger(av.maxPerDay) ? av.maxPerDay : 4,
+                        days: Array.isArray(av.days) && av.days.length ? [...av.days] : [1, 2, 3, 4, 5],
+                        hours: av.hours && av.hours.start && av.hours.end ? { start: av.hours.start, end: av.hours.end } : { start: '08:00', end: '17:00' },
+                        districtsText: Array.isArray(av.districts) ? av.districts.join(', ') : '',
+                        priceNote: av.priceNote || '',
+                        offeredExtras: Array.isArray(av.offeredExtras) ? [...av.offeredExtras] : ['windows', 'deep-clean', 'fridge-oven', 'appliance-care', 'linens', 'ironing', 'laundry', 'rugs', 'away-care', 'flowers', 'extra-clean'],
+                        extraPrices: av.extraPrices && typeof av.extraPrices === 'object' ? { ...av.extraPrices } : {},
+                    };
                     if (this.activeTab === 'account') { this.loadInvoices(); this.loadEarned(); }
                     this.range = d.range; this.authenticated = true;
                     if (window.SUKODA_PUSH) window.SUKODA_PUSH.offer({ audience: 'desk', token: this.token, lang: this.lang, when: true });
@@ -1649,10 +1722,9 @@
             },
             get liveBookings() { return this.bookings.filter((b) => ['scheduled', 'confirmed'].includes(b.status)); },
             get todayVisits() { return this.liveBookings.filter((b) => this.dateOf(b.scheduledAt) === this.todayStr).sort(this.byTime); },
-            /** Past visits still "scheduled": shown at the top of Täna so nothing stays unmarked */
+            /** Past-day visits still "scheduled": shown at the top of Täna so nothing stays unmarked (today's visits have their own cards below) */
             get unmarkedPast() {
-                const now = new Date(this.nowTick || Date.now()).toISOString();
-                return this.liveBookings.filter((b) => b.endTime ? b.endTime < now : b.scheduledAt < now).sort(this.byTime);
+                return this.liveBookings.filter((b) => this.dateOf(b.scheduledAt) < this.todayStr).sort(this.byTime);
             },
             get pendingRequests() { return this.requests.filter((r) => r.status === 'requested'); },
             get handledRequests() { return this.requests.filter((r) => r.status !== 'requested').slice(0, 30); },
@@ -1695,7 +1767,8 @@
                 const f = freqKey ? this.t(freqKey) : (s.frequency || '');
                 const [y, m, d] = (s.anchorDate || '').split('-').map(Number);
                 const dow = y ? T().formatDate(`${s.anchorDate}T12:00:00`, this.lang === 'en' ? 'en-GB' : 'et-EE', { weekday: 'long' }) : '';
-                return `${f}, ${dow} ${this.t('atTime')} ${s.time} · ${s.durationMin} ${this.t('minutes')}`;
+                const base = `${f}, ${dow} ${this.t('atTime')} ${s.time} · ${s.durationMin} ${this.t('minutes')}`;
+                return s.price ? `${base} · ${s.price}` : base;
             },
             schedulePreview(s) {
                 if (!s || !s.anchorDate || !s.time) return '';
@@ -2145,13 +2218,16 @@
                 this.customerModal = { open: true, saving: false, error: '', existingWarning: '', upgrade: false, done: null, form: this.blankCustomerForm() };
             },
             blankCustomerForm() {
-                return { name: '', email: '', phone: '', address: '', size: 'medium', frequency: 'biweekly', weekday: 2, time: '10:00', services: [], force: false };
+                const days = Array.isArray(this.availForm?.days) && this.availForm.days.length ? this.availForm.days : [1, 2, 3, 4, 5];
+                const weekday = days.includes(2) ? 2 : days[0];
+                return { name: '', email: '', phone: '', address: '', size: 'medium', frequency: 'biweekly', weekday, time: '10:00', price: '', services: [], showContact2: false, contact2: { name: '', email: '' }, force: false };
             },
             get sizeChoices() { return [{ id: 'small', key: 'sizeSmall' }, { id: 'medium', key: 'sizeMed' }, { id: 'large', key: 'sizeLarge' }]; },
             get rhythmChoices() { return [{ id: 'weekly', key: 'schedWeek' }, { id: 'biweekly', key: 'schedTwo' }, { id: 'monthly', key: 'schedMonth' }]; },
             get weekdayChoices() {
-                const labels = this.lang === 'en' ? ['M', 'T', 'W', 'T', 'F'] : ['E', 'T', 'K', 'N', 'R'];
-                return [1, 2, 3, 4, 5].map((n, i) => ({ n, label: labels[i] }));
+                const allLabels = this.lang === 'en' ? ['M', 'T', 'W', 'T', 'F', 'S', 'S'] : ['E', 'T', 'K', 'N', 'R', 'L', 'P'];
+                const workDays = Array.isArray(this.availForm?.days) && this.availForm.days.length ? this.availForm.days : [1, 2, 3, 4, 5];
+                return workDays.map((n) => ({ n, label: allLabels[n - 1] || String(n) }));
             },
             get hourChoices() { return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00']; },
             get offerServices() {
@@ -2169,7 +2245,8 @@
                 const today = this.todayStr || new Date().toISOString().slice(0, 10);
                 const [y, m, d] = today.split('-').map(Number);
                 const base = new Date(Date.UTC(y, m - 1, d, 12));
-                let add = (Number(weekday) - base.getUTCDay() + 7) % 7;
+                const target = Number(weekday) % 7;
+                let add = (target - base.getUTCDay() + 7) % 7;
                 if (add === 0) add = 7;
                 base.setUTCDate(base.getUTCDate() + add);
                 return base.toISOString().slice(0, 10);
@@ -2213,10 +2290,14 @@
                 m.saving = true; m.error = '';
                 const f = m.form;
                 const anchor = this.nextWeekday(f.weekday);
+                const contacts = [];
+                if (f.showContact2 && f.contact2 && (f.contact2.name || f.contact2.email)) {
+                    contacts.push({ name: f.contact2.name, email: f.contact2.email, notify: true });
+                }
                 const body = {
                     name: f.name, email: f.email, phone: f.phone, address: f.address, size: f.size,
-                    sendWelcome: true, force: f.force, contacts: [],
-                    schedule: { frequency: f.frequency, anchorDate: anchor, time: f.time, durationMin: this.durationForSize(f.size) },
+                    sendWelcome: true, force: f.force, contacts,
+                    schedule: { frequency: f.frequency, anchorDate: anchor, time: f.time, durationMin: this.durationForSize(f.size), price: f.price || '' },
                 };
                 try {
                     const res = await this.api('/api/haldus/customers', { method: 'POST', body: JSON.stringify(body) });
@@ -2258,8 +2339,8 @@
             startEditSchedule() {
                 const s = this.detail.customer.schedule;
                 this.detail.scheduleForm = s && s.active !== false
-                    ? { active: true, frequency: s.frequency, anchorDate: s.anchorDate, time: s.time, durationMin: s.durationMin }
-                    : { active: true, frequency: 'biweekly', anchorDate: T().shiftDateString(this.todayStr, 7), time: '10:00', durationMin: 180 };
+                    ? { active: true, frequency: s.frequency, anchorDate: s.anchorDate, time: s.time, durationMin: s.durationMin, price: s.price || '' }
+                    : { active: true, frequency: 'biweekly', anchorDate: T().shiftDateString(this.todayStr, 7), time: '10:00', durationMin: 180, price: '' };
                 this.detail.editSchedule = true; this.detail.error = '';
             },
             /** Chip text for a customer who is away now or soon (within 14 days) */
@@ -2393,6 +2474,16 @@
                 const labels = this.lang === 'en' ? ['M', 'T', 'W', 'T', 'F', 'S', 'S'] : ['E', 'T', 'K', 'N', 'R', 'L', 'P'];
                 return [1, 2, 3, 4, 5, 6, 7].map((n, i) => ({ n, label: labels[i] }));
             },
+            get cleanerExtraRows() {
+                const order = ['windows', 'deep-clean', 'fridge-oven', 'appliance-care', 'linens', 'ironing', 'laundry', 'rugs', 'away-care', 'flowers', 'extra-clean'];
+                return order.map((id) => (this.catalogue || []).find((s) => s.id === id)).filter(Boolean);
+            },
+            toggleOfferedExtra(id) {
+                const list = this.availForm.offeredExtras;
+                const i = list.indexOf(id);
+                if (i >= 0) list.splice(i, 1);
+                else list.push(id);
+            },
             toggleWorkDay(n) {
                 const list = this.availForm.days;
                 const i = list.indexOf(n);
@@ -2402,7 +2493,19 @@
                 if (this.availSaving) return; this.availSaving = true; this.availError = '';
                 try {
                     const districts = String(this.availForm.districtsText || '').split(',').map((s) => s.trim()).filter(Boolean);
-                    const res = await this.api('/api/haldus/availability', { method: 'POST', body: JSON.stringify({ leadDays: this.availForm.leadDays, maxPerDay: this.availForm.maxPerDay, days: this.availForm.days, hours: this.availForm.hours, districts, priceNote: this.availForm.priceNote }) });
+                    const res = await this.api('/api/haldus/availability', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            leadDays: this.availForm.leadDays,
+                            maxPerDay: this.availForm.maxPerDay,
+                            days: this.availForm.days,
+                            hours: this.availForm.hours,
+                            districts,
+                            priceNote: this.availForm.priceNote,
+                            offeredExtras: this.availForm.offeredExtras,
+                            extraPrices: this.availForm.extraPrices,
+                        }),
+                    });
                     await this.okJson(res);
                     this.showToast(this.t('availSaved'));
                 } catch (e) { this.availError = e.message; } finally { this.availSaving = false; }
@@ -2518,13 +2621,19 @@
                 const svc = this.catalogue.find((s) => s.id === r.serviceId);
                 const asked = /^([01]\d|2[0-3]):[0-5]\d$/.test(r.preferredTime || '') ? r.preferredTime : '';
                 if (asked && !this.timeOptions.includes(asked)) this.timeOptions = this.timeOptions.concat(asked).sort();
-                const tw = asked || ({ morning: '10:00', afternoon: '13:00' }[r.timeWindow] || '10:00');
                 let date = r.preferredDate || T().shiftDateString(this.todayStr, 1);
                 if (date < this.todayStr) date = T().shiftDateString(this.todayStr, 1);
+                const sameDayClean = r.timeWindow === 'with-visit'
+                    ? this.liveBookings.find((b) => b.orderId === r.orderId && b.kind !== 'extra' && this.dateOf(b.scheduledAt) === date)
+                    : null;
+                const cleanClock = sameDayClean ? this.fmtTime(sameDayClean.scheduledAt) : '';
+                if (cleanClock && !this.timeOptions.includes(cleanClock)) this.timeOptions = this.timeOptions.concat(cleanClock).sort();
+                const tw = asked || cleanClock || ({ morning: '10:00', afternoon: '13:00' }[r.timeWindow] || '10:00');
                 let dur = r.type === 'reschedule' && r.targetBookingId ? (() => { const b = this.bookings.find((x) => x.id === r.targetBookingId); return b ? Math.round((new Date(b.endTime) - new Date(b.scheduledAt)) / 60000) : 180; })() : (svc?.durationMin || 60);
                 if (!this.durationOptions.includes(dur)) dur = 60;
                 const includedPrice = this.termsIncluded(r) && r.kind !== 'issue' && r.category !== 'warranty' ? this.t('termsIncluded') : '';
-                this.confirmModal = { open: true, request: r, date, time: tw, durationMin: dur, price: includedPrice, message: '', force: false, conflicts: [], error: '', saving: false };
+                const customPrice = !includedPrice && r.serviceId && this.availForm?.extraPrices?.[r.serviceId] ? this.availForm.extraPrices[r.serviceId] : '';
+                this.confirmModal = { open: true, request: r, date, time: tw, durationMin: dur, price: includedPrice || customPrice, message: '', force: false, conflicts: [], error: '', saving: false };
             },
             async confirmRequest() {
                 const m = this.confirmModal; if (m.saving) return; m.saving = true; m.error = '';

@@ -1199,7 +1199,8 @@ module.exports = function createHaldus(deps) {
     const target = toDate(request.targetScheduledAt);
     const isReschedule = request.type === 'reschedule';
     const kind = isReschedule ? 'visit' : core.serviceKind(request.serviceId);
-    const who = escapeHtml(primaryName(order) || 'Klient');
+    const senderName = request.submittedBy?.name || request.customerName || primaryName(order) || 'Klient';
+    const who = escapeHtml(senderName);
     const title = isReschedule ? 'Uus aeg on kinnitamisel' : kind === 'question' ? 'Uus küsimus' : kind === 'issue' ? 'Uus teade' : (placed ? 'Aeg on kalendris' : 'Uus soov');
     const intro = isReschedule
       ? `${who} tühistas senise aja ja palus uue. Kinnita see töölaual.`
@@ -1273,6 +1274,20 @@ module.exports = function createHaldus(deps) {
     return recipients.length;
   }
 
+  /** Notify every notifying household contact plus the family member who submitted the request. */
+  async function notifyRequest(order, request, mail, { replyTo } = {}) {
+    const { subject, html } = mail || {};
+    const lang = core.langOf(order);
+    const subj = subject && typeof subject === 'object' ? core.pick(subject, lang) : subject;
+    const body = html && typeof html === 'object' ? core.pick(html, lang) : html;
+    const recipients = core.resolveRequestRecipients(order, request);
+    for (const r of recipients) {
+      await sendEmail({ to: r.email, subject: brandSubject(order, subj), html: body, replyTo, from: brandFrom(order) });
+    }
+    await deliverMailPush(order, mail);
+    return recipients.length;
+  }
+
   /** One customer-facing mail to the primary address, carrying the home's brand (sender name + subject prefix) */
   async function sendCustomerMail(order, mail, { replyTo, to } = {}) {
     const { subject, html } = mail || {};
@@ -1328,6 +1343,7 @@ module.exports = function createHaldus(deps) {
       price: b.price || null,
       note: b.note || '',
       customerNote: b.customerNote || '',
+      completedNote: b.completedNote || '',
       source: b.source || (b.calBookingUid ? 'cal' : (b.isManualEntry ? 'manual' : 'unknown')),
       hasCal: Boolean(b.calBookingUid),
       scheduleOccurrence: b.scheduleOccurrence || null,
@@ -1487,6 +1503,7 @@ module.exports = function createHaldus(deps) {
         order, orderId, provider, start,
         durationMin,
         note: schedule.note || '',
+        price: schedule.price || null,
         source: 'schedule',
         scheduleOccurrence: dateStr,
       });
@@ -1898,6 +1915,8 @@ module.exports = function createHaldus(deps) {
       phone: p.phone || '',
       notifyEmail: p.notifyEmail || p.email || '',
       services: Array.isArray(p.services) && p.services.length ? p.services : ['cleaning'],
+      availability: core.sanitizeAvailability(p.availability || {}),
+      awayPeriods: liveAway(p),
       status: p.status || 'active',
       plan: core.effectivePlan(p),
       createdAt: tsToIso(p.createdAt),
@@ -2060,6 +2079,9 @@ module.exports = function createHaldus(deps) {
       providerName: r.providerName || null,
       access: r.access || '',
       urgent: r.urgent === true,
+      submittedBy: r.submittedBy && typeof r.submittedBy === 'object'
+        ? { name: String(r.submittedBy.name || ''), email: String(r.submittedBy.email || '') }
+        : null,
       // The conversation stays with the request — e-mail only notifies
       messages: (Array.isArray(r.messages) ? r.messages : []).map((m) => ({ id: m.id, by: m.by, name: m.name || '', text: m.text || '', at: tsToIso(m.at) || m.at || null })),
     };
@@ -2830,7 +2852,7 @@ module.exports = function createHaldus(deps) {
           completedBy: 'provider',
           updatedAt: FieldValue.serverTimestamp(),
         };
-        if (note) patch.note = note;
+        if (note) patch.completedNote = note;
         tx.update(ref, patch);
         const orderPatch = {
           totalVisits: FieldValue.increment(1),
@@ -2894,9 +2916,9 @@ module.exports = function createHaldus(deps) {
         await appendRequestMessage(reqRef, { by: 'provider', name: provider.name, text: note ? `${doneWord} ${note}` : doneWord });
       } catch (e) { console.error('visit done thread failed', booking.requestId, e); }
       if (reqDoc.exists) {
-        return !!(await sendCustomerMail(order, requestCompletedEmail({
+        return (await notifyRequest(order, reqDoc.data(), requestCompletedEmail({
           order, request: reqDoc.data(), requestId: reqRef.id, providerName: provider.name, note: clientNote, lang,
-        }), { replyTo: PORTAL_REPLY_TO }));
+        }), { replyTo: PORTAL_REPLY_TO })) > 0;
       }
     }
     const n = await notifyOrder(order, visitDoneEmail({ order, provider, note, items: advanced, lang }), { replyTo: PORTAL_REPLY_TO });
@@ -3450,8 +3472,16 @@ module.exports = function createHaldus(deps) {
         requests,
         range: { from: fromStr, to: toStr },
         // Visit types for the desk: only things that become a visit (written questions and messages never do)
-        // Only the partner's own categories — a warranty team should not be offered "Tavakoristus"
-        catalogue: core.SERVICE_CATALOGUE.filter((s) => (s.kind || 'visit') !== 'question' && providerServices(provider).includes(s.category)).map((s) => ({ id: s.id, category: s.category, name: s.name.et, priceHint: s.priceHint.et, durationMin: s.durationMin })),
+        // Only the partner's own categories — plus flowers for cleaners who handle flowers themselves
+        catalogue: core.SERVICE_CATALOGUE.filter((s) => (s.kind || 'visit') !== 'question' && (providerServices(provider).includes(s.category) || (s.id === 'flowers' && providerServices(provider).includes('cleaning')))).map((s) => ({
+          id: s.id,
+          category: s.category,
+          name: s.name.et,
+          nameEn: s.name.en,
+          priceHint: s.priceHint.et,
+          customPrice: core.cleanerExtraPrice(provider.availability, s.id),
+          durationMin: s.durationMin,
+        })),
         // Upkeep the housekeeper can take on at a home; `byProvider` = typically part of a cleaning service
         maintenanceCatalogue: core.MAINTENANCE_CATALOGUE.map((m) => ({ id: m.id, name: m.name.et, hint: m.hint.et, intervalMonths: m.intervalMonths, byProvider: !!m.byProvider, homeTypes: m.homeTypes })),
         maintenanceIntervals: core.MAINTENANCE_INTERVALS,
@@ -3762,7 +3792,8 @@ module.exports = function createHaldus(deps) {
       const serviceId = b.serviceId && core.getService(b.serviceId) ? b.serviceId : null;
       // A partner may only add visits of its own trade; the bare "Tavakoristus" (no serviceId) is the housekeeper's
       const visitCat = serviceId ? core.getService(serviceId).category : 'cleaning';
-      if (visitCat !== acc.role || !providerServices(provider).includes(visitCat)) {
+      const cleanerFlowers = acc.role === 'cleaning' && visitCat === 'flowers' && providerServices(provider).includes('cleaning');
+      if (!cleanerFlowers && (visitCat !== acc.role || !providerServices(provider).includes(visitCat))) {
         return res.status(403).json({ error: 'Saad lisada ainult oma teenuse visiite' });
       }
       const markCompleted = b.completed === true;
@@ -3841,18 +3872,25 @@ module.exports = function createHaldus(deps) {
       if (booking.status === 'completed') return res.status(200).json({ success: true });
       if (booking.status === 'cancelled') return res.status(400).json({ error: 'Tühistatud visiiti ei saa tehtuks märkida' });
       const note = b.note != null ? str(b.note, 500) : '';
-      await ref.update({ status: 'completed', completedAt: FieldValue.serverTimestamp(), completedBy: 'provider', ...(b.note != null ? { note } : {}), updatedAt: FieldValue.serverTimestamp() });
+      const clientNote = str(b.clientNote, 500);
+      await ref.update({
+        status: 'completed',
+        completedAt: FieldValue.serverTimestamp(),
+        completedBy: 'provider',
+        ...(b.note != null ? { note } : {}),
+        ...(clientNote ? { completedNote: clientNote } : {}),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
       await db.collection('orders').doc(booking.orderId).update({ totalVisits: FieldValue.increment(1), lastVisitAt: booking.scheduledAt || FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
       if (booking.requestId) {
         // Close the loop on the request: a line in the thread and a short note to the household
         const reqRef = db.collection('serviceRequests').doc(booking.requestId);
         const reqDoc = await reqRef.get();
         await reqRef.set({ status: 'completed', completedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
-        const clientNote = str(b.clientNote, 500);
         try {
           await appendRequestMessage(reqRef, { by: 'provider', name: provider.name, text: 'Tehtud.' });
           if (reqDoc.exists && b.notify !== false) {
-            await sendCustomerMail(order, requestCompletedEmail({ order, request: reqDoc.data(), requestId: reqRef.id, providerName: provider.name, note: clientNote, lang: langOf(order) }), { replyTo: PORTAL_REPLY_TO });
+            await notifyRequest(order, reqDoc.data(), requestCompletedEmail({ order, request: reqDoc.data(), requestId: reqRef.id, providerName: provider.name, note: clientNote, lang: langOf(order) }), { replyTo: PORTAL_REPLY_TO });
           }
         } catch (e) { console.error('request completed notice failed', e); }
       }
@@ -3929,7 +3967,10 @@ module.exports = function createHaldus(deps) {
       const durationMin = Number.isInteger(Number(b.durationMin)) && Number(b.durationMin) >= 15 ? Math.min(600, Number(b.durationMin)) : (svc?.durationMin || 60);
       const end = new Date(start.getTime() + Math.max(15, durationMin) * 60000);
 
-      const conflicts = await slotConflicts(provider.id, request.orderId, start, end);
+      const allConflicts = await slotConflicts(provider.id, request.orderId, start, end);
+      const conflicts = request.timeWindow === 'with-visit'
+        ? allConflicts.filter((c) => !(c.orderId === request.orderId && c.providerId === provider.id))
+        : allConflicts;
       if (conflicts.length && !b.force) return res.status(409).json({ error: conflictError(conflicts), code: 'CONFLICT', conflicts });
 
       const price = str(b.price, 60) || null;
@@ -3965,7 +4006,7 @@ module.exports = function createHaldus(deps) {
       if (reqDoc.data().status === 'requested' && requestKind(reqDoc.data()) !== 'visit') {
         await reqRef.update({ status: 'answered', providerMessage: text.slice(0, 300), answeredAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
       }
-      await sendCustomerMail(acc.order, requestMessageEmail({ toSide: 'client', order: acc.order, request: reqDoc.data(), requestId: reqRef.id, fromName: provider.name, text, lang: langOf(acc.order) }), { replyTo: PORTAL_REPLY_TO });
+      await notifyRequest(acc.order, reqDoc.data(), requestMessageEmail({ toSide: 'client', order: acc.order, request: reqDoc.data(), requestId: reqRef.id, fromName: provider.name, text, lang: langOf(acc.order) }), { replyTo: PORTAL_REPLY_TO });
       const fresh = await reqRef.get();
       res.status(200).json({ success: true, request: serializeRequest(reqRef.id, fresh.data()) });
     },
@@ -3991,7 +4032,7 @@ module.exports = function createHaldus(deps) {
         await reqRef.update({ status: 'answered', providerMessage: message.slice(0, 300), answeredAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
       }
       await appendRequestMessage(reqRef, { by: 'provider', name: provider.name, text: message });
-      await sendCustomerMail(acc.order, requestAnsweredEmail({ order: acc.order, request, requestId: reqRef.id, providerName: provider.name, message, lang: langOf(acc.order) }), { replyTo: PORTAL_REPLY_TO });
+      await notifyRequest(acc.order, request, requestAnsweredEmail({ order: acc.order, request, requestId: reqRef.id, providerName: provider.name, message, lang: langOf(acc.order) }), { replyTo: PORTAL_REPLY_TO });
       res.status(200).json({ success: true });
     },
 
@@ -4012,7 +4053,7 @@ module.exports = function createHaldus(deps) {
       const fallback = kind === 'issue' ? 'Kui soovid, tellime töö tasulisena.' : 'Soovitud aeg ei sobi — paku palun uut aega.';
       await reqRef.update({ status: 'declined', outcome: kind === 'issue' ? 'not_covered' : 'new_time', providerMessage: message.slice(0, 300), declinedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
       try { await appendRequestMessage(reqRef, { by: 'provider', name: provider.name, text: message || fallback }); } catch (e) { console.error('decline thread note failed', e); }
-      await sendCustomerMail(acc.order, requestDeclinedEmail({ order: acc.order, request, requestId: reqRef.id, providerName: provider.name, message, lang: langOf(acc.order) }), { replyTo: PORTAL_REPLY_TO });
+      await notifyRequest(acc.order, request, requestDeclinedEmail({ order: acc.order, request, requestId: reqRef.id, providerName: provider.name, message, lang: langOf(acc.order) }), { replyTo: PORTAL_REPLY_TO });
       res.status(200).json({ success: true });
     },
   };
@@ -4022,10 +4063,9 @@ module.exports = function createHaldus(deps) {
   // ============================================================
 
   /** category → partner id on this order (null = SUKODA operator handles it) */
-  async function routeRequest(order) {
-    const out = {};
-    for (const [cat, def] of Object.entries(core.SERVICE_CATEGORIES)) out[cat] = order[def.orderField] || null;
-    return out;
+  async function routeRequest(order, providerDoc = undefined) {
+    const provider = providerDoc !== undefined ? providerDoc : (order?.providerId ? await loadProvider(order.providerId) : null);
+    return core.resolveServiceRoutes(order, provider);
   }
 
   /**
@@ -4049,33 +4089,43 @@ module.exports = function createHaldus(deps) {
     return true;
   }
   /** One line the household reads under a service. A spoken quota stands alone; the contract date and the invoice name stay off it. */
-  function priceLabelFor({ order, category, svc, lang, showPrices }) {
-    const et = lang !== 'en';
+  function priceLabelFor({ order, category, svc, lang, showPrices, availability }) {
+    const L = core.langOf(lang);
     const today = todayTallinnStr();
     const tm = termsFor(order, category);
+    const locale = core.pick({ et: 'et-EE', en: 'en-GB', ru: 'ru-RU' }, L);
     const fmt = (d) => {
       const date = core.parseDateStr(d);
       if (!date) return d;
-      return date.toLocaleDateString(et ? 'et-EE' : 'en-GB', { timeZone: 'Europe/Tallinn', day: 'numeric', month: 'long', year: 'numeric' });
+      return date.toLocaleDateString(locale, { timeZone: 'Europe/Tallinn', day: 'numeric', month: 'long', year: 'numeric' });
     };
     // A free-text message ("something else", a note to the housekeeper) has no price line at all
     if (svc && (svc.id === 'other' || svc.id === 'cleaning-note')) return { text: '', included: false };
     // A quote-first question (extra works from the builder) shows its hint, not "free"
-    if (svc && svc.pricing === 'quote') return { text: svc.priceHint?.[lang] || svc.priceHint?.et || '', included: false };
-    if (svc && (svc.kind || 'visit') === 'question') return { text: et ? 'Tasuta' : 'Free', included: true };
+    if (svc && svc.pricing === 'quote') return { text: core.pick(svc.priceHint, L) || '', included: false };
+    if (svc && (svc.kind || 'visit') === 'question') {
+      return { text: core.pick({ et: 'Tasuta', en: 'Free', ru: 'Бесплатно' }, L), included: true };
+    }
     const covered = termsCover(tm, svc);
     if (covered && (!tm.until || tm.until >= today)) {
       // Warranty is not "included in the price" — it is the builder's obligation, until the warranty ends
       if (tm.quota) return { text: tm.quota, included: true, until: tm.until, quota: tm.quota, after: tm.after };
-      const head = category === 'warranty' ? (et ? 'Garantii korras' : 'Under warranty') : (et ? 'Hinnas sees' : 'Included');
-      return { text: head + (tm.until ? (et ? ' kuni ' : ' until ') + fmt(tm.until) : ''), included: true, until: tm.until, quota: tm.quota, after: tm.after };
+      const head = category === 'warranty'
+        ? core.pick({ et: 'Garantii korras', en: 'Under warranty', ru: 'По гарантии' }, L)
+        : core.pick({ et: 'Hinnas sees', en: 'Included', ru: 'Включено в цену' }, L);
+      const untilSep = core.pick({ et: ' kuni ', en: ' until ', ru: ' до ' }, L);
+      return { text: head + (tm.until ? untilSep + fmt(tm.until) : ''), included: true, until: tm.until, quota: tm.quota, after: tm.after };
     }
     if (covered && tm.until && tm.until < today) {
-      return { text: (tm.after || (svc?.priceHint?.[lang] || svc?.priceHint?.et || '')) + (tm.billedBy ? (et ? ' · arve ' : ' · billed by ') + tm.billedBy : ''), included: false, expired: tm.until };
+      const billedSep = core.pick({ et: ' · arve ', en: ' · billed by ', ru: ' · счёт от ' }, L);
+      return { text: (tm.after || core.pick(svc?.priceHint, L) || '') + (tm.billedBy ? billedSep + tm.billedBy : ''), included: false, expired: tm.until };
     }
-    // Not covered by this home's deal: show the guide price only. The category's invoice
-    // (the standing clean, billed by SUKODA) must not appear on an extra before it is confirmed.
-    const hint = svc?.priceHint?.[lang] || svc?.priceHint?.et || tm?.after || '';
+    // Cleaner's own typed extra price wins when set (including for her own provider-billed clients)
+    const customPrice = svc ? core.cleanerExtraPrice(availability, svc.id) : '';
+    if (customPrice) return { text: customPrice, included: false };
+    if (!showPrices) return { text: '', included: false };
+    // Not covered by this home's deal: show the guide price only.
+    const hint = core.pick(svc?.priceHint, L) || tm?.after || '';
     return { text: hint, included: false };
   }
 
@@ -4616,7 +4666,7 @@ module.exports = function createHaldus(deps) {
       }
     }
     if (!placed) {
-      await sendCustomerMail(order, requestReceivedEmail({ order, request, requestId: ref.id, providerName: '', lang }), { replyTo: PORTAL_REPLY_TO });
+      await notifyRequest(order, request, requestReceivedEmail({ order, request, requestId: ref.id, providerName: provider?.name || '', lang }), { replyTo: PORTAL_REPLY_TO });
     }
     const providerMail = providerNewRequestEmail({ order, request, placed });
     const providerTo = providerReplyTo(provider);
@@ -4677,7 +4727,7 @@ module.exports = function createHaldus(deps) {
       const auth = await authenticateClient(req);
       if (!auth) return res.status(401).json({ error: 'Unauthorized' });
       const { orderId, order } = auth;
-      const lang = langOf(order);
+      const lang = req.query?.lang && core.LANGS.includes(req.query.lang) ? req.query.lang : langOf(order);
       const showPrices = !(order.billing === 'provider' || order.source === 'manual');
       const [provider, reqSnap, interestSnap] = await Promise.all([
         loadProvider(order.providerId),
@@ -4686,11 +4736,16 @@ module.exports = function createHaldus(deps) {
       ]);
       try { await releaseOpenReschedules(reqSnap, order); } catch (e) { console.error('releaseOpenReschedules failed', e); }
       const florist = await loadProvider(floristIdFor(order, provider));
-      const routes = await routeRequest(order);
+      const routes = await routeRequest(order, provider);
+      const avail = provider ? core.sanitizeAvailability(provider.availability || {}) : null;
       // Everyone who comes to this home, one entry per category with a named partner
       const partnerDocs = {};
       await Promise.all(Object.entries(routes).filter(([, pid]) => pid).map(async ([cat, pid]) => {
-        partnerDocs[cat] = cat === 'cleaning' ? provider : cat === 'flowers' ? florist : await loadProvider(pid);
+        partnerDocs[cat] = cat === 'cleaning'
+          ? provider
+          : cat === 'flowers'
+            ? (florist || (pid === provider?.id ? provider : await loadProvider(pid)))
+            : await loadProvider(pid);
       }));
       if (!partnerDocs.flowers && florist) partnerDocs.flowers = florist;
       const partners = Object.entries(partnerDocs).filter(([, p]) => p).map(([cat, p]) => ({
@@ -4710,7 +4765,16 @@ module.exports = function createHaldus(deps) {
         // Services the household said it would want once a partner exists
         interests: [...new Set(interestSnap.docs.map((d) => d.data().serviceId))],
         contacts: Array.isArray(order.contacts) ? order.contacts : [],
-        provider: provider ? { name: provider.name, businessName: provider.businessName || '', phone: provider.phone || '', email: provider.email, leadDays: Number.isInteger(provider.availability?.leadDays) ? provider.availability.leadDays : 14 } : null,
+        provider: provider ? {
+          name: provider.name,
+          businessName: provider.businessName || '',
+          phone: provider.phone || '',
+          email: provider.email,
+          leadDays: avail ? avail.leadDays : 14,
+          priceNote: avail ? avail.priceNote : '',
+          offeredExtras: avail ? avail.offeredExtras : core.CLEANER_EXTRA_IDS,
+          extraPrices: avail ? avail.extraPrices : {},
+        } : null,
         florist: florist ? { name: florist.name, businessName: florist.businessName || '' } : null,
         source: order.source || 'stripe',
         showProvider: core.providerBroughtHome(order),
@@ -4723,15 +4787,28 @@ module.exports = function createHaldus(deps) {
           partnerName: partnerDocs[id]?.name || null,
           partnerBusiness: partnerDocs[id]?.businessName || '',
           terms: termsFor(order, id),
-          priceLabel: priceLabelFor({ order, category: id, svc: null, lang, showPrices }),
+          priceLabel: priceLabelFor({ order, category: id, svc: null, lang, showPrices, availability: avail }),
           // Without a partner the household can only register interest — nothing is promised
           orderable: !!routes[id],
         })),
-        catalogue: core.SERVICE_CATALOGUE.map((s) => ({
-          id: s.id, kind: s.kind || 'visit', category: effectiveCategory(s, routes), categoryLabel: core.categoryLabel(effectiveCategory(s, routes), lang), name: s.name[lang] || s.name.et, description: s.description[lang] || s.description.et,
-          priceHint: showPrices ? (s.priceHint[lang] || s.priceHint.et) : null, durationMin: s.durationMin,
-          priceLabel: priceLabelFor({ order, category: effectiveCategory(s, routes), svc: s, lang, showPrices }),
-        })),
+        catalogue: core.SERVICE_CATALOGUE.filter((s) => {
+          if (!provider) return true;
+          if (s.id === 'flowers' && order.floristId) return true;
+          return core.cleanerOffersExtra(avail, s.id);
+        }).map((s) => {
+          const customPrice = core.cleanerExtraPrice(avail, s.id);
+          return {
+            id: s.id,
+            kind: s.kind || 'visit',
+            category: effectiveCategory(s, routes),
+            categoryLabel: core.categoryLabel(effectiveCategory(s, routes), lang),
+            name: s.name[lang] || s.name.et,
+            description: s.description[lang] || s.description.et,
+            priceHint: customPrice || (showPrices ? (s.priceHint[lang] || s.priceHint.et) : null),
+            durationMin: s.durationMin,
+            priceLabel: priceLabelFor({ order, category: effectiveCategory(s, routes), svc: s, lang, showPrices, availability: avail }),
+          };
+        }),
         flowers: flowerSettings(order, florist),
         timeWindows: Object.entries(core.TIME_WINDOWS).map(([id, w]) => ({ id, label: w[lang] || w.et })),
         requests: reqSnap.docs.filter((d) => d.data().status !== 'awaiting_payment').map((d) => {
@@ -4835,7 +4912,7 @@ module.exports = function createHaldus(deps) {
       ]);
       const visits = bookingsSnap.docs.map((doc) => {
         const row = doc.data() || {};
-        return { id: doc.id, status: row.status, at: tsToIso(row.scheduledAt), serviceId: row.serviceId || null, note: row.completedNote || row.note || '' };
+        return { id: doc.id, status: row.status, at: tsToIso(row.scheduledAt), serviceId: row.serviceId || null, note: row.completedNote || row.customerNote || '' };
       });
       const wishes = requestsSnap.docs.map((doc) => {
         const row = doc.data() || {};
@@ -4861,6 +4938,16 @@ module.exports = function createHaldus(deps) {
       res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(doc.file.name || 'fail')}"`);
       res.setHeader('Cache-Control', 'private, no-store');
       await new Promise((resolve, reject) => file.createReadStream().on('error', reject).on('end', resolve).pipe(res));
+    },
+
+    /** Persist the household's portal language choice so e-mails and push match the screen. */
+    'POST /api/me/lang': async (req, res) => {
+      if (!checkRateLimit(req, res, 'portal-lang', 20, 60000)) return;
+      const auth = await authenticateClient(req);
+      if (!auth) return res.status(401).json({ error: 'Unauthorized' });
+      const lang = core.langOf(req.body?.lang);
+      await db.collection('orders').doc(auth.orderId).update({ lang, updatedAt: FieldValue.serverTimestamp() });
+      res.status(200).json({ success: true, lang });
     },
 
     /** Home type drives which upkeep is suggested (gutters and chimney only make sense for a house) */
@@ -5035,7 +5122,8 @@ module.exports = function createHaldus(deps) {
       if ((svc.id === 'other' || kind !== 'visit') && note.length < 5) return res.status(400).json({ error: lang === 'et' ? (kind === 'question' ? 'Kirjuta oma küsimus' : 'Kirjelda, mis on katki ja kus') : (kind === 'question' ? 'Write your question' : 'Describe what is wrong and where') });
       if (kind === 'question') preferredDate = null;
 
-      const routes = await routeRequest(order);
+      const homeProvider = order.providerId ? await loadProvider(order.providerId) : null;
+      const routes = await routeRequest(order, homeProvider);
       const category = effectiveCategory(svc, routes);
       const providerId = routes[category] || null;
       if (!providerId && kind === 'visit') {
@@ -5070,10 +5158,17 @@ module.exports = function createHaldus(deps) {
 
       const openSnap = await db.collection('serviceRequests').where('orderId', '==', orderId).where('status', '==', 'requested').get();
       if (openSnap.size >= MAX_OPEN_REQUESTS) return res.status(429).json({ error: lang === 'et' ? 'Sul on juba mitu vastuseta soovi. Oota vastust või tühista mõni soov.' : 'You already have several open requests. Wait for a reply or cancel one of them.' });
-      const provider = await loadProvider(providerId);
+      const provider = providerId === homeProvider?.id ? homeProvider : await loadProvider(providerId);
       if (preferredDate && kind === 'visit' && svc.category === 'cleaning' && !urgent) {
-        const earliest = core.earliestBookableDate(todayTallinnStr(), provider?.availability?.leadDays);
-        if (earliest && preferredDate < earliest) {
+        const today = todayTallinnStr();
+        const leadDays = provider?.availability?.leadDays;
+        let upcomingVisitDates = [];
+        const earliest = core.earliestBookableDate(today, leadDays);
+        if (timeWindow !== 'with-visit' && earliest && preferredDate < earliest) {
+          const upcoming = await upcomingBookingsForOrder(orderId);
+          upcomingVisitDates = upcoming.map((u) => tallinnDateStr(toDate(u.scheduledAt))).filter(Boolean);
+        }
+        if (!core.isDateAllowedForRequest({ preferredDate, timeWindow, todayStr: today, leadDays, category: svc.category, kind, urgent, upcomingVisitDates })) {
           return res.status(400).json({ error: core.pick({
             et: `Esimene vaba päev on ${earliest}. Vali see päev või hilisem.`,
             en: `The first open day is ${earliest}. Pick that day or a later one.`,
@@ -5082,7 +5177,9 @@ module.exports = function createHaldus(deps) {
         }
       }
 
-      const firstMsg = note ? [{ id: core.randomId(), by: 'client', name: primaryName(order) || '', text: note, at: new Date() }] : [];
+      const senderName = str(auth.viewer?.name, 120) || primaryName(order) || '';
+      const senderEmail = core.normalizeEmail(auth.viewer?.email) || primaryEmail(order);
+      const firstMsg = note ? [{ id: core.randomId(), by: 'client', name: senderName, text: note, at: new Date() }] : [];
       const addonIds = svc.category === 'cleaning' ? core.telliAddons(b.addonIds) : [];
       const rhythm = svc.category === 'cleaning' ? core.residentRhythm(b.rhythm) : null;
       const quote = await quoteForOrder(order, orderId, svc.id, addonIds, provider?.availability?.leadDays, svc.category === 'cleaning' && b.pay === true);
@@ -5101,8 +5198,9 @@ module.exports = function createHaldus(deps) {
         orderId,
         providerId: providerId || null,
         providerName: provider?.name || null,
-        customerName: primaryName(order) || '',
+        customerName: senderName || primaryName(order) || '',
         customerEmail: primaryEmail(order),
+        submittedBy: { name: senderName, email: senderEmail },
         customerPhone: order.customer?.phone || '',
         address: primaryAddress(order),
         serviceId: svc.id,
@@ -5211,6 +5309,8 @@ module.exports = function createHaldus(deps) {
       }
 
       const provider = await loadProvider(providerId);
+      const senderName = str(auth.viewer?.name, 120) || primaryName(order) || '';
+      const senderEmail = core.normalizeEmail(auth.viewer?.email) || primaryEmail(order);
       const data = {
         type: 'reschedule',
         orderId,
@@ -5218,8 +5318,9 @@ module.exports = function createHaldus(deps) {
         providerName: provider?.name || null,
         targetBookingId: bookingRef.id,
         targetScheduledAt: booking.scheduledAt || null,
-        customerName: primaryName(order) || '',
+        customerName: senderName || primaryName(order) || '',
         customerEmail: primaryEmail(order),
+        submittedBy: { name: senderName, email: senderEmail },
         customerPhone: order.customer?.phone || '',
         address: booking.address || primaryAddress(order),
         serviceId: null,
@@ -5239,7 +5340,7 @@ module.exports = function createHaldus(deps) {
       const request = { ...data, createdAt: new Date() };
       await releaseVisitForNewTime(bookingRef, booking);
 
-      await sendCustomerMail(order, requestReceivedEmail({ order, request, requestId: ref.id, providerName: provider?.name || '', lang }), { replyTo: PORTAL_REPLY_TO });
+      await notifyRequest(order, request, requestReceivedEmail({ order, request, requestId: ref.id, providerName: provider?.name || '', lang }), { replyTo: PORTAL_REPLY_TO });
       const providerMail = providerNewRequestEmail({ order, request });
       const providerTo = providerReplyTo(provider) || NOTIFICATION_EMAIL;
       await sendEmail({ to: providerTo, ...providerMail });

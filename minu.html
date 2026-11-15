@@ -36,7 +36,7 @@
     })();
     </script>
     <script src="/push.js"></script>
-    <script src="/assets/js/minu/kodu.js?v=17"></script>
+    <script src="/assets/js/minu/kodu.js?v=18"></script>
     <script type="module" src="/assets/js/minu/mount.js"></script>
     <script type="module" src="/assets/js/main.js"></script>
 </head>
@@ -186,14 +186,17 @@
     requestProcessing: false,
     requestError: '',
     requestDone: null,
+    feedbackVisit: null,
     telliPanel: 'clean',
     telliWindow: 'morning',
+    telliTiming: 'next',
     telliNote: '',
     telliPhotoName: '',
     showPastOrders: false,
+    showMoreExtras: false,
     upkeepOpen: false,
     docPreview: null,
-    telliAddons: { flowers: false, windows: false },
+    telliAddons: { flowers: false, windows: false, linens: false, 'appliance-care': false },
     telliOpen: '',
     telliPay: false,
     flowerMode: 'season',
@@ -201,6 +204,8 @@
     telliAddonRows: [
         { id: 'flowers', label: 'addonFlowers', serviceId: 'flowers' },
         { id: 'windows', label: 'addonWindows', serviceId: 'windows' },
+        { id: 'linens', label: 'addonLinens', serviceId: 'linens' },
+        { id: 'appliance-care', label: 'addonAppliance', serviceId: 'appliance-care' },
     ],
     telliDate: '',
     telliCursor: '',
@@ -330,9 +335,25 @@
         }
     },
 
+    async setPortalLang(next) {
+        if (!['et', 'en', 'ru'].includes(next)) return;
+        this.lang = next;
+        try { localStorage.setItem('sukoda_lang', next); } catch (e) {}
+        document.documentElement.lang = next;
+        if (!this.authenticated || !this.token) return;
+        try {
+            await fetch('/api/me/lang', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
+                body: JSON.stringify({ lang: next }),
+            });
+        } catch (e) {}
+        await this.loadExtras();
+    },
+
     async loadExtras() {
         try {
-            const res = await fetch('/api/me/extras', { headers: { 'Authorization': 'Bearer ' + this.token } });
+            const res = await fetch('/api/me/extras?lang=' + encodeURIComponent(this.lang), { headers: { 'Authorization': 'Bearer ' + this.token } });
             if (res.ok) {
                 const data = await res.json();
                 this.extras = { ...this.extras, ...data };
@@ -607,12 +628,76 @@
         if (!this.showProvider) return list;
         return list.filter((item) => item.id !== 'warranty-inspection' && item.id !== 'sealant-check');
     },
+    get hasCleaner() {
+        return Boolean(this.order?.provider || this.extras?.provider);
+    },
+    get canShowAskFolder() {
+        return !this.showProvider || (this.documents?.items?.length || 0) > 0 || (this.folderFacts?.length || 0) > 0;
+    },
+    openVisitFeedback(visit = null) {
+        const base = this.serviceById('cleaning-note') || {
+            id: 'cleaning-note',
+            kind: 'question',
+            category: 'cleaning',
+            name: this.t(visit ? 'feedbackTitle' : 'cleanerMsgTitle'),
+            description: this.t('feedbackLead'),
+        };
+        const title = this.t(visit ? 'feedbackTitle' : 'cleanerMsgTitle');
+        const desc = visit && visit.scheduledAt
+            ? this.t('feedbackVisitRef', { date: this.formatDateLong(visit.scheduledAt) }) + '. ' + this.t('feedbackLead')
+            : this.t('feedbackLead');
+        this.feedbackVisit = visit;
+        this.openRequest({ ...base, name: title, description: desc });
+    },
+    get visibleTelliAddonRows() {
+        return this.telliAddonRows.filter((row) => !!this.serviceById(row.serviceId));
+    },
+    get telliPrimaryExtras() {
+        const ids = ['windows', 'deep-clean', 'fridge-oven', 'appliance-care', 'flowers'];
+        return ids.map((id) => this.serviceById(id)).filter((s) => s && (!this.showProvider || this.isOrderable(s)));
+    },
+    get telliMoreExtras() {
+        const ids = ['linens', 'ironing', 'laundry', 'rugs', 'away-care', 'other'];
+        return ids.map((id) => this.serviceById(id)).filter((s) => s && (!this.showProvider || this.isOrderable(s)));
+    },
+    get canOrderCleanRow() {
+        const s = this.serviceById('extra-clean');
+        return !!s && (!this.showProvider || this.isOrderable(s));
+    },
+    get canAttachToNextClean() {
+        return Boolean(this.nextCleanDay && this.telliOpen && !['clean', 'fix', 'warranty', 'away-care', 'note'].includes(this.telliOpen));
+    },
+    get nextCleanShort() {
+        return this.nextCleanDay ? this.formatDateShort(this.nextCleanDay) : '';
+    },
+    get telliEffectiveDate() {
+        return (this.canAttachToNextClean && this.telliTiming === 'next') ? this.nextCleanDay : this.telliDate;
+    },
+    selectTelliWithVisit() {
+        this.telliTiming = 'next';
+    },
+    selectTelliSeparateDay() {
+        this.telliTiming = 'pick';
+        if (!this.telliCursor) {
+            const base = this.telliDate || this.telliDateMin || this.minRequestDate;
+            this.telliCursor = String(base || '').slice(0, 7);
+        }
+    },
+    telliExtraPlaceholder(id) {
+        const map = {
+            'appliance-care': 'phApplianceCare', laundry: 'phLaundry', rugs: 'phRugs',
+            'away-care': 'phAwayCare', other: 'phOther', flowers: 'phFlowers',
+        };
+        return this.t(map[id] || 'phDefault');
+    },
     get telliServiceId() {
-        return { warranty: 'warranty-claim', fix: 'small-repairs', flowers: 'flowers', windows: 'windows' }[this.telliOpen] || 'extra-clean';
+        if (!this.telliOpen || this.telliOpen === 'clean') return 'extra-clean';
+        const mapped = { warranty: 'warranty-claim', fix: 'small-repairs', note: 'cleaning-note' }[this.telliOpen];
+        return mapped || this.telliOpen;
     },
     /** No partner for this service yet: the press records interest, it does not book a visit. */
     get telliGathering() {
-        if (!this.telliOpen || this.telliOpen === 'warranty') return false;
+        if (!this.telliOpen || this.telliOpen === 'warranty' || this.telliOpen === 'note') return false;
         const service = this.serviceById(this.telliServiceId);
         return !!service && !this.isOrderable(service);
     },
@@ -623,6 +708,7 @@
     },
     get telliButtonLabel() {
         if (this.telliOpen === 'warranty' || this.telliPanel === 'warranty') return this.t('sendWarranty');
+        if (this.telliOpen === 'note') return this.t('sendWord');
         if (this.showProvider || this.quoteHasFloor) return this.t('confirmOrder');
         if (this.telliSumAmount && this.telliQuote && this.telliQuote.cardRequired) {
             return this.t('confirmPay', { amount: this.telliSumAmount });
@@ -651,11 +737,15 @@
         this.telliPanel = this.telliOpen || 'clean';
         this.telliDone = '';
         this.telliError = '';
+        this.telliNote = '';
+        this.telliTiming = this.nextCleanDay ? 'next' : 'pick';
         if (!this.flowerTone) this.flowerTone = (this.homeProfile && this.homeProfile.flowerPreference) || '';
         if (this.telliOpen === 'clean' && (this.arcoCleanLine || this.telliPay)) this.telliRhythm = 'once';
-        if (this.telliOpen && this.telliOpen !== 'warranty') this.refreshTelliQuote();
+        if (this.telliOpen && this.telliOpen !== 'warranty' && this.telliOpen !== 'note') this.refreshTelliQuote();
         if (this.telliOpen) {
-            const base = this.telliDate || ((this.telliOpen === 'clean' || this.telliOpen === 'windows') ? this.telliDateMin : this.minRequestDate);
+            const svc = this.serviceById(this.telliServiceId);
+            const cleanLead = this.telliOpen === 'clean' || (svc && svc.category === 'cleaning');
+            const base = this.telliDate || (cleanLead ? this.telliDateMin : this.minRequestDate);
             if (!this.telliCursor) this.telliCursor = String(base || '').slice(0, 7);
         }
     },
@@ -716,12 +806,14 @@
         const [y, m] = this.telliCursorParts();
         const pad = (new Date(y, m - 1, 1).getDay() + 6) % 7;
         const days = new Date(y, m, 0).getDate();
-        const min = (this.telliOpen === 'clean' || this.telliOpen === 'windows') ? this.telliDateMin : this.minRequestDate;
+        const svc = this.serviceById(this.telliServiceId);
+        const cleanLead = this.telliOpen === 'clean' || (svc && svc.category === 'cleaning');
+        const min = cleanLead ? this.telliDateMin : this.minRequestDate;
         const cells = [];
         for (let i = 0; i < pad; i++) cells.push({ key: 'pad-' + i, label: '', iso: '', disabled: true, pad: true });
         for (let day = 1; day <= days; day++) {
             const iso = y + '-' + String(m).padStart(2, '0') + '-' + String(day).padStart(2, '0');
-            cells.push({ key: iso, label: String(day), iso, disabled: !!(min && iso < min), pad: false });
+            cells.push({ key: iso, label: String(day), iso, disabled: !!(min && iso < min && iso !== this.nextCleanDay), pad: false });
         }
         return cells;
     },
@@ -771,6 +863,7 @@
                 meta: day,
                 status: this.requestStatusLabel(request.status, request),
                 open: 'thread',
+                hasReply: ['answered', 'declined'].includes(request.status),
                 requestId: request.id,
             });
         });
@@ -808,7 +901,8 @@
     async refreshTelliQuote() {
         if (!this.token) return;
         const panel = this.telliOpen || this.telliPanel;
-        const serviceId = { warranty: 'warranty-claim', fix: 'small-repairs', flowers: 'flowers', windows: 'windows' }[panel] || 'extra-clean';
+        if (panel === 'note' || panel === 'warranty') { this.telliQuote = null; return; }
+        const serviceId = this.telliServiceId;
         try {
             const res = await fetch('/api/me/requests/quote', {
                 method: 'POST',
@@ -820,10 +914,12 @@
         } catch (e) { /* the price lines stay as written */ }
     },
     async submitTelli() {
-        if (this.telliBusy || (!this.telliGathering && !this.telliDate)) return;
         const panel = this.telliOpen || this.telliPanel;
+        const isNote = panel === 'note';
+        const effectiveDate = isNote ? null : ((panel === 'clean' || panel === 'fix' || panel === 'warranty') ? this.telliDate : this.telliEffectiveDate);
+        if (this.telliBusy || (!isNote && !this.telliGathering && !effectiveDate)) return;
         const words = (this.telliNote || '').trim();
-        if ((panel === 'fix' || panel === 'warranty') && words.length < 5 && !(panel === 'warranty' && this.telliPhotoName)) return;
+        if ((isNote || panel === 'other' || panel === 'fix' || panel === 'warranty') && words.length < 5 && !(panel === 'warranty' && this.telliPhotoName)) return;
         if (panel === 'flowers' && this.flowerMode === 'tone' && this.flowerChoice().length < 2) return;
         this.telliBusy = true;
         this.telliError = '';
@@ -839,19 +935,20 @@
         const note = panel === 'clean'
             ? [giftBit, rhythmBit, this.t('telliNoteOnce'), names.length ? this.t('telliNoteExtras', { list: names.join(', ') }) : '', flowerBit].filter(Boolean).join(' ')
             : panel === 'flowers'
-                ? flowerBit
+                ? [flowerBit, words].filter(Boolean).join(' ')
                 : [giftBit, words, panel === 'warranty' && this.telliPhotoName ? this.t('photoAttached') : ''].filter(Boolean).join(' ');
-        const serviceId = { warranty: 'warranty-claim', fix: 'small-repairs', flowers: 'flowers', windows: 'windows' }[panel] || 'extra-clean';
+        const serviceId = this.telliServiceId;
+        const withNext = !isNote && this.canAttachToNextClean && this.telliTiming === 'next';
         try {
             const res = await fetch('/api/me/requests', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + this.token },
                 body: JSON.stringify({
                     serviceId,
-                    preferredDate: this.telliGathering ? null : this.telliDate,
-                    timeWindow: this.telliWindow || 'any',
+                    preferredDate: (isNote || this.telliGathering) ? null : effectiveDate,
+                    timeWindow: isNote ? 'any' : (withNext ? 'with-visit' : (this.telliWindow || 'any')),
                     note,
-                    access: (this.homeProfile.access || '').trim() || this.t('telliHome'),
+                    access: isNote ? '' : ((this.homeProfile.access || '').trim() || this.t('telliHome')),
                     urgent: false,
                     addonIds: ids,
                     ...(panel === 'clean' && !this.telliPay && this.telliRhythm && this.telliRhythm !== 'once' ? { rhythm: this.telliRhythm } : {}),
@@ -867,12 +964,15 @@
             }
             this.telliDone = data.interest
                 ? this.t('noted')
-                : (panel === 'warranty'
-                    ? this.t('orderWarrantySent')
-                    : (this.showProvider && this.providerFace ? this.t('telliSentNamed', { name: this.providerFace }) : this.t('telliSent')));
-            this.telliAddons = { flowers: false, windows: false };
+                : (isNote
+                    ? this.t('noteSentCleaner')
+                    : (panel === 'warranty'
+                        ? this.t('orderWarrantySent')
+                        : (this.showProvider && this.providerFace ? this.t('telliSentNamed', { name: this.providerFace }) : this.t('telliSent'))));
+            this.telliAddons = { flowers: false, windows: false, linens: false, 'appliance-care': false };
             this.telliNote = '';
             this.telliPhotoName = '';
+            if (isNote) this.telliOpen = '';
             await this.loadExtras();
         } catch (e) {
             this.telliError = e.message && e.message !== 'failed' ? e.message : this.t('telliFailed');
@@ -883,6 +983,7 @@
     closeRequest() {
         this.requestService = null;
         this.requestDone = null;
+        this.feedbackVisit = null;
         this.addonChooser = false;
     },
     async openThread(r) {
@@ -1468,8 +1569,9 @@
         if (this.askSending) return;
         if (question.length < 5) { this.askCard = { fact: '', place: '', action: 'person', href: '', error: this.t('askTooShort') }; return; }
         this.askSending = true;
+        const serviceId = this.showProvider ? 'cleaning-note' : 'home-manual';
         try {
-            const res = await fetch('/api/me/requests', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + this.token }, body: JSON.stringify({ serviceId: 'home-manual', note: question }) });
+            const res = await fetch('/api/me/requests', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + this.token }, body: JSON.stringify({ serviceId, note: question }) });
             const data = await res.json();
             if (!res.ok) { this.askCard = { fact: '', place: '', action: 'person', href: '', error: (data && data.error) || this.t('askFailed') }; return; }
             this.askCard = { fact: this.t('askSent'), place: '', action: '', href: '' };
@@ -1521,6 +1623,10 @@
         if (!this.requestService || this.requestProcessing) return;
         this.requestProcessing = true;
         this.requestError = '';
+        const rawNote = (this.requestNote || '').trim();
+        const visitTag = (this.requestService.id === 'cleaning-note' && this.feedbackVisit?.scheduledAt)
+            ? `[${this.formatDateLong(this.feedbackVisit.scheduledAt)}] `
+            : '';
         try {
             const res = await fetch('/api/me/requests', {
                 method: 'POST',
@@ -1529,7 +1635,7 @@
                     serviceId: this.requestService.id,
                     preferredDate: this.requestDate || null,
                     timeWindow: this.requestWindow,
-                    note: (this.requestNote || '').trim(),
+                    note: (visitTag + rawNote).slice(0, 500),
                     access: this.resolveAccess(),
                     urgent: this.requestKind === 'issue' && this.requestUrgent,
                 }),
@@ -2058,11 +2164,11 @@
                 <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12">
                     <a href="index.html" class="font-serif text-2xl md:text-3xl tracking-[0.08em] font-light">SUKODA</a>
                     <div class="flex text-xs uppercase tracking-[0.16em] font-sans font-medium gap-2">
-                        <button @click="lang = 'et'; localStorage.setItem('sukoda_lang', 'et')" :class="lang === 'et' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">ET</button>
+                        <button @click="setPortalLang('et')" :class="lang === 'et' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">ET</button>
                         <span class="text-muted-light">/</span>
-                        <button @click="lang = 'en'; localStorage.setItem('sukoda_lang', 'en')" :class="lang === 'en' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">EN</button>
+                        <button @click="setPortalLang('en')" :class="lang === 'en' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">EN</button>
                         <span class="text-muted-light">/</span>
-                        <button @click="lang = 'ru'; localStorage.setItem('sukoda_lang', 'ru')" :class="lang === 'ru' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">RU</button>
+                        <button @click="setPortalLang('ru')" :class="lang === 'ru' ? 'text-black' : 'text-muted hover:text-black'" class="transition-colors">RU</button>
                     </div>
                 </div>
             </nav>
@@ -2135,11 +2241,11 @@
                     <a href="index.html" class="font-serif text-xl md:text-3xl tracking-[0.08em] font-light shrink-0">SUKODA</a>
                     <div class="flex items-center gap-3 md:gap-5 min-w-0">
                         <div class="flex text-xs uppercase tracking-[0.14em] font-sans gap-1.5 text-muted">
-                            <button type="button" @click="lang = 'et'; localStorage.setItem('sukoda_lang', 'et')" :class="lang === 'et' ? 'text-black' : 'hover:text-black'" class="transition-colors">ET</button>
+                            <button type="button" @click="setPortalLang('et')" :class="lang === 'et' ? 'text-black' : 'hover:text-black'" class="transition-colors">ET</button>
                             <span class="text-muted-light">/</span>
-                            <button type="button" @click="lang = 'en'; localStorage.setItem('sukoda_lang', 'en')" :class="lang === 'en' ? 'text-black' : 'hover:text-black'" class="transition-colors">EN</button>
+                            <button type="button" @click="setPortalLang('en')" :class="lang === 'en' ? 'text-black' : 'hover:text-black'" class="transition-colors">EN</button>
                             <span class="text-muted-light">/</span>
-                            <button type="button" @click="lang = 'ru'; localStorage.setItem('sukoda_lang', 'ru')" :class="lang === 'ru' ? 'text-black' : 'hover:text-black'" class="transition-colors">RU</button>
+                            <button type="button" @click="setPortalLang('ru')" :class="lang === 'ru' ? 'text-black' : 'hover:text-black'" class="transition-colors">RU</button>
                         </div>
                         <button type="button" @click="logout()" class="text-sm font-sans font-light text-muted hover:text-black transition-colors shrink-0" x-text="t('logOut')"></button>
                     </div>
@@ -2204,13 +2310,18 @@
         <button type="button" class="text-sm font-sans mt-4 underline underline-offset-4" x-show="nextThing.action2" x-cloak @click="runNext(nextThing.kind2)" x-text="nextThing.action2"></button>
       </div>
     </article>
-    <!-- The last visit that happened: one line, then the calendar link -->
+    <!-- The last visit that happened: one line, cleaner's note if any, and one-tap feedback -->
     <div x-show="lastVisit && nextThing.kind !== 'welcome' && nextThing.kind !== 'loading'" x-cloak class="mt-8">
         <p class="eyebrow" x-text="t('lastVisitLabel')"></p>
         <p class="text-sm font-sans font-light mt-2" x-text="lastVisitLine(lastVisit)"></p>
+        <p x-show="lastVisit?.completedNote" class="text-sm text-muted font-sans font-light mt-1.5" x-text="lastVisit?.completedNote"></p>
+        <button type="button" x-show="hasCleaner || lastVisit?.providerName" class="text-sm font-sans mt-3 underline underline-offset-4 hover:text-accent transition-colors" @click="openVisitFeedback(lastVisit)" x-text="t('feedbackAction')"></button>
     </div>
-    <button type="button" class="text-sm font-sans mt-6 underline underline-offset-4" x-show="nextThing.kind !== 'welcome' && nextThing.kind !== 'away' && !(nextThing.kind === 'visit' && nextThing.pending) && (upcomingBookings.length || pastBookings.length)" x-cloak @click="activeTab = 'visits'" x-text="t('seeCalendar')"></button>
-    <form class="mt-10 border-t border-line pt-8" x-show="nextThing.kind !== 'welcome'" x-cloak @submit.prevent="askFolder()">
+    <div class="flex flex-wrap items-center gap-x-6 gap-y-2 mt-6" x-show="nextThing.kind !== 'welcome' && nextThing.kind !== 'loading'" x-cloak>
+        <button type="button" class="text-sm font-sans underline underline-offset-4" x-show="nextThing.kind !== 'away' && !(nextThing.kind === 'visit' && nextThing.pending) && (upcomingBookings.length || pastBookings.length)" @click="activeTab = 'visits'" x-text="t('seeCalendar')"></button>
+        <button type="button" class="text-sm font-sans underline underline-offset-4 hover:text-accent transition-colors" x-show="!lastVisit && hasCleaner" @click="openVisitFeedback(null)" x-text="t('writeCleaner')"></button>
+    </div>
+    <form class="mt-10 border-t border-line pt-8" x-show="nextThing.kind !== 'welcome' && canShowAskFolder" x-cloak @submit.prevent="askFolder()">
         <label class="eyebrow" for="ask-home" x-text="t('askHomeLead')"></label>
         <div class="flex flex-col sm:flex-row gap-3 mt-2">
             <input id="ask-home" type="text" x-model="askText" maxlength="200" :placeholder="t('askPh')" class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-line-strong">
@@ -2278,8 +2389,12 @@
                                 <div class="mt-2 border-t border-line">
                                     <template x-for="booking in pastBookings" :key="booking.id">
                                         <div class="py-3 border-b border-line flex items-baseline justify-between gap-4">
-                                            <p class="text-sm font-sans" x-text="formatDate(booking.scheduledAt)"></p>
-                                            <p class="text-sm text-muted font-sans font-light truncate" x-text="[visitLabel(booking), booking.price].filter(Boolean).join(' · ')"></p>
+                                            <div class="min-w-0">
+                                                <p class="text-sm font-sans" x-text="formatDate(booking.scheduledAt)"></p>
+                                                <p class="text-sm text-muted font-sans font-light truncate" x-text="[visitLabel(booking), booking.price].filter(Boolean).join(' · ')"></p>
+                                                <p x-show="booking.completedNote" class="text-xs text-muted font-sans font-light mt-1" x-text="booking.completedNote"></p>
+                                            </div>
+                                            <button type="button" x-show="booking.status !== 'cancelled' && hasCleaner" @click="openVisitFeedback(booking)" class="text-sm font-sans underline underline-offset-4 shrink-0 hover:text-accent transition-colors" x-text="t('leaveFeedback')"></button>
                                         </div>
                                     </template>
                                 </div>
@@ -2396,14 +2511,14 @@
 
             <!-- Request form: three shapes — a visit (needs a time), an issue (describe first, time optional), a question (answered in writing) -->
             <div x-show="requestService || addonChooser" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4 bg-black/40" role="dialog" aria-modal="true" aria-labelledby="request-modal-title" @click.self="closeRequest()" @keydown.escape.window="if (!viewRequest && !proposeBooking && !rescheduleBookingId) closeRequest()">
-                <div class="bg-paper w-full sm:max-w-lg max-h-[92vh] overflow-y-auto border border-[#E8E3DD] p-6 md:p-8 shadow-lg" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+                <div class="bg-paper w-full sm:max-w-lg max-h-[92vh] overflow-y-auto border border-line p-6 md:p-8 shadow-lg" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
 
                     <!-- Success -->
                     <div x-show="requestDone" x-cloak class="text-center py-6">
                         <div class="w-16 h-16 bg-accent rounded-full flex items-center justify-center mx-auto mb-6 animate-checkmark">
                             <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"></path></svg>
                         </div>
-                        <h3 class="font-serif text-2xl font-light mb-3" x-text="t(requestDone?.interest ? 'doneNoted' : requestKind === 'question' ? 'doneQuestion' : requestKind === 'issue' ? 'doneIssue' : 'doneRequest')"></h3>
+                        <h3 class="font-serif text-2xl font-light mb-3" x-text="t(requestDone?.interest ? 'doneNoted' : requestService?.id === 'cleaning-note' ? 'doneFeedback' : requestKind === 'question' ? 'doneQuestion' : requestKind === 'issue' ? 'doneIssue' : 'doneRequest')"></h3>
                         <p class="text-sm text-muted font-sans font-light leading-relaxed max-w-sm mx-auto mb-2">
                             <span x-text="requestService?.name"></span>
                             <span x-show="requestDate && requestKind !== 'question'" x-text="' · ' + formatDateShort(requestDate)"></span>
@@ -2419,15 +2534,15 @@
                     <div x-show="addonChooser && !requestService && !requestDone">
                         <div class="flex justify-between items-start mb-6">
                             <div class="min-w-0">
-                                <p class="text-[10px] uppercase tracking-[0.16em] text-muted font-sans mb-2" x-text="lang === 'et' ? 'Järgmise koristusega' : 'With the next clean'"></p>
-                                <h3 class="font-serif text-2xl font-light leading-tight" x-text="lang === 'et' ? 'Lisa koristusvisiidile' : 'Add to the cleaning visit'"></h3>
+                                <p class="eyebrow mb-2" x-text="t('withNextCleanHead')"></p>
+                                <h3 class="font-serif text-2xl font-light leading-tight" x-text="t('addToCleanTitle')"></h3>
                             </div>
-                            <button type="button" @click="closeRequest()" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full transition-colors shrink-0 -mr-2 -mt-1">
+                            <button type="button" @click="closeRequest()" :aria-label="t('docClose')" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full transition-colors shrink-0 -mr-2 -mt-1">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                             </button>
                         </div>
-                        <p class="text-sm text-muted font-sans font-light mb-6 leading-relaxed" x-text="(nextCleaning ? formatDateShort(nextCleaning.scheduledAt) + ' · ' + formatTime(nextCleaning.scheduledAt) + '. ' : '') + (lang === 'et' ? 'Vali üks. Midagi ei ole veel valitud ja arvet ei tule enne, kui töö on kinnitatud.' : 'Choose one. Nothing is selected yet, and nothing is invoiced before the work is confirmed.')"></p>
-                        <div class="border border-[#E8E3DD] divide-y divide-[#E8E3DD]">
+                        <p class="text-sm text-muted font-sans font-light mb-6 leading-relaxed" x-text="(nextCleaning ? formatDateShort(nextCleaning.scheduledAt) + ' · ' + formatTime(nextCleaning.scheduledAt) + '. ' : '') + t('addToCleanLead')"></p>
+                        <div class="border border-line divide-y divide-line">
                             <template x-for="s in visitAddons" :key="'pick-' + s.id">
                                 <button type="button" @click="openWithVisit(s)" class="w-full text-left px-4 py-3.5 hover:bg-cream/40 transition-colors">
                                     <span class="block font-sans text-sm" x-text="s.name"></span>
@@ -2644,36 +2759,36 @@
 
             <!-- Reschedule modal -->
             <div x-show="rescheduleBookingId" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/40" role="dialog" aria-modal="true" aria-labelledby="reschedule-modal-title" @click.self="closeReschedule()" @keydown.escape.window="closeReschedule()">
-                <div class="bg-paper max-w-lg w-full max-h-[90vh] overflow-y-auto border border-[#E8E3DD] p-6 md:p-8 shadow-lg" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" @click.stop>
+                <div class="bg-paper max-w-lg w-full max-h-[90vh] overflow-y-auto border border-line p-6 md:p-8 shadow-lg" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" @click.stop>
                     <div class="flex justify-between items-center mb-6">
-                        <h3 id="reschedule-modal-title" class="font-serif text-xl font-light" x-text="lang === 'et' ? 'Muuda visiidi aega' : 'Reschedule visit'"></h3>
-                        <button type="button" @click="closeReschedule()" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full transition-colors">
+                        <h3 id="reschedule-modal-title" class="font-serif text-xl font-light" x-text="t('rescheduleModalTitle')"></h3>
+                        <button type="button" @click="closeReschedule()" :aria-label="t('docClose')" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full transition-colors">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                         </button>
                     </div>
 
-                    <div x-show="rescheduleSuccess" x-cloak class="mb-6 p-4 bg-green-50 border border-green-200 text-green-800 text-sm font-sans" x-text="lang === 'et' ? 'Aeg uuendatud. Saadame meeldetuletuse.' : 'Time updated. We will send a reminder.'"></div>
+                    <div x-show="rescheduleSuccess" x-cloak class="mb-6 p-4 bg-green-50 border border-green-200 text-green-800 text-sm font-sans" x-text="t('rescheduleModalDone')"></div>
                     <p x-show="rescheduleError" x-cloak class="mb-4 text-red-500 text-sm font-sans font-light" x-text="rescheduleError"></p>
 
                     <div x-show="rescheduleSlotsLoading" class="py-8 text-center">
                         <div class="w-10 h-10 border border-accent border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                        <p class="text-sm text-muted font-sans" x-text="lang === 'et' ? 'Laadin vabu aegu…' : 'Loading available times…'"></p>
+                        <p class="text-sm text-muted font-sans" x-text="t('loadingTimes')"></p>
                     </div>
 
                     <div x-show="!rescheduleSlotsLoading && !rescheduleSuccess" x-cloak>
                         <div class="mb-6">
                             <div class="flex items-center justify-between mb-4">
-                                <button @click="reschedulePrevMonth()" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full transition-colors">
+                                <button type="button" @click="reschedulePrevMonth()" :aria-label="t('monthPrev')" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full transition-colors">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7"></path></svg>
                                 </button>
                                 <h4 class="font-serif text-lg font-light" x-text="rescheduleCurrentMonthLabel"></h4>
-                                <button @click="rescheduleNextMonth()" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full transition-colors">
+                                <button type="button" @click="rescheduleNextMonth()" :aria-label="t('monthNext')" class="w-10 h-10 flex items-center justify-center hover:bg-cream rounded-full transition-colors">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"></path></svg>
                                 </button>
                             </div>
                             <div class="grid grid-cols-7 gap-1 mb-2">
-                                <template x-for="(day, di) in (lang === 'et' ? ['E', 'T', 'K', 'N', 'R', 'L', 'P'] : ['M', 'T', 'W', 'T', 'F', 'S', 'S'])" :key="di">
-                                    <div class="text-center text-[11px] uppercase tracking-[0.16em] text-muted font-sans py-2" x-text="day"></div>
+                                <template x-for="(day, di) in telliWeekdays" :key="di">
+                                    <div class="text-center eyebrow py-2" x-text="day"></div>
                                 </template>
                             </div>
                             <div class="grid grid-cols-7 gap-1">
@@ -2686,21 +2801,21 @@
                         </div>
 
                         <div x-show="rescheduleDate" x-transition class="mb-6">
-                            <p class="text-[11px] uppercase tracking-[0.18em] text-muted font-sans mb-3" x-text="lang === 'et' ? 'Saadaolevad ajad' : 'Available times'"></p>
+                            <p class="eyebrow mb-3" x-text="t('availableTimes')"></p>
                             <div class="grid grid-cols-3 gap-2">
                                 <template x-for="time in rescheduleAvailableTimes" :key="time">
                                     <button type="button" @click="rescheduleTime = time"
-                                            :class="rescheduleTime === time ? 'bg-black text-paper' : 'border border-[#E8E3DD] hover:border-accent'"
+                                            :class="rescheduleTime === time ? 'bg-black text-paper' : 'border border-line hover:border-accent'"
                                             class="py-3 px-4 text-center text-sm font-sans font-light rounded transition-colors" x-text="time"></button>
                                 </template>
                             </div>
                         </div>
 
                         <div class="flex gap-4 pt-4">
-                            <button type="button" @click="closeReschedule()" class="p-btn-2" x-text="lang === 'et' ? 'Loobu' : 'Cancel'"></button>
+                            <button type="button" @click="closeReschedule()" class="p-btn-2" x-text="t('docCancel')"></button>
                             <button type="button" @click="confirmReschedule()" :disabled="!rescheduleDate || !rescheduleTime || rescheduleProcessing"
                                     class="p-btn flex-1 disabled:opacity-50">
-                                <span x-show="!rescheduleProcessing" x-text="lang === 'et' ? 'Kinnita' : 'Confirm'"></span>
+                                <span x-show="!rescheduleProcessing" x-text="t('confirmWord')"></span>
                                 <span x-show="rescheduleProcessing" x-cloak>
                                     <svg class="w-4 h-4 animate-spin mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
                                 </span>
@@ -2711,18 +2826,18 @@
             </div>
 
             <!-- Footer (compact: this is a working portal, not the marketing site) -->
-            <footer class="border-t border-[#E8E3DD] px-6 md:px-12 py-8">
+            <footer class="border-t border-line px-6 md:px-12 py-8">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 text-sm font-sans font-light text-muted">
                     <div class="flex flex-wrap items-center gap-4">
                         <!-- White label: the developer's portal, run by SUKODA -->
-                        <span x-show="brand" x-cloak class="text-xs" x-text="lang === 'et' ? 'Portaali haldab SUKODA · Epic Ship OÜ' : 'Portal run by SUKODA · Epic Ship OÜ'"></span>
+                        <span x-show="brand" x-cloak class="text-xs" x-text="t('footerRun')"></span>
                         <a x-show="!brand" href="index.html" class="font-serif text-lg tracking-[0.08em] font-light text-black">SUKODA</a>
-                        <span class="hidden md:inline text-[#D4CFC8]">·</span>
+                        <span class="hidden md:inline text-line-strong">·</span>
                         <a href="mailto:tere@sukoda.ee" class="hover:text-black transition-colors">tere@sukoda.ee</a>
                     </div>
                     <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
-                        <a href="tingimused.html" class="hover:text-black transition-colors" x-text="lang === 'et' ? 'Tingimused' : 'Terms'"></a>
-                        <a href="privaatsus.html" class="hover:text-black transition-colors" x-text="lang === 'et' ? 'Privaatsus' : 'Privacy'"></a>
+                        <a href="tingimused.html" class="hover:text-black transition-colors" x-text="t('terms')"></a>
+                        <a href="privaatsus.html" class="hover:text-black transition-colors" x-text="t('privacy')"></a>
                         <span class="text-xs">© 2026 Epic Ship OÜ · 14713548</span>
                     </div>
                 </div>

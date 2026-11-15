@@ -6141,7 +6141,7 @@ exports.getClientProfile = functions
           .limit(20)
           .get();
 
-        const lang = order.lang === 'en' ? 'en' : 'et';
+        const lang = haldusCore.langOf(order);
         const bookings = bookingsSnapshot.docs.map(doc => {
           const b = doc.data();
           const svc = b.serviceId ? haldusCore.getService(b.serviceId) : null;
@@ -6155,6 +6155,7 @@ exports.getClientProfile = functions
             serviceName: svc ? (svc.name[lang] || svc.name.et) : null,
             price: b.price || null,
             customerNote: b.customerNote || '',
+            completedNote: b.completedNote || '',
             providerName: b.providerName || order.providerName || null,
             hasCal: Boolean(b.calBookingUid),
             canReschedule: Boolean(b.calBookingUid) || b.source === 'schedule' || b.source === 'provider',

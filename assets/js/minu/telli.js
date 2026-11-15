@@ -10,6 +10,7 @@ add({
   giftPickClean: { et: 'Vali aeg', en: 'Pick a time', ru: 'Выбрать время' },
   addTitle: { et: 'Lisa juurde', en: 'Add more', ru: 'Добавить ещё' },
   orderClean: { et: 'Koristus', en: 'Cleaning', ru: 'Уборка' },
+  extraCleanRow: { et: 'Lisakoristus', en: 'Extra clean', ru: 'Дополнительная уборка' },
   orderFix: { et: 'Remondimees', en: 'Handyman', ru: 'Мастер' },
   orderWarranty: { et: 'Garantii', en: 'Warranty', ru: 'Гарантия' },
   orderDay: { et: 'Päev', en: 'Day', ru: 'День' },
@@ -17,8 +18,16 @@ add({
   orderMorning: { et: 'Hommik', en: 'Morning', ru: 'Утро' },
   orderAfternoon: { et: 'Pärastlõuna', en: 'Afternoon', ru: 'После обеда' },
   orderAny: { et: 'Kogu päev', en: 'All day', ru: 'Весь день' },
+  withNextVisitBtn: { et: 'Järgmise koristusega · {date}', en: 'With next clean · {date}', ru: 'Со следующей уборкой · {date}' },
+  pickSeparateDay: { et: 'Eraldi päeval', en: 'Separate day', ru: 'В другой день' },
+  moreExtrasShow: { et: '+ Rohkem lisateenuseid', en: '+ More extra services', ru: '+ Ещё допуслуги' },
+  moreExtrasHide: { et: 'Peida muud lisateenused', en: 'Hide extra services', ru: 'Скрыть допуслуги' },
+  feedbackShortLead: { et: 'Tagasiside eelmise korra kohta või märkus järgmiseks visiidiks.', en: 'Feedback on the last visit or a note for the next one.', ru: 'Отзыв о прошлом визите или заметка к следующему.' },
+  noteSentCleaner: { et: 'Sõnum on saadetud. Vastus tuleb siia, Sinu teenuste alla.', en: 'Your message is sent. The reply comes here, under Your services.', ru: 'Сообщение отправлено. Ответ придёт сюда, в раздел «Ваши услуги».' },
   addonFlowers: { et: 'Lilled', en: 'Flowers', ru: 'Цветы' },
   addonWindows: { et: 'Aknapesu', en: 'Window washing', ru: 'Мытьё окон' },
+  addonLinens: { et: 'Voodipesu vahetus', en: 'Linen change', ru: 'Смена постельного белья' },
+  addonAppliance: { et: 'Kodumasinate hooldus', en: 'Appliance care', ru: 'Уход за бытовой техникой' },
   addonSeason: { et: 'Hooajaline kimp', en: 'Seasonal bouquet', ru: 'Сезонный букет' },
   addonTone: { et: 'Oma valik', en: 'Your choice', ru: 'Свой выбор' },
   flowerTonePh: { et: 'nt valged tulbid, mitte liiliaid', en: 'e.g. white tulips, no lilies', ru: 'напр. белые тюльпаны, без лилий' },
@@ -106,8 +115,46 @@ function dayFields() {
 }
 
 const whenFields = `<div x-show="!telliGathering">${dayFields()}</div>`;
+const extraWhenFields = `
+                <div x-show="!telliGathering">
+                    <div x-show="canAttachToNextClean" class="grid sm:grid-cols-2 gap-2 mt-3">
+                        <button type="button" @click="selectTelliWithVisit()" :class="telliTiming === 'next' ? 'bg-black text-paper border-black' : 'border-line bg-white'" class="py-3 px-3 border text-sm font-sans" x-text="t('withNextVisitBtn', { date: nextCleanShort })"></button>
+                        <button type="button" @click="selectTelliSeparateDay()" :class="telliTiming === 'pick' ? 'bg-black text-paper border-black' : 'border-line bg-white'" class="py-3 px-3 border text-sm font-sans" x-text="t('pickSeparateDay')"></button>
+                    </div>
+                    <div x-show="!canAttachToNextClean || telliTiming === 'pick'">${dayFields()}</div>
+                </div>`;
 const gatherLead = `<p x-show="telliGathering && !telliNoted" x-cloak class="text-sm text-muted font-sans font-light mb-4" x-text="t('gatherLead')"></p>`;
 const gatherDone = `<p x-show="telliNoted" x-cloak class="text-sm font-sans font-light" x-text="t('noted')"></p>`;
+
+function extraServiceBlock(listExpr) {
+  return `
+            <template x-for="svc in ${listExpr}" :key="svc.id">
+                <div class="border-b border-line">
+                    <button type="button" class="w-full py-4 text-left" @click="setTelliOpen(svc.id)">
+                        <span class="flex items-baseline justify-between gap-4">
+                            <span class="font-sans text-base" x-text="svc.name"></span>
+                            <span class="text-sm text-muted font-sans font-light shrink-0" x-text="addonPrice(svc.id)"></span>
+                        </span>
+                        <span class="block text-sm text-muted font-sans font-light mt-1" x-text="svc.description"></span>
+                    </button>
+                    <form x-show="telliOpen === svc.id" x-cloak class="pb-6" @submit.prevent="submitTelli()">
+                        ${gatherLead}
+                        <div x-show="!telliNoted">
+                            <div x-show="svc.id === 'flowers'" class="mb-3">
+                                ${choiceButtons}
+                            </div>
+                            <div x-show="svc.id !== 'flowers'" class="mb-2">
+                                <label class="eyebrow" :for="'telli-note-' + svc.id" x-text="t(svc.id === 'other' ? 'noteWhatNeed' : 'detailsLabel')"></label>
+                                <textarea :id="'telli-note-' + svc.id" x-model="telliNote" :rows="svc.id === 'other' ? 3 : 2" maxlength="500" :placeholder="telliExtraPlaceholder(svc.id)" class="w-full mt-2 bg-white border border-line focus:border-accent outline-none p-3 font-sans font-light text-base placeholder:text-line-strong resize-none"></textarea>
+                            </div>
+                            ${extraWhenFields}
+                            <button type="submit" :disabled="telliBusy || (!telliGathering && (!telliEffectiveDate || (svc.id === 'other' && (telliNote || '').trim().length < 5) || (svc.id === 'flowers' && flowerMode === 'tone' && (flowerTone || '').trim().length < 2) || (telliQuote && telliQuote.unpriced && !showProvider)))" class="p-btn p-btn-wrap w-full mt-6 disabled:opacity-40" x-text="telliBusy ? t('telliSending') : (telliGathering ? t('wantIt') : telliButtonLabel)"></button>
+                        </div>
+                        ${gatherDone}
+                    </form>
+                </div>
+            </template>`;
+}
 
 export const telliHtml = `<div x-show="activeTab === 'extras'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
     <div class="max-w-xl min-w-0">
@@ -121,55 +168,21 @@ export const telliHtml = `<div x-show="activeTab === 'extras'" x-transition:ente
                     </div>
                     <p class="text-sm text-muted font-sans font-light mt-1" x-show="row.meta" x-text="row.meta"></p>
                     <button type="button" x-show="row.pick" class="text-sm font-sans mt-3 underline underline-offset-4" @click="openTelli(row.open)" x-text="t(row.pick)"></button>
-                    <button type="button" x-show="row.open === 'thread'" class="text-sm font-sans mt-3 underline underline-offset-4" @click="openServiceRow(row)" x-text="t('openReply')"></button>
+                    <button type="button" x-show="row.open === 'thread'" class="text-sm font-sans mt-3 underline underline-offset-4" @click="openServiceRow(row)" x-text="row.hasReply ? t('openReply') : t('openIt')"></button>
                 </div>
             </template>
             <p x-show="extrasLoaded && !serviceRows.length" class="py-4 text-sm text-muted font-sans font-light" x-text="t('yoursEmpty')"></p>
         </div>
 
         <p class="eyebrow mt-12" x-text="t('addTitle')"></p>
+        <p x-show="extras.provider && extras.provider.priceNote" x-cloak class="text-sm text-muted font-sans font-light mt-2" x-text="extras.provider && extras.provider.priceNote"></p>
         <div class="mt-2 border-t border-line">
-            <div class="border-b border-line">
-                <button type="button" class="w-full py-4 text-left" @click="setTelliOpen('flowers')">
-                    <span class="flex items-baseline justify-between gap-4">
-                        <span class="font-sans text-base" x-text="addonName('flowers')"></span>
-                        <span class="text-sm text-muted font-sans font-light shrink-0" x-text="addonPrice('flowers')"></span>
-                    </span>
-                    <span class="block text-sm text-muted font-sans font-light mt-1" x-text="addonText('flowers')"></span>
-                </button>
-                <form x-show="telliOpen === 'flowers'" x-cloak class="pb-6" @submit.prevent="submitTelli()">
-                    ${gatherLead}
-                    <div x-show="!telliNoted">
-                    ${choiceButtons}
-                    ${whenFields}
-                    <button type="submit" :disabled="telliBusy || (!telliGathering && (!telliDate || (flowerMode === 'tone' && (flowerTone || '').trim().length < 2) || (telliQuote && telliQuote.unpriced)))" class="p-btn w-full mt-6 disabled:opacity-40" x-text="telliBusy ? t('telliSending') : (telliGathering ? t('wantIt') : telliButtonLabel)"></button>
-                    </div>
-                    ${gatherDone}
-                </form>
-            </div>
+            ${extraServiceBlock('telliPrimaryExtras')}
 
-            <div class="border-b border-line">
-                <button type="button" class="w-full py-4 text-left" @click="setTelliOpen('windows')">
-                    <span class="flex items-baseline justify-between gap-4">
-                        <span class="font-sans text-base" x-text="addonName('windows')"></span>
-                        <span class="text-sm text-muted font-sans font-light shrink-0" x-text="addonPrice('windows')"></span>
-                    </span>
-                    <span class="block text-sm text-muted font-sans font-light mt-1" x-text="addonText('windows')"></span>
-                </button>
-                <form x-show="telliOpen === 'windows'" x-cloak class="pb-6" @submit.prevent="submitTelli()">
-                    ${gatherLead}
-                    <div x-show="!telliNoted">
-                    ${whenFields}
-                    <button type="submit" :disabled="telliBusy || (!telliGathering && (!telliDate || (telliQuote && telliQuote.unpriced)))" class="p-btn w-full mt-6 disabled:opacity-40" x-text="telliBusy ? t('telliSending') : (telliGathering ? t('wantIt') : telliButtonLabel)"></button>
-                    </div>
-                    ${gatherDone}
-                </form>
-            </div>
-
-            <div class="border-b border-line">
+            <div class="border-b border-line" x-show="canOrderCleanRow">
                 <button type="button" class="w-full py-4 text-left" @click="openPaidClean()">
                     <span class="flex items-baseline justify-between gap-4">
-                        <span class="font-sans text-base" x-text="t('cleanOnce')"></span>
+                        <span class="font-sans text-base" x-text="nextCleanVisit ? t('extraCleanRow') : t('cleanOnce')"></span>
                         <span class="text-sm text-muted font-sans font-light shrink-0" x-text="cleanRowPrice"></span>
                     </span>
                     <span class="block text-sm text-muted font-sans font-light mt-1" x-text="addonText('extra-clean')"></span>
@@ -187,8 +200,8 @@ export const telliHtml = `<div x-show="activeTab === 'extras'" x-transition:ente
                     <p x-show="!telliGathering && telliQuote && !telliQuote.unpriced && !telliQuote.cardRequired && telliRhythm === 'once'" class="text-sm text-muted font-sans font-light mt-3" x-text="t('giftCovers')"></p>
                     <p x-show="!telliGathering && telliRhythm !== 'once'" x-cloak class="text-sm text-muted font-sans font-light mt-3" x-text="t('rhythmHint')"></p>
                     ${whenFields}
-                    <div class="mt-6 border-t border-line" x-show="!telliGathering">
-                        <template x-for="row in telliAddonRows" :key="row.id">
+                    <div class="mt-6 border-t border-line" x-show="!telliGathering && visibleTelliAddonRows.length">
+                        <template x-for="row in visibleTelliAddonRows" :key="row.id">
                             <button type="button" @click="toggleTelliAddon(row.id)" class="w-full py-3 border-b border-line text-left">
                                 <span class="flex items-baseline justify-between gap-4">
                                     <span class="font-sans text-base" x-text="addonName(row.serviceId)"></span>
@@ -201,9 +214,9 @@ export const telliHtml = `<div x-show="activeTab === 'extras'" x-transition:ente
                     <div x-show="telliAddons.flowers" x-cloak class="mt-4">
                         ${choiceButtons}
                     </div>
-                    <p x-show="!telliGathering && telliSumAmount && !quoteHasFloor && !showProvider" class="font-serif text-4xl font-light mt-6" x-text="telliSumAmount"></p>
+                    <p x-show="!telliGathering && telliSumAmount && !quoteHasFloor && !showProvider" class="font-serif text-3xl font-light mt-6" x-text="telliSumAmount"></p>
                     <p x-show="!telliGathering && telliQuote && !telliQuote.unpriced && !telliQuote.cardRequired" x-cloak class="text-sm text-muted font-sans font-light mt-2" x-text="t('giftCovers')"></p>
-                    <button type="submit" :disabled="telliBusy || (!telliGathering && (!telliDate || (telliQuote && telliQuote.unpriced) || (telliAddons.flowers && flowerMode === 'tone' && (flowerTone || '').trim().length < 2)))" class="p-btn w-full mt-6 disabled:opacity-40">
+                    <button type="submit" :disabled="telliBusy || (!telliGathering && (!telliDate || (telliQuote && telliQuote.unpriced && !showProvider) || (telliAddons.flowers && flowerMode === 'tone' && (flowerTone || '').trim().length < 2)))" class="p-btn p-btn-wrap w-full mt-6 disabled:opacity-40">
                         <span x-show="!telliBusy" x-text="telliGathering ? t('wantIt') : telliButtonLabel"></span>
                         <span x-show="telliBusy" x-cloak x-text="t('telliSending')"></span>
                     </button>
@@ -212,7 +225,14 @@ export const telliHtml = `<div x-show="activeTab === 'extras'" x-transition:ente
                 </form>
             </div>
 
-            <div class="border-b border-line">
+            <div x-show="telliMoreExtras.length" class="border-b border-line">
+                <button type="button" class="w-full py-3.5 text-left text-sm font-sans text-muted hover:text-black transition-colors" @click="showMoreExtras = !showMoreExtras" x-text="showMoreExtras ? t('moreExtrasHide') : t('moreExtrasShow')"></button>
+            </div>
+            <div x-show="showMoreExtras" x-cloak>
+                ${extraServiceBlock('telliMoreExtras')}
+            </div>
+
+            <div class="border-b border-line" x-show="!showProvider || isOrderable(serviceById('small-repairs'))">
                 <button type="button" class="w-full py-4 text-left" @click="setTelliOpen('fix')">
                     <span class="flex items-baseline justify-between gap-4">
                         <span class="font-sans text-base" x-text="t('orderFix')"></span>
@@ -226,7 +246,7 @@ export const telliHtml = `<div x-show="activeTab === 'extras'" x-transition:ente
                     <label class="eyebrow" for="telli-note-fix" x-text="t('orderNote')"></label>
                     <textarea id="telli-note-fix" x-model="telliNote" rows="4" maxlength="500" :placeholder="t('orderNotePhFix')" class="w-full mt-2 bg-white border border-line focus:border-accent outline-none p-4 font-sans font-light text-base placeholder:text-line-strong resize-none"></textarea>
                     ${whenFields}
-                    <button type="submit" :disabled="telliBusy || (telliNote || '').trim().length < 5 || (!telliGathering && (!telliDate || (telliQuote && telliQuote.unpriced)))" class="p-btn w-full mt-6 disabled:opacity-40" x-text="telliBusy ? t('telliSending') : (telliGathering ? t('wantIt') : telliButtonLabel)"></button>
+                    <button type="submit" :disabled="telliBusy || (telliNote || '').trim().length < 5 || (!telliGathering && (!telliDate || (telliQuote && telliQuote.unpriced && !showProvider)))" class="p-btn p-btn-wrap w-full mt-6 disabled:opacity-40" x-text="telliBusy ? t('telliSending') : (telliGathering ? t('wantIt') : telliButtonLabel)"></button>
                     </div>
                     ${gatherDone}
                 </form>
@@ -252,8 +272,22 @@ export const telliHtml = `<div x-show="activeTab === 'extras'" x-transition:ente
                     <button type="submit" :disabled="telliBusy || !telliDate || ((telliNote || '').trim().length < 5 && !telliPhotoName)" class="p-btn w-full mt-6 disabled:opacity-40" x-text="telliBusy ? t('telliSending') : t('sendWarranty')"></button>
                 </form>
             </div>
+
+            <div class="border-b border-line" x-show="hasCleaner">
+                <button type="button" class="w-full py-4 text-left" @click="setTelliOpen('note')">
+                    <span class="flex items-baseline justify-between gap-4">
+                        <span class="font-sans text-base" x-text="t('writeCleaner')"></span>
+                    </span>
+                    <span class="block text-sm text-muted font-sans font-light mt-1" x-text="t('feedbackShortLead')"></span>
+                </button>
+                <form x-show="telliOpen === 'note'" x-cloak class="pb-6" @submit.prevent="submitTelli()">
+                    <label class="eyebrow" for="telli-note-cleaner" x-text="t('noteMessage')"></label>
+                    <textarea id="telli-note-cleaner" x-model="telliNote" rows="3" maxlength="500" :placeholder="t('phCleaningNote')" class="w-full mt-2 bg-white border border-line focus:border-accent outline-none p-4 font-sans font-light text-base placeholder:text-line-strong resize-none"></textarea>
+                    <button type="submit" :disabled="telliBusy || (telliNote || '').trim().length < 5" class="p-btn w-full mt-4 disabled:opacity-40" x-text="telliBusy ? t('telliSending') : t('sendWord')"></button>
+                </form>
+            </div>
         </div>
-        <p x-show="telliQuote && telliQuote.unpriced && !telliGathering && telliOpen && telliOpen !== 'warranty'" x-cloak class="text-sm text-muted font-sans font-light mt-3" x-text="t('noPrice')"></p>
+        <p x-show="telliQuote && telliQuote.unpriced && !showProvider && !telliGathering && telliOpen && telliOpen !== 'warranty' && telliOpen !== 'note'" x-cloak class="text-sm text-muted font-sans font-light mt-3" x-text="t('noPrice')"></p>
         <p x-show="telliError" x-cloak class="text-sm text-red-500 font-sans font-light mt-3" x-text="telliError"></p>
         <p x-show="telliDone && !telliGathering" x-cloak class="text-sm font-sans font-light mt-3" x-text="telliDone"></p>
 

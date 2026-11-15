@@ -119,7 +119,7 @@ test('an empty home profile asks for linens, flowers and access', () => {
 });
 
 test('calm empty state asks for one report when the home has a warranty service', () => {
-  const card = pickNextThing(portal({ extras: { requests: [], away: [], catalogue: [{ id: 'warranty-claim' }] } }));
+  const card = pickNextThing(portal({ showProvider: false, extras: { requests: [], away: [], catalogue: [{ id: 'warranty-claim' }] } }));
   assert.equal(card.kind, 'calm');
   assert.equal(card.title, 'Järgmist visiiti ei ole plaanis');
   assert.match(card.body, /tasuta/);

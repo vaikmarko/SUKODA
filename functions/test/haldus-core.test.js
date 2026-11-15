@@ -756,3 +756,65 @@ test('a priced visit tells the cleaner only after Stripe has taken the money', (
   assert.equal(copy.includes('cardLater'), false);
   assert.doesNotMatch(copy, /praegu raha ei liigu|kaart ühendatakse|kaardilt kohe|charge later/i);
 });
+
+test('sanitizeSchedule preserves optional visit price so recurring cleans carry their price', () => {
+  const withPrice = core.sanitizeSchedule({ frequency: 'biweekly', anchorDate: '2026-09-01', time: '10:00', durationMin: 180, price: ' 65 € ' });
+  assert.equal(withPrice.error, undefined);
+  assert.equal(withPrice.schedule.price, '65 €');
+  const withoutPrice = core.sanitizeSchedule({ frequency: 'weekly', anchorDate: '2026-09-01', time: '10:00', durationMin: 120 });
+  assert.equal(withoutPrice.schedule.price, undefined);
+});
+
+test('cleaner extras, custom extra prices, flower fallback routing and with-visit notice bypass', () => {
+  const def = core.sanitizeAvailability({});
+  assert.deepEqual(def.offeredExtras, core.CLEANER_EXTRA_IDS);
+  assert.deepEqual(def.extraPrices, {});
+  assert.equal(core.cleanerOffersExtra(null, 'windows'), true);
+  assert.equal(core.cleanerExtraPrice(null, 'windows'), '');
+
+  const custom = core.sanitizeAvailability({
+    offeredExtras: ['windows', 'fridge-oven', 'unknown', 'windows'],
+    extraPrices: { windows: ' 45 € ', 'fridge-oven': '35 €', nope: '99 €', empty: '   ' },
+  });
+  assert.deepEqual(custom.offeredExtras, ['windows', 'fridge-oven']);
+  assert.deepEqual(custom.extraPrices, { windows: '45 €', 'fridge-oven': '35 €' });
+  assert.equal(core.cleanerOffersExtra(custom, 'windows'), true);
+  assert.equal(core.cleanerOffersExtra(custom, 'flowers'), false);
+  assert.equal(core.cleanerExtraPrice(custom, 'windows'), '45 €');
+  assert.equal(core.cleanerExtraPrice(custom, 'deep-clean'), '');
+
+  // Flower routing: explicit florist wins; otherwise home's cleaner handles flowers when offered
+  const ownOrder = { providerId: 'cristelle' };
+  assert.equal(core.resolveServiceRoutes(ownOrder, { id: 'cristelle' }).flowers, 'cristelle');
+  assert.equal(core.resolveServiceRoutes(ownOrder, { id: 'cristelle', availability: custom }).flowers, null, 'cleaner unchecked flowers');
+  assert.equal(core.resolveServiceRoutes({ providerId: 'cristelle', floristId: 'shop-1' }, { id: 'cristelle' }).flowers, 'shop-1');
+  assert.equal(core.resolveServiceRoutes(ownOrder, { id: 'cristelle', defaultFloristId: 'shop-2' }).flowers, 'shop-2');
+  assert.equal(core.resolveServiceRoutes({}, null).flowers, null);
+
+  // Notice window: new standalone clean respects leadDays, but with-visit or existing visit day is allowed
+  assert.equal(core.isDateAllowedForRequest({
+    preferredDate: '2026-09-25', timeWindow: 'morning', todayStr: '2026-09-22', leadDays: 14, category: 'cleaning', kind: 'visit',
+  }), false);
+  assert.equal(core.isDateAllowedForRequest({
+    preferredDate: '2026-09-25', timeWindow: 'with-visit', todayStr: '2026-09-22', leadDays: 14, category: 'cleaning', kind: 'visit',
+  }), true);
+  assert.equal(core.isDateAllowedForRequest({
+    preferredDate: '2026-09-25', timeWindow: 'morning', todayStr: '2026-09-22', leadDays: 14, category: 'cleaning', kind: 'visit', upcomingVisitDates: ['2026-09-25'],
+  }), true);
+  assert.equal(core.isDateAllowedForRequest({
+    preferredDate: '2026-09-20', timeWindow: 'with-visit', todayStr: '2026-09-22', leadDays: 14, category: 'cleaning', kind: 'visit',
+  }), false, 'past date never allowed');
+});
+
+test('resolveRequestRecipients includes notifying household members and the submitting family member', () => {
+  const order = {
+    customer: { email: 'marko@kodu.ee', name: 'Marko' },
+    contacts: [
+      { email: 'mari@kodu.ee', name: 'Mari', notify: true },
+      { email: 'vaikne@kodu.ee', name: 'Vaikne', notify: false },
+    ],
+  };
+  const recs = core.resolveRequestRecipients(order, { submittedBy: { email: 'vaikne@kodu.ee', name: 'Vaikne' } });
+  assert.deepEqual(recs.map((r) => r.email), ['marko@kodu.ee', 'mari@kodu.ee', 'vaikne@kodu.ee']);
+});
+
