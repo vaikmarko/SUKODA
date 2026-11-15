@@ -1,6 +1,6 @@
 {
   "hex": {
-    "index.html": 38,
+    "index.html": 26,
     "minu.html": 4,
     "admin.html": 74,
     "kingitus.html": 31,
@@ -11,7 +11,7 @@
     "deck.html": 6
   },
   "px": {
-    "index.html": 49,
+    "index.html": 47,
     "admin.html": 113,
     "kingitus.html": 53,
     "success.html": 23,

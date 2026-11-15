@@ -190,7 +190,7 @@ function hidePreloader() {
     return;
   }
   sessionStorage.setItem('sukoda_visited', '1');
-  setTimeout(reveal, 400);
+  setTimeout(reveal, 120);
 }
 
 // Do not wait for window "load": consent-gated analytics keep that event

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <style>[x-cloak] { display: none !important; }</style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SUKODA | Koduportaal — kõik, mis su kodu vajab, ühes kohas</title>
+    <title>SUKODA | Koduhooldus pere rütmis — usaldatud inimesed ühes kohas</title>
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="assets/logo/icon-s-black.svg">
@@ -17,13 +17,13 @@
     </script>
     
     <!-- Open Graph -->
-    <meta property="og:title" content="SUKODA — Koduportaal. Kõik, mis su kodu vajab, ühes kohas.">
-    <meta property="og:description" content="Koduhooldaja ajad pere kalendris, hooldusrütm meeles, dokumendid kodu juures. Koduhooldajale, floristile ja remondimehele töölaud, mis saadab kutsed ja teavitused ise.">
+    <meta property="og:title" content="SUKODA — Koduhooldus pere rütmis. Usaldatud inimesed ühes kohas.">
+    <meta property="og:description" content="Koduhooldaja ajad pere kalendris, lisasoovid kahe puutega ning kodu hooldusrütm ja dokumendid käepärast. Samasse portaali ühendad ka lapsehoidja, lemmikloomahoidja, remondimehe ja aedniku.">
     <meta property="og:image" content="https://sukoda.ee/assets/images/product/minu-ulevaade.png">
     <meta property="og:url" content="https://sukoda.ee">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="description" content="SUKODA on koduportaal: koduhooldaja ajad kogu pere kalendris, kodu hooldusrütm ja dokumendid ühes kohas, soovid ühe klikiga. Koduhooldajale, floristile ja remondimehele tasuta töölaud.">
+    <meta name="description" content="Koduhooldaja ajad pere kalendris, lisasoovid kahe puutega ning kodu hooldusrütm ja dokumendid ühes kohas. Tasuta töölaud koduhooldajale ja koduteenuste spetsialistile.">
     <meta property="og:locale" content="et_EE">
     <meta property="og:site_name" content="SUKODA">
     
@@ -138,29 +138,114 @@
              HERO — the product, not a mood: what SUKODA is, in one screen
              ═══════════════════════════════════════════════════════════════ -->
         <header class="grid md:grid-cols-12 grid-line-b overflow-hidden">
-            <div class="md:col-span-6 px-6 md:px-16 pt-16 pb-12 md:py-28 flex flex-col justify-center grid-line border-b md:border-b-0 border-[#E8E3DD]">
+            <div class="md:col-span-6 px-6 md:px-16 pt-16 pb-12 md:py-28 flex flex-col justify-center grid-line border-b md:border-b-0 border-line">
                 <div class="accent-line mb-8 animate-fade-in"></div>
-                <p class="eyebrow mb-6 animate-fade-in" x-text="t('heroKicker')">Koduportaal</p>
-                <h1 class="font-serif text-5xl md:text-6xl lg:text-[4.75rem] leading-[1.05] mb-8 font-light animate-hero-title">
-                    <span x-text="t('heroTitle1')">Kõik, mis su kodu vajab.</span><br><span class="text-muted/60" x-text="t('heroTitle2')">Ühes kohas.</span>
+                <p class="eyebrow mb-6 animate-fade-in" x-text="t('heroKicker')">Koduhooldus · Pere kalender · Koduportaal</p>
+                <h1 class="font-serif text-5xl md:text-6xl lg:text-[4.5rem] leading-[1.05] mb-8 font-light animate-hero-title">
+                    <span x-text="t('heroTitle1')">Koduhooldus pere rütmis.</span><br><span class="text-muted" x-text="t('heroTitle2')">Usaldatud inimesed ühes kohas.</span>
                 </h1>
                 <p class="text-base md:text-lg text-muted max-w-md font-sans font-light leading-relaxed animate-hero-subtitle" x-text="t('heroLead')"></p>
                 <div class="mt-10 md:mt-12 flex flex-wrap items-center gap-4 md:gap-6 animate-hero-cta">
-                    <a href="#alusta" class="p-btn" x-text="t('heroCta')">Too oma kodu portaali</a>
-                    <a href="#teenusepakkujale" class="text-xs uppercase tracking-[0.16em] font-sans text-muted hover:text-black transition-colors luxury-link" x-text="t('heroCta2')">Olen koduhooldaja või teenusepakkuja</a>
+                    <a href="#alusta" class="p-btn" x-text="t('heroCta')">Ühenda oma kodu</a>
+                    <a href="/haldus?alusta" class="text-xs uppercase tracking-[0.16em] font-sans text-muted hover:text-black transition-colors luxury-link" x-text="t('heroCta2')">Ava spetsialisti töölaud →</a>
                 </div>
                 <p class="mt-10 text-xs text-muted font-sans font-light tracking-wide animate-fade-in" x-text="t('heroNote')"></p>
             </div>
-            <!-- Product, as it is today: the household's overview -->
-            <div class="md:col-span-6 relative bg-cream/60 flex items-center overflow-hidden min-h-[420px] md:min-h-0">
-                <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(184,151,106,0.14),transparent_60%)]"></div>
-                <figure class="relative w-[118%] md:w-[112%] ml-6 md:ml-14 my-10 md:my-20 animate-hero-image">
-                    <div class="border border-[#D4CFC8] bg-white shadow-[0_40px_80px_-30px_rgba(44,40,36,0.28)]">
-                        <div class="h-8 border-b border-[#E8E3DD] flex items-center gap-1.5 px-3">
-                            <span class="w-2 h-2 rounded-full bg-[#E8E3DD]"></span><span class="w-2 h-2 rounded-full bg-[#E8E3DD]"></span><span class="w-2 h-2 rounded-full bg-[#E8E3DD]"></span>
-                            <span class="ml-3 text-[10px] font-sans text-muted/70 tracking-wide">sukoda.ee/minu</span>
+            <!-- Live modern Resident Mobile App preview (sharp on Retina, switches ET/EN/RU) -->
+            <div class="md:col-span-6 relative bg-cream/60 flex items-center justify-center overflow-hidden py-12 px-5 md:p-14">
+                <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(143,110,67,0.14),transparent_65%)]"></div>
+                <figure class="relative w-full max-w-[380px] animate-hero-image">
+                    <!-- Floating calendar sync pill -->
+                    <div class="flex items-center justify-between gap-3 bg-black text-paper px-4 py-2.5 rounded-2xl mb-4 shadow-lg">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <span class="w-2 h-2 rounded-full bg-accent shrink-0"></span>
+                            <span class="text-xs font-sans font-light truncate" x-text="t('pvCalSync')"></span>
                         </div>
-                        <img src="/assets/images/product/minu-ulevaade.png" alt="SUKODA koduportaal: järgmine visiit, teenused, kodu hooldus ja inimesed, kes kodus käivad" :alt="t('heroImgAlt')" class="w-full h-auto block" width="1200" height="800" fetchpriority="high">
+                        <span class="eyebrow text-accent shrink-0">.ICS</span>
+                    </div>
+
+                    <!-- Mobile Phone Frame -->
+                    <div class="bg-black p-2.5 rounded-[2.25rem] shadow-[0_36px_80px_-24px_rgba(20,19,18,0.35)]">
+                        <div class="rounded-[1.75rem] overflow-hidden bg-paper border border-line">
+                            <!-- Phone status bar -->
+                            <div class="bg-white px-6 pt-3 pb-2 flex items-center justify-between text-xs font-sans text-black">
+                                <span class="font-medium">9:41</span>
+                                <span class="w-20 h-4 rounded-full bg-black"></span>
+                                <span class="flex items-center gap-1.5 text-black">
+                                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M2 18h2v2H2v-2zm4-3h2v5H6v-5zm4-3h2v8h-2v-8zm4-3h2v11h-2V9zm4-3h2v14h-2V6z"/></svg>
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="7" width="17" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="4" y="9" width="13" height="6" rx="1"/><path d="M21 10v4"/></svg>
+                                </span>
+                            </div>
+
+                            <!-- App header -->
+                            <div class="px-5 py-3 border-b border-line bg-white flex items-center justify-between">
+                                <div>
+                                    <p class="font-serif text-lg tracking-[0.08em] font-light leading-none">SUKODA</p>
+                                    <p class="text-xs text-muted font-sans font-light mt-1">Pirita tee 12-4, Tallinn</p>
+                                </div>
+                                <span class="p-badge-ok px-2.5 py-1 text-xs font-sans" x-text="t('pvInCalendar')"></span>
+                            </div>
+
+                            <div class="p-4 space-y-3.5">
+                                <!-- Next Visit primary card -->
+                                <div class="bg-white border border-line border-t-2 border-t-accent p-4">
+                                    <p class="eyebrow mb-1.5" x-text="t('pvNextEyebrow')"></p>
+                                    <p class="font-serif text-2xl font-light" x-text="t('pvNextDate')"></p>
+                                    <p class="text-xs text-muted font-sans font-light mt-1" x-text="t('pvNextMeta')"></p>
+                                    <div class="mt-3.5 pt-3 border-t border-line flex items-center justify-between gap-3">
+                                        <span class="text-xs font-sans underline underline-offset-4" x-text="t('pvReschedule')"></span>
+                                        <span class="text-xs text-accent font-sans" x-text="t('pvAddWindows')"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Connected trusted people -->
+                                <div class="bg-white border border-line divide-y divide-line">
+                                    <div class="px-4 py-2 bg-cream/40">
+                                        <p class="eyebrow" x-text="t('pvPeopleLabel')"></p>
+                                    </div>
+                                    <div class="px-4 py-2.5 flex items-center justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-sans truncate">Kristi Kask</p>
+                                            <p class="text-xs text-muted font-sans font-light truncate" x-text="t('pvPerson1Role')"></p>
+                                        </div>
+                                        <span class="text-xs text-accent font-sans shrink-0" x-text="t('pvFeedback')"></span>
+                                    </div>
+                                    <div class="px-4 py-2.5 flex items-center justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-sans truncate">Liisa Tamm</p>
+                                            <p class="text-xs text-muted font-sans font-light truncate" x-text="t('pvPerson2Role')"></p>
+                                        </div>
+                                        <span class="p-badge-ok px-2 py-0.5 text-xs font-sans shrink-0" x-text="t('pvConfirmed')"></span>
+                                    </div>
+                                    <div class="px-4 py-2">
+                                        <p class="text-xs text-muted font-sans" x-text="t('pvAddMore')"></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Mobile Bottom Tab Bar + Home Indicator -->
+                            <div class="border-t border-line bg-white pt-2.5 pb-2">
+                                <div class="grid grid-cols-4 text-center">
+                                    <div class="flex flex-col items-center gap-1 text-black">
+                                        <svg class="w-4 h-4 text-accent" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"/></svg>
+                                        <span class="eyebrow text-black" x-text="t('pvTabHome')"></span>
+                                    </div>
+                                    <div class="flex flex-col items-center gap-1 text-muted">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                                        <span class="eyebrow" x-text="t('pvTabServices')"></span>
+                                    </div>
+                                    <div class="flex flex-col items-center gap-1 text-muted">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
+                                        <span class="eyebrow" x-text="t('pvTabFolder')"></span>
+                                    </div>
+                                    <div class="flex flex-col items-center gap-1 text-muted">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                        <span class="eyebrow" x-text="t('pvTabMine')"></span>
+                                    </div>
+                                </div>
+                                <div class="w-28 h-1 rounded-full bg-line-strong mx-auto mt-2.5"></div>
+                            </div>
+                        </div>
                     </div>
                     <figcaption class="sr-only" x-text="t('heroImgCaption')">Koduportaali ülevaade</figcaption>
                 </figure>
@@ -196,15 +281,96 @@
              ( 02 ) TEENUSEPAKKUJALE — the desk; this is also the growth loop
              ═══════════════════════════════════════════════════════════════ -->
         <section id="teenusepakkujale" class="grid md:grid-cols-12 grid-line-b bg-cream/40">
-            <div class="md:col-span-6 relative overflow-hidden grid-line border-b md:border-b-0 border-[#E8E3DD] min-h-[380px] flex items-center">
-                <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(184,151,106,0.14),transparent_60%)]"></div>
-                <figure class="relative w-[90%] mx-auto my-10 md:my-20 reveal">
-                    <div class="border border-[#D4CFC8] bg-white shadow-[0_40px_80px_-30px_rgba(44,40,36,0.28)]">
-                        <div class="h-8 border-b border-[#E8E3DD] flex items-center gap-1.5 px-3">
-                            <span class="w-2 h-2 rounded-full bg-[#E8E3DD]"></span><span class="w-2 h-2 rounded-full bg-[#E8E3DD]"></span><span class="w-2 h-2 rounded-full bg-[#E8E3DD]"></span>
-                            <span class="ml-3 text-[10px] font-sans text-muted/70 tracking-wide">sukoda.ee/haldus</span>
+            <div class="md:col-span-6 relative overflow-hidden grid-line border-b md:border-b-0 border-line py-12 px-5 md:p-14 flex items-center justify-center">
+                <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(143,110,67,0.14),transparent_65%)]"></div>
+                <figure class="relative w-full max-w-[380px] reveal">
+                    <div class="bg-black p-2.5 rounded-[2.25rem] shadow-[0_36px_80px_-24px_rgba(20,19,18,0.35)]">
+                        <div class="rounded-[1.75rem] overflow-hidden bg-paper border border-line">
+                            <!-- Phone status bar -->
+                            <div class="bg-white px-6 pt-3 pb-2 flex items-center justify-between text-xs font-sans text-black">
+                                <span class="font-medium">08:30</span>
+                                <span class="w-20 h-4 rounded-full bg-black"></span>
+                                <span class="flex items-center gap-1.5 text-black">
+                                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M2 18h2v2H2v-2zm4-3h2v5H6v-5zm4-3h2v8h-2v-8zm4-3h2v11h-2V9zm4-3h2v14h-2V6z"/></svg>
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="7" width="17" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="4" y="9" width="13" height="6" rx="1"/><path d="M21 10v4"/></svg>
+                                </span>
+                            </div>
+
+                            <div class="px-5 py-3 border-b border-line bg-white flex items-center justify-between">
+                                <div>
+                                    <p class="font-serif text-lg tracking-[0.08em] font-light leading-none">SUKODA</p>
+                                    <p class="eyebrow mt-1" x-text="t('pvDeskSub')"></p>
+                                </div>
+                                <span class="p-badge-ok px-2.5 py-1 text-xs font-sans" x-text="t('pvDeskBadge')"></span>
+                            </div>
+
+                            <div class="p-4 space-y-3.5">
+                                <!-- Today's active home card -->
+                                <div class="bg-white border border-line border-t-2 border-t-accent p-4">
+                                    <div class="flex items-baseline justify-between gap-2">
+                                        <p class="eyebrow text-accent">10:00 – 13:00</p>
+                                        <span class="text-xs font-sans text-muted">75 €</span>
+                                    </div>
+                                    <p class="font-serif text-xl font-light mt-1">Pirita tee 12-4 · Anna Tamm</p>
+                                    <p class="text-xs text-muted font-sans font-light mt-1" x-text="t('pvDeskChecklist')"></p>
+                                    <div class="mt-3.5 flex items-center justify-between gap-2">
+                                        <span class="bg-black text-paper px-3.5 py-2 text-xs uppercase tracking-[0.14em] font-sans" x-text="t('pvDeskDoneBtn')"></span>
+                                        <span class="text-xs text-muted font-sans underline underline-offset-4 truncate" x-text="t('pvDeskAddClient')"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Personal digital invite + QR card -->
+                                <div class="bg-white border border-line p-3.5 flex items-center justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <p class="eyebrow mb-1" x-text="t('pvInviteLabel')"></p>
+                                        <p class="text-xs font-mono text-black truncate">sukoda.ee/lunasta?code=SK-KRISTI26</p>
+                                        <p class="text-xs text-accent font-sans mt-1" x-text="t('pvShareBtn')"></p>
+                                    </div>
+                                    <svg class="w-11 h-11 shrink-0 text-black border border-line p-1 bg-paper" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                        <path d="M3 3h7v7H3V3zm2 2v3h3V5H5zm9-2h7v7h-7V3zm2 2v3h3V5h-3zM3 14h7v7H3v-7zm2 2v3h3v-3H5zm9-2h3v3h-3v-3zm4 0h3v2h-3v-2zm-4 4h2v3h-2v-3zm3 1h4v2h-4v-2z"/>
+                                    </svg>
+                                </div>
+
+                                <!-- Monthly invoice summary -->
+                                <div class="bg-white border border-line px-4 py-3 flex items-center justify-between gap-3">
+                                    <div>
+                                        <p class="eyebrow" x-text="t('pvMonthLabel')"></p>
+                                        <p class="text-xs text-muted font-sans font-light mt-0.5" x-text="t('pvMonthMeta')"></p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="font-serif text-xl font-light">1 260 €</p>
+                                        <p class="text-xs text-accent font-sans" x-text="t('pvKeepAll')"></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Provider Mobile Tab Bar + Home Indicator -->
+                            <div class="border-t border-line bg-white pt-2.5 pb-2">
+                                <div class="grid grid-cols-5 text-center">
+                                    <div class="flex flex-col items-center gap-1 text-black">
+                                        <svg class="w-4 h-4 text-accent" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2m0 14v2m9-9h-2M5 12H3m14.364-6.364l-1.414 1.414M7.05 16.95l-1.414 1.414m12.728 0l-1.414-1.414M7.05 7.05L5.636 5.636M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+                                        <span class="eyebrow text-black" x-text="t('pvDeskTab1')"></span>
+                                    </div>
+                                    <div class="flex flex-col items-center gap-1 text-muted">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                        <span class="eyebrow" x-text="t('pvDeskTab2')"></span>
+                                    </div>
+                                    <div class="flex flex-col items-center gap-1 text-muted">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"/></svg>
+                                        <span class="eyebrow" x-text="t('pvDeskTab3')"></span>
+                                    </div>
+                                    <div class="flex flex-col items-center gap-1 text-muted">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h8m-8 4h5m-7 6l3.5-3H19a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v9a2 2 0 002 2h1v3z"/></svg>
+                                        <span class="eyebrow" x-text="t('pvDeskTab4')"></span>
+                                    </div>
+                                    <div class="flex flex-col items-center gap-1 text-muted">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                        <span class="eyebrow" x-text="t('pvDeskTab5')"></span>
+                                    </div>
+                                </div>
+                                <div class="w-28 h-1 rounded-full bg-line-strong mx-auto mt-2.5"></div>
+                            </div>
                         </div>
-                        <img src="/assets/images/product/haldus-kalender.png" alt="SUKODA töölaud koduhooldajale: kliendid ja visiidid kuukalendris" :alt="t('deskImgAlt')" class="w-full h-auto block" width="1200" height="800" loading="lazy">
                     </div>
                     <figcaption class="sr-only" x-text="t('deskImgCaption')">Teenusepakkuja töölaud</figcaption>
                 </figure>
@@ -1257,40 +1423,75 @@
                 login: { et: 'Sisene', en: 'Log in', ru: 'Войти' },
                 myHome: { et: 'Minu kodu', en: 'My home', ru: 'Мой дом' },
 
-                heroKicker: { et: 'Koduportaal', en: 'Home portal', ru: 'Портал дома' },
-                heroTitle1: { et: 'Kõik, mis su kodu vajab.', en: 'Everything your home needs.', ru: 'Всё, что нужно вашему дому.' },
-                heroTitle2: { et: 'Ühes kohas.', en: 'In one place.', ru: 'В одном месте.' },
+                heroKicker: { et: 'Koduhooldus · Pere kalender · Koduportaal', en: 'Home care · Family calendar · Home portal', ru: 'Уход за домом · Календарь семьи · Портал дома' },
+                heroTitle1: { et: 'Koduhooldus pere rütmis.', en: 'Home care in your family’s rhythm.', ru: 'Уход за домом в ритме семьи.' },
+                heroTitle2: { et: 'Usaldatud inimesed ühes kohas.', en: 'Trusted people in one place.', ru: 'Свои специалисты в одном месте.' },
                 heroLead: {
-                    et: 'Koduhooldaja ajad on kogu pere kalendris. Filtrid, pesumasin ja suitsuandur tulevad õigel ajal meelde. Lepingud, garantiid ja tehtud tööd on kodu juures. Ja inimesed, kes su kodu tunnevad, on sinu perega ühes portaalis.',
-                    en: 'Your housekeeper\'s times are in the whole household\'s calendar. Filters, the washing machine and the smoke detector come to mind on time. Contracts, warranties and work done stay with the home. And the people who know your home are in the same portal as your family.',
-                    ru: 'Время визитов помощницы по дому в календаре всей семьи. Фильтры, стиральная машина и датчик дыма напомнят о себе вовремя. Договоры, гарантии и выполненные работы хранятся вместе с домом. А люди, которые знают ваш дом, в одном портале с вашей семьёй.',
+                    et: 'Koduhooldaja ajad jõuavad ise kogu pere kalendrisse, lisateenused tellid kahe puutega ning kodu hooldusrütm ja dokumendid püsivad alati käepärast. Samasse rahulikku portaali tood ka lapsehoidja, koerajalutaja, remondimehe ja aedniku.',
+                    en: 'Your housekeeper’s visits arrive automatically in everyone’s calendar, extras take two taps, and upkeep schedules and home documents stay right at hand. Into the same calm portal you can bring your babysitter, dog walker, handyman and gardener.',
+                    ru: 'Визиты помощницы по дому сами попадают в календарь всей семьи, допуслуги заказываются в два касания, а график ухода и документы всегда под рукой. В этот же спокойный портал легко подключить няню, выгул собаки, мастера и садовника.',
                 },
-                heroCta: { et: 'Too oma kodu portaali', en: 'Bring your home in', ru: 'Добавить свой дом' },
-                heroCta2: { et: 'Olen koduhooldaja või teenusepakkuja', en: 'I am a housekeeper or service provider', ru: 'Я помощница по дому или специалист' },
-                heroNote: { et: 'Liitumine käib kutsega ja on koduomanikule tasuta.', en: 'Joining is by invitation and free for the homeowner.', ru: 'Подключение по приглашению, для владельца жилья бесплатно.' },
+                heroCta: { et: 'Ühenda oma kodu', en: 'Connect your home', ru: 'Подключить свой дом' },
+                heroCta2: { et: 'Ava spetsialisti töölaud →', en: 'Open specialist desk →', ru: 'Открыть стол специалиста →' },
+                heroNote: { et: 'Koduomanikule tasuta · Spetsialistile kuni 3 kodu tasuta', en: 'Free for homeowners · Up to 3 homes free for specialists', ru: 'Владельцу дома бесплатно · Специалисту до 3 домов бесплатно' },
                 heroImgAlt: { et: 'SUKODA koduportaal: järgmine visiit, teenused, kodu hooldus ja inimesed, kes kodus käivad', en: 'SUKODA home portal: the next visit, services, home upkeep and the people who come to the home', ru: 'Портал дома SUKODA: ближайший визит, услуги, уход за домом и люди, которые приходят в дом' },
                 heroImgCaption: { et: 'Koduportaali ülevaade', en: 'Home portal overview', ru: 'Обзор портала дома' },
+
+                pvCalSync: { et: 'Kalendrikutse saadetud · Anna ja Mart', en: 'Calendar invite sent · Anna & Mart', ru: 'Приглашение в календарь · Анна и Март' },
+                pvInCalendar: { et: 'Pere kalendris', en: 'In family calendar', ru: 'В календаре семьи' },
+                pvNextEyebrow: { et: 'Järgmine visiit', en: 'Next visit', ru: 'Следующий визит' },
+                pvNextDate: { et: 'Teisipäev, 18. november', en: 'Tuesday, 18 November', ru: 'Вторник, 18 ноября' },
+                pvNextMeta: { et: '10:00 · Regulaarne koristus + akende pesu · Kristi Kask', en: '10:00 · Regular cleaning + windows · Kristi Kask', ru: '10:00 · Регулярная уборка + окна · Кристи Каск' },
+                pvReschedule: { et: 'Muuda aega', en: 'Reschedule', ru: 'Перенести' },
+                pvAddWindows: { et: '+ Lisa järgmise visiidi juurde', en: '+ Attach extra to visit', ru: '+ Добавить к визиту' },
+                pvPeopleLabel: { et: 'Inimesed sinu kodu juures', en: 'People caring for your home', ru: 'Люди вашего дома' },
+                pvPerson1Role: { et: 'Koristus · Iga 2 nädala tagant', en: 'Home care · Every 2 weeks', ru: 'Уборка · Раз в 2 недели' },
+                pvFeedback: { et: 'Jäta tagasiside', en: 'Leave feedback', ru: 'Оставить отзыв' },
+                pvPerson2Role: { et: 'Lapsehoid · Reedel 18:00–22:00', en: 'Childcare · Friday 18:00–22:00', ru: 'Няня · Пятница 18:00–22:00' },
+                pvConfirmed: { et: 'Kinnitatud', en: 'Confirmed', ru: 'Подтверждено' },
+                pvAddMore: { et: '+ Lisa teine teenus (lemmikloomad, remondimees, aed)', en: '+ Add another service (pet care, handyman, garden)', ru: '+ Добавить услугу (питомцы, мастер, сад)' },
+                pvTabHome: { et: 'Kodu', en: 'Home', ru: 'Дом' },
+                pvTabServices: { et: 'Teenused', en: 'Services', ru: 'Услуги' },
+                pvTabFolder: { et: 'Kaust', en: 'Folder', ru: 'Папка' },
+                pvTabMine: { et: 'Minu', en: 'Mine', ru: 'Профиль' },
+
+                pvDeskSub: { et: 'Spetsialisti töölaud', en: 'Specialist desk', ru: 'Стол специалиста' },
+                pvDeskBadge: { et: 'Täna 3 kodu', en: '3 homes today', ru: 'Сегодня 3 дома' },
+                pvDeskChecklist: { et: 'Tavakoristus · Akende pesu · Võti uksekoodiga', en: 'Regular clean · Windows · Door code ready', ru: 'Уборка · Мытьё окон · Код двери' },
+                pvDeskDoneBtn: { et: 'Märgi tehtuks', en: 'Mark done', ru: 'Отметить выполненным' },
+                pvDeskAddClient: { et: '+ Lisa püsiv või ühekordne klient', en: '+ Add recurring or one-off client', ru: '+ Постоянный или разовый клиент' },
+                pvInviteLabel: { et: 'Isiklik kutselink ja QR', en: 'Personal invite link & QR', ru: 'Личная ссылка и QR' },
+                pvShareBtn: { et: 'Jaga kliendile sõnumiga →', en: 'Share with client →', ru: 'Отправить клиенту →' },
+                pvMonthLabel: { et: 'Novembri kokkuvõte', en: 'November summary', ru: 'Сводка за ноябрь' },
+                pvMonthMeta: { et: '18 tehtud visiiti · CSV valmis', en: '18 completed visits · CSV ready', ru: '18 визитов · CSV готов' },
+                pvKeepAll: { et: '100% sinu tasu', en: '100% yours', ru: '100% ваша оплата' },
+                pvDeskTab1: { et: 'Täna', en: 'Today', ru: 'Сегодня' },
+                pvDeskTab2: { et: 'Kalender', en: 'Calendar', ru: 'Календарь' },
+                pvDeskTab3: { et: 'Kodud', en: 'Homes', ru: 'Дома' },
+                pvDeskTab4: { et: 'Soovid', en: 'Requests', ru: 'Запросы' },
+                pvDeskTab5: { et: 'Konto', en: 'Account', ru: 'Профиль' },
+                deskImgCaption: { et: 'Teenusepakkuja töölaud', en: 'Provider desk', ru: 'Рабочий стол специалиста' },
 
                 s1Title1: { et: 'Üks kodu.', en: 'One home.', ru: 'Один дом.' },
                 s1Title2: { et: 'Üks koht.', en: 'One place.', ru: 'Одно место.' },
                 s1Lead: {
-                    et: 'Täna on kodu asjad laiali: ajad on SMS-is, garantii sahtlis, remondimehe number kellegi telefonis ja filter vahetamata, sest keegi ei mäleta. SUKODA toob kodu asjad ühte kohta, mida näevad kogu pere ja inimesed, kes su kodus käivad.',
-                    en: 'Today a home\'s affairs are scattered: times in text messages, the warranty in a drawer, the handyman\'s number on someone\'s phone, and the filter unchanged because nobody remembers. SUKODA brings them into one place that the whole household sees, along with the people who come to your home.',
-                    ru: 'Сегодня дела дома разбросаны: время визитов в смс, гарантия в ящике стола, номер мастера в чьём-то телефоне, а фильтр не заменён, потому что никто не вспомнил. SUKODA собирает всё в одном месте, которое видят вся семья и люди, приходящие в ваш дом.',
+                    et: 'SUKODA koondab kodu igapäevase hoolduse ühte selgesse vaatesse: tulevad visiidid, lisasoovid, seadmete hooldusrütm, dokumendid ja inimesed, kes su kodu tunnevad — kogu perele korraga nähtavalt.',
+                    en: 'SUKODA brings your home’s care into one clear view: upcoming visits, extra requests, appliance upkeep, documents and the people who know your home — shared with the whole household.',
+                    ru: 'SUKODA собирает заботу о доме в одном понятном окне: предстоящие визиты, допуслуги, график обслуживания техники, документы и люди, знающие ваш дом — с общим доступом для всей семьи.',
                 },
 
-                s2Title: { et: 'Koduhooldajale ja koduteenuste spetsialistile.', en: 'For housekeepers and home specialists.', ru: 'Помощницам по дому и специалистам.' },
+                s2Title: { et: 'Töölaud koduhooldajale ja spetsialistile.', en: 'A calm desk for housekeepers and specialists.', ru: 'Рабочий стол для помощниц по дому и специалистов.' },
                 s2Lead: {
-                    et: 'Sa teed oma tööd hästi ja kulutad õhtud sõnumitele: ajad, muudatused, meeldetuletused ja „kas homme ikka sobib?“. Töölaud saadab need sõnumid sinu eest. Sa lisad kliendi või jagad digilinki ja ülejäänu liigub ise.',
-                    en: 'You do your work well and spend your evenings on messages: times, changes, reminders and “is tomorrow still fine?”. The desk sends those messages for you. You add a client or share your digital invite link, and the rest moves by itself.',
-                    ru: 'Вы хорошо делаете свою работу, а вечера уходят на сообщения: время, изменения, напоминания и «завтра всё в силе?». Рабочий стол отправляет эти сообщения за вас. Вы добавляете клиента или делитесь цифровой ссылкой, остальное идёт само.',
+                    et: 'Lisa püsiklient või ühekordne töö 20 sekundiga. Töölaud hoiab sinu päeva järjekorras, saadab kliendile ja tema perele kalendrikutsed ning paneb kuu lõpus valmis täpse arvelduskokkuvõtte.',
+                    en: 'Add a recurring home or a one-off visit in 20 seconds. Your desk orders your day, sends calendar invites to the household and prepares a clean monthly billing summary.',
+                    ru: 'Добавьте постоянный дом или разовый визит за 20 секунд. Рабочий стол выстроит ваш день, отправит семье приглашения в календарь и соберёт сводку для счетов в конце месяца.',
                 },
-                s2Item1: { et: 'Kliendid, korduv graafik ja ühekordsed ajad on ühes kalendris, ka telefonis.', en: 'Clients, recurring schedules and one-off times are in one calendar, on your phone too.', ru: 'Клиенты, регулярный график и разовые визиты в одном календаре, в том числе в телефоне.' },
-                s2Item2: { et: 'Klient ja tema pere saavad kalendrikutsed, muudatused ja meeldetuletused ise. Sa ei saada enam ühtegi SMS-i aegadega.', en: 'The client and their household get calendar invites, changes and reminders by themselves. You never text a time again.', ru: 'Клиент и его семья сами получают приглашения в календарь, изменения и напоминания. Вы больше не отправляете ни одного смс со временем.' },
-                s2Item3: { et: 'Digitaalne kutselink ja QR-kood on kohe telefonis — ei mingeid paberkaarte. Võid lülitada sisse ka uute klientide vastuvõtu.', en: 'Your digital invite link and QR code live right on your phone — no paper cards. You can also toggle open availability for new local homes.', ru: 'Цифровая ссылка-приглашение и QR-код сразу в телефоне — никаких бумажных карточек. Можно также включить приём новых клиентов.' },
-                s2Item4: { et: 'Kuu lõpus on arvelduskokkuvõte ja CSV valmis. 0% vahendustasu — sinu hinnad ja arved jäävad 100% sinu enda kätte.', en: 'At month end your billing summary and CSV are ready. 0% commission — your prices and invoices stay 100% yours.', ru: 'В конце месяца сводка для счетов и CSV готовы. Комиссия 0% — ваши цены и расчёты полностью остаются у вас.' },
+                s2Item1: { et: 'Tänane marsruut, korduv graafik ja ühekordsed visiidid on ühes selges telefonivaates.', en: 'Today’s route, recurring schedules and one-off visits live in one clear mobile view.', ru: 'Маршрут на сегодня, регулярный график и разовые визиты собраны в одном удобном мобильном окне.' },
+                s2Item2: { et: 'Kalendrikutsed, kellaaja muudatused ja homse visiidi meeldetuletused liiguvad perele automaatselt.', en: 'Calendar invites, time updates and next-day reminders go out to the household automatically.', ru: 'Приглашения в календарь, переносы времени и напоминания о завтрашнем визите уходят семье автоматически.' },
+                s2Item3: { et: 'Isiklik kutselink ja telefoni QR-kood ühendavad nii püsiva kui ka ühekordse kliendi, et kordustellimused tuleksid kahe puutega.', en: 'Your personal invite link and phone QR code connect recurring and one-off clients so repeat bookings arrive in two taps.', ru: 'Личная ссылка и QR-код в телефоне подключают постоянных и разовых клиентов, чтобы повторные заказы приходили в два касания.' },
+                s2Item4: { et: 'Kuu lõpus on arvelduskokkuvõte ja CSV valmis ning kogu teenitud tasu jääb 100% sinu kätte.', en: 'At month end your billing summary and CSV are ready, and 100% of your earnings stay directly with you.', ru: 'В конце месяца сводка для счетов и CSV готовы, а 100% оплаты за работу остаётся напрямую у вас.' },
                 openDesk: { et: 'Ava tasuta töölaud', en: 'Open free desk', ru: 'Открыть бесплатный стол' },
-                s2Note: { et: 'Kuni 3 kodu tasuta · 6-kohaline sisenemiskood tuleb kohe e-postile.', en: 'Up to 3 homes free · 6-digit login code arrives immediately.', ru: 'До 3 домов бесплатно · 6-значный код входа сразу придёт на почту.' },
+                s2Note: { et: 'Kuni 3 kodu tasuta · Sisenemine kohe 6-kohalise koodiga', en: 'Up to 3 homes free · Instant sign-in with a 6-digit code', ru: 'До 3 домов бесплатно · Мгновенный вход по 6-значному коду' },
                 planFree: { et: 'Tasuta', en: 'Free', ru: 'Бесплатно' },
                 planFreeHomes: { et: 'kuni 3 kodu', en: 'up to 3 homes', ru: 'до 3 домов' },
                 planStandard: { et: 'Standard', en: 'Standard', ru: 'Стандарт' },
@@ -1299,28 +1500,28 @@
                 planStudioHomes: { et: 'piiramatult kodusid', en: 'unlimited homes', ru: 'без ограничения' },
                 perMonth: { et: '€ kuus', en: '€ a month', ru: '€ в месяц' },
                 s2Price: {
-                    et: 'Hind sõltub ainult sellest, mitu kodu sul töölaual on. Kõik võimalused on igas paketis, vahendustasu on 0% ja klient ei maksa SUKODA-le midagi.',
-                    en: 'The price depends only on how many homes are on your desk. Every feature is in every plan, commission is 0%, and your client pays SUKODA nothing.',
-                    ru: 'Цена зависит только от числа домов на рабочем столе. Все возможности есть в каждом тарифе, комиссия 0%, а клиент ничего не платит SUKODA.',
+                    et: 'Kõik tööriistad sisalduvad igas paketis. Hind sõltub aktiivsete kodude arvust, tellimus käib kuu kaupa ja koduomanikule on portaal alati tasuta.',
+                    en: 'Every feature is included in every plan. Pricing scales simply by active homes, billed monthly, and the home portal is always free for households.',
+                    ru: 'Все функции доступны в каждом тарифе. Стоимость зависит только от числа активных домов с помесячной оплатой, а для семей портал всегда бесплатный.',
                 },
 
-                s3Title: { et: 'Alustad koristusest. Kodu kasvab koos vajadustega.', en: 'Start with home care. Grow with your household.', ru: 'Начните с уборки. Подключайте нужное по мере жизни.' },
+                s3Title: { et: 'Alustad koduhooldusest. Lisad vajadusel teised.', en: 'Start with home care. Add others as life grows.', ru: 'Начните с ухода за домом. Добавляйте нужное со временем.' },
                 s3Lead: {
-                    et: 'Enamik kodusid alustab regulaarsest koduhooldusest. Samasse rahulikku portaali saad igal hetkel lisada ka lapsehoidja, koerajalutaja, remondimehe või aedniku — kutsud oma inimese või valid vaba spetsialisti, kes juba SUKODA kodudes käib.',
-                    en: 'Most homes start with regular home care. Into the same calm portal you can add a babysitter, dog walker, handyman or gardener whenever needed — invite your own person or pick an open specialist already active in SUKODA homes.',
-                    ru: 'Большинство домов начинает с регулярной уборки. В этот же спокойный портал в любой момент можно добавить няню, выгул собаки, мастера или садовника — пригласить своего человека или выбрать специалиста, который уже работает в домах SUKODA.',
+                    et: 'Enamik peresid alustab regulaarsest koristusest. Samasse rahulikku koduvaatesse saad igal hetkel ühendada ka lapsehoidja, lemmikloomahoidja, remondimehe, aedniku või floristi — kutsudes oma inimese või valides vaba spetsialisti, kes juba SUKODA kodudes käib.',
+                    en: 'Most families start with regular cleaning. Whenever needed, connect a babysitter, pet sitter, handyman, gardener or florist to the very same home — by inviting your own person or choosing an open specialist already trusted in SUKODA homes.',
+                    ru: 'Большинство семей начинает с регулярной уборки. В любой момент к этому же дому можно подключить няню, уход за питомцами, мастера, садовника или флориста — пригласив своего человека или выбрав специалиста, который уже работает в домах SUKODA.',
                 },
                 s3Note: {
-                    et: 'Kokkulepe ja arveldus käivad alati otse sinu ja spetsialisti vahel (0% vahendustasu). SUKODA ei ole anonüümne vahendusplatvorm, vaid sinu kodu ja usaldatud inimeste ühine tööriist.',
-                    en: 'Agreements and billing always stay directly between you and the specialist (0% commission). SUKODA is not an anonymous middleman marketplace, but a shared tool for your home and trusted people.',
-                    ru: 'Договорённость и расчёт всегда напрямую между вами и специалистом (комиссия 0%). SUKODA — не безликий маркетплейс-посредник, а общий инструмент вашего дома и проверенных людей.',
+                    et: 'Tingimused ja arveldus käivad otse pere ja spetsialisti vahel. Iga vaba spetsialisti profiil näitab päriselt aktiivsete SUKODA kodude ja tehtud visiitide arvu.',
+                    en: 'Terms and billing happen directly between household and specialist. Every open specialist profile displays verified active SUKODA homes and completed visits.',
+                    ru: 'Условия и расчёты согласуются напрямую между семьёй и специалистом. В профиле каждого открытого специалиста видно реальное число активных домов и выполненных визитов.',
                 },
 
-                s4Title: { et: 'Kuidas kodu liitub — 100% digitaalselt.', en: 'How a home joins — 100% digital.', ru: 'Как подключить дом — 100% цифрово.' },
+                s4Title: { et: 'Kolm sammu ühendatud koduni.', en: 'Three steps to a connected home.', ru: 'Три шага к подключённому дому.' },
                 s4Lead: {
-                    et: 'Paroole ega paberkaarte ei ole. Kodu tuleb portaali digitaalse kutselingiga spetsialistilt, sinu saadetud e-kutsega või arendajalt koos võtmetega.',
-                    en: 'No passwords and no paper cards. A home joins via a digital invite link from a specialist, an e-mail invite you send, or digitally from your developer with the keys.',
-                    ru: 'Без паролей и бумажных карточек. Дом подключается по цифровой ссылке от специалиста, вашему приглашению по почте или от застройщика вместе с ключами.',
+                    et: 'Kodu avaneb hetkega: spetsialisti kutselingist, sinu saadetud e-kutsest või uue kodu võtmete üleandmisel.',
+                    en: 'Your home opens in moments: through a specialist’s invite link, an invitation you send, or at new-home handover.',
+                    ru: 'Портал дома открывается за минуту: по ссылке от специалиста, вашему приглашению или при получении ключей от нового дома.',
                 },
 
                 quote: {
@@ -1332,9 +1533,9 @@
 
                 startTitle: { et: 'Alusta', en: 'Get started', ru: 'Начать' },
                 startLead: {
-                    et: 'Kõik käib digitaalselt paari minutiga. Koduomanik kutsub oma inimese või sisestab kutsekoodi. Spetsialist avab tasuta töölaua kohe. Arendaja ühendab uued kodud üleandmisel.',
-                    en: 'Everything happens digitally in a couple of minutes. A homeowner invites their person or enters an invite code. A specialist opens a free desk right away. A developer connects new homes at handover.',
-                    ru: 'Всё происходит цифрово за пару минут. Владелец приглашает своего человека или вводит код приглашения. Специалист сразу открывает бесплатный стол. Застройщик подключает новые дома при передаче ключей.',
+                    et: 'Vali oma roll ja alusta kohe. Koduomanik kutsub oma spetsialisti või sisestab kutsekoodi. Spetsialist avab tasuta töölaua 30 sekundiga. Arendaja ühendab uued kodud üleandmisel.',
+                    en: 'Choose your role and start right away. A homeowner invites their specialist or enters an invite code. A specialist opens a free desk in 30 seconds. A developer connects new homes at handover.',
+                    ru: 'Выберите свою роль и начните сразу. Владелец приглашает своего специалиста или вводит код приглашения. Специалист открывает бесплатный стол за 30 секунд. Застройщик подключает новые дома при передаче ключей.',
                 },
                 startError: { et: 'Saatmine ei õnnestunud. Kirjuta tere@sukoda.ee.', en: 'Sending failed. Write to tere@sukoda.ee.', ru: 'Не удалось отправить. Напишите на tere@sukoda.ee.' },
                 roleHome: { et: 'Koduomanik', en: 'Homeowner', ru: 'Владелец жилья' },
@@ -1362,25 +1563,25 @@
                 fCity: { et: 'Linn või piirkond', en: 'City or area', ru: 'Город или район' },
                 fCompany: { et: 'Ettevõte ja objekt', en: 'Company and project', ru: 'Компания и объект' },
                 codeLead: {
-                    et: 'Sisesta spetsialistilt, arendajalt või kingituseks saadud digitaalne kutsekood (nt SK-XXXXXXXX). Kui kodu on juba lisatud, sisene otse ülemisest nupust.',
-                    en: 'Enter the digital invite code received from your specialist, developer or gift (e.g. SK-XXXXXXXX). If your home is already active, sign in from the top right.',
-                    ru: 'Введите цифровой код приглашения от специалиста, застройщика или подарка (напр. SK-XXXXXXXX). Если дом уже подключён, войдите по кнопке вверху.',
+                    et: 'Sisesta spetsialistilt, arendajalt või kingituseks saadud kutsekood (nt SK-XXXXXXXX). Kui sinu kodu on juba ühendatud, sisene otse ülemisest nupust.',
+                    en: 'Enter the invite code received from your specialist, developer or gift (e.g. SK-XXXXXXXX). If your home is already connected, sign in from the top right.',
+                    ru: 'Введите код приглашения от специалиста, застройщика или подарка (напр. SK-XXXXXXXX). Если дом уже подключён, войдите по кнопке вверху.',
                 },
                 openWithCode: { et: 'Ava oma kodu', en: 'Open my home', ru: 'Открыть мой дом' },
                 partnerLead: {
-                    et: 'Töölaud on koduhooldajale, lapsehoidjale, lemmikloomahoidjale, remondimehele, aednikule ja floristile. Ava konto 30 sekundiga — saad kohe isikliku digitaalse kutselingi ja QR-koodi.',
-                    en: 'The desk is built for housekeepers, childcare, pet care, handymen, gardeners and florists. Open your desk in 30 seconds and get your personal digital invite link and QR code.',
-                    ru: 'Рабочий стол создан для помощниц по дому, нянь, ухода за питомцами, мастеров, садовников и флористов. Откройте счёт за 30 секунд и получите личную ссылку и QR-код.',
+                    et: 'Töölaud koduhooldajale, lapsehoidjale, lemmikloomahoidjale, remondimehele, aednikule ja floristile. Ava tasuta töölaud 30 sekundiga — saad kohe kalendri, kliendikaardid ja isikliku kutselingi.',
+                    en: 'Built for housekeepers, childcare, pet care, handymen, gardeners and florists. Open your free desk in 30 seconds with calendar, client cards and your personal invite link.',
+                    ru: 'Для помощниц по дому, нянь, ухода за питомцами, мастеров, садовников и флористов. Откройте бесплатный стол за 30 секунд с календарём, карточками домов и личной ссылкой.',
                 },
-                partnerItem1: { et: 'Kliendid, ajad ja korduv graafik on ühes kohas.', en: 'Clients, times and recurring schedules are in one place.', ru: 'Клиенты, время и регулярный график в одном месте.' },
-                partnerItem2: { et: 'Jaga kliendile digilinki või näita telefonist QR-koodi — paberkaarte pole vaja.', en: 'Share a digital link or show a QR code on your phone — no paper cards needed.', ru: 'Отправьте клиенту ссылку или покажите QR-код с экрана телефона — без бумажных карточек.' },
-                partnerItem3: { et: 'Soovi korral lülita sisse uute klientide vastuvõtt oma piirkonnas.', en: 'Optionally toggle open availability to receive new local clients.', ru: 'При желании включите приём новых клиентов в своём районе.' },
-                partnerItem4: { et: 'Kuu lõpus on arvelduskokkuvõte valmis. 0% vahendustasu.', en: 'At month end your invoice summary is ready. 0% commission.', ru: 'В конце месяца сводка для счетов готова. Комиссия 0%.' },
-                partnerNote: { et: 'Kuni 3 kodu on tasuta, edasi 19 € kuus. 6-kohaline sisenemiskood tuleb kohe e-postile.', en: 'Up to 3 homes free, then 19 € a month. 6-digit login code arrives immediately.', ru: 'До 3 домов бесплатно, дальше 19 € в месяц. 6-значный код входа приходит сразу.' },
+                partnerItem1: { et: 'Tänane marsruut, püsiklientide graafik ja ühekordsed tööd on ühes kohas.', en: 'Today’s route, recurring schedules and one-off jobs live in one place.', ru: 'Маршрут на сегодня, регулярный график и разовые работы в одном месте.' },
+                partnerItem2: { et: 'Jaga kliendile oma kutselinki sõnumis või näita QR-koodi otse telefoni ekraanilt.', en: 'Share your invite link in a message or show your QR code straight from your phone screen.', ru: 'Отправьте клиенту личную ссылку в сообщении или покажите QR-код с экрана телефона.' },
+                partnerItem3: { et: 'Soovi korral lülita sisse uute klientide vastuvõtt oma piirkonnas.', en: 'Optionally toggle open availability to welcome new local clients.', ru: 'При желании включите приём новых клиентов в своём районе.' },
+                partnerItem4: { et: 'Kuu lõpus on arvelduskokkuvõte ja CSV valmis ning kogu tasu jääb 100% sinu kätte.', en: 'At month end your billing summary and CSV are ready, and 100% of your fee stays yours.', ru: 'В конце месяца сводка для счетов и CSV готовы, и 100% оплаты остаётся у вас.' },
+                partnerNote: { et: 'Kuni 3 kodu tasuta, edasi 19 € kuus. 6-kohaline sisenemiskood tuleb kohe e-postile.', en: 'Up to 3 homes free, then 19 € a month. 6-digit login code arrives immediately.', ru: 'До 3 домов бесплатно, дальше 19 € в месяц. 6-значный код входа приходит сразу.' },
                 devLead: {
-                    et: 'Ostja saab võtmete üleandmisel digitaalse kutselingi või QR-koodi, mis avab tema kodu portaalis: dokumendid, garantii, hooldusrütm ja teenused ühes kohas. Jätke kontakt ja räägime läbi.',
-                    en: 'At key handover the buyer receives a digital invite link or QR code that opens their home in the portal: documents, warranty, upkeep rhythm and services in one place. Leave your contact and we will talk.',
-                    ru: 'При передаче ключей покупатель получает цифровую ссылку или QR-код, открывающий его дом в портале: документы, гарантия, ритм обслуживания и услуги в одном месте. Оставьте контакт, и мы свяжемся.',
+                    et: 'Ostja saab võtmete üleandmisel kutselingi või QR-koodi, mis avab tema kodu portaalis: dokumendid, garantii, hooldusrütm ja teenused ühes kohas. Jätke kontakt ja räägime läbi.',
+                    en: 'At key handover the buyer receives an invite link or QR code that opens their home in the portal: documents, warranty, upkeep rhythm and services in one place. Leave your contact and we will talk.',
+                    ru: 'При передаче ключей покупатель получает ссылку или QR-код, открывающий его дом в портале: документы, гарантия, ритм обслуживания и услуги в одном месте. Оставьте контакт, и мы свяжемся.',
                 },
                 sendInvite: { et: 'Saada kutse', en: 'Send the invitation', ru: 'Отправить приглашение' },
                 leaveContact: { et: 'Jäta kontakt', en: 'Leave my contact', ru: 'Оставить контакт' },
@@ -1409,19 +1610,19 @@
                   text: { et: 'Iga visiit jõuab kalendrikutsena sinule ja kõigile, kes peaksid teadma. Kui aeg muutub, uueneb kutse ise.', en: 'Every visit arrives as a calendar invite to you and to everyone who should know. When the time changes, the invite updates by itself.', ru: 'Каждый визит приходит приглашением в календарь вам и всем, кому нужно знать. Если время меняется, приглашение обновляется само.' } },
                 { icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
                   title: { et: 'Inimesed nimepidi', en: 'People by name', ru: 'Люди по именам' },
-                  text: { et: 'Sa näed, kes su kodus käib, millal ta tuleb ja kuidas ta kätte saad. Koduhooldaja, florist ja remondimees on nimega inimesed, mitte anonüümne teenus.', en: 'You see who comes to your home, when they come and how to reach them. The housekeeper, florist and handyman are people with names, not an anonymous service.', ru: 'Вы видите, кто приходит в ваш дом, когда придёт и как с ним связаться. Помощница по дому, флорист и мастер — люди с именами, а не безликая услуга.' } },
+                  text: { et: 'Näed alati, kes su kodus käib, millal ta tuleb ja kuidas temaga suhelda. Koduhooldaja, lapsehoidja, remondimees ja aednik on sinu pere kindlad kontaktid ühes vaates.', en: 'Always see who cares for your home, when they arrive and how to reach them. Your housekeeper, babysitter, handyman and gardener live in one shared view.', ru: 'Вы всегда видите, кто приходит в дом, когда следующий визит и как написать. Помощница по дому, няня, мастер и садовник собраны в одном окне.' } },
                 { icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
-                  title: { et: 'Soovid ühe puutega', en: 'Requests with one tap', ru: 'Пожелания одним касанием' },
-                  text: { et: 'Aknad, filtrid, pilt seina või lilled külalisteks: sa ütled, millal sobib, ja õige inimene kinnitab aja.', en: 'Windows, filters, a picture on the wall or flowers for guests: you say when suits you and the right person confirms a time.', ru: 'Окна, фильтры, картина на стену или цветы к приходу гостей: вы говорите, когда удобно, и нужный человек подтверждает время.' } },
+                  title: { et: 'Soovid kahe puutega', en: 'Extras in two taps', ru: 'Пожелания в два касания' },
+                  text: { et: 'Aknad järgmise koristuse juurde, pilt seina, lapsehoid reede õhtuks või lilled külalisteks: valid aja ja sinu inimene kinnitab.', en: 'Windows with your next clean, a picture mounted, Friday babysitting or fresh flowers: pick the time and your person confirms.', ru: 'Мытьё окон к следующей уборке, полка на стену, няня на пятницу или свежие цветы: выберите время, и ваш специалист подтвердит.' } },
                 { icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15',
                   title: { et: 'Hooldusrütm', en: 'Upkeep rhythm', ru: 'Ритм ухода' },
-                  text: { et: 'Ventilatsioonifiltrid, pesumasin, suitsuandur ja süvapuhastus tulevad õigel ajal meelde, ilma et sa neid ise mäletaksid.', en: 'Ventilation filters, the washing machine, the smoke detector and the deep clean come to mind on time, without you having to remember them.', ru: 'Фильтры вентиляции, стиральная машина, датчик дыма и генеральная уборка напомнят о себе вовремя, вам не нужно держать их в голове.' } },
+                  text: { et: 'Ventilatsioonifiltrid, pesumasin, suitsuandur ja süvapuhastus annavad õigel päeval ise märku ning tehtud tööd jäävad kodu ajalukku.', en: 'Ventilation filters, the washing machine, smoke detectors and deep cleans remind you on the right day and log into your home’s history.', ru: 'Фильтры вентиляции, стиральная машина, датчик дыма и генеральная уборка напоминают о себе вовремя и сохраняются в истории дома.' } },
                 { icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
                   title: { et: 'Kodu dokumendid', en: 'Home documents', ru: 'Документы дома' },
-                  text: { et: 'Lepingud, kindlustus, seadmete garantiid ja tehtud tööd on kodu juures. Kodu müües annad kausta kaasa.', en: 'Contracts, insurance, appliance warranties and work done stay with the home. When you sell, the folder goes with it.', ru: 'Договоры, страховка, гарантии на технику и выполненные работы хранятся вместе с домом. При продаже папка переходит новому владельцу.' } },
+                  text: { et: 'Lepingud, kindlustus, seadmete garantiid ja tehtud tööd püsivad kodu kaustas. Kodu müües annad kausta uuele omanikule edasi.', en: 'Contracts, insurance, appliance warranties and work history stay in the home folder, ready to hand over when you sell.', ru: 'Договоры, страховка, гарантии на технику и история работ хранятся в папке дома и легко передаются новому владельцу.' } },
                 { icon: 'M12 19l9 2-9-18-9 18 9-2zm0 0v-8',
-                  title: { et: 'Oleme eemal', en: 'We are away', ru: 'Нас нет дома' },
-                  text: { et: 'Oled reisil või suvel maal? Märgi periood ja visiidid jäävad selleks ajaks ära. Igaüks, kes su kodus käib, saab teate.', en: 'On a trip or at the cottage for the summer? Mark the period and visits are cancelled for that time. Everyone who comes to your home gets notified.', ru: 'Уезжаете или проводите лето за городом? Отметьте период, и визиты на это время отменятся. Все, кто приходит в ваш дом, получат уведомление.' } },
+                  title: { et: 'Reisi- ja puhkuserežiim', en: 'Travel & holiday dates', ru: 'Даты поездок и отпуска' },
+                  text: { et: 'Märgid pere reisi kuupäevad ühe korra ning kalender kohandab visiidid ja teavitab kõiki koduga seotud inimesi automaatselt.', en: 'Mark your family’s trip dates once and the calendar adjusts visits and notifies everyone caring for your home automatically.', ru: 'Отметьте даты поездки один раз — календарь сам скорректирует визиты и уведомит всех специалистов вашего дома.' } },
             ],
             categories: [
                 { title: { et: 'Koristus', en: 'Cleaning', ru: 'Уборка' },
@@ -1439,13 +1640,13 @@
             ],
             steps: [
                 { href: '#alusta',
-                  title: { et: 'Spetsialist avab töölaua', en: 'The specialist opens a desk', ru: 'Специалист открывает рабочий стол' },
-                  text: { et: 'Koduhooldaja või muu spetsialist sisestab nime ja e-posti ning saab kohe 6-kohalise sisenemiskoodi ja oma digitaalse kutselingi. Võid saata talle kutse ka ise.', en: 'The housekeeper or specialist enters their name and e-mail and immediately receives a 6-digit login code and personal digital invite link. Or you can invite them yourself.', ru: 'Помощница по дому или специалист вводит имя и почту и сразу получает 6-значный код входа и личную цифровую ссылку. Либо вы сами отправляете приглашение.' },
-                  link: { et: 'Ava töölaud või saada kutse', en: 'Open a desk or send an invite', ru: 'Открыть стол или отправить приглашение' } },
-                { title: { et: 'Kodu ühendub digilingi või e-kutsega', en: 'The home connects via link or e-mail', ru: 'Дом подключается по ссылке или почте' },
-                  text: { et: 'Spetsialist lisab sinu kodu või jagab sulle oma digilinki / QR-koodi telefonist. Sina saad e-kirjaga ligipääsu oma koduportaalile — parooli ega paberkaarti pole.', en: 'The specialist adds your home or shares their digital link / phone QR code. You get e-mail access to your home portal — no password or paper card.', ru: 'Специалист добавляет ваш дом или делится цифровой ссылкой / QR-кодом с телефона. Вы получаете доступ к порталу дома по почте — без паролей и бумажных карт.' } },
-                { title: { et: 'Edasi liigub kõik ise', en: 'From then on it runs itself', ru: 'Дальше всё идёт само' },
-                  text: { et: 'Kalendrikutsed, muudatused ja meeldetuletused liiguvad ise kogu perele. Hiljem lisad samasse kohta ka teised kodu ja pere inimesed.', en: 'Calendar invites, changes and reminders flow automatically to the whole household. Later you add any other home and family people to the same place.', ru: 'Приглашения в календарь, изменения и напоминания приходят сами всей семье. Позже вы добавляете туда и других специалистов дома.' } },
+                  title: { et: 'Spetsialist avab töölaua', en: 'Specialist opens their desk', ru: 'Специалист открывает стол' },
+                  text: { et: 'Spetsialist sisestab nime ja e-posti, siseneb 6-kohalise koodiga ning saab kohe isikliku kutselingi ja QR-koodi. Kutse võid saata talle ka ise.', en: 'The specialist enters their name and e-mail, signs in with a 6-digit code and gets a personal invite link and QR code. Or you can invite them yourself.', ru: 'Специалист вводит имя и почту, входит по 6-значному коду и сразу получает личную ссылку и QR-код. Приглашение можете отправить и вы сами.' },
+                  link: { et: 'Ava töölaud või saada kutse', en: 'Open a desk or send an invite', ru: 'Открыть стол или пригласить' } },
+                { title: { et: 'Kodu ühendub lingi või kutsega', en: 'The home connects by link or invite', ru: 'Дом подключается по ссылке' },
+                  text: { et: 'Spetsialist lisab püsiva või ühekordse visiidi või jagab kutselinki. Pere siseneb oma e-posti ja 6-kohalise koodiga otse koduportaali.', en: 'The specialist schedules a recurring or one-off visit or shares their link. The household signs in with their e-mail and a 6-digit code.', ru: 'Специалист добавляет регулярный или разовый визит либо делится ссылкой. Семья входит в портал по почте и 6-значному коду.' } },
+                { title: { et: 'Kõik jookseb pere rütmis', en: 'Everything runs in rhythm', ru: 'Дальше всё работает в ритме' },
+                  text: { et: 'Kalendrikutsed, meeldetuletused ja lisasoovid liiguvad ühes kohas ning kordustellimus samale inimesele käib kahe puutega.', en: 'Calendar invites, reminders and extra requests flow in one place, and re-booking the same trusted person takes two taps.', ru: 'Приглашения в календарь, напоминания и допуслуги живут в одном месте, а повторный заказ тому же специалисту занимает два касания.' } },
             ],
             t(key, vars) {
                 const row = this.T[key] || {};

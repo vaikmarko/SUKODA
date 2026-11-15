@@ -27,7 +27,7 @@ add({
   otherServicesLead: { et: 'Too oma kodu juurde ka lapsehoidja, koerajalutaja, remondimees või aednik. Valid spetsialisti, kes juba SUKODA kodudes käib, või kutsud oma usaldatud inimese.', en: 'Add childcare, pet care, a handyman or garden care to your home. Pick a specialist who already serves SUKODA homes, or invite your own trusted person.', ru: 'Подключите к своему дому няню, выгул собаки, мастера или уход за садом. Выберите специалиста, который уже работает в домах SUKODA, или пригласите своего человека.' },
   trustHomesBadge: { et: 'Püsivalt {homes} kodus · {visits} tehtud visiiti', en: 'Active in {homes} homes · {visits} completed visits', ru: 'Постоянно в домах: {homes} · визитов: {visits}' },
   trustNewBadge: { et: 'Uus platvormil', en: 'New on SUKODA', ru: 'Новый специалист' },
-  directDealNote: { et: 'Valid ja arveldad otse spetsialistiga. SUKODA vahendustasu ei võta.', en: 'You agree and settle directly with the specialist. SUKODA takes 0% commission.', ru: 'Договорённость и расчёт напрямую со специалистом. Комиссия SUKODA — 0%.' },
+  directDealNote: { et: 'Lepid aja ja arvelduse kokku otse valitud spetsialistiga.', en: 'You agree times and billing directly with your chosen specialist.', ru: 'Время и расчёт вы согласуете напрямую с выбранным специалистом.' },
   pickSpecialistBtn: { et: 'Vali ja saada soov', en: 'Select and send a note', ru: 'Выбрать и написать' },
   connectNoteLabel: { et: 'Kirjuta lühidalt, mida ja millal vajad', en: 'Write briefly what you need and when', ru: 'Коротко напишите, что и когда нужно' },
   connectSendBtn: { et: 'Ühenda koduga ja saada', en: 'Connect to home and send', ru: 'Подключить к дому и отправить' },

@@ -371,8 +371,8 @@ Eestis on klassikalised teenuste vahendusturud (kus platvorm otsib võõraid teg
    - Pere kas **kutsub oma usaldatud inimese** (ühe puutega e-kutse, mis ühendab spetsialisti sisselogimisel automaatselt koduga) või **valib vaba spetsialisti**, kes on oma töölaual lülitanud sisse `openForNewClients`.
    - Kvaliteedimärgiks ei ole anonüümsed arvustused, vaid objektiivne platvormisisene fakt: **mitmes SUKODA kodus spetsialist püsivalt käib ja mitu visiiti on tehtud** (`Püsivalt X kodus · Y tehtud visiiti`).
    - Ligipääsu privaatsus: püsiv uksekood (`homeProfile.access`) on nähtav ainult püsivale koduhooldajale; teised spetsialistid näevad ainult konkreetse tellimuse juurde lisatud ligipääsuinfot.
-4. **100% digitaalne liitumine (ilma paberkaartideta):**
-   - Füüsiliste kaartide trükkimisest ja saatmisest loobutakse. Igal spetsialistil on töölaual püsiv digitaalne kutselink (`sukoda.ee/lunasta?code=SK-XXXXXXXX`), mobiilne jagamisnupp (`navigator.share`) ja ekraanilt skaneeritav QR-kood. (Vanad koodid jäävad tagasiühilduvaks.)
+4. **Digitaalne kutselink ja telefoni QR-kood:**
+   - Igal spetsialistil on töölaual püsiv digitaalne kutselink (`sukoda.ee/lunasta?code=SK-XXXXXXXX`), mobiilne jagamisnupp (`navigator.share`) ja ekraanilt skaneeritav QR-kood. (Vanad koodid jäävad tagasiühilduvaks.)
    - Uus spetsialist avab tasuta töölaua 30 sekundiga (`/haldus?alusta` → kohene 6-kohaline sisenemiskood samal ekraanil).
 5. **Järgmine tehniline etapp — natiivne Flutteri mobiilirakendus (iOS + Android):**
    - Täna töötab SUKODA kiire mobiilisõbraliku PWA-na (pöidla-all oleva alumise tabbariga nii `/minu` kui ka `/haldus` vaates).

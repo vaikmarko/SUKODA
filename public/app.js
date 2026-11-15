@@ -79,9 +79,9 @@
     },
     cardLink: { et: 'Ava see siin', en: 'Open it here', ru: 'Откройте его здесь' },
     deskSignupLine: {
-      et: 'Pole veel töölauda?',
-      en: 'New here?',
-      ru: 'Ещё нет рабочего стола?',
+      et: 'Uus spetsialist?',
+      en: 'New specialist?',
+      ru: 'Новый специалист?',
     },
     deskSignupLink: {
       et: 'Ava tasuta töölaud',
