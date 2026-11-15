@@ -451,6 +451,9 @@ export const haldusRu = {
   savingProfile: 'Сохраняю…',
   saved: 'Сохранено',
   schedOnce: 'Разовый визит',
+  addNoteBtn: '+ Добавить заметку',
+  moreOptions: '+ Дополнительные поля (телефон, семья, допуслуги)',
+  lessOptions: 'Скрыть доп. поля',
 };
 
 if (typeof window !== 'undefined') {

@@ -145,14 +145,12 @@ function extraServiceBlock(listExpr) {
   return `
             <template x-for="svc in ${listExpr}" :key="svc.id">
                 <div class="border-b border-line">
-                    <button type="button" class="w-full py-4 text-left" @click="setTelliOpen(svc.id)">
-                        <span class="flex items-baseline justify-between gap-4">
-                            <span class="font-sans text-base" x-text="svc.name"></span>
-                            <span class="text-sm text-muted font-sans font-light shrink-0" x-text="addonPrice(svc.id)"></span>
-                        </span>
-                        <span class="block text-sm text-muted font-sans font-light mt-1" x-text="svc.description"></span>
+                    <button type="button" class="w-full py-4 text-left flex items-baseline justify-between gap-4" @click="setTelliOpen(svc.id)">
+                        <span class="font-sans text-base" x-text="svc.name"></span>
+                        <span class="text-sm text-muted font-sans font-light shrink-0" x-text="addonPrice(svc.id)"></span>
                     </button>
                     <form x-show="telliOpen === svc.id" x-cloak class="pb-6" @submit.prevent="submitTelli()">
+                        <p class="text-sm text-muted font-sans font-light mb-4" x-text="svc.description"></p>
                         ${gatherLead}
                         <div x-show="!telliNoted">
                             <div x-show="svc.id === 'flowers'" class="mb-3">
@@ -195,12 +193,9 @@ export const telliHtml = `<div x-show="activeTab === 'extras'" x-transition:ente
             ${extraServiceBlock('telliPrimaryExtras')}
 
             <div class="border-b border-line" x-show="canOrderCleanRow">
-                <button type="button" class="w-full py-4 text-left" @click="openPaidClean()">
-                    <span class="flex items-baseline justify-between gap-4">
-                        <span class="font-sans text-base" x-text="nextCleanVisit ? t('extraCleanRow') : t('cleanOnce')"></span>
-                        <span class="text-sm text-muted font-sans font-light shrink-0" x-text="cleanRowPrice"></span>
-                    </span>
-                    <span class="block text-sm text-muted font-sans font-light mt-1" x-text="addonText('extra-clean')"></span>
+                <button type="button" class="w-full py-4 text-left flex items-baseline justify-between gap-4" @click="openPaidClean()">
+                    <span class="font-sans text-base" x-text="nextCleanVisit ? t('extraCleanRow') : t('cleanOnce')"></span>
+                    <span class="text-sm text-muted font-sans font-light shrink-0" x-text="cleanRowPrice"></span>
                 </button>
                 <form x-show="telliOpen === 'clean'" x-cloak class="pb-6" @submit.prevent="submitTelli()">
                     ${gatherLead}
@@ -248,12 +243,9 @@ export const telliHtml = `<div x-show="activeTab === 'extras'" x-transition:ente
             </div>
 
             <div class="border-b border-line" x-show="!showProvider || isOrderable(serviceById('small-repairs'))">
-                <button type="button" class="w-full py-4 text-left" @click="setTelliOpen('fix')">
-                    <span class="flex items-baseline justify-between gap-4">
-                        <span class="font-sans text-base" x-text="t('orderFix')"></span>
-                        <span class="text-sm text-muted font-sans font-light shrink-0" x-text="addonPrice('small-repairs')"></span>
-                    </span>
-                    <span class="block text-sm text-muted font-sans font-light mt-1" x-text="t('fixLead')"></span>
+                <button type="button" class="w-full py-4 text-left flex items-baseline justify-between gap-4" @click="setTelliOpen('fix')">
+                    <span class="font-sans text-base" x-text="t('orderFix')"></span>
+                    <span class="text-sm text-muted font-sans font-light shrink-0" x-text="addonPrice('small-repairs')"></span>
                 </button>
                 <form x-show="telliOpen === 'fix'" x-cloak class="pb-6" @submit.prevent="submitTelli()">
                     ${gatherLead}

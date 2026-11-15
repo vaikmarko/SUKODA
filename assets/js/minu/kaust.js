@@ -77,7 +77,7 @@ export const kaustHtml = `<div id="dokumendid" x-show="activeTab === 'folder'" x
                                 <div class="flex items-center gap-4 mt-5">
                                     <button type="button" @click="addDocument()" :disabled="!docForm.title || docBusy" class="p-btn" x-text="docBusy ? t('docSaving') : (docFile ? t('docUpload') : t('docAdd'))"></button>
                                     <button type="button" @click="docAdding = false; docFile = null" class="text-sm font-sans text-muted hover:text-black" x-text="t('docCancel')"></button>
-                                    <p x-show="docError" x-cloak class="text-sm text-red-500 font-sans font-light" x-text="docError"></p>
+                                    <p x-show="docError" x-cloak class="text-sm text-accent font-sans font-light" x-text="docError"></p>
                                 </div>
                             </div>
 

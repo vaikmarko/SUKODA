@@ -157,9 +157,11 @@
 
     // Household contacts (who receives notifications)
     contacts: [],
+    contactsEditing: false,
     contactsSaving: false,
     contactsSaved: false,
     homes: [],
+    handoverOpen: false,
     handover: { name: '', email: '', busy: false, error: '', sent: false },
     contactsError: '',
 
@@ -380,6 +382,7 @@
     // ---- Contacts ----
     addContact() {
         if (this.contacts.length >= (this.extras.maxContacts || 6)) return;
+        this.contactsEditing = true;
         // Temporary id so the row keeps its inputs when a neighbour is removed (the server assigns the real one)
         this.contacts.push({ id: 'new-' + Math.random().toString(36).slice(2, 8), name: '', email: '', phone: '', notify: true });
     },
@@ -447,6 +450,7 @@
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'failed');
             this.contacts = data.contacts;
+            this.contactsEditing = false;
             this.contactsSaved = true;
             setTimeout(() => this.contactsSaved = false, 3000);
         } catch (e) {
@@ -2330,7 +2334,7 @@
                     <div class="border-t border-line pt-8 mt-4">
                         <p class="text-muted font-sans font-light text-sm">
                             <span x-text="t('loginNoHome')"></span>
-                            <a href="index.html#liitu" class="text-black underline underline-offset-4 hover:text-accent transition-colors ml-1" x-text="t('startHere')"></a>
+                            <a href="/#alusta" class="text-black underline underline-offset-4 hover:text-accent transition-colors ml-1" x-text="t('startHere')"></a>
                         </p>
                     </div>
                 </div>
@@ -2359,8 +2363,8 @@
                 </div>
             </nav>
 
-            <!-- Welcome header: the home itself, first — for developer homes with the project picture and the three facts that matter -->
-            <div class="grid-line-b overflow-hidden" x-show="nextThing.kind !== 'welcome' && nextThing.kind !== 'loading'" x-cloak>
+            <!-- Welcome header: shown on Kodu/Calendar so Teenused, Kaust and Minu open straight at the top -->
+            <div class="grid-line-b overflow-hidden" x-show="(activeTab === 'overview' || activeTab === 'visits') && nextThing.kind !== 'welcome' && nextThing.kind !== 'loading'" x-cloak>
                 <div class="grid grid-cols-1 lg:grid-cols-12 items-stretch min-w-0">
                     <div class="px-6 md:px-12 py-8 md:py-12 flex flex-col justify-center min-w-0" :class="brand?.image ? 'lg:col-span-7' : 'lg:col-span-12'">
                         <div class="accent-line mb-4"></div>

@@ -141,7 +141,7 @@
                 </div>
             </nav>
 
-            <div class="px-4 md:px-12 py-4 grid-line-b">
+            <div x-show="activeTab === 'today'" class="px-4 md:px-12 py-4 grid-line-b">
                 <p class="font-serif text-2xl font-light" x-text="t('greet', { name: greetName() })"></p>
             </div>
 
@@ -251,10 +251,13 @@
                                         <p class="text-sm font-sans font-light mt-1" x-text="standingNote(b)"></p>
                                     </div>
                                     <p x-show="bringLine(b)" class="text-sm font-sans mt-4" x-text="bringLine(b)"></p>
-                                    <label class="block mt-4">
-                                        <span class="eyebrow" x-text="t('noteLabel')"></span>
-                                        <textarea rows="2" class="h-input resize-none font-sans mt-1" :placeholder="t('notePh')" :value="todayNotes[b.id] || ''" @input="todayNotes[b.id] = $event.target.value"></textarea>
-                                    </label>
+                                    <div class="mt-4">
+                                        <button type="button" x-show="!todayNoteOpen[b.id] && !(todayNotes[b.id] || '').trim()" @click="todayNoteOpen[b.id] = true" class="text-xs font-sans text-muted hover:text-black underline underline-offset-4" x-text="t('addNoteBtn')"></button>
+                                        <label class="block" x-show="todayNoteOpen[b.id] || (todayNotes[b.id] || '').trim()" x-cloak>
+                                            <span class="eyebrow" x-text="t('noteLabel')"></span>
+                                            <textarea rows="2" class="h-input resize-none font-sans mt-1" :placeholder="t('notePh')" :value="todayNotes[b.id] || ''" @input="todayNotes[b.id] = $event.target.value"></textarea>
+                                        </label>
+                                    </div>
                                     <button type="button" class="p-btn w-full mt-4" :disabled="todaySavingId === b.id" @click="markTodayDone(b)" x-text="todaySavingId === b.id ? t('saving') : t('done')"></button>
                                     <button type="button" class="h-link w-full mt-2 justify-center" :disabled="todaySavingId === b.id" @click="markNoEntry(b)" x-text="t('noEntry')"></button>
                                 </article>
@@ -407,65 +410,42 @@
                     </div>
                 </div>
 
-                <!-- ─────────── KONTO: pakett, arved, minu andmed ─────────── -->
+                <!-- ─────────── KONTO: kutselink, arveldus ja seaded ─────────── -->
                 <div x-show="activeTab === 'account'" x-cloak>
-                    <div class="max-w-3xl space-y-10">
+                    <div class="max-w-3xl space-y-6">
 
-                        <!-- Contracted partner (set up by SUKODA): no plans, no cards — just the arrangement in one line -->
+                        <!-- Contracted partner (set up by SUKODA) -->
                         <div x-show="isEnterprise" x-cloak>
                             <p class="eyebrow mb-1" x-text="t('coop')"></p>
                             <p class="font-serif text-2xl font-light" x-text="provider?.businessName || provider?.name"></p>
                         </div>
 
-                        <!-- Plan: what it costs, stated plainly, and what you are on -->
-                        <div x-show="!isEnterprise">
-                            <div class="flex flex-wrap items-end justify-between gap-4 mb-5">
+                        <!-- 1. Personal invite link & QR code (top priority for self-serve growth) -->
+                        <div x-show="!isEnterprise && provider?.inviteUrl" class="bg-white border border-line p-5 space-y-4">
+                            <div class="flex flex-wrap items-start justify-between gap-3">
                                 <div>
-                                    <p class="eyebrow mb-1" x-text="t('planLabel')"></p>
-                                    <p class="font-serif text-2xl font-light"><span x-text="billing.planName"></span> <span class="text-muted text-lg" x-text="planHomes()"></span></p>
+                                    <p class="eyebrow mb-1" x-text="t('digitalInviteTitle')"></p>
+                                    <p class="text-sm text-muted font-sans font-light" x-text="t('digitalInviteLead')"></p>
                                 </div>
-                                <p class="text-sm text-muted font-sans font-light" x-show="billing.hasSubscription && billing.periodEnd" x-text="planRenewal()"></p>
+                                <p class="font-mono text-xs text-muted" x-text="provider?.inviteCode"></p>
                             </div>
-
-                            <div class="grid sm:grid-cols-3 gap-3">
-                                <template x-for="p in billing.plans" :key="p.id">
-                                    <div class="border p-5 flex flex-col" :class="billing.plan === p.id ? 'border-black bg-white' : 'border-line bg-white/60'">
-                                        <div class="flex items-baseline justify-between mb-1">
-                                            <p class="font-serif text-xl font-light" x-text="p.name"></p>
-                                            <span x-show="billing.plan === p.id" class="h-chip bg-black text-paper" x-text="t('currentPlan')"></span>
-                                        </div>
-                                        <p class="font-serif text-3xl font-light mb-1"><span x-text="p.price"></span><span class="text-base text-muted" x-text="' ' + t('perMonth')"></span></p>
-                                        <p class="text-sm text-muted font-sans font-light leading-relaxed flex-1" x-text="p.blurb"></p>
-                                        <div class="mt-5">
-                                            <button type="button" x-show="billing.plan !== p.id" @click="choosePlan(p)" :disabled="billingBusy" class="w-full" :class="p.price ? 'p-btn' : 'p-btn-2'" x-text="planButton(p)"></button>
-                                            <button type="button" x-show="billing.plan === p.id && billing.cancelAtPeriodEnd" @click="resumePlan()" :disabled="billingBusy" class="p-btn-2 w-full" x-text="t('resumePlan')"></button>
-                                        </div>
-                                    </div>
-                                </template>
+                            <div class="flex flex-wrap gap-3">
+                                <button type="button" @click="shareInvite(provider.inviteUrl)" class="p-btn" x-text="t('shareInviteBtn')"></button>
+                                <button type="button" @click="showInviteQr = !showInviteQr" class="p-btn-2" x-text="showInviteQr ? t('hideQr') : t('showQr')"></button>
                             </div>
-                            <p class="text-xs text-muted font-sans font-light mt-4" x-text="t('planNote')"></p>
-                            <p x-show="billingError" x-cloak class="text-sm text-red-500 font-sans font-light mt-3" x-text="billingError"></p>
+                            <div x-show="showInviteQr" x-cloak class="pt-4 border-t border-line flex flex-col items-center text-center">
+                                <div class="w-48 h-48 bg-white p-2 border border-line" x-html="inviteQrSvg()"></div>
+                                <p class="font-serif text-xl font-light tracking-widest mt-3" x-text="provider?.inviteCode"></p>
+                                <p class="text-xs text-muted font-sans font-light mt-1" x-text="t('scanQrHint')"></p>
+                                <input type="text" readonly class="h-input font-mono text-xs text-center mt-3 max-w-sm" :value="provider?.inviteUrl || ''" @focus="$event.target.select()">
+                            </div>
                         </div>
 
-                        <!-- Invoices -->
-                        <div x-show="!isEnterprise && (billing.hasSubscription || invoices.length)">
-                            <p class="eyebrow mb-3" x-text="t('invoices')"></p>
-                            <div class="bg-white border border-line divide-y divide-line" x-show="invoices.length">
-                                <template x-for="inv in invoices" :key="inv.id">
-                                    <div class="flex items-center justify-between gap-4 px-5 py-3 text-sm font-sans">
-                                        <span class="font-light"><span x-text="fmtDateShort(inv.paidAt)"></span> · <span x-text="inv.number || inv.id"></span></span>
-                                        <span class="flex items-center gap-4"><span class="font-serif text-base" x-text="inv.amount.toFixed(2).replace('.', ',') + ' €'"></span><a :href="inv.pdf || inv.url" target="_blank" rel="noopener" class="h-link h-link-accent">PDF</a></span>
-                                    </div>
-                                </template>
-                            </div>
-                            <p x-show="!invoices.length" class="text-sm text-muted font-sans font-light" x-text="t('noInvoices')"></p>
-                        </div>
-
-                        <div x-show="hasOwnClients">
+                        <!-- 2. Monthly client billing summary -->
+                        <div x-show="hasOwnClients && invoice.months.length" class="bg-white border border-line p-5">
                             <p class="eyebrow" x-text="t('invoiceTitle')"></p>
-                            <p class="text-sm text-muted font-sans font-light mt-2" x-text="invoice.months.length ? t('invoiceOwn') : t('invoiceEmpty')"></p>
                             <template x-for="block in invoice.months" :key="block.month">
-                                <div class="mt-6">
+                                <div class="mt-4 first:mt-3">
                                     <div class="flex flex-wrap items-baseline justify-between gap-4">
                                         <p class="font-sans capitalize" x-text="invoiceMonthLabel(block.month)"></p>
                                         <div class="flex items-baseline gap-4">
@@ -473,9 +453,9 @@
                                             <p class="font-serif text-2xl font-light" x-show="block.cents" x-text="euroLabel(block.cents)"></p>
                                         </div>
                                     </div>
-                                    <div class="bg-white border border-line divide-y divide-line mt-3">
+                                    <div class="border border-line divide-y divide-line mt-3">
                                         <template x-for="home in block.homes" :key="home.orderId">
-                                            <div class="px-5 py-4">
+                                            <div class="px-4 py-3.5">
                                                 <div class="flex flex-wrap items-center justify-between gap-3">
                                                     <p class="text-sm font-sans" x-text="home.customerName"></p>
                                                     <div class="flex items-center gap-3">
@@ -484,7 +464,7 @@
                                                     </div>
                                                 </div>
                                                 <template x-for="line in home.lines" :key="line.id">
-                                                    <p class="text-sm text-muted font-sans font-light mt-1" x-text="invoiceLine(line)"></p>
+                                                    <p class="text-xs text-muted font-sans font-light mt-1" x-text="invoiceLine(line)"></p>
                                                 </template>
                                             </div>
                                         </template>
@@ -493,106 +473,12 @@
                             </template>
                         </div>
 
-                        <div x-show="earnedCents > 0 || !hasOwnClients">
+                        <div x-show="earnedCents > 0" class="bg-white border border-line p-5">
                             <p class="eyebrow" x-text="t('earned')"></p>
-                            <p class="font-serif text-2xl font-light mt-2" x-text="earnedLabel()"></p>
-                            <p class="text-sm text-muted font-sans font-light mt-2" x-text="t('earnedWait')"></p>
+                            <p class="font-serif text-2xl font-light mt-1" x-text="earnedLabel()"></p>
                         </div>
 
-                        <form class="border-t border-line pt-6" @submit.prevent="saveProviderAway()">
-                            <p class="eyebrow" x-text="t('awayTitle')"></p>
-                            <p class="text-sm text-muted font-sans font-light mt-2" x-text="t('awayBody')"></p>
-                            <div x-show="provider?.awayPeriods?.length" x-cloak class="mt-4 border border-line divide-y divide-line bg-white">
-                                <template x-for="ap in (provider?.awayPeriods || [])" :key="ap.id">
-                                    <div class="px-4 py-2.5 flex items-center justify-between gap-3 text-sm font-sans font-light">
-                                        <span><span x-text="fmtDateShort(ap.from)"></span><span x-show="ap.to && ap.to !== ap.from" x-text="' – ' + fmtDateShort(ap.to)"></span></span>
-                                        <button type="button" @click="removeProviderAway(ap)" class="h-link" x-text="t('remove')"></button>
-                                    </div>
-                                </template>
-                            </div>
-                            <div class="grid sm:grid-cols-2 gap-4 mt-4">
-                                <label class="block">
-                                    <span class="h-label" x-text="t('awayFrom')"></span>
-                                    <input type="date" class="h-input" x-model="providerAway.from" :min="todayStr" required>
-                                </label>
-                                <label class="block">
-                                    <span class="h-label" x-text="t('awayTo')"></span>
-                                    <input type="date" class="h-input" x-model="providerAway.to" :min="providerAway.from || todayStr" required>
-                                </label>
-                            </div>
-                            <button type="submit" class="p-btn mt-4" :disabled="providerAway.busy" x-text="providerAway.busy ? t('savingProfile') : t('awaySave')"></button>
-                            <p x-show="providerAway.error" x-cloak class="text-sm text-accent font-sans font-light mt-3" x-text="providerAway.error"></p>
-                            <p x-show="providerAway.saved" x-cloak class="text-sm font-sans font-light mt-3" x-text="t('awaySaved')"></p>
-                        </form>
-
-                        <form class="border-t border-line pt-6" @submit.prevent="saveAvailability()">
-                            <p class="eyebrow" x-text="t('workTitle')"></p>
-                            <p class="text-sm text-muted font-sans font-light mt-2" x-text="t('workLead')"></p>
-                            <div class="grid sm:grid-cols-2 gap-4 mt-4">
-                                <div class="sm:col-span-2">
-                                    <p class="h-label" x-text="t('workDaysLabel')"></p>
-                                    <div class="flex flex-wrap gap-2">
-                                        <template x-for="d in allWeekdayChoices" :key="d.n">
-                                            <button type="button" @click="toggleWorkDay(d.n)" class="min-h-11 min-w-11 px-3 border text-sm font-light" :class="availForm.days.includes(d.n) ? 'bg-black text-paper border-black' : 'border-line text-black'" :aria-pressed="availForm.days.includes(d.n)" x-text="d.label"></button>
-                                        </template>
-                                    </div>
-                                </div>
-                                <label class="block">
-                                    <span class="h-label" x-text="t('hoursLabel')"></span>
-                                    <span class="flex gap-3">
-                                        <input type="time" class="h-input" x-model="availForm.hours.start" :aria-label="t('hoursFrom')">
-                                        <input type="time" class="h-input" x-model="availForm.hours.end" :aria-label="t('hoursTo')">
-                                    </span>
-                                </label>
-                                <label class="block">
-                                    <span class="h-label" x-text="t('maxPerDayLabel')"></span>
-                                    <input type="number" min="1" max="12" class="h-input" x-model.number="availForm.maxPerDay">
-                                </label>
-                                <label class="block">
-                                    <span class="h-label" x-text="t('leadLabel')"></span>
-                                    <input type="number" min="0" max="60" class="h-input" x-model.number="availForm.leadDays">
-                                </label>
-                                <label class="block">
-                                    <span class="h-label" x-text="t('districtsLabel')"></span>
-                                    <input type="text" class="h-input" x-model="availForm.districtsText" placeholder="Kristiine, Kesklinn">
-                                </label>
-                                <label class="block sm:col-span-2">
-                                    <span class="h-label" x-text="t('priceNoteLabel')"></span>
-                                    <input type="text" class="h-input" maxlength="240" x-model="availForm.priceNote" :placeholder="t('priceNotePh')">
-                                </label>
-                            </div>
-                            <div x-show="isCleaningProvider && cleanerExtraRows.length" class="mt-8 pt-6 border-t border-line">
-                                <p class="eyebrow" x-text="t('extrasOfferTitle')"></p>
-                                <p class="text-sm text-muted font-sans font-light mt-1 mb-4" x-text="t('extrasOfferLead')"></p>
-                                <div class="bg-white border border-line divide-y divide-line">
-                                    <template x-for="ex in cleanerExtraRows" :key="ex.id">
-                                        <div class="px-4 py-3 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3">
-                                            <label class="flex items-center gap-3 cursor-pointer min-w-0 flex-1">
-                                                <input type="checkbox" class="accent-black" :checked="availForm.offeredExtras.includes(ex.id)" @change="toggleOfferedExtra(ex.id)">
-                                                <span class="text-sm font-sans font-light truncate" x-text="svcName(ex)"></span>
-                                            </label>
-                                            <input x-show="availForm.offeredExtras.includes(ex.id)" type="text" maxlength="40" :placeholder="svcHint(ex) || '45 €'" :aria-label="svcName(ex) + ' ' + t('priceLabel')" x-model="availForm.extraPrices[ex.id]" class="h-input sm:w-36 text-sm sm:text-right py-1.5">
-                                        </div>
-                                    </template>
-                                </div>
-                            </div>
-                            <div x-show="!isEnterprise" class="mt-8 pt-6 border-t border-line">
-                                <label class="flex items-start gap-3 cursor-pointer">
-                                    <input type="checkbox" class="mt-1 accent-black" x-model="availForm.openForNewClients">
-                                    <span>
-                                        <span class="font-sans text-sm block" x-text="t('openNewClientsLabel')"></span>
-                                        <span class="text-xs text-muted font-sans font-light block mt-1 leading-relaxed" x-text="t('openNewClientsHint')"></span>
-                                    </span>
-                                </label>
-                                <div x-show="availForm.openForNewClients" x-cloak class="mt-4">
-                                    <label class="h-label" x-text="t('bioLabel')"></label>
-                                    <input type="text" maxlength="240" x-model="availForm.bio" :placeholder="t('bioPh')" class="h-input">
-                                </div>
-                            </div>
-                            <button type="submit" class="p-btn mt-5" :disabled="availSaving" x-text="availSaving ? t('savingProfile') : t('saveAvail')"></button>
-                            <p x-show="availError" x-cloak class="text-sm text-accent font-sans font-light mt-3" x-text="availError"></p>
-                        </form>
-
+                        <!-- Enterprise building handover -->
                         <div x-show="isEnterprise" x-cloak class="border border-line bg-white p-5">
                             <p class="eyebrow mb-3" x-text="t('buildingTitle')"></p>
                             <form class="grid sm:grid-cols-2 gap-4" @submit.prevent="saveBuilding()">
@@ -621,51 +507,187 @@
                             </form>
                         </div>
 
-                        <!-- 100% Digital personal invite link & QR code -->
-                        <div x-show="!isEnterprise && provider?.inviteUrl" class="border-t border-line pt-6">
-                            <p class="eyebrow mb-2" x-text="t('digitalInviteTitle')"></p>
-                            <p class="text-sm text-muted font-sans font-light mb-4 leading-relaxed" x-text="t('digitalInviteLead')"></p>
-                            <div class="bg-white border border-line p-5 space-y-4">
-                                <div>
-                                    <p class="h-label" x-text="t('appLink')"></p>
-                                    <input type="text" readonly class="h-input font-mono text-sm" :value="provider?.inviteUrl || ''" @focus="$event.target.select()">
-                                </div>
-                                <div class="flex flex-wrap gap-3">
-                                    <button type="button" @click="shareInvite(provider.inviteUrl)" class="p-btn" x-text="t('shareInviteBtn')"></button>
-                                    <button type="button" @click="showInviteQr = !showInviteQr" class="p-btn-2" x-text="showInviteQr ? t('hideQr') : t('showQr')"></button>
-                                </div>
-                                <div x-show="showInviteQr" x-cloak class="pt-4 border-t border-line flex flex-col items-center text-center">
-                                    <div class="w-48 h-48 bg-white p-2 border border-line" x-html="inviteQrSvg()"></div>
-                                    <p class="font-serif text-xl font-light tracking-widest mt-3" x-text="provider?.inviteCode"></p>
-                                    <p class="text-xs text-muted font-sans font-light mt-1" x-text="t('scanQrHint')"></p>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- 3. Clean Accordion Settings -->
+                        <div class="bg-white border border-line divide-y divide-line">
 
-                        <!-- Profile -->
-                        <div class="border-t border-line pt-6">
-                            <p class="eyebrow mb-3" x-text="t('myDetails')"></p>
-                            <form @submit.prevent="saveProfile()" class="bg-white border border-line p-5 grid sm:grid-cols-2 gap-4 font-sans">
-                                <div><label class="h-label" for="profile-name" x-text="t('nameLabel')"></label><input id="profile-name" type="text" x-model="profileForm.name" class="h-input" autocomplete="name"></div>
-                                <div><label class="h-label" for="profile-company" x-text="t('companyLabel')"></label><input id="profile-company" type="text" x-model="profileForm.businessName" class="h-input" autocomplete="organization"></div>
-                                <div><label class="h-label" for="profile-phone" x-text="t('phoneLabel')"></label><input id="profile-phone" type="tel" x-model="profileForm.phone" class="h-input" autocomplete="tel"></div>
-                                <div><label class="h-label" for="profile-city" x-text="t('areaLabel')"></label><input id="profile-city" type="text" x-model="profileForm.city" :placeholder="t('areaPh')" class="h-input"></div>
-                                <div class="sm:col-span-2"><label class="h-label" for="profile-notify" x-text="t('notifyEmail')"></label><input id="profile-notify" type="email" x-model="profileForm.notifyEmail" class="h-input" autocomplete="email"></div>
-                                <div class="sm:col-span-2" x-show="!isEnterprise">
-                                    <p class="h-label" x-text="t('offerLabel')"></p>
-                                    <div class="flex flex-wrap gap-2 mt-1">
-                                        <template x-for="o in editableServices" :key="'pf-' + o.id">
-                                            <button type="button" @click="toggleProfileService(o.id)" :class="profileForm.services.includes(o.id) ? 'bg-black text-paper border-black' : 'border-line-strong text-muted hover:text-black'" class="min-h-11 px-3 border text-sm font-light transition-colors" :aria-pressed="profileForm.services.includes(o.id)" x-text="t(o.key)"></button>
+                            <!-- Working hours, extras & new clients -->
+                            <div>
+                                <button type="button" @click="accountOpen = accountOpen === 'work' ? '' : 'work'" class="w-full px-5 py-4 flex items-center justify-between gap-4 text-left hover:bg-cream/30 transition-colors">
+                                    <div class="min-w-0">
+                                        <p class="font-sans text-base" x-text="t('workTitle')"></p>
+                                        <p class="text-xs text-muted font-sans font-light mt-0.5 truncate" x-text="availForm.hours.start + '–' + availForm.hours.end + (availForm.districtsText ? ' · ' + availForm.districtsText : '')"></p>
+                                    </div>
+                                    <span class="text-xs font-sans text-muted shrink-0" x-text="accountOpen === 'work' ? t('close') : t('edit')"></span>
+                                </button>
+                                <form x-show="accountOpen === 'work'" x-cloak class="px-5 pb-6 pt-2 border-t border-line" @submit.prevent="saveAvailability()">
+                                    <div class="grid sm:grid-cols-2 gap-4 mt-2">
+                                        <div class="sm:col-span-2">
+                                            <p class="h-label" x-text="t('workDaysLabel')"></p>
+                                            <div class="flex flex-wrap gap-2">
+                                                <template x-for="d in allWeekdayChoices" :key="d.n">
+                                                    <button type="button" @click="toggleWorkDay(d.n)" class="min-h-11 min-w-11 px-3 border text-sm font-light" :class="availForm.days.includes(d.n) ? 'bg-black text-paper border-black' : 'border-line text-black'" :aria-pressed="availForm.days.includes(d.n)" x-text="d.label"></button>
+                                                </template>
+                                            </div>
+                                        </div>
+                                        <label class="block">
+                                            <span class="h-label" x-text="t('hoursLabel')"></span>
+                                            <span class="flex gap-3">
+                                                <input type="time" class="h-input" x-model="availForm.hours.start" :aria-label="t('hoursFrom')">
+                                                <input type="time" class="h-input" x-model="availForm.hours.end" :aria-label="t('hoursTo')">
+                                            </span>
+                                        </label>
+                                        <label class="block">
+                                            <span class="h-label" x-text="t('maxPerDayLabel')"></span>
+                                            <input type="number" min="1" max="12" class="h-input" x-model.number="availForm.maxPerDay">
+                                        </label>
+                                        <label class="block">
+                                            <span class="h-label" x-text="t('leadLabel')"></span>
+                                            <input type="number" min="0" max="60" class="h-input" x-model.number="availForm.leadDays">
+                                        </label>
+                                        <label class="block">
+                                            <span class="h-label" x-text="t('districtsLabel')"></span>
+                                            <input type="text" class="h-input" x-model="availForm.districtsText" placeholder="Kristiine, Kesklinn">
+                                        </label>
+                                        <label class="block sm:col-span-2">
+                                            <span class="h-label" x-text="t('priceNoteLabel')"></span>
+                                            <input type="text" class="h-input" maxlength="240" x-model="availForm.priceNote" :placeholder="t('priceNotePh')">
+                                        </label>
+                                    </div>
+                                    <div x-show="isCleaningProvider && cleanerExtraRows.length" class="mt-6 pt-5 border-t border-line">
+                                        <p class="eyebrow mb-3" x-text="t('extrasOfferTitle')"></p>
+                                        <div class="border border-line divide-y divide-line">
+                                            <template x-for="ex in cleanerExtraRows" :key="ex.id">
+                                                <div class="px-4 py-2.5 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3">
+                                                    <label class="flex items-center gap-3 cursor-pointer min-w-0 flex-1">
+                                                        <input type="checkbox" class="accent-black" :checked="availForm.offeredExtras.includes(ex.id)" @change="toggleOfferedExtra(ex.id)">
+                                                        <span class="text-sm font-sans font-light truncate" x-text="svcName(ex)"></span>
+                                                    </label>
+                                                    <input x-show="availForm.offeredExtras.includes(ex.id)" type="text" maxlength="40" :placeholder="svcHint(ex) || '45 €'" :aria-label="svcName(ex) + ' ' + t('priceLabel')" x-model="availForm.extraPrices[ex.id]" class="h-input sm:w-32 text-sm sm:text-right py-1">
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div x-show="!isEnterprise" class="mt-6 pt-5 border-t border-line">
+                                        <label class="flex items-start gap-3 cursor-pointer">
+                                            <input type="checkbox" class="mt-1 accent-black" x-model="availForm.openForNewClients">
+                                            <span>
+                                                <span class="font-sans text-sm block" x-text="t('openNewClientsLabel')"></span>
+                                                <span class="text-xs text-muted font-sans font-light block mt-0.5" x-text="t('openNewClientsHint')"></span>
+                                            </span>
+                                        </label>
+                                        <div x-show="availForm.openForNewClients" x-cloak class="mt-3">
+                                            <label class="h-label" x-text="t('bioLabel')"></label>
+                                            <input type="text" maxlength="240" x-model="availForm.bio" :placeholder="t('bioPh')" class="h-input">
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="p-btn mt-5" :disabled="availSaving" x-text="availSaving ? t('savingProfile') : t('saveAvail')"></button>
+                                    <p x-show="availError" x-cloak class="text-sm text-accent font-sans font-light mt-3" x-text="availError"></p>
+                                </form>
+                            </div>
+
+                            <!-- Holiday / Away periods -->
+                            <div>
+                                <button type="button" @click="accountOpen = accountOpen === 'away' ? '' : 'away'" class="w-full px-5 py-4 flex items-center justify-between gap-4 text-left hover:bg-cream/30 transition-colors">
+                                    <div class="min-w-0">
+                                        <p class="font-sans text-base" x-text="t('awayTitle')"></p>
+                                        <p class="text-xs text-muted font-sans font-light mt-0.5 truncate" x-show="provider?.awayPeriods?.length" x-text="provider.awayPeriods.map((ap) => fmtDateShort(ap.from) + (ap.to && ap.to !== ap.from ? '–' + fmtDateShort(ap.to) : '')).join(', ')"></p>
+                                    </div>
+                                    <span class="text-xs font-sans text-muted shrink-0" x-text="accountOpen === 'away' ? t('close') : t('edit')"></span>
+                                </button>
+                                <form x-show="accountOpen === 'away'" x-cloak class="px-5 pb-6 pt-3 border-t border-line" @submit.prevent="saveProviderAway()">
+                                    <p class="text-xs text-muted font-sans font-light mb-4" x-text="t('awayBody')"></p>
+                                    <div x-show="provider?.awayPeriods?.length" x-cloak class="mb-4 border border-line divide-y divide-line">
+                                        <template x-for="ap in (provider?.awayPeriods || [])" :key="ap.id">
+                                            <div class="px-4 py-2.5 flex items-center justify-between gap-3 text-sm font-sans font-light">
+                                                <span><span x-text="fmtDateShort(ap.from)"></span><span x-show="ap.to && ap.to !== ap.from" x-text="' – ' + fmtDateShort(ap.to)"></span></span>
+                                                <button type="button" @click="removeProviderAway(ap)" class="h-link" x-text="t('remove')"></button>
+                                            </div>
                                         </template>
                                     </div>
+                                    <div class="grid sm:grid-cols-2 gap-4">
+                                        <label class="block"><span class="h-label" x-text="t('awayFrom')"></span><input type="date" class="h-input" x-model="providerAway.from" :min="todayStr" required></label>
+                                        <label class="block"><span class="h-label" x-text="t('awayTo')"></span><input type="date" class="h-input" x-model="providerAway.to" :min="providerAway.from || todayStr" required></label>
+                                    </div>
+                                    <button type="submit" class="p-btn mt-4" :disabled="providerAway.busy" x-text="providerAway.busy ? t('savingProfile') : t('awaySave')"></button>
+                                    <p x-show="providerAway.error" x-cloak class="text-sm text-accent font-sans font-light mt-3" x-text="providerAway.error"></p>
+                                    <p x-show="providerAway.saved" x-cloak class="text-sm font-sans font-light mt-3" x-text="t('awaySaved')"></p>
+                                </form>
+                            </div>
+
+                            <!-- My Profile Details -->
+                            <div>
+                                <button type="button" @click="accountOpen = accountOpen === 'profile' ? '' : 'profile'" class="w-full px-5 py-4 flex items-center justify-between gap-4 text-left hover:bg-cream/30 transition-colors">
+                                    <div class="min-w-0">
+                                        <p class="font-sans text-base" x-text="t('myDetails')"></p>
+                                        <p class="text-xs text-muted font-sans font-light mt-0.5 truncate" x-text="[provider?.name, provider?.phone, provider?.email].filter(Boolean).join(' · ')"></p>
+                                    </div>
+                                    <span class="text-xs font-sans text-muted shrink-0" x-text="accountOpen === 'profile' ? t('close') : t('edit')"></span>
+                                </button>
+                                <form x-show="accountOpen === 'profile'" x-cloak @submit.prevent="saveProfile()" class="px-5 pb-6 pt-3 border-t border-line grid sm:grid-cols-2 gap-4 font-sans">
+                                    <div><label class="h-label" for="profile-name" x-text="t('nameLabel')"></label><input id="profile-name" type="text" x-model="profileForm.name" class="h-input" autocomplete="name"></div>
+                                    <div><label class="h-label" for="profile-company" x-text="t('companyLabel')"></label><input id="profile-company" type="text" x-model="profileForm.businessName" class="h-input" autocomplete="organization"></div>
+                                    <div><label class="h-label" for="profile-phone" x-text="t('phoneLabel')"></label><input id="profile-phone" type="tel" x-model="profileForm.phone" class="h-input" autocomplete="tel"></div>
+                                    <div><label class="h-label" for="profile-city" x-text="t('areaLabel')"></label><input id="profile-city" type="text" x-model="profileForm.city" :placeholder="t('areaPh')" class="h-input"></div>
+                                    <div class="sm:col-span-2"><label class="h-label" for="profile-notify" x-text="t('notifyEmail')"></label><input id="profile-notify" type="email" x-model="profileForm.notifyEmail" class="h-input" autocomplete="email"></div>
+                                    <div class="sm:col-span-2" x-show="!isEnterprise">
+                                        <p class="h-label" x-text="t('offerLabel')"></p>
+                                        <div class="flex flex-wrap gap-2 mt-1">
+                                            <template x-for="o in editableServices" :key="'pf-' + o.id">
+                                                <button type="button" @click="toggleProfileService(o.id)" :class="profileForm.services.includes(o.id) ? 'bg-black text-paper border-black' : 'border-line-strong text-muted hover:text-black'" class="min-h-11 px-3 border text-sm font-light transition-colors" :aria-pressed="profileForm.services.includes(o.id)" x-text="t(o.key)"></button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <p class="sm:col-span-2 text-xs text-muted font-light" x-text="t('loginEmailNote', { email: provider?.email || '' })"></p>
+                                    <div class="sm:col-span-2 flex items-center gap-4">
+                                        <button type="submit" :disabled="profileSaving" class="p-btn" x-text="profileSaving ? t('savingProfile') : t('save')"></button>
+                                        <span x-show="profileSaved" x-cloak x-transition class="text-sm font-sans font-light" x-text="t('saved')"></span>
+                                        <span x-show="profileError" x-cloak class="text-sm text-accent font-sans font-light" x-text="profileError"></span>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Plan & SUKODA subscription invoices -->
+                            <div x-show="!isEnterprise">
+                                <button type="button" @click="accountOpen = accountOpen === 'plan' ? '' : 'plan'" class="w-full px-5 py-4 flex items-center justify-between gap-4 text-left hover:bg-cream/30 transition-colors">
+                                    <div class="min-w-0">
+                                        <p class="font-sans text-base" x-text="t('planLabel')"></p>
+                                        <p class="text-xs text-muted font-sans font-light mt-0.5 truncate"><span x-text="billing.planName"></span> <span x-text="planHomes()"></span><span x-show="billing.hasSubscription && billing.periodEnd" x-text="' · ' + planRenewal()"></span></p>
+                                    </div>
+                                    <span class="text-xs font-sans text-muted shrink-0" x-text="accountOpen === 'plan' ? t('close') : t('seePlans')"></span>
+                                </button>
+                                <div x-show="accountOpen === 'plan'" x-cloak class="px-5 pb-6 pt-4 border-t border-line space-y-5">
+                                    <div class="grid sm:grid-cols-3 gap-3">
+                                        <template x-for="p in billing.plans" :key="p.id">
+                                            <div class="border p-4 flex flex-col" :class="billing.plan === p.id ? 'border-black bg-white' : 'border-line bg-paper/50'">
+                                                <div class="flex items-baseline justify-between mb-1">
+                                                    <p class="font-serif text-xl font-light" x-text="p.name"></p>
+                                                    <span x-show="billing.plan === p.id" class="h-chip bg-black text-paper" x-text="t('currentPlan')"></span>
+                                                </div>
+                                                <p class="font-serif text-2xl font-light mb-1"><span x-text="p.price"></span><span class="text-sm text-muted" x-text="' ' + t('perMonth')"></span></p>
+                                                <p class="text-xs text-muted font-sans font-light leading-relaxed flex-1" x-text="p.blurb"></p>
+                                                <div class="mt-4">
+                                                    <button type="button" x-show="billing.plan !== p.id" @click="choosePlan(p)" :disabled="billingBusy" class="w-full" :class="p.price ? 'p-btn p-btn-sm' : 'p-btn-2 p-btn-sm'" x-text="planButton(p)"></button>
+                                                    <button type="button" x-show="billing.plan === p.id && billing.cancelAtPeriodEnd" @click="resumePlan()" :disabled="billingBusy" class="p-btn-2 p-btn-sm w-full" x-text="t('resumePlan')"></button>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <p class="text-xs text-muted font-sans font-light" x-text="t('planNote')"></p>
+                                    <p x-show="billingError" x-cloak class="text-sm text-accent font-sans font-light" x-text="billingError"></p>
+                                    <div x-show="invoices.length">
+                                        <p class="eyebrow mb-2" x-text="t('invoices')"></p>
+                                        <div class="border border-line divide-y divide-line">
+                                            <template x-for="inv in invoices" :key="inv.id">
+                                                <div class="flex items-center justify-between gap-4 px-4 py-2.5 text-sm font-sans">
+                                                    <span class="font-light"><span x-text="fmtDateShort(inv.paidAt)"></span> · <span x-text="inv.number || inv.id"></span></span>
+                                                    <span class="flex items-center gap-4"><span class="font-serif text-base" x-text="inv.amount.toFixed(2).replace('.', ',') + ' €'"></span><a :href="inv.pdf || inv.url" target="_blank" rel="noopener" class="h-link h-link-accent">PDF</a></span>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
                                 </div>
-                                <p class="sm:col-span-2 text-xs text-muted font-light" x-text="t('loginEmailNote', { email: provider?.email || '' })"></p>
-                                <div class="sm:col-span-2 flex items-center gap-4">
-                                    <button type="submit" :disabled="profileSaving" class="p-btn" x-text="profileSaving ? t('savingProfile') : t('save')"></button>
-                                    <span x-show="profileSaved" x-cloak x-transition class="text-sm font-sans font-light" x-text="t('saved')"></span>
-                                    <span x-show="profileError" x-cloak class="text-sm text-accent font-sans font-light" x-text="profileError"></span>
-                                </div>
-                            </form>
+                            </div>
+
                         </div>
                     </div>
                 </div>
@@ -756,24 +778,19 @@
                         </div>
                     </div>
 
-                    <form x-show="!customerModal.done" @submit.prevent="saveCustomer()" class="space-y-6 font-sans">
+                    <form x-show="!customerModal.done" @submit.prevent="saveCustomer()" class="space-y-5 font-sans">
                         <div x-show="provider?.inviteUrl" class="bg-cream/60 border border-line p-4 flex flex-wrap items-center justify-between gap-3">
-                            <p class="text-xs text-muted font-light leading-relaxed" x-text="t('quickInviteBanner')"></p>
+                            <p class="text-xs text-muted font-light" x-text="t('quickInviteBanner')"></p>
                             <button type="button" @click="shareInvite(provider.inviteUrl)" class="p-btn-2 p-btn-sm shrink-0" x-text="t('shareInviteBtn')"></button>
-                        </div>
-                        <p class="text-sm text-muted font-light" x-text="t('addClientLead')"></p>
-                        <div>
-                            <label class="h-label" x-text="t('nameReq')"></label>
-                            <input type="text" x-model="customerModal.form.name" required class="h-input" autocomplete="name">
                         </div>
                         <div class="grid sm:grid-cols-2 gap-4">
                             <div>
-                                <label class="h-label" x-text="t('emailReq')"></label>
-                                <input type="email" x-model="customerModal.form.email" required class="h-input" autocomplete="email">
+                                <label class="h-label" x-text="t('nameReq')"></label>
+                                <input type="text" x-model="customerModal.form.name" required class="h-input" autocomplete="name">
                             </div>
                             <div>
-                                <label class="h-label" x-text="t('phoneOpt')"></label>
-                                <input type="tel" x-model="customerModal.form.phone" class="h-input" autocomplete="tel">
+                                <label class="h-label" x-text="t('emailReq')"></label>
+                                <input type="email" x-model="customerModal.form.email" required class="h-input" autocomplete="email">
                             </div>
                         </div>
                         <div>
@@ -822,36 +839,43 @@
                             </div>
                         </div>
 
-                        <p x-show="customerModal.form.frequency !== 'none'" class="text-sm font-light" x-text="firstVisitLine()"></p>
-
-                        <div x-show="customerModal.form.frequency !== 'none'">
-                            <label class="h-label" x-text="t('visitPriceOpt')"></label>
-                            <input type="text" x-model="customerModal.form.price" maxlength="40" placeholder="65 €" class="h-input">
-                            <p class="text-xs text-muted font-light mt-1.5" x-text="t('priceToInvoice')"></p>
-                        </div>
-
-                        <div>
-                            <button type="button" x-show="!customerModal.form.showContact2" @click="customerModal.form.showContact2 = true" class="h-link h-link-accent" x-text="t('addFamilyMember')"></button>
-                            <div x-show="customerModal.form.showContact2" x-cloak class="space-y-3 border border-line bg-white p-4">
-                                <div class="flex items-center justify-between">
-                                    <p class="h-label mb-0" x-text="t('familyMemberTitle')"></p>
-                                    <button type="button" @click="customerModal.form.showContact2 = false; customerModal.form.contact2 = { name: '', email: '' }" class="text-xs text-muted hover:text-black" x-text="t('remove')"></button>
-                                </div>
-                                <p class="text-xs text-muted font-light" x-text="t('familyMemberHint')"></p>
-                                <div class="grid sm:grid-cols-2 gap-4">
-                                    <div><label class="h-label" x-text="t('nameLabel')"></label><input type="text" x-model="customerModal.form.contact2.name" class="h-input"></div>
-                                    <div><label class="h-label" x-text="t('emailLabel')"></label><input type="email" x-model="customerModal.form.contact2.email" class="h-input"></div>
-                                </div>
+                        <div x-show="customerModal.form.frequency !== 'none'" class="grid sm:grid-cols-2 gap-4 items-end">
+                            <div>
+                                <label class="h-label" x-text="t('visitPriceOpt')"></label>
+                                <input type="text" x-model="customerModal.form.price" maxlength="40" placeholder="65 €" class="h-input">
                             </div>
+                            <p class="text-xs text-muted font-light pb-2" x-text="firstVisitLine()"></p>
                         </div>
 
-                        <div x-show="isCleaningProvider && offerServices.length">
-                            <p class="h-label" x-text="t('whatLabel')"></p>
-                            <p class="text-sm text-muted font-light mb-3" x-text="t('whatLead')"></p>
-                            <div class="flex flex-wrap gap-2">
-                                <template x-for="s in offerServices" :key="s.id">
-                                    <button type="button" @click="toggleService(s.id)" class="min-h-11 px-3 border text-sm font-light" :class="customerModal.form.services.includes(s.id) ? 'bg-black text-paper border-black' : 'border-line text-black'" :aria-pressed="customerModal.form.services.includes(s.id)" x-text="s.label"></button>
-                                </template>
+                        <!-- Optional details collapsed so adding a client takes 15 seconds -->
+                        <div class="pt-1">
+                            <button type="button" @click="customerModal.moreOpen = !customerModal.moreOpen" class="text-xs font-sans text-muted hover:text-black underline underline-offset-4" x-text="customerModal.moreOpen ? t('lessOptions') : t('moreOptions')"></button>
+                            <div x-show="customerModal.moreOpen" x-cloak class="mt-4 pt-4 border-t border-line space-y-5">
+                                <div>
+                                    <label class="h-label" x-text="t('phoneOpt')"></label>
+                                    <input type="tel" x-model="customerModal.form.phone" class="h-input" autocomplete="tel">
+                                </div>
+                                <div>
+                                    <button type="button" x-show="!customerModal.form.showContact2" @click="customerModal.form.showContact2 = true" class="h-link h-link-accent" x-text="t('addFamilyMember')"></button>
+                                    <div x-show="customerModal.form.showContact2" x-cloak class="space-y-3 border border-line bg-white p-4">
+                                        <div class="flex items-center justify-between">
+                                            <p class="h-label mb-0" x-text="t('familyMemberTitle')"></p>
+                                            <button type="button" @click="customerModal.form.showContact2 = false; customerModal.form.contact2 = { name: '', email: '' }" class="text-xs text-muted hover:text-black" x-text="t('remove')"></button>
+                                        </div>
+                                        <div class="grid sm:grid-cols-2 gap-4">
+                                            <div><label class="h-label" x-text="t('nameLabel')"></label><input type="text" x-model="customerModal.form.contact2.name" class="h-input"></div>
+                                            <div><label class="h-label" x-text="t('emailLabel')"></label><input type="email" x-model="customerModal.form.contact2.email" class="h-input"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div x-show="isCleaningProvider && offerServices.length">
+                                    <p class="h-label mb-2" x-text="t('whatLabel')"></p>
+                                    <div class="flex flex-wrap gap-2">
+                                        <template x-for="s in offerServices" :key="s.id">
+                                            <button type="button" @click="toggleService(s.id)" class="min-h-11 px-3 border text-sm font-light" :class="customerModal.form.services.includes(s.id) ? 'bg-black text-paper border-black' : 'border-line text-black'" :aria-pressed="customerModal.form.services.includes(s.id)" x-text="s.label"></button>
+                                        </template>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -859,8 +883,8 @@
                             <p class="mb-2" x-text="customerModal.existingWarning"></p>
                             <label class="flex items-center gap-2"><input type="checkbox" x-model="customerModal.form.force"> <span x-text="t('forceNew')"></span></label>
                         </div>
-                        <p x-show="customerModal.error" x-cloak class="text-sm text-red-500 font-light" x-text="customerModal.error"></p>
-                        <button type="button" x-show="customerModal.upgrade" x-cloak @click="customerModal.open = false; activeTab = 'account'" class="p-btn-2" x-text="t('seePlans')"></button>
+                        <p x-show="customerModal.error" x-cloak class="text-sm text-accent font-light" x-text="customerModal.error"></p>
+                        <button type="button" x-show="customerModal.upgrade" x-cloak @click="customerModal.open = false; activeTab = 'account'; accountOpen = 'plan'" class="p-btn-2" x-text="t('seePlans')"></button>
                         <div class="flex gap-3 pt-2">
                             <button type="button" @click="customerModal.open = false" class="p-btn-2" x-text="t('cancel')"></button>
                             <button type="submit" :disabled="customerModal.saving" class="p-btn flex-1" x-text="customerModal.saving ? t('savingProfile') : t('addClientTitle')"></button>
@@ -1631,6 +1655,9 @@
             savingProfile: { et: 'Salvestan…', en: 'Saving…' },
             saved: { et: 'Salvestatud', en: 'Saved' },
             schedOnce: { et: 'Ühekordne visiit', en: 'One-off visit' },
+            addNoteBtn: { et: '+ Lisa märkus', en: '+ Add a note' },
+            moreOptions: { et: '+ Rohkem valikuid (telefon, pereliige, lisateenused)', en: '+ More options (phone, family member, extras)' },
+            lessOptions: { et: 'Peida lisavalikud', en: 'Hide extra options' },
         };
         const MONTHS = ['Jaanuar', 'Veebruar', 'Märts', 'Aprill', 'Mai', 'Juuni', 'Juuli', 'August', 'September', 'Oktoober', 'November', 'Detsember'];
         const WEEKDAYS = ['pühapäev', 'esmaspäev', 'teisipäev', 'kolmapäev', 'neljapäev', 'reede', 'laupäev'];
@@ -1693,6 +1720,8 @@
             T: COPY,
             nowTick: 0,
             todayNotes: {},
+            todayNoteOpen: {},
+            accountOpen: '',
             providerAway: { from: '', to: '', busy: false, error: '', saved: false },
             todaySavingId: '',
             activeTab: 'today',
@@ -1712,7 +1741,7 @@
 
             visitModal: { open: false, orderId: '', bookingId: null, customerName: '', currentStart: null, date: '', time: '10:00', durationMin: 180, serviceId: '', price: '', note: '', customerNote: '', notify: true, force: false, conflicts: [], error: '', saving: false, completed: false },
             // `form` starts with the real shape so Alpine never evaluates customerModal.form.* against null on load
-            customerModal: { open: false, saving: false, error: '', existingWarning: '', upgrade: false, done: null, form: { name: '', email: '', phone: '', address: '', size: 'medium', frequency: 'biweekly', weekday: 2, time: '10:00', price: '', services: [], showContact2: false, contact2: { name: '', email: '' }, force: false } },
+            customerModal: { open: false, moreOpen: false, saving: false, error: '', existingWarning: '', upgrade: false, done: null, form: { name: '', email: '', phone: '', address: '', size: 'medium', frequency: 'biweekly', weekday: 2, time: '10:00', price: '', services: [], showContact2: false, contact2: { name: '', email: '' }, force: false } },
             msgModal: { open: false, title: '', subtitle: '', hint: '', placeholder: '', button: '', danger: false, required: true, text: '', error: '', saving: false, submit() {} },
             detail: { open: false, customer: null, inviteUrl: '', sendingLink: false, editSchedule: false, scheduleForm: {}, contactsForm: [], editContacts: false, notes: '', notesDirty: false, saving: false, error: '', editAway: false, awayForm: { from: '', to: '', note: '' }, editFlowers: false, flowersForm: { auto: false, floristId: '', leadDays: 2, note: '', budget: '' }, maintAdding: false, maintForm: { name: '', intervalMonths: 6 } },
             confirmModal: { open: false, request: null, date: '', time: '10:00', durationMin: 60, price: '', message: '', force: false, conflicts: [], error: '', saving: false },
@@ -2423,7 +2452,7 @@
 
             // ---------- customers ----------
             openCustomerModal() {
-                this.customerModal = { open: true, saving: false, error: '', existingWarning: '', upgrade: false, done: null, form: this.blankCustomerForm() };
+                this.customerModal = { open: true, moreOpen: false, saving: false, error: '', existingWarning: '', upgrade: false, done: null, form: this.blankCustomerForm() };
             },
             blankCustomerForm() {
                 const days = Array.isArray(this.availForm?.days) && this.availForm.days.length ? this.availForm.days : [1, 2, 3, 4, 5];
