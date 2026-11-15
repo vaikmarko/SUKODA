@@ -450,6 +450,7 @@ export const haldusRu = {
   save: 'Сохранить',
   savingProfile: 'Сохраняю…',
   saved: 'Сохранено',
+  schedOnce: 'Разовый визит',
 };
 
 if (typeof window !== 'undefined') {

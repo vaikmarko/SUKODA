@@ -118,6 +118,22 @@ test('an empty home profile asks for linens, flowers and access', () => {
   assert.equal(card.action, 'Täida');
 });
 
+test('a one-off or non-cleaning home skips linens/flowers setup and invites re-ordering', () => {
+  const oneOff = pickNextThing(portal({
+    order: { status: 'paid', source: 'manual', schedule: null },
+    homeProfile: { linens: '', flowerPreference: '', access: '' },
+  }));
+  assert.equal(oneOff.kind, 'calm');
+  assert.equal(oneOff.action, 'Telli teenus');
+
+  const handymanOnly = pickNextThing(portal({
+    hasCleaner: false,
+    homeProfile: { linens: '', flowerPreference: '', access: '' },
+  }));
+  assert.equal(handymanOnly.kind, 'calm');
+  assert.equal(handymanOnly.action, 'Telli teenus');
+});
+
 test('calm empty state asks for one report when the home has a warranty service', () => {
   const card = pickNextThing(portal({ showProvider: false, extras: { requests: [], away: [], catalogue: [{ id: 'warranty-claim' }] } }));
   assert.equal(card.kind, 'calm');

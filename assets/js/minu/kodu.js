@@ -286,7 +286,8 @@ function pickNextThing(vm) {
   }
 
   const hp = vm.homeProfile;
-  if (hp && typeof hp === 'object') {
+  const wantsCleanSetup = vm.hasCleaner !== false && !(vm.showProvider && vm.order && vm.order.source === 'manual' && vm.order.schedule === null);
+  if (hp && typeof hp === 'object' && wantsCleanSetup) {
     const missing = ['linens', 'flowerPreference', 'access'].filter((k) => !String(hp[k] || '').trim());
     if (missing.length) {
       return {

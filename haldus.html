@@ -806,13 +806,18 @@
                             </div>
                         </div>
 
-                        <div x-show="customerModal.form.frequency !== 'none'">
+                        <div x-show="customerModal.form.frequency !== 'none' && customerModal.form.frequency !== 'once'">
                             <p class="h-label" x-text="t('dayLabel')"></p>
                             <div class="flex flex-wrap gap-2">
                                 <template x-for="d in weekdayChoices" :key="d.n">
                                     <button type="button" @click="customerModal.form.weekday = d.n" class="min-h-11 min-w-11 px-3 border text-sm font-light" :class="customerModal.form.weekday === d.n ? 'bg-black text-paper border-black' : 'border-line text-black'" :aria-pressed="customerModal.form.weekday === d.n" x-text="d.label"></button>
                                 </template>
                             </div>
+                        </div>
+
+                        <div x-show="customerModal.form.frequency === 'once'" x-cloak>
+                            <label class="h-label" x-text="t('dateLabel')"></label>
+                            <input type="date" x-model="customerModal.form.oneOffDate" :required="customerModal.form.frequency === 'once'" class="h-input">
                         </div>
 
                         <div x-show="customerModal.form.frequency !== 'none'">
@@ -1632,6 +1637,7 @@
             save: { et: 'Salvesta', en: 'Save' },
             savingProfile: { et: 'Salvestan…', en: 'Saving…' },
             saved: { et: 'Salvestatud', en: 'Saved' },
+            schedOnce: { et: 'Ühekordne visiit', en: 'One-off visit' },
         };
         const MONTHS = ['Jaanuar', 'Veebruar', 'Märts', 'Aprill', 'Mai', 'Juuni', 'Juuli', 'August', 'September', 'Oktoober', 'November', 'Detsember'];
         const WEEKDAYS = ['pühapäev', 'esmaspäev', 'teisipäev', 'kolmapäev', 'neljapäev', 'reede', 'laupäev'];
@@ -2429,8 +2435,9 @@
             blankCustomerForm() {
                 const days = Array.isArray(this.availForm?.days) && this.availForm.days.length ? this.availForm.days : [1, 2, 3, 4, 5];
                 const weekday = days.includes(2) ? 2 : days[0];
-                const freq = this.isCleaningProvider ? 'biweekly' : 'none';
-                return { name: '', email: '', phone: '', address: '', size: 'medium', frequency: freq, weekday, time: '10:00', price: '', services: [], showContact2: false, contact2: { name: '', email: '' }, force: false };
+                const freq = this.isCleaningProvider ? 'biweekly' : 'once';
+                const tomorrow = T().shiftDateString(this.todayStr || new Date().toISOString().slice(0, 10), 1);
+                return { name: '', email: '', phone: '', address: '', size: 'medium', frequency: freq, weekday, oneOffDate: tomorrow, time: '10:00', price: '', services: [], showContact2: false, contact2: { name: '', email: '' }, force: false };
             },
             get sizeChoices() { return [{ id: 'small', key: 'sizeSmall' }, { id: 'medium', key: 'sizeMed' }, { id: 'large', key: 'sizeLarge' }]; },
             get rhythmChoices() {
@@ -2438,6 +2445,7 @@
                     { id: 'weekly', key: 'schedWeek' },
                     { id: 'biweekly', key: 'schedTwo' },
                     { id: 'monthly', key: 'schedMonth' },
+                    { id: 'once', key: 'schedOnce' },
                     { id: 'none', key: 'schedFlex' },
                 ];
             },
@@ -2489,10 +2497,11 @@
             },
             firstVisitLine() {
                 const f = this.customerModal.form;
-                if (!f) return '';
-                const date = this.nextWeekday(f.weekday);
+                if (!f || f.frequency === 'none') return '';
+                const date = f.frequency === 'once' ? f.oneOffDate : this.nextWeekday(f.weekday);
+                if (!date) return '';
                 const line = this.t('firstVisit', { when: this.fmtDateLong(date), time: f.time, hours: this.durationForSize(f.size) / 60 });
-                return this.holidayName(date) ? line + ' ' + this.t('holidaySkip') : line;
+                return (f.frequency !== 'once' && this.holidayName(date)) ? line + ' ' + this.t('holidaySkip') : line;
             },
             async shareInvite(url) {
                 if (!url) return;
@@ -2523,8 +2532,9 @@
                 const m = this.customerModal; if (m.saving) return;
                 m.saving = true; m.error = '';
                 const f = m.form;
-                const hasSchedule = f.frequency && f.frequency !== 'none';
-                const anchor = this.nextWeekday(f.weekday);
+                const isOnce = f.frequency === 'once';
+                const hasSchedule = f.frequency && f.frequency !== 'none' && !isOnce;
+                const anchor = isOnce ? (f.oneOffDate || this.todayStr) : this.nextWeekday(f.weekday);
                 const contacts = [];
                 if (f.showContact2 && f.contact2 && (f.contact2.name || f.contact2.email)) {
                     contacts.push({ name: f.contact2.name, email: f.contact2.email, notify: true });
@@ -2533,6 +2543,7 @@
                     name: f.name, email: f.email, phone: f.phone, address: f.address, size: f.size,
                     sendWelcome: true, force: f.force, contacts,
                     ...(hasSchedule ? { schedule: { frequency: f.frequency, anchorDate: anchor, time: f.time, durationMin: this.durationForSize(f.size), price: f.price || '' } } : {}),
+                    ...(isOnce && f.oneOffDate ? { oneOffVisit: { date: f.oneOffDate, time: f.time, price: f.price || '' } } : {}),
                 };
                 try {
                     const res = await this.api('/api/haldus/customers', { method: 'POST', body: JSON.stringify(body) });

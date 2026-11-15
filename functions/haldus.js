@@ -2355,7 +2355,8 @@ module.exports = function createHaldus(deps) {
       : (core.SERVICE_CATALOGUE.find((s) => s.category === role && (s.kind || 'visit') === 'visit')?.id || null);
 
     let schedule = null;
-    if (b.schedule && b.schedule.frequency && b.schedule.frequency !== 'none') {
+    let oneOffStart = null;
+    if (b.schedule && b.schedule.frequency && b.schedule.frequency !== 'none' && b.schedule.frequency !== 'once') {
       const s = core.sanitizeSchedule(b.schedule);
       if (s.error) throw new HomeError(400, { error: s.error });
       schedule = {
@@ -2363,6 +2364,14 @@ module.exports = function createHaldus(deps) {
         providerId: provider.id,
         ...(defaultServiceId ? { serviceId: defaultServiceId } : {}),
       };
+    } else if (b.oneOffVisit && b.oneOffVisit.date && b.oneOffVisit.time) {
+      if (!core.parseDateStr(b.oneOffVisit.date)) throw new HomeError(400, { error: 'Kuupäev ei ole õige' });
+      try {
+        oneOffStart = new Date(tallinnLocalDateTimeToISOString(b.oneOffVisit.date, b.oneOffVisit.time));
+      } catch {
+        throw new HomeError(400, { error: 'Kuupäev või kellaaeg ei ole õige' });
+      }
+      if (Number.isNaN(oneOffStart.getTime())) throw new HomeError(400, { error: 'Kuupäev või kellaaeg ei ole õige' });
     }
 
     // Duplicate guard: same email already active somewhere
@@ -2418,12 +2427,31 @@ module.exports = function createHaldus(deps) {
     const ref = await db.collection('orders').add(orderData);
     const orderId = ref.id;
 
-    // Schedule first so the welcome can name the first visit.
+    // Schedule or single visit first so the welcome can name the first visit.
     let created = [];
     let skipped = [];
+    let oneOffBooking = null;
     if (schedule) {
       const r = await syncSchedule({ orderId, order: orderData, provider });
       created = r.created; skipped = r.skipped;
+    } else if (oneOffStart) {
+      const oneOffCompleted = oneOffStart < now;
+      const durationMin = core.SIZE_DEFAULT_DURATION[size] || 180;
+      oneOffBooking = await createVisit({
+        order: orderData,
+        orderId,
+        provider,
+        start: oneOffStart,
+        durationMin,
+        serviceId: defaultServiceId,
+        price: str(b.oneOffVisit?.price, 60) || null,
+        source: 'provider',
+        status: oneOffCompleted ? 'completed' : 'scheduled',
+      });
+      if (oneOffCompleted) {
+        await ref.update({ totalVisits: 1, lastVisitAt: Timestamp.fromDate(oneOffStart), updatedAt: FieldValue.serverTimestamp() });
+      }
+      created = [oneOffBooking];
     }
 
     let welcomeSent = false;
@@ -2431,7 +2459,7 @@ module.exports = function createHaldus(deps) {
     if (sendWelcome) {
       try {
         portalUrl = await issueClientToken(ref);
-        const first = created[0];
+        const first = created.find((v) => v.status !== 'completed');
         const firstWhen = first
           ? `${formatDate(first.scheduledAt, lang)}, ${formatTime(first.scheduledAt)}`
           : '';
@@ -2442,8 +2470,14 @@ module.exports = function createHaldus(deps) {
       }
     }
 
-    if (created.length) {
+    if (schedule && created.length) {
       await notifyOrder(orderData, scheduleEmail({ order: orderData, bookings: created, providerName: provider.name, lang }), { replyTo: PORTAL_REPLY_TO });
+    } else if (oneOffBooking && oneOffBooking.status === 'scheduled') {
+      try {
+        await sendVisitNotification('confirmed', { order: orderData, booking: oneOffBooking, provider });
+      } catch (e) {
+        console.error('One-off visit invite failed (non-fatal):', e);
+      }
     }
 
     // Keep the operator informed
