@@ -818,3 +818,57 @@ test('resolveRequestRecipients includes notifying household members and the subm
   assert.deepEqual(recs.map((r) => r.email), ['marko@kodu.ee', 'mari@kodu.ee', 'vaikne@kodu.ee']);
 });
 
+test('primaryTrade, providerInviteCode and toggleInvoicedHome support all trades and self-serve invoicing', () => {
+  assert.equal(core.primaryTrade(null), 'cleaning');
+  assert.equal(core.primaryTrade({ services: [] }), 'cleaning');
+  assert.equal(core.primaryTrade({ services: ['handyman', 'cleaning'] }), 'cleaning');
+  assert.equal(core.primaryTrade({ services: ['handyman', 'garden'] }), 'handyman');
+  assert.equal(core.primaryTrade({ services: ['garden'] }), 'garden');
+  assert.equal(core.primaryTrade({ services: ['unknown'] }), 'cleaning');
+
+  const code = core.providerInviteCode(Buffer.from([0, 1, 2, 3, 4, 5, 6, 7]));
+  assert.match(code, /^SK-[A-Z2-9]{8}$/);
+  assert.equal(/[01OI]/.test(code), false);
+  assert.equal(core.providerInviteCode(Buffer.from([1, 2])), null);
+
+  const step1 = core.toggleInvoicedHome(null, '2026-11', 'home-1');
+  assert.equal(step1.invoiced, true);
+  assert.deepEqual(step1.invoicedMonths, { '2026-11': ['home-1'] });
+  const step2 = core.toggleInvoicedHome(step1.invoicedMonths, '2026-11', 'home-2');
+  assert.deepEqual(step2.invoicedMonths['2026-11'], ['home-1', 'home-2']);
+  const step3 = core.toggleInvoicedHome(step2.invoicedMonths, '2026-11', 'home-1');
+  assert.equal(step3.invoiced, false);
+  assert.deepEqual(step3.invoicedMonths, { '2026-11': ['home-2'] });
+  const step4 = core.toggleInvoicedHome(step3.invoicedMonths, '2026-11', 'home-2');
+  assert.deepEqual(step4.invoicedMonths, {});
+  assert.equal(core.toggleInvoicedHome({}, 'bad', 'home-1').error, 'invalid');
+  assert.equal(core.toggleInvoicedHome({}, '2026-13', 'home-1').error, 'invalid');
+  assert.equal(core.toggleInvoicedHome({}, '2026-11', '').error, 'invalid');
+
+  // Childcare & pet care categories + safe public directory card
+  assert.equal(core.primaryTrade({ services: ['childcare'] }), 'childcare');
+  assert.equal(core.primaryTrade({ services: ['pets'] }), 'pets');
+  assert.equal(core.getService('babysitting').category, 'childcare');
+  assert.equal(core.getService('dog-walk').category, 'pets');
+
+  assert.equal(core.publicProviderCard({ id: 'p1', name: 'Liisa', services: ['childcare'], availability: { openForNewClients: false } }), null);
+  const card = core.publicProviderCard({
+    id: 'p1',
+    name: 'Liisa Tamm',
+    businessName: 'Hoid OÜ',
+    email: 'secret@hoid.ee',
+    phone: '+372555',
+    sessionTokenHash: 'hash',
+    city: 'Tallinn',
+    services: ['childcare', 'pets'],
+    availability: { openForNewClients: true, districts: ['Kalamaja', 'Tallinn'], bio: 'Rahulik hoidja, 6 a kogemust.', priceNote: '15 €/h' },
+  }, { activeHomes: 7, completedVisits: 84 });
+  assert.equal(card.name, 'Liisa Tamm');
+  assert.deepEqual(card.services, ['childcare', 'pets']);
+  assert.equal(card.area, 'Tallinn, Kalamaja');
+  assert.equal(card.activeHomes, 7);
+  assert.equal(card.completedVisits, 84);
+  assert.equal(JSON.stringify(card).includes('secret@hoid.ee'), false);
+  assert.equal(JSON.stringify(card).includes('555'), false);
+});
+

@@ -78,7 +78,7 @@ test('every t() key used in minu.html and minu modules exists in the resident di
   assert.deepEqual(missing, []);
 });
 
-test('every t() key used in haldus.html exists in COPY with et and en', () => {
+test('every t() key used in haldus.html exists in COPY with et, en and ru', () => {
   const vm = require('vm');
   const html = read('haldus.html');
   const start = html.indexOf('const COPY = {');
@@ -87,12 +87,21 @@ test('every t() key used in haldus.html exists in COPY with et and en', () => {
   const sandbox = {};
   vm.createContext(sandbox);
   vm.runInContext(html.slice(start, end).replace('const COPY =', 'this.COPY ='), sandbox);
+  const ruRaw = read('assets/js/haldus-ru.js')
+    .replace(/^export\s+const\s+haldusRu\s*=/m, 'this.RU =')
+    .replace(/if\s*\(typeof window[\s\S]*$/m, '');
+  vm.runInContext(ruRaw, sandbox);
   const copy = sandbox.COPY;
+  const ru = sandbox.RU || {};
 
   for (const [k, row] of Object.entries(copy)) {
     assert.equal(typeof row.et, 'string', `haldus ${k}.et missing`);
     assert.equal(typeof row.en, 'string', `haldus ${k}.en missing`);
-    if (row.et.trim()) assert.ok(row.en.trim(), `haldus ${k}.en empty`);
+    assert.equal(typeof ru[k], 'string', `haldus ${k}.ru missing in assets/js/haldus-ru.js`);
+    if (row.et.trim()) {
+      assert.ok(row.en.trim(), `haldus ${k}.en empty`);
+      assert.ok(ru[k].trim(), `haldus ${k}.ru empty`);
+    }
   }
 
   const missing = [];

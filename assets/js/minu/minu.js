@@ -52,6 +52,8 @@ add({
   handoverGo: { et: 'Anna üle', en: 'Hand over', ru: 'Передать' },
   handoverSent: { et: 'Link on saadetud. See kodu on nüüd uue omaniku käes.', en: 'The link is sent. This home is now with the new owner.', ru: 'Ссылка отправлена. Дом теперь у нового владельца.' },
   handoverFail: { et: 'Link ei läinud teele. Kontrolli aadressi ja proovi uuesti.', en: 'The link did not go out. Check the address and try again.', ru: 'Ссылка не отправилась. Проверьте адрес и попробуйте снова.' },
+  homePeopleTitle: { et: 'Inimesed sinu kodu juures', en: 'People caring for your home', ru: 'Люди, заботящиеся о вашем доме' },
+  disconnectAsk: { et: 'Eemaldad selle spetsialisti oma kodu juurest?', en: 'Remove this specialist from your home?', ru: 'Отключить этого специалиста от вашего дома?' },
   nameLabel: { et: 'Nimi', en: 'Name', ru: 'Имя' },
   namePh: { et: 'nt Kristi', en: 'e.g. Anna', ru: 'напр. Анна' },
   phoneLabel: { et: 'Telefon', en: 'Phone', ru: 'Телефон' },
@@ -275,6 +277,25 @@ export const minuHtml = `<div x-show="activeTab === 'mine'" x-transition:enter="
                         </div>
 
                         <aside class="lg:col-span-5 space-y-6 lg:space-y-8 min-w-0">
+
+                        <!-- ── Connected specialists ── -->
+                        <div x-show="partners.length" x-cloak class="bg-white border border-line">
+                            <div class="px-6 py-4 border-b border-line">
+                                <h2 class="p-h" x-text="t('homePeopleTitle')"></h2>
+                            </div>
+                            <div class="divide-y divide-line">
+                                <template x-for="p in partners" :key="p.category">
+                                    <div class="px-6 py-4 flex items-center justify-between gap-4">
+                                        <div class="min-w-0">
+                                            <p class="eyebrow" x-text="p.label"></p>
+                                            <p class="font-sans text-sm mt-1 truncate" x-text="p.name + (p.businessName ? ' · ' + p.businessName : '')"></p>
+                                            <p class="text-xs text-muted font-sans font-light mt-0.5 truncate" x-text="[p.phone, p.email].filter(Boolean).join(' · ')"></p>
+                                        </div>
+                                        <button type="button" x-show="viewer && viewer.primary && p.canDisconnect" @click="disconnectPartner(p)" class="text-xs font-sans text-muted hover:text-black shrink-0" x-text="t('docRemove')"></button>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
 
                         <!-- ── Household contacts ── -->
                         <div class="bg-white border border-line">

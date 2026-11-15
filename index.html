@@ -258,7 +258,7 @@
                     <p class="text-base text-muted font-sans font-light leading-relaxed max-w-lg mt-4 md:mt-0" x-text="t('s3Lead')"></p>
                 </div>
             </div>
-            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-line border-t border-line">
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-line border-t border-line">
                 <template x-for="(c, i) in categories" :key="i">
                     <div class="p-6 md:p-10 bg-paper reveal" :style="'transition-delay: ' + (i * 80) + 'ms'">
                         <p class="eyebrow text-accent mb-5" x-text="'0' + (i + 1)"></p>
@@ -302,30 +302,35 @@
             </div>
         </section>
 
-        <!-- Alusta: three doors while public package sales are off (SUKODA_SALES).
-             Homeowner: invite your own housekeeper (or join the waitlist) · Provider: open a desk now · Developer: talk to us -->
+        <!-- Alusta: three self-serve doors.
+             Homeowner: invite your own specialist or enter a digital invite code · Provider: open a desk in 30s · Developer: talk to us -->
         <section id="alusta" x-show="!window.SUKODA_SALES" class="grid md:grid-cols-12 grid-line-b bg-cream/40" x-data="{
-            role: 'home', homeMode: 'invite',
+            role: 'home', homeMode: 'invite', partnerRole: 'cleaning', inviteCode: '',
             name: '', email: '', note: '', partnerName: '', partnerEmail: '',
             sent: '', sending: false, error: '',
             get canSend() {
                 if (this.role === 'home' && this.homeMode === 'invite') return this.partnerEmail && this.email;
+                if (this.role === 'home' && this.homeMode === 'code') return this.inviteCode.trim().length >= 5;
                 return !!this.email;
             },
             async submit() {
                 if (!this.canSend || this.sending) return;
+                if (this.role === 'home' && this.homeMode === 'code') {
+                    window.location.href = '/lunasta?code=' + encodeURIComponent(this.inviteCode.trim().toUpperCase());
+                    return;
+                }
                 this.sending = true; this.error = '';
                 try {
                     let res;
                     if (this.role === 'home' && this.homeMode === 'invite') {
                         res = await fetch('/api/haldus/invite-partner', {
                             method: 'POST', headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ partnerName: this.partnerName, partnerEmail: this.partnerEmail, name: this.name, email: this.email, lang: lang }),
+                            body: JSON.stringify({ role: this.partnerRole, partnerName: this.partnerName, partnerEmail: this.partnerEmail, name: this.name, email: this.email, lang: lang }),
                         });
                     } else {
                         res = await fetch('/api/waitlist', {
                             method: 'POST', headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ email: this.email, name: this.name, city: this.role === 'home' ? 'Koduomanik (ootel)' : 'Arendaja', address: this.note, lang: lang }),
+                            body: JSON.stringify({ email: this.email, name: this.name, city: 'Arendaja', address: this.note, lang: lang }),
                         });
                     }
                     if (!res.ok) throw new Error('fail');
@@ -353,10 +358,17 @@
                         <div x-show="role === 'home'" class="space-y-6">
                             <div class="flex gap-6 text-xs uppercase tracking-[0.16em] font-sans border-b border-line">
                                 <button type="button" @click="homeMode = 'invite'" :class="homeMode === 'invite' ? 'text-black border-b border-black -mb-px' : 'text-muted hover:text-black'" class="pb-3 transition-colors" x-text="t('haveKeeper')"></button>
-                                <button type="button" @click="homeMode = 'wait'" :class="homeMode === 'wait' ? 'text-black border-b border-black -mb-px' : 'text-muted hover:text-black'" class="pb-3 transition-colors" x-text="t('noKeeper')"></button>
+                                <button type="button" @click="homeMode = 'code'" :class="homeMode === 'code' ? 'text-black border-b border-black -mb-px' : 'text-muted hover:text-black'" class="pb-3 transition-colors" x-text="t('haveCode')"></button>
                             </div>
                             <div x-show="homeMode === 'invite'" class="space-y-4">
                                 <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="t('inviteLead')"></p>
+                                <div class="flex flex-wrap gap-1.5 pt-1">
+                                    <button type="button" @click="partnerRole = 'cleaning'" :class="partnerRole === 'cleaning' ? 'bg-black text-paper border-black' : 'border-line text-muted hover:text-black'" class="px-3 py-1.5 border text-xs font-sans transition-colors" x-text="t('catCleaning')"></button>
+                                    <button type="button" @click="partnerRole = 'childcare'" :class="partnerRole === 'childcare' ? 'bg-black text-paper border-black' : 'border-line text-muted hover:text-black'" class="px-3 py-1.5 border text-xs font-sans transition-colors" x-text="t('catChildcare')"></button>
+                                    <button type="button" @click="partnerRole = 'pets'" :class="partnerRole === 'pets' ? 'bg-black text-paper border-black' : 'border-line text-muted hover:text-black'" class="px-3 py-1.5 border text-xs font-sans transition-colors" x-text="t('catPets')"></button>
+                                    <button type="button" @click="partnerRole = 'handyman'" :class="partnerRole === 'handyman' ? 'bg-black text-paper border-black' : 'border-line text-muted hover:text-black'" class="px-3 py-1.5 border text-xs font-sans transition-colors" x-text="t('catHandyman')"></button>
+                                    <button type="button" @click="partnerRole = 'garden'" :class="partnerRole === 'garden' ? 'bg-black text-paper border-black' : 'border-line text-muted hover:text-black'" class="px-3 py-1.5 border text-xs font-sans transition-colors" x-text="t('catGarden')"></button>
+                                </div>
                                 <div class="border-b border-line-strong focus-within:border-accent transition-colors">
                                     <input type="text" x-model="partnerName" autocomplete="off" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="t('keeperName')" :aria-label="t('keeperName')">
                                 </div>
@@ -372,16 +384,10 @@
                                     </div>
                                 </div>
                             </div>
-                            <div x-show="homeMode === 'wait'" x-cloak class="space-y-4">
-                                <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="t('waitLead')"></p>
+                            <div x-show="homeMode === 'code'" x-cloak class="space-y-4">
+                                <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="t('codeLead')"></p>
                                 <div class="border-b border-line-strong focus-within:border-accent transition-colors">
-                                    <input type="text" x-model="name" autocomplete="name" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="t('fName')" :aria-label="t('fName')">
-                                </div>
-                                <div class="border-b border-line-strong focus-within:border-accent transition-colors">
-                                    <input type="email" x-model="email" autocomplete="email" inputmode="email" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="t('fEmail')" :aria-label="t('fEmail')">
-                                </div>
-                                <div class="border-b border-line-strong focus-within:border-accent transition-colors">
-                                    <input type="text" x-model="note" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="t('fCity')" :aria-label="t('fCity')">
+                                    <input type="text" x-model="inviteCode" autocomplete="off" autocapitalize="characters" class="w-full text-base font-mono tracking-wider uppercase py-3 outline-none bg-transparent" placeholder="SK-XXXXXXXX" :aria-label="t('haveCode')">
                                 </div>
                             </div>
                         </div>
@@ -415,7 +421,7 @@
 
                         <p x-show="error" x-cloak class="text-sm text-accent font-sans font-light" x-text="error" role="alert"></p>
                         <button type="button" x-show="role !== 'partner'" @click="submit()" :disabled="sending || !canSend" class="p-btn w-full disabled:opacity-50">
-                            <span x-show="!sending" x-text="role === 'home' && homeMode === 'invite' ? t('sendInvite') : t('leaveContact')"></span>
+                            <span x-show="!sending" x-text="role === 'home' ? (homeMode === 'invite' ? t('sendInvite') : t('openWithCode')) : t('leaveContact')"></span>
                             <span x-show="sending" x-cloak x-text="t('sendingShort')"></span>
                         </button>
                     </div>
@@ -1273,18 +1279,18 @@
                     ru: 'Сегодня дела дома разбросаны: время визитов в смс, гарантия в ящике стола, номер мастера в чьём-то телефоне, а фильтр не заменён, потому что никто не вспомнил. SUKODA собирает всё в одном месте, которое видят вся семья и люди, приходящие в ваш дом.',
                 },
 
-                s2Title: { et: 'Koduhooldajale, floristile, remondimehele.', en: 'For housekeepers, florists and handymen.', ru: 'Помощницам по дому, флористам, мастерам.' },
+                s2Title: { et: 'Koduhooldajale ja koduteenuste spetsialistile.', en: 'For housekeepers and home specialists.', ru: 'Помощницам по дому и специалистам.' },
                 s2Lead: {
-                    et: 'Sa teed oma tööd hästi ja kulutad õhtud sõnumitele: ajad, muudatused, meeldetuletused ja „kas homme ikka sobib?“. Töölaud saadab need sõnumid sinu eest. Sa lisad kliendi ja ajad, ülejäänu liigub ise.',
-                    en: 'You do your work well and spend your evenings on messages: times, changes, reminders and “is tomorrow still fine?”. The desk sends those messages for you. You add the client and the times, the rest moves by itself.',
-                    ru: 'Вы хорошо делаете свою работу, а вечера уходят на сообщения: время, изменения, напоминания и «завтра всё в силе?». Рабочий стол отправляет эти сообщения за вас. Вы добавляете клиента и время, остальное идёт само.',
+                    et: 'Sa teed oma tööd hästi ja kulutad õhtud sõnumitele: ajad, muudatused, meeldetuletused ja „kas homme ikka sobib?“. Töölaud saadab need sõnumid sinu eest. Sa lisad kliendi või jagad digilinki ja ülejäänu liigub ise.',
+                    en: 'You do your work well and spend your evenings on messages: times, changes, reminders and “is tomorrow still fine?”. The desk sends those messages for you. You add a client or share your digital invite link, and the rest moves by itself.',
+                    ru: 'Вы хорошо делаете свою работу, а вечера уходят на сообщения: время, изменения, напоминания и «завтра всё в силе?». Рабочий стол отправляет эти сообщения за вас. Вы добавляете клиента или делитесь цифровой ссылкой, остальное идёт само.',
                 },
                 s2Item1: { et: 'Kliendid, korduv graafik ja ühekordsed ajad on ühes kalendris, ka telefonis.', en: 'Clients, recurring schedules and one-off times are in one calendar, on your phone too.', ru: 'Клиенты, регулярный график и разовые визиты в одном календаре, в том числе в телефоне.' },
                 s2Item2: { et: 'Klient ja tema pere saavad kalendrikutsed, muudatused ja meeldetuletused ise. Sa ei saada enam ühtegi SMS-i aegadega.', en: 'The client and their household get calendar invites, changes and reminders by themselves. You never text a time again.', ru: 'Клиент и его семья сами получают приглашения в календарь, изменения и напоминания. Вы больше не отправляете ни одного смс со временем.' },
-                s2Item3: { et: 'Kliendi soovid, nagu aknad, süvapuhastus või lilled, jõuavad sinuni ja sa kinnitad aja ühe puutega.', en: 'Client requests such as windows, a deep clean or flowers reach you, and you confirm a time with one tap.', ru: 'Пожелания клиента, например окна, генеральная уборка или цветы, приходят к вам, и вы подтверждаете время одним касанием.' },
-                s2Item4: { et: 'Kuu lõpus on kokkuvõte arve tegemiseks valmis. Kliendi eemalolek, sissepääs ja eelistused on alati näha.', en: 'At the end of the month the summary for your invoice is ready. The client\'s away periods, access and preferences are always visible.', ru: 'В конце месяца сводка для счёта уже готова. Отсутствие клиента, доступ в дом и предпочтения всегда перед глазами.' },
-                openDesk: { et: 'Ava oma töölaud', en: 'Open your desk', ru: 'Открыть рабочий стол' },
-                s2Note: { et: 'Kuni 3 kodu on tasuta. Sisenemislink tuleb kohe e-postile.', en: 'Up to 3 homes are free. The login link arrives by e-mail at once.', ru: 'До 3 домов бесплатно. Ссылка для входа сразу придёт на почту.' },
+                s2Item3: { et: 'Digitaalne kutselink ja QR-kood on kohe telefonis — ei mingeid paberkaarte. Võid lülitada sisse ka uute klientide vastuvõtu.', en: 'Your digital invite link and QR code live right on your phone — no paper cards. You can also toggle open availability for new local homes.', ru: 'Цифровая ссылка-приглашение и QR-код сразу в телефоне — никаких бумажных карточек. Можно также включить приём новых клиентов.' },
+                s2Item4: { et: 'Kuu lõpus on arvelduskokkuvõte ja CSV valmis. 0% vahendustasu — sinu hinnad ja arved jäävad 100% sinu enda kätte.', en: 'At month end your billing summary and CSV are ready. 0% commission — your prices and invoices stay 100% yours.', ru: 'В конце месяца сводка для счетов и CSV готовы. Комиссия 0% — ваши цены и расчёты полностью остаются у вас.' },
+                openDesk: { et: 'Ava tasuta töölaud', en: 'Open free desk', ru: 'Открыть бесплатный стол' },
+                s2Note: { et: 'Kuni 3 kodu tasuta · 6-kohaline sisenemiskood tuleb kohe e-postile.', en: 'Up to 3 homes free · 6-digit login code arrives immediately.', ru: 'До 3 домов бесплатно · 6-значный код входа сразу придёт на почту.' },
                 planFree: { et: 'Tasuta', en: 'Free', ru: 'Бесплатно' },
                 planFreeHomes: { et: 'kuni 3 kodu', en: 'up to 3 homes', ru: 'до 3 домов' },
                 planStandard: { et: 'Standard', en: 'Standard', ru: 'Стандарт' },
@@ -1293,28 +1299,28 @@
                 planStudioHomes: { et: 'piiramatult kodusid', en: 'unlimited homes', ru: 'без ограничения' },
                 perMonth: { et: '€ kuus', en: '€ a month', ru: '€ в месяц' },
                 s2Price: {
-                    et: 'Hind sõltub ainult sellest, mitu kodu sul töölaual on. Kõik võimalused on igas paketis, maksad kuu kaupa ja võid igal ajal lõpetada. Sinu klient ei maksa SUKODA-le midagi, sinu hinnad ja arved jäävad sinu enda asjaks.',
-                    en: 'The price depends on one thing only: how many homes are on your desk. Every feature is in every plan, you pay month by month and can stop at any time. Your client pays SUKODA nothing; your prices and invoices stay your own business.',
-                    ru: 'Цена зависит только от того, сколько домов у вас на рабочем столе. Все возможности есть в каждом тарифе, оплата помесячно, отказаться можно в любой момент. Ваш клиент ничего не платит SUKODA, ваши цены и счета остаются вашим делом.',
+                    et: 'Hind sõltub ainult sellest, mitu kodu sul töölaual on. Kõik võimalused on igas paketis, vahendustasu on 0% ja klient ei maksa SUKODA-le midagi.',
+                    en: 'The price depends only on how many homes are on your desk. Every feature is in every plan, commission is 0%, and your client pays SUKODA nothing.',
+                    ru: 'Цена зависит только от числа домов на рабочем столе. Все возможности есть в каждом тарифе, комиссия 0%, а клиент ничего не платит SUKODA.',
                 },
 
-                s3Title: { et: 'Mida kodu siit saab.', en: 'What a home gets here.', ru: 'Что получает дом.' },
+                s3Title: { et: 'Alustad koristusest. Kodu kasvab koos vajadustega.', en: 'Start with home care. Grow with your household.', ru: 'Начните с уборки. Подключайте нужное по мере жизни.' },
                 s3Lead: {
-                    et: 'Iga soov läheb inimesele, kes su kodu juba tunneb. Kui sellist inimest veel ei ole, ütle meile, mida vajad, ja me otsime õige inimese.',
-                    en: 'Every request goes to a person who already knows your home. If there is no such person yet, tell us what you need and we find the right one.',
-                    ru: 'Каждое пожелание уходит человеку, который уже знает ваш дом. Если такого человека пока нет, скажите нам, что нужно, и мы найдём подходящего.',
+                    et: 'Enamik kodusid alustab regulaarsest koduhooldusest. Samasse rahulikku portaali saad igal hetkel lisada ka lapsehoidja, koerajalutaja, remondimehe või aedniku — kutsud oma inimese või valid vaba spetsialisti, kes juba SUKODA kodudes käib.',
+                    en: 'Most homes start with regular home care. Into the same calm portal you can add a babysitter, dog walker, handyman or gardener whenever needed — invite your own person or pick an open specialist already active in SUKODA homes.',
+                    ru: 'Большинство домов начинает с регулярной уборки. В этот же спокойный портал в любой момент можно добавить няню, выгул собаки, мастера или садовника — пригласить своего человека или выбрать специалиста, который уже работает в домах SUKODA.',
                 },
                 s3Note: {
-                    et: 'Hinna lepid kokku otse inimesega, kes töö teeb, nagu seni. SUKODA ei ole vahendaja ega turuplats, vaid koht, kus su kodu ja inimesed, kes kodu eest hoolitsevad, kokku saavad.',
-                    en: 'You agree the price directly with the person doing the work, as before. SUKODA is not a middleman or a marketplace; it is the place where your home and the people who care for the home meet.',
-                    ru: 'Цену вы согласуете напрямую с тем, кто выполняет работу, как и раньше. SUKODA не посредник и не маркетплейс, а место, где встречаются ваш дом и люди, которые о нём заботятся.',
+                    et: 'Kokkulepe ja arveldus käivad alati otse sinu ja spetsialisti vahel (0% vahendustasu). SUKODA ei ole anonüümne vahendusplatvorm, vaid sinu kodu ja usaldatud inimeste ühine tööriist.',
+                    en: 'Agreements and billing always stay directly between you and the specialist (0% commission). SUKODA is not an anonymous middleman marketplace, but a shared tool for your home and trusted people.',
+                    ru: 'Договорённость и расчёт всегда напрямую между вами и специалистом (комиссия 0%). SUKODA — не безликий маркетплейс-посредник, а общий инструмент вашего дома и проверенных людей.',
                 },
 
-                s4Title: { et: 'Kuidas kodu liitub.', en: 'How a home joins.', ru: 'Как подключить дом.' },
+                s4Title: { et: 'Kuidas kodu liitub — 100% digitaalselt.', en: 'How a home joins — 100% digital.', ru: 'Как подключить дом — 100% цифрово.' },
                 s4Lead: {
-                    et: 'Kontot ei pea looma. Kodu tuleb portaali inimese kaudu, kes seal juba käib, enamasti koduhooldaja, või arendajalt koos võtmetega. Siin ei ole otsingut ega võrdlust, on inimesed, keda sa usaldad.',
-                    en: 'There is no account to create. A home joins through the person who already comes there, usually the housekeeper, or from the developer together with the keys. There is no search or comparison here, only people you trust.',
-                    ru: 'Аккаунт создавать не нужно. Дом подключается через человека, который уже в нём бывает, чаще всего помощницу по дому, или от застройщика вместе с ключами. Здесь нет поиска и сравнения, только люди, которым вы доверяете.',
+                    et: 'Paroole ega paberkaarte ei ole. Kodu tuleb portaali digitaalse kutselingiga spetsialistilt, sinu saadetud e-kutsega või arendajalt koos võtmetega.',
+                    en: 'No passwords and no paper cards. A home joins via a digital invite link from a specialist, an e-mail invite you send, or digitally from your developer with the keys.',
+                    ru: 'Без паролей и бумажных карточек. Дом подключается по цифровой ссылке от специалиста, вашему приглашению по почте или от застройщика вместе с ключами.',
                 },
 
                 quote: {
@@ -1326,49 +1332,55 @@
 
                 startTitle: { et: 'Alusta', en: 'Get started', ru: 'Начать' },
                 startLead: {
-                    et: 'Sisse saab kolmel viisil. Koduomanik kutsub oma koduhooldaja. Koduhooldaja või muu teenusepakkuja avab endale töölaua. Arendaja räägib meiega, kuidas anda kodud üle koos portaaliga.',
-                    en: 'There are three ways in. A homeowner invites their housekeeper. A housekeeper or other service provider opens a desk. A developer talks to us about handing over homes together with the portal.',
-                    ru: 'Подключиться можно тремя способами. Владелец жилья приглашает свою помощницу по дому. Помощница по дому или другой специалист открывает рабочий стол. Застройщик обсуждает с нами, как передавать дома вместе с порталом.',
+                    et: 'Kõik käib digitaalselt paari minutiga. Koduomanik kutsub oma inimese või sisestab kutsekoodi. Spetsialist avab tasuta töölaua kohe. Arendaja ühendab uued kodud üleandmisel.',
+                    en: 'Everything happens digitally in a couple of minutes. A homeowner invites their person or enters an invite code. A specialist opens a free desk right away. A developer connects new homes at handover.',
+                    ru: 'Всё происходит цифрово за пару минут. Владелец приглашает своего человека или вводит код приглашения. Специалист сразу открывает бесплатный стол. Застройщик подключает новые дома при передаче ключей.',
                 },
                 startError: { et: 'Saatmine ei õnnestunud. Kirjuta tere@sukoda.ee.', en: 'Sending failed. Write to tere@sukoda.ee.', ru: 'Не удалось отправить. Напишите на tere@sukoda.ee.' },
                 roleHome: { et: 'Koduomanik', en: 'Homeowner', ru: 'Владелец жилья' },
                 rolePartner: { et: 'Teenusepakkuja', en: 'Service provider', ru: 'Специалист' },
                 roleDeveloper: { et: 'Arendaja', en: 'Developer', ru: 'Застройщик' },
-                haveKeeper: { et: 'Mul on koduhooldaja', en: 'I have a housekeeper', ru: 'У меня есть помощница по дому' },
-                noKeeper: { et: 'Mul ei ole veel koduhooldajat', en: 'No housekeeper yet', ru: 'Помощницы по дому пока нет' },
+                haveKeeper: { et: 'Kutsu oma spetsialist', en: 'Invite your specialist', ru: 'Пригласить специалиста' },
+                haveCode: { et: 'Mul on kutsekood', en: 'I have an invite code', ru: 'У меня есть код' },
+                catCleaning: { et: 'Koristus', en: 'Cleaning', ru: 'Уборка' },
+                catChildcare: { et: 'Lapsehoid', en: 'Childcare', ru: 'Няня' },
+                catPets: { et: 'Lemmikloomad', en: 'Pet care', ru: 'Питомцы' },
+                catHandyman: { et: 'Remondimees', en: 'Handyman', ru: 'Мастер' },
+                catGarden: { et: 'Aed ja õu', en: 'Garden', ru: 'Сад' },
                 inviteLead: {
-                    et: 'Kutsu oma koduhooldaja SUKODA-sse. Koduhooldaja avab tasuta töölaua, lisab sinu kodu ja ajad jõuavad edaspidi sinu pere kalendrisse ise.',
-                    en: 'Invite your housekeeper to SUKODA. The housekeeper opens a free desk, adds your home, and from then on the times reach your household calendar by themselves.',
-                    ru: 'Пригласите свою помощницу по дому в SUKODA. Она откроет бесплатный рабочий стол, добавит ваш дом, и время визитов дальше будет само попадать в календарь вашей семьи.',
+                    et: 'Saada oma koduhooldajale, lapsehoidjale, koerajalutajale või remondimehele tasuta töölaua kutse. Kui ta sisse logib ja sinu kodu lisab, jõuavad ajad pere kalendrisse ise.',
+                    en: 'Send your housekeeper, babysitter, dog walker or handyman a free desk invite. Once they sign in and add your home, visits sync to your family calendar automatically.',
+                    ru: 'Отправьте своей помощнице по дому, няне, выгульщику собаки или мастеру приглашение на бесплатный стол. Когда специалист войдёт и добавит ваш дом, визиты будут сами попадать в календарь семьи.',
                 },
-                keeperName: { et: 'Koduhooldaja nimi', en: 'Housekeeper\'s name', ru: 'Имя помощницы по дому' },
-                keeperEmail: { et: 'Koduhooldaja e-post', en: 'Housekeeper\'s e-mail', ru: 'Электронная почта помощницы' },
-                keeperFallback: { et: 'koduhooldaja', en: 'your housekeeper', ru: 'помощница по дому' },
+                keeperName: { et: 'Spetsialisti nimi', en: 'Specialist\'s name', ru: 'Имя специалиста' },
+                keeperEmail: { et: 'Spetsialisti e-post', en: 'Specialist\'s e-mail', ru: 'Электронная почта специалиста' },
+                keeperFallback: { et: 'spetsialist', en: 'your specialist', ru: 'специалист' },
                 yourName: { et: 'Sinu nimi', en: 'Your name', ru: 'Ваше имя' },
                 yourEmail: { et: 'Sinu e-post', en: 'Your e-mail', ru: 'Ваша электронная почта' },
                 fName: { et: 'Nimi', en: 'Name', ru: 'Имя' },
                 fEmail: { et: 'E-post', en: 'E-mail', ru: 'Электронная почта' },
                 fCity: { et: 'Linn või piirkond', en: 'City or area', ru: 'Город или район' },
                 fCompany: { et: 'Ettevõte ja objekt', en: 'Company and project', ru: 'Компания и объект' },
-                waitLead: {
-                    et: 'Koristust ei saa siit otse tellida, kodu tuleb portaali koduhooldaja kaudu. Jäta oma kontakt ja me anname isiklikult teada, kui sinu piirkonnas on koduhooldaja, keda usaldame.',
-                    en: 'Cleaning cannot be ordered here directly; a home joins through its housekeeper. Leave your contact and we will tell you personally when there is a housekeeper in your area whom we trust.',
-                    ru: 'Уборку здесь напрямую заказать нельзя, дом подключается через помощницу по дому. Оставьте контакт, и мы лично сообщим, когда в вашем районе появится помощница, которой мы доверяем.',
+                codeLead: {
+                    et: 'Sisesta spetsialistilt, arendajalt või kingituseks saadud digitaalne kutsekood (nt SK-XXXXXXXX). Kui kodu on juba lisatud, sisene otse ülemisest nupust.',
+                    en: 'Enter the digital invite code received from your specialist, developer or gift (e.g. SK-XXXXXXXX). If your home is already active, sign in from the top right.',
+                    ru: 'Введите цифровой код приглашения от специалиста, застройщика или подарка (напр. SK-XXXXXXXX). Если дом уже подключён, войдите по кнопке вверху.',
                 },
+                openWithCode: { et: 'Ava oma kodu', en: 'Open my home', ru: 'Открыть мой дом' },
                 partnerLead: {
-                    et: 'Töölaud on koduhooldajale, floristile, remondimehele või aednikule. Sa lisad kliendi ja ajad või graafiku, klient ja tema pere saavad kalendrikutsed, muudatused ja meeldetuletused ise. Sina ei saada enam ühtegi SMS-i aegadega.',
-                    en: 'The desk is for housekeepers, florists, handymen and gardeners. You add a client and the times or a schedule; the client and their household get calendar invites, changes and reminders by themselves. You never text a time again.',
-                    ru: 'Рабочий стол для помощниц по дому, флористов, мастеров и садовников. Вы добавляете клиента и время или график, а клиент и его семья сами получают приглашения в календарь, изменения и напоминания. Вы больше не отправляете смс со временем.',
+                    et: 'Töölaud on koduhooldajale, lapsehoidjale, lemmikloomahoidjale, remondimehele, aednikule ja floristile. Ava konto 30 sekundiga — saad kohe isikliku digitaalse kutselingi ja QR-koodi.',
+                    en: 'The desk is built for housekeepers, childcare, pet care, handymen, gardeners and florists. Open your desk in 30 seconds and get your personal digital invite link and QR code.',
+                    ru: 'Рабочий стол создан для помощниц по дому, нянь, ухода за питомцами, мастеров, садовников и флористов. Откройте счёт за 30 секунд и получите личную ссылку и QR-код.',
                 },
                 partnerItem1: { et: 'Kliendid, ajad ja korduv graafik on ühes kohas.', en: 'Clients, times and recurring schedules are in one place.', ru: 'Клиенты, время и регулярный график в одном месте.' },
-                partnerItem2: { et: 'Kliendi soovid jõuavad sinuni ja sa kinnitad aja ühe puutega.', en: 'Client requests reach you and you confirm a time with one tap.', ru: 'Пожелания клиента приходят к вам, и вы подтверждаете время одним касанием.' },
-                partnerItem3: { et: 'Lilled ja muu, mis kuulub sinu teenusesse, tellitakse automaatselt.', en: 'Flowers and whatever else is part of your service are ordered automatically.', ru: 'Цветы и всё остальное, что входит в вашу услугу, заказываются автоматически.' },
-                partnerItem4: { et: 'Kuu lõpus on kokkuvõte arve tegemiseks valmis.', en: 'At the end of the month the summary for your invoice is ready.', ru: 'В конце месяца сводка для счёта уже готова.' },
-                partnerNote: { et: 'Kuni 3 kodu on tasuta, edasi 19 € kuus. Sisenemislink tuleb kohe e-postile.', en: 'Up to 3 homes are free, then 19 € a month. The login link arrives by e-mail at once.', ru: 'До 3 домов бесплатно, дальше 19 € в месяц. Ссылка для входа сразу придёт на почту.' },
+                partnerItem2: { et: 'Jaga kliendile digilinki või näita telefonist QR-koodi — paberkaarte pole vaja.', en: 'Share a digital link or show a QR code on your phone — no paper cards needed.', ru: 'Отправьте клиенту ссылку или покажите QR-код с экрана телефона — без бумажных карточек.' },
+                partnerItem3: { et: 'Soovi korral lülita sisse uute klientide vastuvõtt oma piirkonnas.', en: 'Optionally toggle open availability to receive new local clients.', ru: 'При желании включите приём новых клиентов в своём районе.' },
+                partnerItem4: { et: 'Kuu lõpus on arvelduskokkuvõte valmis. 0% vahendustasu.', en: 'At month end your invoice summary is ready. 0% commission.', ru: 'В конце месяца сводка для счетов готова. Комиссия 0%.' },
+                partnerNote: { et: 'Kuni 3 kodu on tasuta, edasi 19 € kuus. 6-kohaline sisenemiskood tuleb kohe e-postile.', en: 'Up to 3 homes free, then 19 € a month. 6-digit login code arrives immediately.', ru: 'До 3 домов бесплатно, дальше 19 € в месяц. 6-значный код входа приходит сразу.' },
                 devLead: {
-                    et: 'Ostja saab võtmetega kaasa kaardi, mille kood avab tema kodu portaalis: dokumendid, garantii, hooldus ja teenused on ühes kohas, teie partneritega. Jätke kontakt ja me võtame ühendust.',
-                    en: 'The buyer receives a card with the keys; its code opens their home in the portal, with documents, warranty, upkeep and services in one place, together with your partners. Leave your contact and we will get in touch.',
-                    ru: 'Покупатель получает вместе с ключами карту, код которой открывает его дом в портале: документы, гарантия, обслуживание и услуги в одном месте, с вашими партнёрами. Оставьте контакт, и мы свяжемся с вами.',
+                    et: 'Ostja saab võtmete üleandmisel digitaalse kutselingi või QR-koodi, mis avab tema kodu portaalis: dokumendid, garantii, hooldusrütm ja teenused ühes kohas. Jätke kontakt ja räägime läbi.',
+                    en: 'At key handover the buyer receives a digital invite link or QR code that opens their home in the portal: documents, warranty, upkeep rhythm and services in one place. Leave your contact and we will talk.',
+                    ru: 'При передаче ключей покупатель получает цифровую ссылку или QR-код, открывающий его дом в портале: документы, гарантия, ритм обслуживания и услуги в одном месте. Оставьте контакт, и мы свяжемся.',
                 },
                 sendInvite: { et: 'Saada kutse', en: 'Send the invitation', ru: 'Отправить приглашение' },
                 leaveContact: { et: 'Jäta kontakt', en: 'Leave my contact', ru: 'Оставить контакт' },
@@ -1414,22 +1426,26 @@
             categories: [
                 { title: { et: 'Koristus', en: 'Cleaning', ru: 'Уборка' },
                   items: { et: ['Regulaarne koristus', 'Süvapuhastus', 'Akende pesu', 'Külmik ja ahi', 'Triikimine', 'Voodipesu vahetus'], en: ['Regular cleaning', 'Deep clean', 'Windows', 'Fridge and oven', 'Ironing', 'Linen change'], ru: ['Регулярная уборка', 'Генеральная уборка', 'Мытьё окон', 'Холодильник и духовка', 'Глажка', 'Смена постельного белья'] } },
-                { title: { et: 'Lilled', en: 'Flowers', ru: 'Цветы' },
-                  items: { et: ['Värsked lilled igaks visiidiks', 'Kimp külalisteks', 'Toataimede hooldus'], en: ['Fresh flowers for every visit', 'A bouquet for guests', 'Houseplant care'], ru: ['Свежие цветы к каждому визиту', 'Букет к приходу гостей', 'Уход за комнатными растениями'] } },
+                { title: { et: 'Lapsehoid', en: 'Childcare', ru: 'Няня и дети' },
+                  items: { et: ['Õhtune ja päevane lapsehoid', 'Koolist või trennist koju saatmine', 'Kokkulepitud rütm pere kalendris'], en: ['Daytime and evening babysitting', 'After-school pickup and care', 'Recurring schedule in family calendar'], ru: ['Дневной и вечерний присмотр', 'Встреча из школы или секции', 'Регулярный график в календаре семьи'] } },
+                { title: { et: 'Lemmikloomad', en: 'Pet care', ru: 'Питомцы' },
+                  items: { et: ['Koera jalutamine', 'Lemmiklooma hoid ja toitmine kodus', 'Hoolitsus pere reisi ajal'], en: ['Dog walking', 'In-home pet sitting and feeding', 'Care while the family is away'], ru: ['Выгул собаки', 'Присмотр и кормление дома', 'Забота на время отъезда семьи'] } },
                 { title: { et: 'Remondimees', en: 'Handyman', ru: 'Мастер' },
                   items: { et: ['Pilt seina, riiul üles', 'Ventilatsioonifiltrid', 'Väikesed parandused', 'Mööbli kokkupanek'], en: ['Pictures and shelves up', 'Ventilation filters', 'Small repairs', 'Furniture assembly'], ru: ['Повесить картину или полку', 'Фильтры вентиляции', 'Мелкий ремонт', 'Сборка мебели'] } },
                 { title: { et: 'Aed ja õu', en: 'Garden and outdoors', ru: 'Сад и двор' },
                   items: { et: ['Muru', 'Hekk', 'Terrassi ja kivide pesu', 'Hooajatööd aias'], en: ['Lawn', 'Hedge', 'Terrace and paving wash', 'Seasonal garden work'], ru: ['Газон', 'Живая изгородь', 'Мойка террасы и плитки', 'Сезонные работы в саду'] } },
+                { title: { et: 'Lilled', en: 'Flowers', ru: 'Цветы' },
+                  items: { et: ['Värsked lilled igaks visiidiks', 'Kimp külalisteks', 'Toataimede hooldus'], en: ['Fresh flowers for every visit', 'A bouquet for guests', 'Houseplant care'], ru: ['Свежие цветы к каждому визиту', 'Букет к приходу гостей', 'Уход за комнатными растениями'] } },
             ],
             steps: [
                 { href: '#alusta',
-                  title: { et: 'Koduhooldaja avab töölaua', en: 'The housekeeper opens a desk', ru: 'Помощница по дому открывает рабочий стол' },
-                  text: { et: 'Koduhooldaja sisestab oma nime, e-posti ja teenused. Sisenemislink tuleb kohe. Kui tahad, saadad kutse ise.', en: 'The housekeeper enters their name, e-mail and services. The login link arrives at once. If you like, you send the invitation yourself.', ru: 'Помощница по дому вводит имя, электронную почту и услуги. Ссылка для входа приходит сразу. Если хотите, приглашение отправите вы сами.' },
-                  link: { et: 'Ava töölaud või kutsu oma koduhooldaja', en: 'Open a desk or invite your housekeeper', ru: 'Открыть рабочий стол или пригласить помощницу' } },
-                { title: { et: 'Koduhooldaja lisab sinu kodu', en: 'The housekeeper adds your home', ru: 'Помощница по дому добавляет ваш дом' },
-                  text: { et: 'Koduhooldaja paneb kirja aadressi, ajad ja kes veel peaks teadma. Sina saad e-kirja portaali lingiga, parooli ei ole. Kaardiga kodu avad koodiga ise.', en: 'The housekeeper writes down the address, the times and who else should know. You get an e-mail with your portal link; there is no password. A home that came with a card you open with the code yourself.', ru: 'Помощница по дому записывает адрес, время визитов и кого ещё нужно оповещать. Вы получаете письмо со ссылкой на портал, пароль не нужен. Дом, полученный с картой, вы открываете кодом сами.' } },
+                  title: { et: 'Spetsialist avab töölaua', en: 'The specialist opens a desk', ru: 'Специалист открывает рабочий стол' },
+                  text: { et: 'Koduhooldaja või muu spetsialist sisestab nime ja e-posti ning saab kohe 6-kohalise sisenemiskoodi ja oma digitaalse kutselingi. Võid saata talle kutse ka ise.', en: 'The housekeeper or specialist enters their name and e-mail and immediately receives a 6-digit login code and personal digital invite link. Or you can invite them yourself.', ru: 'Помощница по дому или специалист вводит имя и почту и сразу получает 6-значный код входа и личную цифровую ссылку. Либо вы сами отправляете приглашение.' },
+                  link: { et: 'Ava töölaud või saada kutse', en: 'Open a desk or send an invite', ru: 'Открыть стол или отправить приглашение' } },
+                { title: { et: 'Kodu ühendub digilingi või e-kutsega', en: 'The home connects via link or e-mail', ru: 'Дом подключается по ссылке или почте' },
+                  text: { et: 'Spetsialist lisab sinu kodu või jagab sulle oma digilinki / QR-koodi telefonist. Sina saad e-kirjaga ligipääsu oma koduportaalile — parooli ega paberkaarti pole.', en: 'The specialist adds your home or shares their digital link / phone QR code. You get e-mail access to your home portal — no password or paper card.', ru: 'Специалист добавляет ваш дом или делится цифровой ссылкой / QR-кодом с телефона. Вы получаете доступ к порталу дома по почте — без паролей и бумажных карт.' } },
                 { title: { et: 'Edasi liigub kõik ise', en: 'From then on it runs itself', ru: 'Дальше всё идёт само' },
-                  text: { et: 'Kalendrikutsed, muudatused ja meeldetuletused tulevad ise. Sa lisad pere ja dokumendid ega pea rohkem midagi meeles pidama.', en: 'Calendar invites, changes and reminders come by themselves. You add the household and the documents and no longer have to remember anything.', ru: 'Приглашения в календарь, изменения и напоминания приходят сами. Вы добавляете семью и документы, и больше ничего не нужно держать в голове.' } },
+                  text: { et: 'Kalendrikutsed, muudatused ja meeldetuletused liiguvad ise kogu perele. Hiljem lisad samasse kohta ka teised kodu ja pere inimesed.', en: 'Calendar invites, changes and reminders flow automatically to the whole household. Later you add any other home and family people to the same place.', ru: 'Приглашения в календарь, изменения и напоминания приходят сами всей семье. Позже вы добавляете туда и других специалистов дома.' } },
             ],
             t(key, vars) {
                 const row = this.T[key] || {};

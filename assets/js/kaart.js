@@ -3,7 +3,7 @@ import '../css/main.css';
 import { qrSvg } from '../../functions/lib/qr.js';
 
 const REDEEM = 'https://sukoda.ee/lunasta?code=';
-const CODE = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{8}$/;
+const CODE = /^(?:SK-)?[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{8}$/;
 
 const T = {
   print: { et: 'Prindi', en: 'Print', ru: 'Печать' },

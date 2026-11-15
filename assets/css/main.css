@@ -2,15 +2,22 @@
 @import "./fonts.css";
 
 @theme {
-  --color-black: #111111;
+  --color-black: #141312;
   --color-paper: #FAF8F5;
-  --color-cream: #F5F0EB;
-  --color-accent: #B8976A;
-  --color-muted: #6B6560;
+  --color-cream: #F3EFE9;
+  --color-accent: #8F6E43;
+  --color-muted: #5F5A54;
   /* Lines and quiet text — use these instead of raw hex in HTML (border-line, border-line-strong, text-muted-light) */
-  --color-line: #E8E3DD;
-  --color-line-strong: #D4CFC8;
-  --color-muted-light: #B8B2AA;
+  --color-line: #E6E0D8;
+  --color-line-strong: #D1C9BF;
+  --color-muted-light: #AEAAA3;
+  /* Calm semantic status tokens */
+  --color-ok: #285943;
+  --color-ok-bg: #ECF4F0;
+  --color-warn: #8A5A19;
+  --color-warn-bg: #FAF3E6;
+  --color-err: #9E382B;
+  --color-err-bg: #FDF1EF;
 
   --font-serif: "Cormorant Garamond", Georgia, serif;
   --font-sans: "Inter", system-ui, sans-serif;
@@ -36,11 +43,11 @@ body {
 }
 
 .grid-line {
-  border-right: 1px solid #E8E3DD;
+  border-right: 1px solid var(--color-line);
 }
 
 .grid-line-b {
-  border-bottom: 1px solid #E8E3DD;
+  border-bottom: 1px solid var(--color-line);
 }
 
 .accent-line {
@@ -134,14 +141,72 @@ body {
 .p-have { border-left: 2px solid var(--color-accent); }
 /* Kodu: the single next thing */
 .p-next {
-  background: var(--color-paper);
+  background: #FFFFFF;
   border: 1px solid var(--color-line);
   border-left: 2px solid var(--color-accent);
+  box-shadow: 0 10px 30px -22px rgba(20, 19, 18, 0.18);
 }
 .p-next-hd { padding: 1rem 1.5rem; border-bottom: 1px solid var(--color-line); }
 .p-next-bd { padding: 1.5rem; }
 @media (min-width: 768px) {
   .p-next-bd { padding: 2rem; }
+}
+
+/* Semantic calm chips (replaces loud SaaS badges) */
+.p-badge-ok { background: var(--color-ok-bg); color: var(--color-ok); }
+.p-badge-warn { background: var(--color-warn-bg); color: var(--color-warn); }
+.p-badge-err { background: var(--color-err-bg); color: var(--color-err); }
+.p-badge-neutral { background: var(--color-cream); color: var(--color-muted); }
+
+/* Thumb-friendly mobile bottom navigation bar */
+.p-tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  background: rgba(250, 248, 245, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--color-line);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.p-tabbar-btn {
+  flex: 1 1 0%;
+  min-width: 0;
+  min-height: 3.35rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  padding: 0.35rem 0.25rem;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--color-muted);
+  transition: color 0.2s ease;
+  position: relative;
+}
+.p-tabbar-btn.is-active {
+  color: var(--color-black);
+}
+.p-tabbar-btn.is-active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 24%;
+  right: 24%;
+  height: 2px;
+  background: var(--color-accent);
+}
+.p-has-tabbar {
+  padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+}
+@media (min-width: 768px) {
+  .p-has-tabbar { padding-bottom: 0; }
 }
 
 @keyframes fadeIn {

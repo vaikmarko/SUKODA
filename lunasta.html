@@ -43,15 +43,15 @@
         <main id="main-content" class="flex-1 flex items-start md:items-center justify-center px-6 py-12 md:py-24">
             <div class="w-full max-w-lg">
 
-                <!-- 1. Code: one title, one field, one button. A wrong code stays on this screen with a sentence that says what to do. -->
+                <!-- 1. Code: one title, one field, one button. -->
                 <div x-show="state === 'input' || state === 'checking'" class="text-center">
                     <div class="animate-in">
-                        <h1 class="font-serif text-3xl md:text-4xl font-light mb-10 leading-tight" x-text="t('title')">Sisesta kaardil olev kood.</h1>
+                        <h1 class="font-serif text-3xl md:text-4xl font-light mb-10 leading-tight" x-text="t('title')">Sisesta kutsekood.</h1>
                     </div>
                     <div class="animate-in-delay">
                         <form @submit.prevent="check()" class="max-w-sm mx-auto" novalidate>
                             <label for="code" class="sr-only" x-text="t('codeLabel')">Kood</label>
-                            <input id="code" type="text" x-model="code" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" enterkeyhint="go" placeholder="SK000-XXXX-XXXX" class="l-input l-code mb-3" :aria-invalid="!!error" aria-describedby="code-error" required>
+                            <input id="code" type="text" x-model="code" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" enterkeyhint="go" placeholder="SK-XXXXXXXX" class="l-input l-code mb-3" :aria-invalid="!!error" aria-describedby="code-error" required>
                             <p id="code-error" x-show="error" x-cloak class="text-sm text-accent font-sans font-light text-center mb-6" x-text="error" role="alert"></p>
                             <button type="submit" :disabled="state === 'checking' || !code.trim()" class="p-btn w-full mt-4 disabled:opacity-50" x-text="state === 'checking' ? t('checking') : t('open')">Ava kodu</button>
                         </form>
@@ -111,9 +111,9 @@
                         <label class="flex items-start gap-3 mt-10 text-sm text-muted font-light leading-relaxed cursor-pointer">
                             <input type="checkbox" x-model="form.consent" required class="mt-1 accent-black">
                             <span>
-                                <span x-show="lang === 'et'">Nõustun <a href="/tingimused" target="_blank" class="text-black border-b border-accent hover:text-accent">tingimuste</a> ja <a href="/privaatsus" target="_blank" class="text-black border-b border-accent hover:text-accent">privaatsuspoliitikaga</a>. Minu andmeid näeb ainult kaardil nimetatud koduhooldaja.</span>
-                                <span x-show="lang === 'en'" x-cloak>I agree to the <a href="/tingimused" target="_blank" class="text-black border-b border-accent hover:text-accent">terms</a> and the <a href="/privaatsus" target="_blank" class="text-black border-b border-accent hover:text-accent">privacy policy</a>. Only the housekeeper named on the card sees my details.</span>
-                                <span x-show="lang === 'ru'" x-cloak>Я принимаю <a href="/tingimused" target="_blank" class="text-black border-b border-accent hover:text-accent">условия</a> и <a href="/privaatsus" target="_blank" class="text-black border-b border-accent hover:text-accent">политику конфиденциальности</a>. Мои данные видит только помощница по дому, указанная на карте.</span>
+                                <span x-show="lang === 'et'">Nõustun <a href="/tingimused" target="_blank" class="text-black border-b border-accent hover:text-accent">tingimuste</a> ja <a href="/privaatsus" target="_blank" class="text-black border-b border-accent hover:text-accent">privaatsuspoliitikaga</a>. Minu andmeid näeb ainult kutsuja.</span>
+                                <span x-show="lang === 'en'" x-cloak>I agree to the <a href="/tingimused" target="_blank" class="text-black border-b border-accent hover:text-accent">terms</a> and the <a href="/privaatsus" target="_blank" class="text-black border-b border-accent hover:text-accent">privacy policy</a>. Only the inviting specialist sees my details.</span>
+                                <span x-show="lang === 'ru'" x-cloak>Я принимаю <a href="/tingimused" target="_blank" class="text-black border-b border-accent hover:text-accent">условия</a> и <a href="/privaatsus" target="_blank" class="text-black border-b border-accent hover:text-accent">политику конфиденциальности</a>. Мои данные видит только пригласивший специалист.</span>
                             </span>
                         </label>
 
@@ -126,7 +126,7 @@
                 </div>
 
                 <!-- 3. Outcomes: one sentence on what happened, one sentence on what to do, one button -->
-                <div x-show="['done', 'used', 'unassigned', 'legacy', 'already'].includes(state)" x-cloak class="text-center">
+                <div x-show="['done', 'used', 'unassigned', 'legacy', 'already', 'provider_full'].includes(state)" x-cloak class="text-center">
                     <div class="animate-in">
                         <p class="eyebrow text-accent mb-6" x-text="outcome().kicker"></p>
                         <h1 class="font-serif text-3xl md:text-4xl font-light mb-6 leading-tight" x-text="outcome().title"></h1>
@@ -178,13 +178,13 @@
                 skip: { et: 'Sisu juurde', en: 'Skip to content', ru: 'К содержимому' },
                 navLabel: { et: 'Peamenüü', en: 'Main navigation', ru: 'Главное меню' },
                 langLabel: { et: 'Keel', en: 'Language', ru: 'Язык' },
-                title: { et: 'Sisesta kaardil olev kood.', en: 'Enter the code on your card.', ru: 'Введите код с карты.' },
+                title: { et: 'Sisesta kutsekood.', en: 'Enter your invite code.', ru: 'Введите код приглашения.' },
                 codeLabel: { et: 'Kood', en: 'Code', ru: 'Код' },
                 open: { et: 'Ava kodu', en: 'Open my home', ru: 'Открыть дом' },
                 opening: { et: 'Avan…', en: 'Opening…', ru: 'Открываем…' },
                 checking: { et: 'Kontrollin…', en: 'Checking…', ru: 'Проверяем…' },
                 sending: { et: 'Saadan…', en: 'Sending…', ru: 'Отправляем…' },
-                errEmpty: { et: 'Kirjuta kood nii, nagu see on kaardil.', en: 'Type the code exactly as it is on the card.', ru: 'Введите код так, как он напечатан на карте.' },
+                errEmpty: { et: 'Kirjuta kutsekood.', en: 'Enter the invite code.', ru: 'Введите код приглашения.' },
                 errNotFound: { et: 'Koodi ei leitud. Kontrolli tähti ja numbreid või kirjuta tere@sukoda.ee.', en: 'We could not find this code. Check the letters and numbers, or write to tere@sukoda.ee.', ru: 'Код не найден. Проверьте буквы и цифры или напишите на tere@sukoda.ee.' },
                 errMany: { et: 'Liiga palju katseid. Proovi mõne minuti pärast uuesti.', en: 'Too many attempts. Try again in a few minutes.', ru: 'Слишком много попыток. Попробуйте через несколько минут.' },
                 errNet: { et: 'Ühendus katkes. Proovi uuesti.', en: 'The connection failed. Try again.', ru: 'Нет соединения. Попробуйте ещё раз.' },
@@ -196,7 +196,7 @@
 
                 inviteKicker: { et: 'Kutse', en: 'Invitation', ru: 'Приглашение' },
                 inviteTitle: { et: '{name} kutsub sind SUKODA-sse.', en: '{name} invites you to SUKODA.', ru: '{name} приглашает вас в SUKODA.' },
-                inviteLead: { et: '{name} hoolitseb sinu kodu eest. Täida oma andmed ja sinu kodu on portaalis.', en: '{name} looks after your home. Fill in your details and your home is in the portal.', ru: '{name} ухаживает за вашим домом. Заполните данные, и ваш дом появится в портале.' },
+                inviteLead: { et: '{name} ootab sinu kodu SUKODA-sse. Täida oma andmed ja sinu kodu avaneb rakenduses.', en: '{name} invites your home to SUKODA. Fill in your details and your home opens in the app.', ru: '{name} приглашает ваш дом в SUKODA. Заполните данные, и ваш дом откроется в приложении.' },
                 yourHome: { et: 'Sinu kodu', en: 'Your home', ru: 'Ваш дом' },
                 name: { et: 'Nimi', en: 'Name', ru: 'Имя' },
                 email: { et: 'E-post', en: 'E-mail', ru: 'Электронная почта' },
@@ -219,12 +219,14 @@
                 doneInviteText: { et: 'Saatsime aadressile {email} sisenemislingi, parooli ei ole. {name} lisab ajad ja iga visiit tuleb sulle kalendrikutsena.', en: 'We sent a login link to {email}; there is no password. {name} adds the times and every visit arrives as a calendar invite.', ru: 'Мы отправили ссылку для входа на {email}, пароль не нужен. {name} добавит время визитов, и каждый визит придёт приглашением в календарь.' },
                 login: { et: 'Sisene portaali', en: 'Log in to the portal', ru: 'Войти в портал' },
                 write: { et: 'Kirjuta tere@sukoda.ee', en: 'Write to tere@sukoda.ee', ru: 'Написать на tere@sukoda.ee' },
-                card: { et: 'Kaart', en: 'Card', ru: 'Карта' },
-                usedTitle: { et: 'See kaart on juba kasutatud.', en: 'This card has already been used.', ru: 'Эта карта уже использована.' },
-                usedText: { et: 'Kui kodu on juba portaalis, sisene oma e-postiga. Kui ei ole, kirjuta tere@sukoda.ee.', en: 'If your home is already in the portal, log in with your e-mail. If it is not, write to tere@sukoda.ee.', ru: 'Если ваш дом уже в портале, войдите по адресу электронной почты. Если нет, напишите на tere@sukoda.ee.' },
-                alreadyKicker: { et: 'Juba portaalis', en: 'Already in the portal', ru: 'Уже в портале' },
-                alreadyTitle: { et: 'Sinu kodu on juba portaalis.', en: 'Your home is already in the portal.', ru: 'Ваш дом уже в портале.' },
-                alreadyText: { et: 'Sinu e-postiga on kodu juba portaalis ja kaart jäi kasutamata. Sisene oma e-postiga.', en: 'A home with your e-mail is already in the portal and the card stays unused. Log in with your e-mail.', ru: 'Дом с вашим адресом электронной почты уже в портале, карта осталась неиспользованной. Войдите по адресу электронной почты.' },
+                card: { et: 'Kutse', en: 'Invitation', ru: 'Приглашение' },
+                usedTitle: { et: 'See kood on juba kasutatud.', en: 'This code has already been used.', ru: 'Этот код уже использован.' },
+                usedText: { et: 'Kui sinu kodu on juba SUKODA-s, sisene oma e-postiga. Kui ei ole, küsi uus kutselink või kirjuta tere@sukoda.ee.', en: 'If your home is already in SUKODA, sign in with your e-mail. Otherwise ask for a fresh invite link or write to tere@sukoda.ee.', ru: 'Если ваш дом уже в SUKODA, войдите по эл. почте. Иначе попросите новую ссылку или напишите на tere@sukoda.ee.' },
+                fullTitle: { et: '{name} töölaud on praegu täis.', en: '{name}’s desk is currently full.', ru: 'Рабочий стол ({name}) сейчас заполнен.' },
+                fullText: { et: ' anna sellest {name}-le teada, et ta saaks oma paketti uuendada ja sinu kodu vastu võtta.', en: 'Let {name} know so they can upgrade their plan and add your home.', ru: 'Сообщите об этом ({name}), чтобы специалист обновил тариф и добавил ваш дом.' },
+                alreadyKicker: { et: 'Juba SUKODA-s', en: 'Already in SUKODA', ru: 'Уже в SUKODA' },
+                alreadyTitle: { et: 'Sinu kodu on juba olemas.', en: 'Your home is already set up.', ru: 'Ваш дом уже подключён.' },
+                alreadyText: { et: 'Sinu e-postiga on kodu juba SUKODA-s. Sisene rakendusse oma e-postiga.', en: 'A home with your e-mail is already in SUKODA. Sign in with your e-mail.', ru: 'Дом с вашей эл. почтой уже в SUKODA. Войдите по адресу эл. почты.' },
                 unassignedTitle: { et: 'See kaart ei ole veel aktiivne.', en: 'This card is not active yet.', ru: 'Эта карта ещё не активна.' },
                 unassignedText: { et: 'Kaart hakkab tööle, kui koduhooldaja on kaardi enda nimele võtnud. Küsi oma koduhooldajalt või kirjuta tere@sukoda.ee.', en: 'The card starts working once the housekeeper has taken the card under their name. Ask your housekeeper, or write to tere@sukoda.ee.', ru: 'Карта заработает, когда помощница по дому оформит карту на своё имя. Спросите у неё или напишите на tere@sukoda.ee.' },
                 giftKicker: { et: 'Kinkekaart', en: 'Gift card', ru: 'Подарочная карта' },
@@ -276,13 +278,14 @@
                     if (r.status === 429) { this.error = this.t('errMany'); this.state = 'input'; return; }
                     if (!r.ok && !r.data.state) { this.error = this.errText(r.data.error, 'errNotFound'); this.state = 'input'; return; }
                     this.code = r.data.code || code;
+                    if (r.data.provider) this.provider = r.data.provider;
                     if (r.data.state === 'welcome') {
                         this.welcome = true;
                         this.home = r.data.home || this.home;
                         this.cardToken = r.data.token || '';
                         this.state = 'welcome';
                     }
-                    else if (r.data.state === 'invite') { this.provider = r.data.provider || this.provider; this.state = 'invite'; }
+                    else if (r.data.state === 'invite') { this.state = 'invite'; }
                     else if (r.data.state === 'notfound' || !r.data.state) { this.error = this.t('errNotFound'); this.state = 'input'; }
                     else this.state = r.data.state;
                 } catch (e) {
@@ -337,10 +340,11 @@
                 const first = this.provider.firstName || '';
                 switch (this.state) {
                     case 'done': return this.welcome
-                        ? { kicker: this.t('welcomeBack'), title: this.t('doneWelcomeTitle'), text: this.t('doneWelcomeText', { email: this.doneEmail }), href: '/minu', cta: this.t('open'), second: '' }
-                        : { kicker: this.t('welcomeBack'), title: this.t('doneInviteTitle'), text: this.t('doneInviteText', { email: this.doneEmail, name: first }), href: '/minu', cta: this.t('login'), second: '' };
-                    case 'used': return { kicker: this.t('card'), title: this.t('usedTitle'), text: this.t('usedText'), href: '/minu', cta: this.t('login'), second: this.t('write'), secondHref: mailHref };
-                    case 'already': return { kicker: this.t('alreadyKicker'), title: this.t('alreadyTitle'), text: this.t('alreadyText'), href: '/minu', cta: this.t('login'), second: this.t('otherCode'), secondHref: '' };
+                        ? { kicker: this.t('welcomeBack'), title: this.t('doneWelcomeTitle'), text: this.t('doneWelcomeText', { email: this.doneEmail }), href: '/app?email=' + encodeURIComponent(this.doneEmail), cta: this.t('open'), second: '' }
+                        : { kicker: this.t('welcomeBack'), title: this.t('doneInviteTitle'), text: this.t('doneInviteText', { email: this.doneEmail, name: first }), href: '/app?email=' + encodeURIComponent(this.doneEmail), cta: this.t('login'), second: '' };
+                    case 'provider_full': return { kicker: this.t('card'), title: this.t('fullTitle', { name: first || 'Partner' }), text: this.t('fullText', { name: first || 'partner' }).trim(), href: '/lunasta', cta: this.t('otherCode'), second: '' };
+                    case 'used': return { kicker: this.t('card'), title: this.t('usedTitle'), text: this.t('usedText'), href: '/app', cta: this.t('login'), second: this.t('write'), secondHref: mailHref };
+                    case 'already': return { kicker: this.t('alreadyKicker'), title: this.t('alreadyTitle'), text: this.t('alreadyText'), href: '/app?email=' + encodeURIComponent(this.form.email || ''), cta: this.t('login'), second: this.t('otherCode'), secondHref: '' };
                     case 'unassigned': return { kicker: this.t('card'), title: this.t('unassignedTitle'), text: this.t('unassignedText'), href: mailHref, cta: this.t('write'), second: this.t('otherCode'), secondHref: '' };
                     case 'legacy': return { kicker: this.t('giftKicker'), title: this.t('legacyTitle'), text: this.t('legacyText'), href: mailHref, cta: this.t('write'), second: this.t('otherCode'), secondHref: '' };
                     default: return { kicker: '', title: '', text: '', href: '/lunasta', cta: '', second: '' };

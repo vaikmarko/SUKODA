@@ -65,6 +65,8 @@ const SERVICE_CATEGORIES = {
   warranty: { et: 'Garantii ja maja', en: 'Warranty & building', ru: 'Гарантия и дом', orderField: 'warrantyId', nameField: 'warrantyName' },
   flowers: { et: 'Lilled', en: 'Flowers', ru: 'Цветы', orderField: 'floristId', nameField: 'floristName' },
   handyman: { et: 'Remondimees', en: 'Handyman', ru: 'Мастер', orderField: 'handymanId', nameField: 'handymanName' },
+  childcare: { et: 'Lapsehoid', en: 'Childcare', ru: 'Няня', orderField: 'childcareId', nameField: 'childcareName' },
+  pets: { et: 'Lemmikloomad', en: 'Pet care', ru: 'Питомцы', orderField: 'petcareId', nameField: 'petcareName' },
   building: { et: 'Maja ja haldur', en: 'Building & manager', ru: 'Дом и управляющий', orderField: 'managerId', nameField: 'managerName' },
   garden: { et: 'Aed ja õu', en: 'Garden and outdoors', ru: 'Сад и двор', orderField: 'gardenerId', nameField: 'gardenerName' },
 };
@@ -393,6 +395,52 @@ const SERVICE_CATALOGUE = [
     priceHint: { et: 'hind kokkuleppel', en: 'price on request', ru: 'цена по договорённости' },
     durationMin: 180,
   },
+  // — Lapsehoid —
+  {
+    id: 'babysitting',
+    category: 'childcare',
+    name: { et: 'Lapsehoid', en: 'Babysitting', ru: 'Няня для ребёнка' },
+    description: {
+      et: 'Lapsehoid sinu kodus kokkulepitud ajal — päeval, õhtul või regulaarse rütmiga.',
+      en: 'Childcare in your home at the agreed time — daytime, evening or on a regular schedule.', ru: 'Присмотр за ребёнком у вас дома в согласованное время — днём, вечером или по графику.',
+    },
+    priceHint: { et: 'alates 15 €/h', en: 'from 15 €/h', ru: 'от 15 €/ч' },
+    durationMin: 180,
+  },
+  {
+    id: 'after-school',
+    category: 'childcare',
+    name: { et: 'Lasteaiast või koolist toomine', en: 'Pick-up from nursery or school', ru: 'Встретить из садика или школы' },
+    description: {
+      et: 'Lapse turvaline koju toomine ja hoidmine kuni vanemate saabumiseni.',
+      en: 'Safe pick-up and care at home until parents arrive.', ru: 'Безопасное сопровождение ребёнка домой и присмотр до прихода родителей.',
+    },
+    priceHint: { et: 'alates 15 €/h', en: 'from 15 €/h', ru: 'от 15 €/ч' },
+    durationMin: 120,
+  },
+  // — Lemmikloomad —
+  {
+    id: 'dog-walk',
+    category: 'pets',
+    name: { et: 'Koera jalutamine', en: 'Dog walking', ru: 'Выгул собаки' },
+    description: {
+      et: 'Jalutuskäik sinu koeraga kokkulepitud ajal — ühekordselt või kindla nädalapäeva rütmiga.',
+      en: 'A walk with your dog at the agreed time — one-off or on a weekly schedule.', ru: 'Прогулка с вашей собакой в согласованное время — разово или по еженедельному графику.',
+    },
+    priceHint: { et: 'alates 15 €/kord', en: 'from 15 €/walk', ru: 'от 15 €/раз' },
+    durationMin: 60,
+  },
+  {
+    id: 'pet-sitting',
+    category: 'pets',
+    name: { et: 'Lemmiklooma hoid kodus', en: 'In-home pet sitting', ru: 'Присмотр за питомцем дома' },
+    description: {
+      et: 'Toitmine, värske vesi, jalutamine ja selts sinu lemmikule reisi või pika tööpäeva ajal.',
+      en: 'Feeding, fresh water, walks and company for your pet while you travel or work late.', ru: 'Кормление, свежая вода, прогулки и компания для питомца во время отъезда или долгого дня.',
+    },
+    priceHint: { et: 'alates 20 €/visiit', en: 'from 20 €/visit', ru: 'от 20 €/визит' },
+    durationMin: 60,
+  },
   {
     id: 'cleaning-note',
     kind: 'question', // a written message to the housekeeper — no visit, no time; the reply comes in writing
@@ -410,8 +458,8 @@ const SERVICE_CATALOGUE = [
     category: 'cleaning',
     name: { et: 'Muu soov', en: 'Something else', ru: 'Другое пожелание' },
     description: {
-      et: 'Kirjelda, mida vajad. Leiame õige inimese ja vastame.',
-      en: 'Describe what you need. We find the right person and reply.', ru: 'Опишите, что нужно. Найдём нужного человека и ответим.',
+      et: 'Kirjelda, mida vajad. Koduhooldaja või partner vaatab soovi üle ja vastab.',
+      en: 'Describe what you need. Your housekeeper or partner reviews the request and replies.', ru: 'Опишите, что нужно. Ваш специалист рассмотрит пожелание и ответит.',
     },
     priceHint: { et: 'hind kokkuleppel', en: 'price on request', ru: 'цена по договорённости' },
     durationMin: 60,
@@ -1393,8 +1441,36 @@ function sanitizeAvailability(input) {
     maxPerDay: Number.isInteger(max) ? Math.min(12, Math.max(1, max)) : 4,
     districts,
     priceNote: String(input?.priceNote || '').trim().slice(0, 240),
+    bio: String(input?.bio || '').trim().slice(0, 240),
+    openForNewClients: input?.openForNewClients === true,
     offeredExtras,
     extraPrices,
+  };
+}
+
+/**
+ * Safe public directory card for a provider who opted into `openForNewClients`.
+ * Exposes objective retention stats (`activeHomes`, `completedVisits`) and never leaks
+ * private contact details, tokens or client names before a household connects.
+ */
+function publicProviderCard(provider, stats = {}) {
+  if (!provider || provider.status === 'disabled') return null;
+  const avail = sanitizeAvailability(provider.availability || {});
+  if (!avail.openForNewClients) return null;
+  const services = (Array.isArray(provider.services) && provider.services.length ? provider.services : ['cleaning'])
+    .filter((s) => Boolean(SERVICE_CATEGORIES[s]) && s !== 'warranty' && s !== 'building');
+  if (!services.length) return null;
+  const area = [...new Set([String(provider.city || '').trim(), ...avail.districts].filter(Boolean))].join(', ');
+  return {
+    id: String(provider.id || ''),
+    name: String(provider.name || '').trim(),
+    businessName: String(provider.businessName || '').trim(),
+    services,
+    area,
+    bio: avail.bio,
+    priceNote: avail.priceNote,
+    activeHomes: Math.max(0, Math.trunc(Number(stats.activeHomes) || 0)),
+    completedVisits: Math.max(0, Math.trunc(Number(stats.completedVisits) || 0)),
   };
 }
 
@@ -1514,6 +1590,52 @@ function handoverCode(bytes) {
   let out = '';
   for (let i = 0; i < 8; i++) out += HANDOVER_ALPHABET[bytes[i] % HANDOVER_ALPHABET.length];
   return out;
+}
+
+/** Reusable personal invite code for a provider (`SK-XXXXXXXX`), unambiguous characters only. */
+function providerInviteCode(bytes) {
+  const base = handoverCode(bytes);
+  return base ? `SK-${base}` : null;
+}
+
+/** Main category a provider manages when adding a home (`cleaning` wins if offered). */
+function primaryTrade(provider) {
+  const raw = Array.isArray(provider?.services) ? provider.services : [];
+  const valid = raw.map((s) => String(s || '')).filter((s) => Boolean(SERVICE_CATEGORIES[s]));
+  if (!valid.length || valid.includes('cleaning')) return 'cleaning';
+  return valid[0];
+}
+
+/**
+ * Toggle whether a provider has sent their invoice for `orderId` in `month` (`YYYY-MM`).
+ * Keeps up to 18 recent months and 300 homes per month.
+ */
+function toggleInvoicedHome(invoicedMonths, month, orderId, explicitState) {
+  const m = /^(\d{4})-(\d{2})$/.exec(String(month || '').trim());
+  const id = String(orderId || '').trim().slice(0, 80);
+  if (!m || !id) return { error: 'invalid' };
+  const monthNum = Number(m[2]);
+  if (monthNum < 1 || monthNum > 12) return { error: 'invalid' };
+  const key = `${m[1]}-${m[2]}`;
+  const src = invoicedMonths && typeof invoicedMonths === 'object' ? invoicedMonths : {};
+  const next = {};
+  for (const [k, list] of Object.entries(src)) {
+    if (!/^\d{4}-\d{2}$/.test(k) || !Array.isArray(list)) continue;
+    const clean = [...new Set(list.map((v) => String(v || '').trim().slice(0, 80)).filter(Boolean))].slice(0, 300);
+    if (clean.length) next[k] = clean;
+  }
+  const cur = new Set(next[key] || []);
+  const shouldHave = typeof explicitState === 'boolean' ? explicitState : !cur.has(id);
+  if (shouldHave) cur.add(id);
+  else cur.delete(id);
+  if (cur.size) next[key] = [...cur].slice(0, 300);
+  else delete next[key];
+  const keys = Object.keys(next).sort();
+  while (keys.length > 18) {
+    const drop = keys.shift();
+    delete next[drop];
+  }
+  return { invoicedMonths: next, invoiced: shouldHave };
 }
 
 function routeChoice(value) {
@@ -1655,6 +1777,7 @@ module.exports = {
   canAutoPlaceVisit,
   CLEANER_EXTRA_IDS,
   sanitizeAvailability,
+  publicProviderCard,
   cleanerOffersExtra,
   cleanerExtraPrice,
   resolveServiceRoutes,
@@ -1669,6 +1792,9 @@ module.exports = {
   telliAddons,
   orderQuote,
   handoverCode,
+  providerInviteCode,
+  primaryTrade,
+  toggleInvoicedHome,
   sanitizeBuilding,
   sanitizeHandover,
   MAINTENANCE_CATALOGUE,

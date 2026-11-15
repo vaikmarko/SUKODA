@@ -1502,6 +1502,7 @@ module.exports = function createHaldus(deps) {
       const booking = await createVisit({
         order, orderId, provider, start,
         durationMin,
+        serviceId: schedule.serviceId || null,
         note: schedule.note || '',
         price: schedule.price || null,
         source: 'schedule',
@@ -1906,6 +1907,7 @@ module.exports = function createHaldus(deps) {
   }
 
   function serializeProvider(p) {
+    const inviteCode = p.inviteCode || null;
     return {
       id: p.id,
       name: p.name || '',
@@ -1913,15 +1915,27 @@ module.exports = function createHaldus(deps) {
       businessName: p.businessName || '',
       email: p.email || '',
       phone: p.phone || '',
+      city: p.city || '',
       notifyEmail: p.notifyEmail || p.email || '',
       services: Array.isArray(p.services) && p.services.length ? p.services : ['cleaning'],
       availability: core.sanitizeAvailability(p.availability || {}),
       awayPeriods: liveAway(p),
+      inviteCode,
+      inviteUrl: inviteCode ? `${SITE}/lunasta?code=${encodeURIComponent(inviteCode)}` : null,
+      invoicedMonths: p.invoicedMonths && typeof p.invoicedMonths === 'object' ? p.invoicedMonths : {},
       status: p.status || 'active',
       plan: core.effectivePlan(p),
       createdAt: tsToIso(p.createdAt),
       lastLoginAt: tsToIso(p.lastLoginAt),
     };
+  }
+
+  /** Whether this provider manages the home itself (the housekeeper, or the specialist who created this manual home). */
+  function canManageHome(o, role, providerId) {
+    if (role === 'cleaning') return true;
+    if (!providerId || !o) return false;
+    if (o.providerId === providerId) return true;
+    return o.source === 'manual' && String(o.createdBy || '') === `provider:${providerId}`;
   }
 
   // ============================================================
@@ -1943,11 +1957,12 @@ module.exports = function createHaldus(deps) {
 
   function serializeCustomer(id, o, role, providerId = null) {
     const cleaning = role === 'cleaning';
+    const canEdit = canManageHome(o, role, providerId);
     const hp = o.homeProfile || null;
     return {
       id,
-      role, // 'cleaning' | 'flowers' | 'warranty' | 'handyman' | ...
-      canEditHome: cleaning || (!!providerId && o.providerId === providerId),
+      role, // 'cleaning' | 'flowers' | 'warranty' | 'handyman' | 'childcare' | 'pets' | 'garden' ...
+      canEditHome: canEdit,
       name: primaryName(o) || (o.customer?.name || ''),
       email: primaryEmail(o),
       phone: o.type === 'gift' ? (o.recipient?.phone || o.customer?.phone || '') : (o.customer?.phone || ''),
@@ -1963,9 +1978,9 @@ module.exports = function createHaldus(deps) {
       contacts: Array.isArray(o.contacts) ? o.contacts : [],
       schedule: serializeSchedule(o.schedule),
       awayPeriods: liveAway(o),
-      // Other roles only see what they need to get in and work safely; household preferences stay with the housekeeper
+      // Standing door code stays strictly with the home's cleaner; other roles only get per-visit request.access
       homeProfile: hp ? {
-        access: hp.access || '', pets: hp.pets || '', allergies: hp.allergies || '',
+        access: cleaning ? (hp.access || '') : '', pets: hp.pets || '', allergies: hp.allergies || '',
         ...(cleaning ? { flowerPreference: hp.flowerPreference || '', linens: hp.linens || '', towels: hp.towels || '' } : {}),
         specialRequests: hp.specialRequests || '',
       } : null,
@@ -1974,7 +1989,7 @@ module.exports = function createHaldus(deps) {
       terms: o.terms ? (cleaning ? o.terms : (o.terms[role] ? { [role]: o.terms[role] } : null)) : null,
       brand: o.brand?.name ? { name: o.brand.name, project: o.brand.project || '' } : null,
       floorPlan: /^https:\/\//.test(String(o.floorPlan || '')) ? String(o.floorPlan) : null,
-      maintenance: cleaning ? serializeMaintenanceForProvider(o) : null,
+      maintenance: canEdit ? serializeMaintenanceForProvider(o) : null,
       // Part of the partner's service standard: flowers ordered automatically before each visit
       flowers: cleaning || role === 'flowers'
         ? { auto: o.flowers?.auto === true, leadDays: FLOWER_LEAD_DAYS.includes(o.flowers?.leadDays) ? o.flowers.leadDays : 2, floristId: o.floristId || null, budget: o.flowers?.budget || '', note: o.flowers?.note || '' }
@@ -2331,11 +2346,23 @@ module.exports = function createHaldus(deps) {
     if (contactsRes.error) throw new HomeError(400, { error: contactsRes.error });
     const contacts = contactsRes.contacts.filter((c) => c.email !== email);
 
+    const role = core.primaryTrade(provider);
+    const catDef = core.SERVICE_CATEGORIES[role] || core.SERVICE_CATEGORIES.cleaning;
+    const orderField = catDef.orderField;
+    const nameField = catDef.nameField;
+    const defaultServiceId = role === 'cleaning'
+      ? null
+      : (core.SERVICE_CATALOGUE.find((s) => s.category === role && (s.kind || 'visit') === 'visit')?.id || null);
+
     let schedule = null;
-    if (b.schedule && b.schedule.frequency) {
+    if (b.schedule && b.schedule.frequency && b.schedule.frequency !== 'none') {
       const s = core.sanitizeSchedule(b.schedule);
       if (s.error) throw new HomeError(400, { error: s.error });
-      schedule = s.schedule;
+      schedule = {
+        ...s.schedule,
+        providerId: provider.id,
+        ...(defaultServiceId ? { serviceId: defaultServiceId } : {}),
+      };
     }
 
     // Duplicate guard: same email already active somewhere
@@ -2344,7 +2371,7 @@ module.exports = function createHaldus(deps) {
       .where('status', 'in', ['paid', 'cancelling'])
       .limit(3)
       .get();
-    const mine = dupSnap.docs.find((d) => d.data().providerId === provider.id);
+    const mine = dupSnap.docs.find((d) => d.data()[orderField] === provider.id || d.data().providerId === provider.id);
     if (mine) throw new HomeError(409, { error: 'See klient on juba sinu nimekirjas', code: 'ALREADY_MINE', orderId: mine.id });
     if (!dupSnap.empty && !b.force) {
       throw new HomeError(409, {
@@ -2365,8 +2392,10 @@ module.exports = function createHaldus(deps) {
       lang,
       customer: { name, email, phone, address, additionalInfo: str(b.additionalInfo, 1000) },
       contacts, contactEmails: contactEmailsOf(contacts),
-      providerId: provider.id,
-      providerName: provider.name || '',
+      providerId: role === 'cleaning' ? provider.id : null,
+      providerName: role === 'cleaning' ? (provider.name || '') : '',
+      [orderField]: provider.id,
+      [nameField]: provider.name || '',
       providerNotes: str(b.providerNotes, 1000),
       schedule,
       homeProfile: b.homeProfile && typeof b.homeProfile === 'object' ? {
@@ -2406,7 +2435,7 @@ module.exports = function createHaldus(deps) {
         const firstWhen = first
           ? `${formatDate(first.scheduledAt, lang)}, ${formatTime(first.scheduledAt)}`
           : '';
-        await sendEmail({ to: email, ...welcomeEmail({ order: orderData, providerName: provider.name, portalUrl, lang, firstWhen }), replyTo: providerReplyTo(provider) });
+        await sendEmail({ to: email, ...welcomeEmail({ order: orderData, providerName: provider.name, portalUrl, lang, role, firstWhen }), replyTo: providerReplyTo(provider) });
         welcomeSent = true;
       } catch (e) {
         console.error('Welcome email failed (non-fatal):', e);
@@ -2424,7 +2453,7 @@ module.exports = function createHaldus(deps) {
       html: `<p>${operatorIntro || `${escapeHtml(provider.name)} (${escapeHtml(provider.email)}) lisas haldusesse uue kliendi.`}</p><p><strong>${escapeHtml(name)}</strong> · ${escapeHtml(email)} · ${escapeHtml(address)}</p><p>Graafik: ${schedule ? `${schedule.frequency}, ${schedule.time}` : 'puudub'} · Loodud visiite: ${created.length}</p><p>Tellimus: ${orderId}</p>`,
     });
 
-    return { ref, orderId, orderData, created, skipped, welcomeSent, portalUrl };
+    return { ref, orderId, orderData, role, created, skipped, welcomeSent, portalUrl };
   }
 
   // ============================================================
@@ -2522,13 +2551,58 @@ module.exports = function createHaldus(deps) {
     return { assigned, errors };
   }
 
-  /** Public view of a code for /lunasta — never leaks more than the state and the inviting provider */
+  async function findProviderByInviteCode(code) {
+    if (!code) return null;
+    const snap = await db.collection('providers').where('inviteCode', '==', code).limit(1).get();
+    if (snap.empty) return null;
+    const doc = snap.docs[0];
+    return { id: doc.id, ...doc.data() };
+  }
+
+  async function ensureProviderInviteCode(provider) {
+    if (!provider || !provider.id) return null;
+    if (provider.inviteCode) return provider.inviteCode;
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      const code = core.providerInviteCode(crypto.randomBytes(8));
+      if (!code) continue;
+      const existing = await findProviderByInviteCode(code);
+      if (existing) continue;
+      await db.collection('providers').doc(provider.id).update({ inviteCode: code, updatedAt: FieldValue.serverTimestamp() });
+      provider.inviteCode = code;
+      return code;
+    }
+    return null;
+  }
+
+  /** Public view of a code for /lunasta — supports both reusable digital provider invite codes and legacy cards */
   async function validateCard(code) {
     const found = await findCardByCode(code);
-    if (!found) return { state: 'notfound' };
+    if (!found) {
+      const provider = await findProviderByInviteCode(code);
+      if (!provider || provider.status === 'disabled') return { state: 'notfound' };
+      const role = core.primaryTrade(provider);
+      const pub = {
+        firstName: provider.contactName || firstName(provider.name) || provider.name || '',
+        name: provider.name || '',
+        businessName: provider.businessName || '',
+        role,
+      };
+      const plan = core.effectivePlan(provider);
+      const limit = core.planLimit(plan);
+      if (limit !== Infinity) {
+        const homes = activeHomeCount(await loadProviderOrders(provider.id));
+        if (homes >= limit) return { state: 'provider_full', provider: pub };
+      }
+      return {
+        state: 'invite',
+        reusable: true,
+        role,
+        provider: pub,
+        providerDoc: provider,
+      };
+    }
     const { card } = found;
     if (!isPhysicalCard(card)) {
-      // A real paid gift (e.g. a personal gift order) — handled personally by e-mail
       if (card.giftRedeemed) return { state: 'used' };
       return { state: 'legacy' };
     }
@@ -2537,9 +2611,12 @@ module.exports = function createHaldus(deps) {
     if (st === 'free') return { state: 'unassigned' };
     const provider = await loadProvider(card.assignedProviderId);
     if (!provider || provider.status === 'disabled') return { state: 'unassigned' };
+    const role = core.primaryTrade(provider);
     return {
       state: 'invite',
-      provider: { firstName: provider.contactName || provider.name || '', name: provider.name || '', businessName: provider.businessName || '' },
+      reusable: false,
+      role,
+      provider: { firstName: provider.contactName || firstName(provider.name) || provider.name || '', name: provider.name || '', businessName: provider.businessName || '', role },
       found, providerDoc: provider,
     };
   }
@@ -2713,11 +2790,14 @@ module.exports = function createHaldus(deps) {
       if (code === WELCOME_CODE) return redeemWelcome(req, res, code);
       if (b.consent !== true) return res.status(400).json({ error: 'Nõustu tingimustega, et jätkata' });
       const v = await validateCard(code);
-      if (v.state !== 'invite') return res.status(409).json({ state: v.state, error: 'Seda kaarti ei saa kasutada' });
+      if (v.state !== 'invite') return res.status(409).json({ state: v.state, error: 'Seda kutset ei saa praegu kasutada' });
       const provider = v.providerDoc;
-      const cardRef = v.found.ref;
+      const role = core.primaryTrade(provider);
+      const catDef = core.SERVICE_CATEGORIES[role] || core.SERVICE_CATEGORIES.cleaning;
+      const orderField = catDef.orderField;
+      const nameField = catDef.nameField;
 
-      // Cheap checks before touching the card
+      // Cheap checks before touching anything
       if (!str(b.name, 200)) return res.status(400).json({ error: 'Nimi on kohustuslik' });
       if (!core.isValidEmail(core.normalizeEmail(b.email))) return res.status(400).json({ error: 'E-posti aadress ei ole õige' });
       if (!str(b.address, 500)) return res.status(400).json({ error: 'Aadress on kohustuslik' });
@@ -2730,14 +2810,69 @@ module.exports = function createHaldus(deps) {
       const contactsCheck = core.sanitizeContacts(contacts);
       if (contactsCheck.error) return res.status(400).json({ error: 'Teise kontakti e-posti aadress ei ole õige' });
 
-      // Already a home with this provider → no duplicate, point to the portal instead (card stays unused)
+      // Already a home with this provider → no duplicate, point to the portal instead
       const email = core.normalizeEmail(b.email);
       const dup = await db.collection('orders').where('customer.email', '==', email).where('status', 'in', ['paid', 'cancelling']).limit(3).get();
-      if (dup.docs.some((d) => d.data().providerId === provider.id)) {
-        return res.status(409).json({ state: 'already', error: 'Selle e-posti aadressiga on kodu selle koduhooldaja juures juba olemas. Sisene rakendusse sama aadressiga.', code: 'ALREADY_MINE' });
+      if (dup.docs.some((d) => d.data()[orderField] === provider.id || d.data().providerId === provider.id)) {
+        return res.status(409).json({ state: 'already', error: 'Selle e-posti aadressiga on kodu selle spetsialisti juures juba olemas. Sisene rakendusse sama aadressiga.', code: 'ALREADY_MINE' });
       }
 
-      // Claim the card first so two people cannot use the same code at once
+      // Reusable digital invite link: if the household already has a home in SUKODA and this role slot is free,
+      // attach this specialist directly to the existing home so all services live under one roof.
+      if (v.reusable) {
+        const attachable = dup.docs.find((d) => (d.data().type || 'subscription') === 'subscription' && !d.data()[orderField]);
+        if (attachable) {
+          const plan = core.effectivePlan(provider);
+          const limit = core.planLimit(plan);
+          if (limit !== Infinity) {
+            const homes = activeHomeCount(await loadProviderOrders(provider.id));
+            if (homes >= limit) return res.status(409).json({ state: 'provider_full', provider: v.provider });
+          }
+          await attachable.ref.update({
+            [orderField]: provider.id,
+            [nameField]: provider.name || '',
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+          const mergedOrder = { ...attachable.data(), [orderField]: provider.id, [nameField]: provider.name || '' };
+          let welcomeSent = false;
+          try {
+            const portalUrl = await issueClientToken(attachable.ref);
+            await sendEmail({ to: email, ...welcomeEmail({ order: mergedOrder, providerName: provider.name, portalUrl, lang: core.langOf({ lang: b.lang || mergedOrder.lang }), role }), replyTo: providerReplyTo(provider) });
+            welcomeSent = true;
+          } catch (e) { console.error('Attach welcome mail failed:', e); }
+          try {
+            await sendEmail({ to: providerReplyTo(provider) || provider.email, ...inviteProviderEmail({ provider, order: { ...mergedOrder, inviteCode: code } }) });
+          } catch (e) { console.error('Attach provider mail failed:', e); }
+          return res.status(200).json({ state: 'done', success: true, attached: true, provider: v.provider, welcomeSent, email });
+        }
+
+        let home;
+        try {
+          home = await createHome({
+            provider,
+            input: { name: b.name, email: b.email, phone: b.phone, address: b.address, size: b.size, lang: b.lang, contacts, force: true },
+            createdBy: `provider:${provider.id}`,
+            enforcePlanCap: true,
+            extraFields: { inviteCode: code },
+            operatorSubject: `SUKODA | Kutselingiga liitus kodu: ${str(b.name, 200)}`,
+            operatorIntro: `${escapeHtml(provider.name)} (${escapeHtml(provider.email)}) — kutselink ${escapeHtml(code)} avas uue kodu.`,
+          });
+        } catch (e) {
+          if (e instanceof HomeError) {
+            if (e.status === 402) return res.status(409).json({ state: 'provider_full', provider: v.provider });
+            if (e.status === 409) return res.status(409).json({ state: 'already', error: 'Selle e-posti aadressiga on kodu juba olemas. Sisene rakendusse sama aadressiga.', code: e.body.code });
+            return res.status(e.status).json(e.body);
+          }
+          throw e;
+        }
+        try {
+          await sendEmail({ to: providerReplyTo(provider) || provider.email, ...inviteProviderEmail({ provider, order: home.orderData }) });
+        } catch (e) { console.error('Invite provider mail failed (non-fatal):', e); }
+        return res.status(200).json({ state: 'done', success: true, provider: v.provider, welcomeSent: home.welcomeSent, email: home.orderData.customer.email });
+      }
+
+      const cardRef = v.found.ref;
+      // Claim the legacy card first so two people cannot use the same code at once
       const claimedAt = Timestamp.fromDate(new Date());
       try {
         await db.runTransaction(async (tx) => {
@@ -2923,6 +3058,75 @@ module.exports = function createHaldus(deps) {
     }
     const n = await notifyOrder(order, visitDoneEmail({ order, provider, note, items: advanced, lang }), { replyTo: PORTAL_REPLY_TO });
     return n > 0;
+  }
+
+  function providerSignupAccessEmail({ code, url, lang }) {
+    const L = core.langOf(lang);
+    const subject = core.pick({
+      et: 'SUKODA Töölaud | Sinu sisenemiskood',
+      en: 'SUKODA Desk | Your sign-in code',
+      ru: 'SUKODA Рабочий стол | Ваш код для входа',
+    }, L);
+    const intro = core.pick({
+      et: 'Sisesta see 6-kohaline kood töölauale või vajuta allolevale nupule. Kood kehtib 10 minutit.',
+      en: 'Enter this 6-digit code on the desk or tap the button below. The code is valid for 10 minutes.',
+      ru: 'Введите этот 6-значный код на рабочем столе или нажмите кнопку ниже. Код действует 10 минут.',
+    }, L);
+    const btn = core.pick({ et: 'AVA TÖÖLAUD', en: 'OPEN THE DESK', ru: 'ОТКРЫТЬ РАБОЧИЙ СТОЛ' }, L);
+    return {
+      subject,
+      html: wrap(
+        H2(escapeHtml(code))
+        + P(intro)
+        + `<div style="margin-top:24px;"><a href="${url}" style="display:inline-block;background:#111111;color:#FFFFFF;padding:14px 32px;text-decoration:none;font-size:11px;text-transform:uppercase;letter-spacing:3px;font-weight:500;">${btn}</a></div>`,
+        L,
+      ),
+    };
+  }
+
+  /**
+   * When an authenticated homeowner invited a specialist (`partnerInvites` with `verifiedOwner: true`),
+   * verifying that e-mail automatically connects the specialist to the inviting home.
+   */
+  async function claimPartnerInvites(providerDoc) {
+    if (!providerDoc) return 0;
+    const p = providerDoc.data ? providerDoc.data() : providerDoc;
+    const providerId = providerDoc.id || p.id;
+    const email = core.normalizeEmail(p.email);
+    if (!providerId || !email) return 0;
+    try {
+      const snap = await db.collection('partnerInvites').where('partnerEmail', '==', email).limit(10).get();
+      if (snap.empty) return 0;
+      let claimed = 0;
+      for (const invDoc of snap.docs) {
+        const inv = invDoc.data();
+        if (inv.claimedAt || !inv.verifiedOwner || !inv.orderId) continue;
+        const role = core.SERVICE_CATEGORIES[inv.role] ? inv.role : core.primaryTrade(p);
+        const catDef = core.SERVICE_CATEGORIES[role];
+        if (!catDef) continue;
+        const orderRef = db.collection('orders').doc(String(inv.orderId));
+        const orderSnap = await orderRef.get();
+        if (!orderSnap.exists) {
+          await invDoc.ref.update({ claimedAt: FieldValue.serverTimestamp() });
+          continue;
+        }
+        const order = orderSnap.data();
+        if (!order[catDef.orderField] && ['paid', 'cancelling'].includes(order.status)) {
+          await orderRef.update({
+            [catDef.orderField]: providerId,
+            [catDef.nameField]: p.name || '',
+            [`connectedProviders.${role}`]: { providerId, at: FieldValue.serverTimestamp(), via: 'invite' },
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+          claimed += 1;
+        }
+        await invDoc.ref.update({ claimedAt: FieldValue.serverTimestamp(), providerId });
+      }
+      return claimed;
+    } catch (e) {
+      console.error('claimPartnerInvites failed', providerId, e && e.message);
+      return 0;
+    }
   }
 
   function loginCodeEmail(code, lang) {
@@ -3142,6 +3346,9 @@ module.exports = function createHaldus(deps) {
       }
       const target = await findLoginTarget(email);
       if (!target || target.audience !== audience.audience) return res.status(401).json(fail);
+      if (target.audience === 'desk' && target.providerDoc) {
+        await claimPartnerInvites(target.providerDoc);
+      }
       const session = await issueLoginSession(target, email);
       res.status(200).json({ token: session.token, desk: session.desk });
     },
@@ -3202,76 +3409,151 @@ module.exports = function createHaldus(deps) {
     },
 
     /**
-     * Self-serve onboarding for service providers: a housekeeper (or florist, handyman, gardener) opens their
-     * own desk and gets the login link immediately. Nothing for the operator to do; they are just told.
-     * Existing e-mail → behaves like a login (link re-sent), so the form is safe to submit twice.
+     * Self-serve onboarding for service providers: opens a desk immediately and sends both
+     * a 6-digit login code (for instant entry in the app/PWA) and a magic link.
      */
     'POST /api/haldus/signup': async (req, res) => {
-      if (!checkRateLimit(req, res, 'haldus-signup', 5, 600000)) return;
+      if (!checkRateLimit(req, res, 'haldus-signup', 8, 600000)) return;
       const b = req.body || {};
       const name = str(b.name, 120);
       const email = core.normalizeEmail(b.email);
-      if (!name) return res.status(400).json({ error: 'Nimi on kohustuslik' });
-      if (!core.isValidEmail(email)) return res.status(400).json({ error: 'E-posti aadress ei ole õige' });
-      const services = (Array.isArray(b.services) ? b.services : []).filter((s) => Object.keys(core.SERVICE_CATEGORIES).includes(s) || s === 'other');
+      const lang = core.langOf(b.lang);
+      if (!name) return res.status(400).json({ error: { et: 'Nimi on kohustuslik', en: 'Name is required', ru: 'Укажите имя' } });
+      if (!core.isValidEmail(email)) return res.status(400).json({ error: { et: 'E-posti aadress ei ole õige', en: 'Enter a valid e-mail address', ru: 'Введите корректный адрес эл. почты' } });
+      const services = (Array.isArray(b.services) ? b.services : []).filter((s) => Object.keys(core.SERVICE_CATEGORIES).includes(s));
 
-      const dup = await db.collection('providers').where('email', '==', email).limit(1).get();
-      if (!dup.empty) {
-        const doc = dup.docs[0];
-        if (doc.data().status !== 'disabled') await sendProviderMagicLink(doc);
-        return res.status(200).json({ sent: true, existing: true });
+      const rl = db.collection('rateLimits').doc(`signup_code_${sha256(email)}`);
+      const rlDoc = await rl.get();
+      const lastSent = toDate(rlDoc.data()?.lastSent) || new Date(0);
+      if (lastSent > new Date(Date.now() - 45 * 1000)) {
+        return res.status(200).json({ sent: true, codeSent: true });
       }
 
-      const ref = await db.collection('providers').add({
-        name, email, notifyEmail: email, phone: str(b.phone, 40), businessName: str(b.businessName, 160),
-        city: str(b.city, 80), services: services.length ? services : ['cleaning'], status: 'active', lang: 'et',
-        plan: 'trial', createdBy: 'self', createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp(),
-      });
-      await sendProviderMagicLink(await ref.get());
-      await sendEmail({
-        to: NOTIFICATION_EMAIL,
-        subject: `SUKODA | Uus partner liitus — ${name}`,
-        html: wrap(H2('Uus teenusepakkuja') + P(`${escapeHtml(name)}${b.businessName ? ' · ' + escapeHtml(str(b.businessName, 160)) : ''} avas endale töölaua.`)
-          + `<div style="background:#FFFFFF;padding:24px;margin-bottom:24px;border-left:2px solid #B8976A;">${ROW('E-post', escapeHtml(email))}${b.phone ? ROW('Telefon', escapeHtml(str(b.phone, 40))) : ''}${ROW('Teenused', escapeHtml((services.length ? services : ['cleaning']).map((s) => core.SERVICE_CATEGORIES[s]?.et || s).join(', ')))}${b.city ? ROW('Piirkond', escapeHtml(str(b.city, 80))) : ''}</div>`
-          + P('Ta saab kohe kliente lisada. Kui midagi tundub valesti, saad ta admin-konsoolis peatada.', 'font-size:12px;'), 'et'),
-      });
-      res.status(200).json({ sent: true, existing: false });
+      const dup = await db.collection('providers').where('email', '==', email).limit(1).get();
+      let providerDoc = null;
+      let existing = false;
+      if (!dup.empty) {
+        providerDoc = dup.docs[0];
+        existing = true;
+        if (providerDoc.data().status === 'disabled') {
+          return res.status(200).json({ sent: true, codeSent: true, existing: true });
+        }
+      } else {
+        let inviteCode = null;
+        for (let attempt = 0; attempt < 4; attempt += 1) {
+          const candidate = core.providerInviteCode(crypto.randomBytes(8));
+          if (candidate && !(await findProviderByInviteCode(candidate))) { inviteCode = candidate; break; }
+        }
+        const ref = await db.collection('providers').add({
+          name,
+          email,
+          notifyEmail: email,
+          phone: str(b.phone, 40),
+          businessName: str(b.businessName, 160),
+          city: str(b.city, 80),
+          services: services.length ? services : ['cleaning'],
+          status: 'active',
+          lang,
+          plan: 'free',
+          ...(inviteCode ? { inviteCode } : {}),
+          createdBy: 'self',
+          createdAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+        providerDoc = await ref.get();
+        try {
+          await sendEmail({
+            to: NOTIFICATION_EMAIL,
+            subject: `SUKODA | Uus partner liitus — ${name}`,
+            html: wrap(H2('Uus teenusepakkuja') + P(`${escapeHtml(name)}${b.businessName ? ' · ' + escapeHtml(str(b.businessName, 160)) : ''} avas endale töölaua.`)
+              + `<div style="background:#FFFFFF;padding:24px;margin-bottom:24px;border-left:2px solid #B8976A;">${ROW('E-post', escapeHtml(email))}${b.phone ? ROW('Telefon', escapeHtml(str(b.phone, 40))) : ''}${ROW('Teenused', escapeHtml((services.length ? services : ['cleaning']).map((s) => core.SERVICE_CATEGORIES[s]?.et || s).join(', ')))}${b.city ? ROW('Piirkond', escapeHtml(str(b.city, 80))) : ''}</div>`
+              + P('Ta saab kohe kliente lisada.', 'font-size:12px;'), 'et'),
+          });
+        } catch (e) { console.error('signup operator mail failed', e); }
+      }
+
+      const rawToken = await issueProviderToken(providerDoc.ref);
+      const url = `${HALDUS_URL}?token=${rawToken}`;
+      const code = core.generateLoginCode(crypto.randomInt(0, 1000000));
+      if (code) {
+        await db.collection('loginCodes').doc(sha256(email)).set({
+          codeHash: core.hashLoginCode(email, code),
+          expiresAt: Timestamp.fromDate(core.loginCodeExpiresAt(new Date())),
+          attempts: 0,
+          audience: 'desk',
+          createdAt: FieldValue.serverTimestamp(),
+        });
+        await sendEmail({ to: email, ...providerSignupAccessEmail({ code, url, lang: lang || langOf(providerDoc.data()) }) });
+      } else {
+        await sendEmail({ to: email, ...providerMagicLinkEmail(url) });
+      }
+      await rl.set({ lastSent: FieldValue.serverTimestamp(), count: FieldValue.increment(1) }, { merge: true });
+      res.status(200).json({ sent: true, codeSent: Boolean(code), existing });
     },
 
     /**
-     * A homeowner invites their own housekeeper to open a desk. The housekeeper gets a personal note with the
-     * signup link; the operator gets a copy so the loop can be closed by hand if needed.
+     * A homeowner invites their own specialist to open a desk. When called by a signed-in homeowner,
+     * records `orderId` + `role` so the home connects automatically once the specialist signs in.
      */
     'POST /api/haldus/invite-partner': async (req, res) => {
-      if (!checkRateLimit(req, res, 'haldus-invite', 5, 600000)) return;
+      if (!checkRateLimit(req, res, 'haldus-invite', 8, 600000)) return;
       const b = req.body || {};
+      const auth = await authenticateClient(req).catch(() => null);
+      const verifiedOwner = Boolean(auth && auth.viewer?.primary && portalRole(auth) === 'owner');
       const partnerEmail = core.normalizeEmail(b.partnerEmail);
-      const email = core.normalizeEmail(b.email);
+      const email = verifiedOwner ? (core.normalizeEmail(auth.viewer?.email) || primaryEmail(auth.order)) : core.normalizeEmail(b.email);
       if (!core.isValidEmail(partnerEmail) || !core.isValidEmail(email)) return res.status(400).json({ error: 'Kontrolli mõlemat e-posti aadressi' });
       const partnerName = str(b.partnerName, 120);
-      const name = str(b.name, 120);
+      const name = verifiedOwner ? (str(b.name, 120) || primaryName(auth.order)) : str(b.name, 120);
+      const role = core.SERVICE_CATEGORIES[b.role] && b.role !== 'warranty' && b.role !== 'building' ? b.role : 'cleaning';
       const who = name || email;
-      const url = `${HALDUS_URL}?alusta`;
+      const qs = new URLSearchParams({ alusta: '1', email: partnerEmail, role });
+      if (partnerName) qs.set('name', partnerName);
+      const url = `${HALDUS_URL}?${qs.toString()}`;
       await sendEmail({
         to: partnerEmail,
         replyTo: email,
         subject: `SUKODA | ${who} kutsub sind oma koduportaali`,
         html: wrap(
           H2(`Tere${partnerName ? ', ' + escapeHtml(firstName(partnerName)) : ''}.`)
-          + P(`${escapeHtml(who)} kasutab SUKODA rakendust ja soovib, et koristusajad, kalendrikutsed ja soovid liiguksid edaspidi rakenduse kaudu otse sinult.`)
-          + P('Töölaual lisad kliendi ja paned paika ajad või korduva graafiku. Klient ja tema pere saavad kalendrikutsed, muudatused ja meeldetuletused ise. Kliendi soovid jõuavad sinuni ja sa kinnitad aja ühe puutega. Alustamine on tasuta ja võtab kaks minutit.')
+          + P(`${escapeHtml(who)} kasutab SUKODA rakendust ja soovib, et sinu visiidiajad, kalendrikutsed ja soovid liiguksid edaspidi rakenduse kaudu otse sinult.`)
+          + P('Töölaual näed kodu, paned paika ajad või korduva graafiku ning pere saab kalendrikutsed ja meeldetuletused ise. Alustamine on tasuta (0% vahendustasu) ja võtab minuti.')
           + `<div style="text-align:center;margin:32px 0;"><a href="${url}" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">Ava oma töölaud</a></div>`
-          + P(`Kui sul on küsimusi, vasta sellele kirjale. Vastus jõuab otse kutsujale (${escapeHtml(who)}). SUKODA kohta küsi: tere@sukoda.ee.`, 'font-size:12px;'),
+          + P(`Kui sul on küsimusi, vasta sellele kirjale. Vastus jõuab otse kutsujale (${escapeHtml(who)}).`, 'font-size:12px;'),
           'et',
         ),
       });
-      await sendEmail({
-        to: NOTIFICATION_EMAIL,
-        subject: `SUKODA | Koduomanik kutsus partneri — ${who} → ${partnerName || partnerEmail}`,
-        html: wrap(H2('Kutse teenusepakkujale') + `<div style="background:#FFFFFF;padding:24px;margin-bottom:24px;border-left:2px solid #B8976A;">${ROW('Koduomanik', escapeHtml(who) + ' &lt;' + escapeHtml(email) + '&gt;')}${ROW('Partner', escapeHtml(partnerName || '—') + ' &lt;' + escapeHtml(partnerEmail) + '&gt;')}</div>` + P('Kui partner nädala jooksul töölauda ei ava, tasub koduomanikule kirjutada.', 'font-size:12px;'), 'et'),
+      // If this specialist is already on SUKODA and the home owner invited them, link right away
+      let linkedNow = false;
+      if (verifiedOwner && auth?.orderId) {
+        const existingProv = await db.collection('providers').where('email', '==', partnerEmail).limit(1).get();
+        if (!existingProv.empty && existingProv.docs[0].data().status !== 'disabled') {
+          const pDoc = existingProv.docs[0];
+          const catDef = core.SERVICE_CATEGORIES[role];
+          if (catDef && !auth.order[catDef.orderField]) {
+            await db.collection('orders').doc(auth.orderId).update({
+              [catDef.orderField]: pDoc.id,
+              [catDef.nameField]: pDoc.data().name || partnerName || '',
+              [`connectedProviders.${role}`]: { providerId: pDoc.id, at: FieldValue.serverTimestamp(), via: 'invite' },
+              updatedAt: FieldValue.serverTimestamp(),
+            });
+            linkedNow = true;
+          }
+        }
+      }
+      await db.collection('partnerInvites').add({
+        partnerEmail,
+        partnerName,
+        email,
+        name,
+        role,
+        orderId: verifiedOwner ? auth.orderId : null,
+        verifiedOwner,
+        ...(linkedNow ? { claimedAt: FieldValue.serverTimestamp() } : {}),
+        lang: core.langOf(b.lang),
+        createdAt: FieldValue.serverTimestamp(),
       });
-      await db.collection('partnerInvites').add({ partnerEmail, partnerName, email, name, lang: b.lang === 'en' ? 'en' : 'et', createdAt: FieldValue.serverTimestamp() });
-      res.status(200).json({ sent: true });
+      res.status(200).json({ sent: true, linked: linkedNow });
     },
 
     'POST /api/haldus/auth/validate': async (req, res) => {
@@ -3287,6 +3569,7 @@ module.exports = function createHaldus(deps) {
       const newExp = new Date();
       newExp.setDate(newExp.getDate() + TOKEN_DAYS);
       await doc.ref.update({ sessionTokenExpiresAt: Timestamp.fromDate(newExp), lastLoginAt: FieldValue.serverTimestamp() });
+      await claimPartnerInvites(doc);
       res.status(200).json({ token, provider: serializeProvider({ id: doc.id, ...p }) });
     },
 
@@ -3412,7 +3695,11 @@ module.exports = function createHaldus(deps) {
 
       const orders = await loadProviderOrders(provider.id);
       const orderIds = new Set(orders.map((o) => o.doc.id));
-      const billingInfo = billingView(provider, activeHomeCount(orders));
+      const activeHomes = activeHomeCount(orders);
+      const billingInfo = billingView(provider, activeHomes);
+      if (!billingInfo.enterprise && !provider.inviteCode) {
+        await ensureProviderInviteCode(provider);
+      }
       const customers = orders
         .map(({ doc, role }) => serializeCustomer(doc.id, doc.data(), role, provider.id))
         .sort((a, b) => a.name.localeCompare(b.name, 'et'));
@@ -3459,6 +3746,14 @@ module.exports = function createHaldus(deps) {
       }).filter((row) => ownIds.has(row.orderId)), { months: [core.shiftMonthKey(nowKey, -1), nowKey] });
       const requests = requestSnap.docs.filter((d) => d.data().status !== 'awaiting_payment').map((d) => serializeRequest(d.id, d.data()));
 
+      // Keep lightweight retention stats fresh on the provider doc for trust badges
+      const completedRecent = invoiceSnap.docs.filter((d) => d.data().status === 'completed').length;
+      const prevCompleted = Number(provider.stats?.completedVisits) || 0;
+      const nextStats = { activeHomes, completedVisits: Math.max(prevCompleted, completedRecent) };
+      if (!provider.stats || provider.stats.activeHomes !== nextStats.activeHomes || provider.stats.completedVisits !== nextStats.completedVisits) {
+        db.collection('providers').doc(provider.id).update({ stats: nextStats }).catch(() => {});
+      }
+
       // Florists the partner can pick as "my flower shop" (shared curated list)
       const floristSnap = await db.collection('providers').where('services', 'array-contains', 'flowers').get();
       const florists = floristSnap.docs.filter((d) => d.data().active !== false).map((d) => ({ id: d.id, name: d.data().name, businessName: d.data().businessName || '' }));
@@ -3478,12 +3773,26 @@ module.exports = function createHaldus(deps) {
           category: s.category,
           name: s.name.et,
           nameEn: s.name.en,
+          nameRu: s.name.ru,
           priceHint: s.priceHint.et,
+          priceHintEn: s.priceHint.en,
+          priceHintRu: s.priceHint.ru,
           customPrice: core.cleanerExtraPrice(provider.availability, s.id),
           durationMin: s.durationMin,
         })),
         // Upkeep the housekeeper can take on at a home; `byProvider` = typically part of a cleaning service
-        maintenanceCatalogue: core.MAINTENANCE_CATALOGUE.map((m) => ({ id: m.id, name: m.name.et, hint: m.hint.et, intervalMonths: m.intervalMonths, byProvider: !!m.byProvider, homeTypes: m.homeTypes })),
+        maintenanceCatalogue: core.MAINTENANCE_CATALOGUE.map((m) => ({
+          id: m.id,
+          name: m.name.et,
+          nameEn: m.name.en,
+          nameRu: m.name.ru,
+          hint: m.hint.et,
+          hintEn: m.hint.en,
+          hintRu: m.hint.ru,
+          intervalMonths: m.intervalMonths,
+          byProvider: !!m.byProvider,
+          homeTypes: m.homeTypes,
+        })),
         maintenanceIntervals: core.MAINTENANCE_INTERVALS,
         billing: billingInfo,
         // Printed invitation cards the operator has handed to this provider (code + free/used)
@@ -3500,6 +3809,12 @@ module.exports = function createHaldus(deps) {
       if (b.name != null) update.name = str(b.name, 120);
       if (b.businessName != null) update.businessName = str(b.businessName, 160);
       if (b.phone != null) update.phone = str(b.phone, 40);
+      if (b.city != null) update.city = str(b.city, 80);
+      if (b.lang != null) update.lang = core.langOf(b.lang);
+      if (Array.isArray(b.services)) {
+        const svcs = b.services.filter((s) => Object.keys(core.SERVICE_CATEGORIES).includes(s) && s !== 'warranty' && s !== 'building');
+        if (svcs.length) update.services = svcs;
+      }
       if (b.notifyEmail != null) {
         const e = core.normalizeEmail(b.notifyEmail);
         if (e && !core.isValidEmail(e)) return res.status(400).json({ error: 'Teavituste e-posti aadress ei ole õige' });
@@ -3557,11 +3872,11 @@ module.exports = function createHaldus(deps) {
         if (e instanceof HomeError) return res.status(e.status).json(e.body);
         throw e;
       }
-      const { orderId, created, skipped, welcomeSent } = home;
+      const { orderId, role, created, skipped, welcomeSent } = home;
       const doc = await home.ref.get();
       res.status(200).json({
         success: true,
-        customer: serializeCustomer(orderId, doc.data(), 'cleaning', provider.id),
+        customer: serializeCustomer(orderId, doc.data(), role || 'cleaning', provider.id),
         createdVisits: created.map((c) => serializeBooking(c.id, c)),
         skippedHolidays: skipped,
         welcomeSent,
@@ -3577,8 +3892,8 @@ module.exports = function createHaldus(deps) {
       if (!acc) return res.status(404).json({ error: 'Klienti ei leitud' });
       const { ref, order } = acc;
 
-      // Only the housekeeper's role edits the home itself; other partners keep their own notes and nothing else
-      const canEditHome = acc.role === 'cleaning' || order.providerId === provider.id;
+      // Only the home's managing provider edits the home itself; other partners keep their own notes
+      const canEditHome = canManageHome(order, acc.role, provider.id);
       if (!canEditHome) {
         if (b.providerNotes == null) return res.status(403).json({ error: 'Kodu andmeid muudab koduhooldaja. Sina saad muuta ainult oma märkmeid.' });
         await ref.update({ [`providerNotesBy.${provider.id}`]: str(b.providerNotes, 1000), updatedAt: FieldValue.serverTimestamp() });
@@ -3643,7 +3958,7 @@ module.exports = function createHaldus(deps) {
       if (!provider) return res.status(401).json({ error: 'Unauthorized' });
       const b = req.body || {};
       const acc = await accessOrder(provider, b.orderId);
-      if (!acc || acc.role !== 'cleaning') return res.status(404).json({ error: 'Klienti ei leitud' });
+      if (!acc || !canManageHome(acc.order, acc.role, provider.id)) return res.status(404).json({ error: 'Klienti ei leitud' });
       const r = await addAwayPeriod({ orderRef: acc.ref, order: acc.order, input: b, provider, by: 'provider' });
       if (r.error) return res.status(r.status || 400).json({ error: r.error });
       res.status(200).json({ success: true, ...r });
@@ -3654,7 +3969,7 @@ module.exports = function createHaldus(deps) {
       if (!provider) return res.status(401).json({ error: 'Unauthorized' });
       const b = req.body || {};
       const acc = await accessOrder(provider, b.orderId);
-      if (!acc || acc.role !== 'cleaning') return res.status(404).json({ error: 'Klienti ei leitud' });
+      if (!acc || !canManageHome(acc.order, acc.role, provider.id)) return res.status(404).json({ error: 'Klienti ei leitud' });
       const r = await removeAwayPeriod({ orderRef: acc.ref, order: acc.order, periodId: String(b.periodId || ''), provider, by: 'provider' });
       if (r.error) return res.status(r.status || 400).json({ error: r.error });
       res.status(200).json({ success: true, ...r });
@@ -3669,7 +3984,7 @@ module.exports = function createHaldus(deps) {
       if (!provider) return res.status(401).json({ error: 'Unauthorized' });
       const b = req.body || {};
       const acc = await accessOrder(provider, b.orderId);
-      if (!acc || acc.role !== 'cleaning') return res.status(404).json({ error: 'Klienti ei leitud' });
+      if (!acc || !canManageHome(acc.order, acc.role, provider.id)) return res.status(404).json({ error: 'Klienti ei leitud' });
       const { ref, order } = acc;
       const r = applyMaintenanceAction(order, b, { by: 'provider', lang: 'et' });
       if (r.error) return res.status(r.status || 400).json({ error: r.error });
@@ -3686,7 +4001,23 @@ module.exports = function createHaldus(deps) {
       const acc = await accessOrder(provider, req.body?.orderId);
       if (!acc) return res.status(404).json({ error: 'Klienti ei leitud' });
       const { ref, order } = acc;
-      if (acc.role !== 'cleaning' && order.providerId !== provider.id) return res.status(403).json({ error: 'Kodu saab arhiveerida ainult koduhooldaja või SUKODA.' });
+      if (!canManageHome(order, acc.role, provider.id)) {
+        // A secondary specialist connected to this home can detach themselves without cancelling the home
+        const catDef = core.SERVICE_CATEGORIES[acc.role];
+        if (catDef && order[catDef.orderField] === provider.id) {
+          const upcoming = await upcomingBookingsForOrder(ref.id);
+          let dropped = 0;
+          for (const u of upcoming) {
+            if (u.providerId === provider.id) {
+              await db.collection('bookings').doc(u.id).update({ status: 'cancelled', cancelReason: 'Koostöö lõpetatud', cancelledAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
+              dropped += 1;
+            }
+          }
+          await ref.update({ [catDef.orderField]: null, [catDef.nameField]: '', updatedAt: FieldValue.serverTimestamp() });
+          return res.status(200).json({ success: true, cancelledVisits: dropped });
+        }
+        return res.status(403).json({ error: 'Kodu saab arhiveerida ainult kodu lisanud spetsialist.' });
+      }
       if (order.source !== 'manual') {
         return res.status(400).json({ error: 'See klient tuli SUKODA kaudu ja tema kodu lõpetab SUKODA. Kirjuta tere@sukoda.ee.' });
       }
@@ -3706,9 +4037,8 @@ module.exports = function createHaldus(deps) {
       if (!provider) return res.status(401).json({ error: 'Unauthorized' });
       const acc = await accessOrder(provider, req.body?.orderId);
       if (!acc) return res.status(404).json({ error: 'Klienti ei leitud' });
-      // A fresh link replaces the household's live session, so only the housekeeper who created the home may send it
-      if (acc.role !== 'cleaning' || acc.order.source !== 'manual') {
-        return res.status(403).json({ error: 'Rakenduse lingi saab uuesti saata ainult kodu lisanud koduhooldaja. Klient saab uue lingi ka ise, kui sisestab rakenduses oma e-posti aadressi.' });
+      if (!canManageHome(acc.order, acc.role, provider.id) || acc.order.source !== 'manual') {
+        return res.status(403).json({ error: 'Rakenduse lingi saab uuesti saata ainult kodu lisanud spetsialist. Klient saab sisse ka oma e-postiga.' });
       }
       const email = primaryEmail(acc.order);
       if (!core.isValidEmail(email)) return res.status(400).json({ error: 'Kliendil ei ole e-posti aadressi' });
@@ -3723,12 +4053,17 @@ module.exports = function createHaldus(deps) {
       if (!provider) return res.status(401).json({ error: 'Unauthorized' });
       const b = req.body || {};
       const acc = await accessOrder(provider, b.orderId);
-      if (!acc || acc.role !== 'cleaning') return res.status(404).json({ error: 'Klienti ei leitud' });
+      if (!acc || !canManageHome(acc.order, acc.role, provider.id)) return res.status(404).json({ error: 'Klienti ei leitud' });
       const { ref, order } = acc;
 
       const s = core.sanitizeSchedule(b.schedule);
       if (s.error) return res.status(400).json({ error: s.error });
-      const schedule = s.schedule;
+      const defaultServiceId = acc.role === 'cleaning'
+        ? null
+        : (core.SERVICE_CATALOGUE.find((svc) => svc.category === acc.role && (svc.kind || 'visit') === 'visit')?.id || null);
+      const schedule = s.schedule.active === false
+        ? s.schedule
+        : { ...s.schedule, providerId: provider.id, ...(defaultServiceId ? { serviceId: defaultServiceId } : {}) };
 
       // Cancel future untouched schedule-generated visits (manually moved ones stay)
       const upcoming = await upcomingBookingsForOrder(ref.id);
@@ -3921,6 +4256,33 @@ module.exports = function createHaldus(deps) {
       res.status(result.status).json(result.body);
     },
 
+    'POST /api/haldus/away/remove': async (req, res) => {
+      const provider = await authenticateProvider(req);
+      if (!provider) return res.status(401).json({ error: { et: 'Sisene uuesti.', en: 'Sign in again.', ru: 'Войдите ещё раз.' } });
+      const periodId = String(req.body?.periodId || '').trim();
+      if (!periodId) return res.status(400).json({ error: { et: 'Perioodi ei leitud.', en: 'Period not found.', ru: 'Период не найден.' } });
+      const next = (provider.awayPeriods || []).filter((p) => p && p.id !== periodId);
+      await db.collection('providers').doc(provider.id).update({ awayPeriods: next, updatedAt: FieldValue.serverTimestamp() });
+      res.status(200).json({ success: true, awayPeriods: liveAway({ awayPeriods: next }) });
+    },
+
+    'POST /api/haldus/invoices/mark': async (req, res) => {
+      const provider = await authenticateProvider(req);
+      if (!provider) return res.status(401).json({ error: 'Unauthorized' });
+      const resToggle = core.toggleInvoicedHome(
+        provider.invoicedMonths,
+        req.body?.month,
+        req.body?.orderId,
+        typeof req.body?.invoiced === 'boolean' ? req.body.invoiced : undefined,
+      );
+      if (resToggle.error) return res.status(400).json({ error: 'Vigased andmed' });
+      await db.collection('providers').doc(provider.id).update({
+        invoicedMonths: resToggle.invoicedMonths,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+      res.status(200).json({ success: true, invoiced: resToggle.invoiced, invoicedMonths: resToggle.invoicedMonths });
+    },
+
     'POST /api/haldus/visits/note': async (req, res) => {
       const provider = await authenticateProvider(req);
       if (!provider) return res.status(401).json({ error: 'Unauthorized' });
@@ -4053,6 +4415,22 @@ module.exports = function createHaldus(deps) {
       const fallback = kind === 'issue' ? 'Kui soovid, tellime töö tasulisena.' : 'Soovitud aeg ei sobi — paku palun uut aega.';
       await reqRef.update({ status: 'declined', outcome: kind === 'issue' ? 'not_covered' : 'new_time', providerMessage: message.slice(0, 300), declinedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
       try { await appendRequestMessage(reqRef, { by: 'provider', name: provider.name, text: message || fallback }); } catch (e) { console.error('decline thread note failed', e); }
+      // If a household connected this specialist from the directory and their very first request is declined,
+      // free the category slot so the family can pick someone else right away.
+      const conn = acc.order.connectedProviders?.[request.category];
+      if (conn && conn.providerId === provider.id && core.SERVICE_CATEGORIES[request.category]) {
+        const catDef = core.SERVICE_CATEGORIES[request.category];
+        const prevBookings = await db.collection('bookings').where('orderId', '==', request.orderId).limit(20).get();
+        const hasHistory = prevBookings.docs.some((d) => d.data().providerId === provider.id && d.data().status !== 'cancelled');
+        if (!hasHistory && acc.order[catDef.orderField] === provider.id) {
+          await acc.ref.update({
+            [catDef.orderField]: null,
+            [catDef.nameField]: '',
+            [`connectedProviders.${request.category}`]: FieldValue.delete(),
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+        }
+      }
       await notifyRequest(acc.order, request, requestDeclinedEmail({ order: acc.order, request, requestId: reqRef.id, providerName: provider.name, message, lang: langOf(acc.order) }), { replyTo: PORTAL_REPLY_TO });
       res.status(200).json({ success: true });
     },
@@ -4722,6 +5100,37 @@ module.exports = function createHaldus(deps) {
     }
   }
 
+  /** Safe directory of providers who opted into `openForNewClients`, sorted by real home retention. */
+  async function loadDirectoryProviders() {
+    try {
+      const snap = await db.collection('providers').where('availability.openForNewClients', '==', true).limit(60).get();
+      if (snap.empty) return [];
+      const cards = [];
+      for (const doc of snap.docs) {
+        const p = { id: doc.id, ...doc.data() };
+        let stats = p.stats;
+        if (!stats || typeof stats.activeHomes !== 'number') {
+          const [orders, bSnap] = await Promise.all([
+            loadProviderOrders(doc.id),
+            db.collection('bookings').where('providerId', '==', doc.id).limit(200).get(),
+          ]);
+          stats = {
+            activeHomes: activeHomeCount(orders),
+            completedVisits: bSnap.docs.filter((b) => b.data().status === 'completed').length,
+          };
+          doc.ref.update({ stats }).catch(() => {});
+        }
+        const card = core.publicProviderCard(p, stats);
+        if (card) cards.push(card);
+      }
+      cards.sort((a, b) => (b.activeHomes - a.activeHomes) || (b.completedVisits - a.completedVisits) || a.name.localeCompare(b.name, 'et'));
+      return cards;
+    } catch (e) {
+      console.error('loadDirectoryProviders failed', e && e.message);
+      return [];
+    }
+  }
+
   const portalHandlers = {
     'GET /api/me/extras': async (req, res) => {
       const auth = await authenticateClient(req);
@@ -4729,10 +5138,11 @@ module.exports = function createHaldus(deps) {
       const { orderId, order } = auth;
       const lang = req.query?.lang && core.LANGS.includes(req.query.lang) ? req.query.lang : langOf(order);
       const showPrices = !(order.billing === 'provider' || order.source === 'manual');
-      const [provider, reqSnap, interestSnap] = await Promise.all([
+      const [provider, reqSnap, interestSnap, directory] = await Promise.all([
         loadProvider(order.providerId),
         db.collection('serviceRequests').where('orderId', '==', orderId).orderBy('createdAt', 'desc').limit(30).get(),
         db.collection('serviceInterests').where('orderId', '==', orderId).get(),
+        loadDirectoryProviders(),
       ]);
       try { await releaseOpenReschedules(reqSnap, order); } catch (e) { console.error('releaseOpenReschedules failed', e); }
       const florist = await loadProvider(floristIdFor(order, provider));
@@ -4749,11 +5159,19 @@ module.exports = function createHaldus(deps) {
       }));
       if (!partnerDocs.flowers && florist) partnerDocs.flowers = florist;
       const partners = Object.entries(partnerDocs).filter(([, p]) => p).map(([cat, p]) => ({
-        category: cat, label: core.categoryLabel(cat, lang), name: p.name, contactName: p.contactName || '', businessName: p.businessName || '', phone: p.phone || '', email: p.email || '',
+        category: cat,
+        label: core.categoryLabel(cat, lang),
+        name: p.name,
+        contactName: p.contactName || '',
+        businessName: p.businessName || '',
+        phone: p.phone || '',
+        email: p.email || '',
+        canDisconnect: cat !== 'warranty' && cat !== 'building' && !(cat === 'cleaning' && order.stripeSubscriptionId && order.subscriptionStatus === 'active'),
       }));
       res.status(200).json({
         viewer: auth.viewer || null,
         partners,
+        directory,
         // Developer after-sales white label: who runs this home's portal (name + project), UI only
         brand: order.brand && order.brand.name ? {
           name: String(order.brand.name), project: String(order.brand.project || ''), tagline: String(order.brand.tagline || ''), warrantyUntil: String(order.brand.warrantyUntil || ''),
@@ -5019,6 +5437,134 @@ module.exports = function createHaldus(deps) {
         });
       }
       res.status(200).json({ token: raw });
+    },
+
+    /** Connect an open specialist from the directory to a category on this home, optionally sending a first request. */
+    'POST /api/me/providers/connect': async (req, res) => {
+      if (!checkRateLimit(req, res, 'portal-connect', 10, 60000)) return;
+      const auth = await authenticateClient(req);
+      if (!auth) return res.status(401).json({ error: 'Unauthorized' });
+      const { orderId, order } = auth;
+      const lang = langOf(order);
+      if (order.status !== 'paid') return res.status(400).json({ error: 'Inactive home' });
+      const b = req.body || {};
+      const category = String(b.category || '');
+      const catDef = core.SERVICE_CATEGORIES[category];
+      if (!catDef || category === 'warranty' || category === 'building') {
+        return res.status(400).json({ error: 'Invalid category' });
+      }
+      const provider = await loadProvider(docId(b.providerId));
+      const card = core.publicProviderCard(provider);
+      if (!card || !card.services.includes(category)) {
+        return res.status(404).json({ error: core.pick({
+          et: 'See spetsialist ei võta praegu uusi kodusid vastu.',
+          en: 'This specialist is not taking new homes right now.',
+          ru: 'Этот специалист сейчас не берёт новые дома.',
+        }, lang) });
+      }
+      const plan = core.effectivePlan(provider);
+      const limit = core.planLimit(plan);
+      if (limit !== Infinity) {
+        const homes = activeHomeCount(await loadProviderOrders(provider.id));
+        if (homes >= limit && order[catDef.orderField] !== provider.id) {
+          return res.status(409).json({ error: core.pick({
+            et: 'Selle spetsialisti graafik on praegu täis. Vali keegi teine või kutsu oma inimene.',
+            en: 'This specialist’s schedule is currently full. Pick someone else or invite your own person.',
+            ru: 'График этого специалиста сейчас заполнен. Выберите другого или пригласите своего специалиста.',
+          }, lang) });
+        }
+      }
+      await db.collection('orders').doc(orderId).update({
+        [catDef.orderField]: provider.id,
+        [catDef.nameField]: provider.name || '',
+        [`connectedProviders.${category}`]: { providerId: provider.id, at: FieldValue.serverTimestamp(), via: 'directory' },
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+
+      const note = str(b.note, 500);
+      const svc = (b.serviceId && core.getService(b.serviceId)?.category === category ? core.getService(b.serviceId) : null)
+        || core.SERVICE_CATALOGUE.find((s) => s.category === category && (s.kind || 'visit') === 'visit');
+      let createdReq = null;
+      if (svc && note.length >= 3) {
+        let preferredDate = null;
+        if (b.preferredDate && core.parseDateStr(b.preferredDate) && b.preferredDate >= todayTallinnStr(0)) {
+          preferredDate = b.preferredDate;
+        }
+        const timeWindow = core.TIME_WINDOWS[b.timeWindow] ? b.timeWindow : 'any';
+        const senderName = str(auth.viewer?.name, 120) || primaryName(order) || '';
+        const senderEmail = core.normalizeEmail(auth.viewer?.email) || primaryEmail(order);
+        const reqData = {
+          orderId,
+          providerId: provider.id,
+          providerName: provider.name || null,
+          customerName: senderName || primaryName(order) || '',
+          customerEmail: primaryEmail(order),
+          submittedBy: { name: senderName, email: senderEmail },
+          customerPhone: order.customer?.phone || '',
+          address: primaryAddress(order),
+          serviceId: svc.id,
+          category,
+          preferredDate,
+          timeWindow,
+          note,
+          access: str(b.access, 400) || core.pick({ et: 'Olen sel ajal kodus.', en: 'I will be home.', ru: 'Я буду дома.' }, lang),
+          urgent: false,
+          messages: [{ id: core.randomId(), by: 'client', name: senderName, text: note, at: new Date() }],
+          status: 'requested',
+          lang,
+          source: 'portal',
+          createdAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        };
+        const reqRef = await db.collection('serviceRequests').add(reqData);
+        const request = { ...reqData, createdAt: new Date() };
+        const updatedOrder = { ...order, [catDef.orderField]: provider.id, [catDef.nameField]: provider.name || '' };
+        await finishRequest({ order: updatedOrder, orderId, provider, svc, kind: svc.kind || 'visit', ref: reqRef, request, lang, price: null });
+        createdReq = { ...serializeRequest(reqRef.id, request), serviceName: core.serviceName(svc.id, lang) };
+      }
+      res.status(200).json({ success: true, providerName: provider.name, request: createdReq });
+    },
+
+    /** Disconnect a specialist from a category on this home so the household stays in control. */
+    'POST /api/me/providers/disconnect': async (req, res) => {
+      if (!checkRateLimit(req, res, 'portal-disconnect', 10, 60000)) return;
+      const auth = await authenticateClient(req);
+      if (!auth) return res.status(401).json({ error: 'Unauthorized' });
+      if (!auth.viewer?.primary || portalRole(auth) !== 'owner') return res.status(403).json({ error: 'Forbidden' });
+      const { orderId, order } = auth;
+      const category = String(req.body?.category || '');
+      const catDef = core.SERVICE_CATEGORIES[category];
+      if (!catDef || category === 'warranty' || category === 'building') {
+        return res.status(400).json({ error: 'Invalid category' });
+      }
+      if (category === 'cleaning' && order.stripeSubscriptionId && order.subscriptionStatus === 'active') {
+        return res.status(400).json({ error: 'Active subscription' });
+      }
+      const prevProviderId = order[catDef.orderField];
+      if (!prevProviderId) return res.status(200).json({ success: true });
+      const upcoming = await upcomingBookingsForOrder(orderId);
+      for (const u of upcoming) {
+        if (u.providerId === prevProviderId) {
+          await db.collection('bookings').doc(u.id).update({
+            status: 'cancelled',
+            cancelReason: 'Kodu lõpetas koostöö',
+            cancelledBy: 'client',
+            cancelledAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+        }
+      }
+      const patch = {
+        [catDef.orderField]: null,
+        [catDef.nameField]: '',
+        [`connectedProviders.${category}`]: FieldValue.delete(),
+        updatedAt: FieldValue.serverTimestamp(),
+      };
+      if (category === 'cleaning' || order.schedule?.providerId === prevProviderId) {
+        patch['schedule.active'] = false;
+      }
+      await db.collection('orders').doc(orderId).update(patch);
+      res.status(200).json({ success: true });
     },
 
     'POST /api/me/handover': async (req, res) => {
@@ -5632,8 +6178,9 @@ module.exports = function createHaldus(deps) {
         const order = doc.data();
         if (order.status !== 'paid' || order.pausedAt) continue;
         try {
-          if (order.providerId && !providerCache[order.providerId]) providerCache[order.providerId] = await loadProvider(order.providerId);
-          const provider = providerCache[order.providerId] || null;
+          const schedProviderId = order.schedule?.providerId || order.providerId || null;
+          if (schedProviderId && !providerCache[schedProviderId]) providerCache[schedProviderId] = await loadProvider(schedProviderId);
+          const provider = providerCache[schedProviderId] || null;
           const { created, skipped } = await syncSchedule({ orderId: doc.id, order, provider });
           if (created.length) {
             await notifyOrder(order, scheduleEmail({ order, bookings: created, providerName: provider?.name || '', lang: langOf(order) }), { replyTo: PORTAL_REPLY_TO });

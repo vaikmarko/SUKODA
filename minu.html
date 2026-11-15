@@ -194,6 +194,14 @@
     telliPhotoName: '',
     showPastOrders: false,
     showMoreExtras: false,
+    showExpandServices: false,
+    expandCategory: '',
+    connectTargetId: '',
+    connectNote: '',
+    connectBusy: false,
+    connectError: '',
+    connectSuccess: '',
+    partnerInvite: { name: '', email: '', busy: false, done: false, error: '' },
     upkeepOpen: false,
     docPreview: null,
     telliAddons: { flowers: false, windows: false, linens: false, 'appliance-care': false },
@@ -660,12 +668,107 @@
         const ids = ['linens', 'ironing', 'laundry', 'rugs', 'away-care', 'other'];
         return ids.map((id) => this.serviceById(id)).filter((s) => s && (!this.showProvider || this.isOrderable(s)));
     },
+    get telliConnectedPartnerServices() {
+        const ids = ['babysitting', 'after-school', 'dog-walk', 'pet-sitting', 'hang-mount', 'assembly', 'lawn', 'hedge', 'outdoor-wash', 'seasonal-garden'];
+        return ids.map((id) => this.serviceById(id)).filter((s) => s && this.isOrderable(s));
+    },
+    get partners() {
+        return this.extras?.partners || [];
+    },
+    get expandableCategories() {
+        if (!this.showProvider) return [];
+        const cats = this.extras?.categories || {};
+        const connected = new Set((this.partners || []).map((p) => p.category));
+        const order = ['childcare', 'pets', 'handyman', 'garden', 'flowers', 'cleaning'];
+        return order
+            .filter((id) => !connected.has(id) && cats[id])
+            .map((id) => ({ id, label: cats[id] }));
+    },
+    directoryForCategory(catId) {
+        if (!catId) return [];
+        return (this.extras?.directory || []).filter((sp) => (sp.categories || []).includes(catId));
+    },
+    selectExpandCategory(catId) {
+        this.expandCategory = this.expandCategory === catId ? '' : catId;
+        this.connectTargetId = '';
+        this.connectNote = '';
+        this.connectError = '';
+        this.partnerInvite = { name: '', email: '', busy: false, done: false, error: '' };
+    },
+    async connectSpecialist(sp) {
+        if (!sp || !this.expandCategory || this.connectBusy) return;
+        this.connectBusy = true;
+        this.connectError = '';
+        this.connectSuccess = '';
+        try {
+            const res = await fetch('/api/me/providers/connect', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
+                body: JSON.stringify({ providerId: sp.id, category: this.expandCategory, note: this.connectNote.trim() }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || this.t('telliFailed'));
+            await this.loadExtras();
+            this.connectSuccess = this.t('connectDoneMsg', { name: sp.name });
+            this.connectTargetId = '';
+            this.connectNote = '';
+            this.expandCategory = '';
+            this.showExpandServices = false;
+        } catch (e) {
+            this.connectError = e.message || this.t('telliFailed');
+        } finally {
+            this.connectBusy = false;
+        }
+    },
+    async inviteOwnSpecialist() {
+        if (!this.expandCategory || !this.partnerInvite.email || this.partnerInvite.busy) return;
+        this.partnerInvite.busy = true;
+        this.partnerInvite.error = '';
+        this.partnerInvite.done = false;
+        try {
+            const res = await fetch('/api/haldus/invite-partner', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
+                body: JSON.stringify({
+                    role: this.expandCategory,
+                    partnerName: this.partnerInvite.name.trim(),
+                    partnerEmail: this.partnerInvite.email.trim(),
+                }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || this.t('telliFailed'));
+            if (data.linked) await this.loadExtras();
+            this.partnerInvite.done = true;
+            this.partnerInvite.name = '';
+            this.partnerInvite.email = '';
+        } catch (e) {
+            this.partnerInvite.error = e.message || this.t('telliFailed');
+        } finally {
+            this.partnerInvite.busy = false;
+        }
+    },
+    async disconnectPartner(p) {
+        if (!p || !p.category) return;
+        if (!confirm(this.t('disconnectAsk'))) return;
+        try {
+            const res = await fetch('/api/me/providers/disconnect', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
+                body: JSON.stringify({ category: p.category }),
+            });
+            if (res.ok) await this.loadExtras();
+        } catch (e) {
+            console.error(e);
+        }
+    },
     get canOrderCleanRow() {
         const s = this.serviceById('extra-clean');
         return !!s && (!this.showProvider || this.isOrderable(s));
     },
     get canAttachToNextClean() {
-        return Boolean(this.nextCleanDay && this.telliOpen && !['clean', 'fix', 'warranty', 'away-care', 'note'].includes(this.telliOpen));
+        const s = this.serviceById(this.telliOpen);
+        const cat = s ? s.category : '';
+        return Boolean(this.nextCleanDay && this.telliOpen && (cat === 'cleaning' || cat === 'flowers') && !['clean', 'fix', 'warranty', 'away-care', 'note'].includes(this.telliOpen));
     },
     get nextCleanShort() {
         return this.nextCleanDay ? this.formatDateShort(this.nextCleanDay) : '';
@@ -687,6 +790,10 @@
         const map = {
             'appliance-care': 'phApplianceCare', laundry: 'phLaundry', rugs: 'phRugs',
             'away-care': 'phAwayCare', other: 'phOther', flowers: 'phFlowers',
+            'babysitting': 'phBabysitting', 'after-school': 'phBabysitting',
+            'dog-walk': 'phDogWalk', 'pet-sitting': 'phDogWalk',
+            'lawn': 'phGarden', 'hedge': 'phGarden', 'outdoor-wash': 'phGarden', 'seasonal-garden': 'phGarden',
+            'hang-mount': 'phSmallRepairs', 'assembly': 'phSmallRepairs',
         };
         return this.t(map[id] || 'phDefault');
     },
@@ -1094,7 +1201,7 @@
     get maintHomeItems() { return this.maintenance.items.filter((i) => i.doneBy !== 'provider'); },
     get maintProviderItems() { return this.maintenance.items.filter((i) => i.doneBy === 'provider'); },
     get showProvider() { return this.extras?.showProvider === true; },
-    get providerFace() { return this.shortName(this.extras?.provider?.name || this.order?.provider?.name || ''); },
+    get providerFace() { return this.shortName(this.extras?.provider?.name || this.order?.provider?.name || this.extras?.partners?.[0]?.name || ''); },
     get providerFirstName() { return (this.maintenance.provider?.name || this.extras.provider?.name || '').split(' ')[0]; },
     get requestDoneBody() {
         const name = this.showProvider ? (this.shortName(this.requestDone?.providerName) || this.providerFace) : '';
@@ -1685,7 +1792,7 @@
     },
     isNotCovered(r) { return !!r && r.status === 'declined' && (r.outcome === 'not_covered' || (!r.outcome && r.kind === 'issue')); },
     requestStatusColor(status) {
-        return { requested: 'text-amber-600 bg-amber-50', confirmed: 'text-green-600 bg-green-50', completed: 'text-green-600 bg-green-50', answered: 'text-green-600 bg-green-50', declined: 'text-red-500 bg-red-50', cancelled: 'text-gray-500 bg-gray-50' }[status] || 'text-gray-500 bg-gray-50';
+        return { requested: 'p-badge-warn', confirmed: 'p-badge-ok', completed: 'p-badge-ok', answered: 'p-badge-ok', declined: 'p-badge-err', cancelled: 'p-badge-neutral' }[status] || 'p-badge-neutral';
     },
     serviceIcon(id) {
         const icons = {
@@ -2233,7 +2340,7 @@
         <!-- ═══════════════════════════════════════════════ -->
         <!-- STATE 2: LOGGED IN                              -->
         <!-- ═══════════════════════════════════════════════ -->
-        <div x-show="!loading && authenticated" x-cloak class="min-w-0 overflow-x-clip">
+        <div x-show="!loading && authenticated" x-cloak class="min-w-0 overflow-x-clip p-has-tabbar">
 
             <!-- Navigation -->
             <nav class="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm grid-line-b" aria-label="Main navigation">
@@ -2271,8 +2378,8 @@
                 </div>
             </div>
 
-            <!-- Tab navigation: four tabs, one home -->
-            <div class="px-6 md:px-12 grid-line-b overflow-x-auto">
+            <!-- Tab navigation: four tabs, one home (desktop) -->
+            <div class="hidden md:block px-6 md:px-12 grid-line-b overflow-x-auto">
                 <div class="flex gap-8 md:gap-12 text-sm uppercase tracking-[0.14em] font-sans font-medium whitespace-nowrap">
                     <button type="button" @click="activeTab = 'overview'" :class="activeTab === 'overview' || activeTab === 'visits' ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black border-b-2 border-transparent'" class="py-4 transition-colors" x-text="t('tabKodu')"></button>
                     <button type="button" @click="activeTab = 'extras'" :class="activeTab === 'extras' ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black border-b-2 border-transparent'" class="py-4 transition-colors relative">
@@ -2284,6 +2391,29 @@
                     <button type="button" @click="activeTab = 'mine'" :class="activeTab === 'mine' ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black border-b-2 border-transparent'" class="py-4 transition-colors" x-text="t('tabMine')"></button>
                 </div>
             </div>
+
+            <!-- Mobile bottom tab bar -->
+            <nav class="p-tabbar md:hidden" aria-label="Mobile navigation">
+                <button type="button" @click="activeTab = 'overview'" :aria-current="(activeTab === 'overview' || activeTab === 'visits') ? 'page' : 'false'" class="p-tabbar-btn">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"/></svg>
+                    <span x-text="t('tabKodu')"></span>
+                </button>
+                <button type="button" @click="activeTab = 'extras'" :aria-current="activeTab === 'extras' ? 'page' : 'false'" class="p-tabbar-btn">
+                    <span class="relative inline-flex">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                        <span x-show="needsYou" x-cloak class="absolute -top-0.5 -right-1.5 w-2 h-2 rounded-full bg-accent" aria-hidden="true"></span>
+                    </span>
+                    <span x-text="t('tabServices')"></span>
+                </button>
+                <button type="button" @click="activeTab = 'folder'" :aria-current="activeTab === 'folder' ? 'page' : 'false'" class="p-tabbar-btn">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
+                    <span x-text="t('tabFolder')"></span>
+                </button>
+                <button type="button" @click="activeTab = 'mine'" :aria-current="activeTab === 'mine' ? 'page' : 'false'" class="p-tabbar-btn">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    <span x-text="t('tabMine')"></span>
+                </button>
+            </nav>
 
             <main id="main-content" class="px-6 md:px-12 py-8 md:py-12 min-w-0">
                 <section id="push-offer" hidden class="border border-line bg-paper p-4 mb-6 max-w-xl" x-show="nextThing.kind !== 'welcome'">

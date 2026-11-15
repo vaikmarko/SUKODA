@@ -1,5 +1,8 @@
 import Alpine from 'alpinejs';
 import '../css/main.css';
+import { qrSvg } from '../../functions/lib/qr.js';
+
+window.SUKODA_QR = qrSvg;
 
 const TALLINN_TIME_ZONE = 'Europe/Tallinn';
 

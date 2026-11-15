@@ -352,4 +352,29 @@ Oma juturobot persoonaga; Arco veateadete töölaud; App Store / Play; CRM ja m�
 3. ~~Cristelle: OÜ või FIE, km-kohustus?~~ — otsustatud 24.09: OÜ, käibemaksukohustuseta. Oma kliendid arveldab ise, SUKODA raha ei liiguta.
 4. ~~Arco garantii tee ja arve tootes?~~ — otsustatud 24.09: Arcole ei näidata midagi. Arve ja andmed teeb Marko käsitsi. Diili järel läheb rike otse Hausingusse.
 5. ~~Üleandmise kingituse sisu lepingusse?~~ — otsustatud 24.09: diili ei ole. Müük käib kinkekaardiga `SK1349-9EMK-4W47` aadressil `/lunasta`. See üks kood avab ettevalmistatud Kodulahe kodu ilma nime ja e-posti vormita. Teised kaardid on kas kutse või vana ostetud kinkekaart.
-6. ~~RU keel piloodis või hiljem?~~ — otsustatud 22.09: elaniku pool ET/EN/RU piloodist alates, töölaud ET/EN.
+6. ~~RU keel piloodis või hiljem?~~ — uuendatud 15.11: nii elaniku portaal (`minu.html`), spetsialisti töölaud (`haldus.html`) kui ka maandumisleht (`index.html`, `lunasta.html`) on täielikult `ET / EN / RU`.
+
+---
+
+## 10. Strateegiline suund (15.11.2026): Iseteenindav SaaS, terav fookus + universaalne mootor
+
+Eestis on klassikalised teenuste vahendusturud (kus platvorm otsib võõraid tegijaid, võtab 20–30% komisjoni ja lahendab kvaliteedivaidlusi) takerdunud kahel põhjusel: võõra inimese koju lubamise usaldusbarjäär ja platvormist möödahiilimine pärast esimest visiiti. SUKODA lahendab selle olemuslikult teisiti:
+
+1. **Null käsitööd operaatorile (0% vahendustasu, puhas SaaS tööriist):**
+   - Marko ei otsi käsitsi töötajaid, ei vahenda võõraid ega sekku arveldusse. Kokkulepped ja arved käivad 100% otse pere ja spetsialisti vahel.
+   - Äriloogika on läbipaistev tarkvaratellimus spetsialistile: **0 € / kuu** (kuni 3 kodu) → **19 € / kuu** (kuni 20 kodu) → **39 € / kuu** (piiramatult kodusid), lisaks B2B uusarenduste kodupassid (nt Arco Vara).
+2. **„Instagrami printsiip“ — terav fookus pinnal, universaalne mootor all:**
+   - Avalehe ja esmase kogemuse terav fookus on **regulaarsel koduhooldusel / koristusel** (kõige sagedasem rütm, kõige suurem SMS-ide, võtmete ja kalendrite valu).
+   - Sama puhas mootor (`orders` kodu-objekt + kategooriapõhised rollid + ajagraafik + vestlus) kannab aga kõiki kodu ja pere usaldatud inimesi ühe katuse all: **koristus**, **lapsehoid** (`childcare`), **lemmikloomad / koerajalutus** (`pets`), **remondimees** (`handyman`), **aed ja õu** (`garden`) ning **lilled** (`flowers`).
+   - Elaniku vaade püsib rahulik: esiplaanil on ainult tema koduga juba ühendatud teenused; lisateenused avanevad vaikselt jaotise *„+ Lisa teine teenus sinu kodule“* alt.
+3. **Usaldus ilma võltsitavate tärnideta:**
+   - Pere kas **kutsub oma usaldatud inimese** (ühe puutega e-kutse, mis ühendab spetsialisti sisselogimisel automaatselt koduga) või **valib vaba spetsialisti**, kes on oma töölaual lülitanud sisse `openForNewClients`.
+   - Kvaliteedimärgiks ei ole anonüümsed arvustused, vaid objektiivne platvormisisene fakt: **mitmes SUKODA kodus spetsialist püsivalt käib ja mitu visiiti on tehtud** (`Püsivalt X kodus · Y tehtud visiiti`).
+   - Ligipääsu privaatsus: püsiv uksekood (`homeProfile.access`) on nähtav ainult püsivale koduhooldajale; teised spetsialistid näevad ainult konkreetse tellimuse juurde lisatud ligipääsuinfot.
+4. **100% digitaalne liitumine (ilma paberkaartideta):**
+   - Füüsiliste kaartide trükkimisest ja saatmisest loobutakse. Igal spetsialistil on töölaual püsiv digitaalne kutselink (`sukoda.ee/lunasta?code=SK-XXXXXXXX`), mobiilne jagamisnupp (`navigator.share`) ja ekraanilt skaneeritav QR-kood. (Vanad koodid jäävad tagasiühilduvaks.)
+   - Uus spetsialist avab tasuta töölaua 30 sekundiga (`/haldus?alusta` → kohene 6-kohaline sisenemiskood samal ekraanil).
+5. **Järgmine tehniline etapp — natiivne Flutteri mobiilirakendus (iOS + Android):**
+   - Täna töötab SUKODA kiire mobiilisõbraliku PWA-na (pöidla-all oleva alumise tabbariga nii `/minu` kui ka `/haldus` vaates).
+   - Järgmise etapina ehitatakse ühe koodibaasiga **Flutteri rakendus** (App Store + Google Play), mis kasutab täpselt samu olemasolevaid JSON API lõpp-punkte (`/api/me/*`, `/api/haldus/*`), 6-kohalist sisenemiskoodi ja Firebase Cloud Messaging (FCM) push-teavitusi — null äriloogika dubleerimist.
+

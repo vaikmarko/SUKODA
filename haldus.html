@@ -21,6 +21,7 @@
     <script src="/push.js"></script>
     <link rel="preload" href="/assets/fonts/cormorant-garamond-400.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/assets/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
+    <script type="module" src="/assets/js/haldus-ru.js"></script>
     <script type="module" src="/assets/js/main.js"></script>
     <style>
         .h-input { width: 100%; background: transparent; border: 0; border-bottom: 1px solid var(--color-line); padding: 10px 0; font-size: 15px; font-weight: 300; outline: none; transition: border-color .2s; }
@@ -54,28 +55,29 @@
                 <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12">
                     <a href="/" class="font-serif text-2xl md:text-3xl tracking-[0.08em] font-light">SUKODA</a>
                     <div class="flex items-center gap-1" role="group" :aria-label="t('langLabel')">
-                        <button type="button" @click="setLang('et')" class="text-xs font-sans py-3 px-2" :class="{ 'text-black': lang !== 'en', 'text-muted': lang === 'en' }" :aria-pressed="lang !== 'en'">ET</button>
+                        <button type="button" @click="setLang('et')" class="text-xs font-sans py-3 px-2" :class="{ 'text-black': lang === 'et', 'text-muted': lang !== 'et' }" :aria-pressed="lang === 'et'">ET</button>
                         <button type="button" @click="setLang('en')" class="text-xs font-sans py-3 px-2" :class="{ 'text-black': lang === 'en', 'text-muted': lang !== 'en' }" :aria-pressed="lang === 'en'">EN</button>
+                        <button type="button" @click="setLang('ru')" class="text-xs font-sans py-3 px-2" :class="{ 'text-black': lang === 'ru', 'text-muted': lang !== 'ru' }" :aria-pressed="lang === 'ru'">RU</button>
                     </div>
                 </div>
             </nav>
             <main class="min-h-[80vh] flex items-center justify-center px-4 py-12 md:py-24">
                 <div class="max-w-md w-full text-center">
-                    <p class="eyebrow mb-3">Töölaud</p>
-                    <h1 class="font-serif text-3xl md:text-4xl font-light mb-3" x-text="signupMode && !loginSent ? t('signupTitle') : t('loginTitle')"></h1>
-                    <p x-show="globalError" x-cloak class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 text-sm font-sans text-left" x-text="globalError"></p>
+                    <p class="eyebrow mb-3" x-text="t('deskWord')"></p>
+                    <h1 class="font-serif text-3xl md:text-4xl font-light mb-3" x-text="signupCodeMode ? t('codeTitle') : (signupMode && !loginSent ? t('signupTitle') : t('loginTitle'))"></h1>
+                    <p x-show="globalError" x-cloak class="mb-6 p-4 p-badge-err border border-line text-sm font-sans text-left" x-text="globalError"></p>
 
-                    <div x-show="!loginSent && !signupMode">
+                    <div x-show="!loginSent && !signupMode && !signupCodeMode">
                         <p class="text-muted font-sans font-light text-sm mb-10 max-w-sm mx-auto leading-relaxed" x-text="t('loginLead')"></p>
                         <form @submit.prevent="sendMagicLink()" class="text-left mb-8">
                             <label class="h-label" for="login-email" x-text="t('emailLabel')"></label>
                             <input id="login-email" type="email" x-model="loginEmail" required autocomplete="email" class="h-input font-sans">
-                            <p x-show="loginError" x-cloak class="text-sm text-red-500 font-sans font-light mt-3" x-text="loginError"></p>
+                            <p x-show="loginError" x-cloak class="text-sm text-accent font-sans font-light mt-3" x-text="loginError"></p>
                             <button type="submit" :disabled="loginSending || !loginEmail" class="p-btn w-full mt-8" x-text="loginSending ? t('sending') : t('sendLink')"></button>
                         </form>
                     </div>
-                    <!-- Self-serve onboarding: a partner opens their own desk, link arrives at once -->
-                    <div x-show="!loginSent && signupMode" x-cloak>
+                    <!-- Self-serve onboarding: open a desk and enter the 6-digit code right here -->
+                    <div x-show="!loginSent && signupMode && !signupCodeMode" x-cloak>
                         <p class="text-muted font-sans font-light text-sm mb-8 max-w-sm mx-auto leading-relaxed" x-text="t('signupLead')"></p>
                         <form @submit.prevent="signup()" class="text-left mb-8 space-y-5">
                             <div class="grid sm:grid-cols-2 gap-4">
@@ -95,17 +97,30 @@
                                 </div>
                             </div>
                             <div><label class="h-label" x-text="t('areaLabel')"></label><input type="text" x-model="signupForm.city" :placeholder="t('areaPh')" class="h-input font-sans"></div>
-                            <p x-show="loginError" x-cloak class="text-sm text-red-500 font-sans font-light" x-text="loginError"></p>
+                            <p x-show="loginError" x-cloak class="text-sm text-accent font-sans font-light" x-text="loginError"></p>
                             <button type="submit" :disabled="loginSending || !signupForm.name || !signupForm.email" class="p-btn w-full" x-text="loginSending ? t('opening') : t('openDesk')"></button>
                             <p class="text-xs text-muted font-sans font-light leading-relaxed" x-text="t('signupPricing')"></p>
                         </form>
                     </div>
-                    <div x-show="loginSent" x-cloak x-transition>
+                    <!-- Instant 6-digit code step after signup -->
+                    <div x-show="signupCodeMode" x-cloak x-transition class="text-left mb-8">
+                        <p class="text-muted font-sans font-light text-sm mb-8 text-center leading-relaxed" x-text="t('codeSentLead', { email: loginEmail })"></p>
+                        <form @submit.prevent="verifySignupCode()" class="space-y-5">
+                            <div>
+                                <label class="h-label" for="signup-code" x-text="t('codeLabel')"></label>
+                                <input id="signup-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" x-model="signupCode" x-ref="signupCodeInput" class="h-input font-serif text-2xl tracking-[0.25em] text-center">
+                            </div>
+                            <p x-show="loginError" x-cloak class="text-sm text-accent font-sans font-light text-center" x-text="loginError"></p>
+                            <button type="submit" :disabled="loginSending || signupCode.trim().length !== 6" class="p-btn w-full" x-text="loginSending ? t('checkingCode') : t('enterDesk')"></button>
+                            <button type="button" @click="signupCodeMode = false; loginError = ''" class="h-link w-full justify-center" x-text="t('changeEmail')"></button>
+                        </form>
+                    </div>
+                    <div x-show="loginSent && !signupCodeMode" x-cloak x-transition>
                         <p class="font-serif text-xl font-light mb-2" x-text="t('linkSent')"></p>
                         <p x-show="loginPortal" x-cloak class="text-muted font-sans font-light text-sm mb-2" x-text="t('linkIsHome')"></p>
                         <p class="text-muted font-sans font-light text-sm"><span x-text="t('linkMissing')"></span> <a href="mailto:tere@sukoda.ee" class="text-black">tere@sukoda.ee</a></p>
                     </div>
-                    <div class="border-t border-line pt-8 mt-8" x-show="!loginSent">
+                    <div class="border-t border-line pt-8 mt-8" x-show="!loginSent && !signupCodeMode">
                         <button type="button" @click="signupMode = !signupMode; loginError = ''" class="h-link h-link-accent mx-auto" x-text="signupMode ? t('haveAccess') : t('newHere')"></button>
                     </div>
                 </div>
@@ -113,16 +128,21 @@
         </div>
 
         <!-- ═══════════════ APP ═══════════════ -->
-        <div x-show="!loading && authenticated" x-cloak>
+        <div x-show="!loading && authenticated" x-cloak class="p-has-tabbar">
 
             <nav class="sticky top-0 z-40 bg-paper/95 backdrop-blur-sm grid-line-b" aria-label="Main navigation">
-                <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12">
+                <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12 gap-2">
                     <div class="flex items-center gap-3">
                         <a href="/" class="font-serif text-2xl md:text-3xl tracking-[0.08em] font-light">SUKODA</a>
-                        <span class="eyebrow text-accent hidden sm:inline">Töölaud</span>
+                        <span class="eyebrow text-accent hidden sm:inline" x-text="t('deskWord')"></span>
                     </div>
                     <div class="flex items-center gap-2 md:gap-4">
-                        <button type="button" @click="loadData()" :disabled="refreshing" class="h-link" x-text="refreshing ? t('refreshing') : t('refresh')"></button>
+                        <div class="flex items-center gap-0.5" role="group" :aria-label="t('langLabel')">
+                            <button type="button" @click="setLang('et')" class="text-xs font-sans py-2 px-1.5" :class="{ 'text-black': lang === 'et', 'text-muted': lang !== 'et' }" :aria-pressed="lang === 'et'">ET</button>
+                            <button type="button" @click="setLang('en')" class="text-xs font-sans py-2 px-1.5" :class="{ 'text-black': lang === 'en', 'text-muted': lang !== 'en' }" :aria-pressed="lang === 'en'">EN</button>
+                            <button type="button" @click="setLang('ru')" class="text-xs font-sans py-2 px-1.5" :class="{ 'text-black': lang === 'ru', 'text-muted': lang !== 'ru' }" :aria-pressed="lang === 'ru'">RU</button>
+                        </div>
+                        <button type="button" @click="loadData()" :disabled="refreshing" class="h-link hidden sm:inline-flex" x-text="refreshing ? t('refreshing') : t('refresh')"></button>
                         <button type="button" @click="logout()" class="h-link" x-text="t('logOut')"></button>
                     </div>
                 </div>
@@ -132,10 +152,10 @@
                 <p class="font-serif text-2xl font-light" x-text="t('greet', { name: greetName() })"></p>
             </div>
 
-            <!-- Tabs -->
-            <div class="px-4 md:px-12 grid-line-b flex items-stretch">
+            <!-- Desktop Tabs (mobile uses bottom tabbar) -->
+            <div class="hidden md:flex px-12 grid-line-b items-stretch">
                 <div class="flex-1 overflow-x-auto">
-                    <div class="flex gap-4 md:gap-12 text-xs uppercase tracking-wide md:tracking-[0.16em] font-sans font-medium whitespace-nowrap">
+                    <div class="flex gap-12 text-xs uppercase tracking-[0.16em] font-sans font-medium whitespace-nowrap">
                         <template x-for="tab in tabs" :key="tab.id">
                             <button type="button" @click="activeTab = tab.id" :class="activeTab === tab.id ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black'" class="pb-4 pt-4 transition-colors relative" :aria-current="activeTab === tab.id ? 'page' : null">
                                 <span x-text="t(tab.key)"></span>
@@ -144,11 +164,22 @@
                         </template>
                     </div>
                 </div>
-                <div class="flex items-center gap-1 shrink-0 pl-4" role="group" :aria-label="t('langLabel')">
-                    <button type="button" @click="setLang('et')" class="text-xs font-sans py-3 px-2" :class="{ 'text-black': lang !== 'en', 'text-muted': lang === 'en' }" :aria-pressed="lang !== 'en'">ET</button>
-                    <button type="button" @click="setLang('en')" class="text-xs font-sans py-3 px-2" :class="{ 'text-black': lang === 'en', 'text-muted': lang !== 'en' }" :aria-pressed="lang === 'en'">EN</button>
-                </div>
             </div>
+
+            <!-- Mobile Thumb-Friendly Bottom Tabbar -->
+            <nav class="p-tabbar md:hidden" :aria-label="t('deskWord')">
+                <div class="flex items-stretch">
+                    <template x-for="tab in tabs" :key="'m-' + tab.id">
+                        <button type="button" @click="activeTab = tab.id; window.scrollTo({ top: 0, behavior: 'smooth' })" :class="activeTab === tab.id ? 'is-active' : ''" class="p-tabbar-btn" :aria-current="activeTab === tab.id ? 'page' : null">
+                            <span class="relative inline-flex">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" :d="tab.icon"></path></svg>
+                                <span x-show="tab.id === 'requests' && pendingRequests.length" class="absolute -top-1.5 -right-2.5 bg-accent text-paper text-xs rounded-full min-w-4 h-4 px-1 flex items-center justify-center leading-none" x-text="pendingRequests.length"></span>
+                            </span>
+                            <span class="truncate max-w-full" x-text="t(tab.key)"></span>
+                        </button>
+                    </template>
+                </div>
+            </nav>
 
             <main class="px-4 md:px-12 py-6 md:py-10">
                 <section id="push-offer" hidden class="border border-line bg-paper p-4 mb-6 max-w-xl">
@@ -160,8 +191,8 @@
                     </div>
                 </section>
 
-                <p x-show="globalError" x-cloak class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 text-sm font-sans" x-text="globalError"></p>
-                <p x-show="toast" x-cloak x-transition class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] bg-black text-paper px-6 py-3 text-xs font-sans tracking-wide shadow-lg" x-text="toast"></p>
+                <p x-show="globalError" x-cloak class="mb-6 p-4 p-badge-err border border-line text-sm font-sans" x-text="globalError"></p>
+                <p x-show="toast" x-cloak x-transition class="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[200] bg-black text-paper px-6 py-3 text-xs font-sans tracking-wide shadow-lg" x-text="toast"></p>
 
                 <!-- ─────────── TÄNA ─────────── -->
                 <div x-show="activeTab === 'today'">
@@ -287,13 +318,19 @@
                 <div x-show="activeTab === 'customers'">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                         <input type="text" x-model="customerSearch" :placeholder="t('searchHomes')" :aria-label="t('searchHomes')" class="h-input font-sans sm:max-w-xs">
-                        <button type="button" x-show="isCleaningProvider && (filteredCustomers.length || customerSearch)" @click="openCustomerModal()" class="p-btn" x-text="t('addClient')"></button>
+                        <div class="flex flex-wrap gap-2" x-show="!isEnterprise && (filteredCustomers.length || customerSearch)">
+                            <button type="button" x-show="provider?.inviteUrl" @click="shareInvite(provider.inviteUrl)" class="p-btn-2" x-text="t('shareInviteBtn')"></button>
+                            <button type="button" @click="openCustomerModal()" class="p-btn" x-text="t('addClient')"></button>
+                        </div>
                     </div>
                     <div x-show="filteredCustomers.length === 0" class="bg-cream/40 border border-line p-10 text-center">
                         <p class="font-serif text-xl font-light mb-2" x-text="customerSearch ? t('homesNoMatch') : t('homesEmpty')"></p>
-                        <p class="text-sm text-muted font-sans font-light" x-show="isCleaningProvider && !customerSearch" x-text="t('homesEmptyAdd')"></p>
-                        <p class="text-sm text-muted font-sans font-light" x-show="!isCleaningProvider && !customerSearch" x-text="t('homesEmptyAssigned')"></p>
-                        <button type="button" x-show="isCleaningProvider && !customerSearch" @click="openCustomerModal()" class="p-btn mt-6" x-text="t('addClient')"></button>
+                        <p class="text-sm text-muted font-sans font-light" x-show="!isEnterprise && !customerSearch" x-text="t('homesEmptyAdd')"></p>
+                        <p class="text-sm text-muted font-sans font-light" x-show="isEnterprise && !customerSearch" x-text="t('homesEmptyAssigned')"></p>
+                        <div class="flex flex-wrap justify-center gap-3 mt-6" x-show="!isEnterprise && !customerSearch">
+                            <button type="button" @click="openCustomerModal()" class="p-btn" x-text="t('addClient')"></button>
+                            <button type="button" x-show="provider?.inviteUrl" @click="shareInvite(provider.inviteUrl)" class="p-btn-2" x-text="t('shareInviteBtn')"></button>
+                        </div>
                     </div>
                     <div class="grid md:grid-cols-2 gap-3">
                         <template x-for="c in filteredCustomers" :key="c.id">
@@ -436,16 +473,22 @@
                             <p class="text-sm text-muted font-sans font-light mt-2" x-text="invoice.months.length ? t('invoiceOwn') : t('invoiceEmpty')"></p>
                             <template x-for="block in invoice.months" :key="block.month">
                                 <div class="mt-6">
-                                    <div class="flex items-baseline justify-between gap-4">
-                                        <p class="font-sans" x-text="invoiceMonthLabel(block.month)"></p>
-                                        <p class="font-serif text-2xl font-light" x-show="block.cents" x-text="euroLabel(block.cents)"></p>
+                                    <div class="flex flex-wrap items-baseline justify-between gap-4">
+                                        <p class="font-sans capitalize" x-text="invoiceMonthLabel(block.month)"></p>
+                                        <div class="flex items-baseline gap-4">
+                                            <button type="button" @click="downloadInvoiceCsv(block)" class="h-link h-link-accent" x-text="t('exportCsv')"></button>
+                                            <p class="font-serif text-2xl font-light" x-show="block.cents" x-text="euroLabel(block.cents)"></p>
+                                        </div>
                                     </div>
                                     <div class="bg-white border border-line divide-y divide-line mt-3">
                                         <template x-for="home in block.homes" :key="home.orderId">
                                             <div class="px-5 py-4">
-                                                <div class="flex items-baseline justify-between gap-4">
+                                                <div class="flex flex-wrap items-center justify-between gap-3">
                                                     <p class="text-sm font-sans" x-text="home.customerName"></p>
-                                                    <p class="font-serif font-light" x-text="home.cents ? euroLabel(home.cents) : t('agreedPrice')"></p>
+                                                    <div class="flex items-center gap-3">
+                                                        <p class="font-serif font-light" x-text="home.cents ? euroLabel(home.cents) : t('agreedPrice')"></p>
+                                                        <button type="button" x-show="home.orderId" @click="toggleInvoiceSent(block.month, home.orderId)" class="h-chip transition-colors" :class="isInvoiced(block.month, home.orderId) ? 'p-badge-ok' : 'p-badge-neutral hover:text-black'" x-text="isInvoiced(block.month, home.orderId) ? t('invoiceSentDone') : t('markInvoiced')"></button>
+                                                    </div>
                                                 </div>
                                                 <template x-for="line in home.lines" :key="line.id">
                                                     <p class="text-sm text-muted font-sans font-light mt-1" x-text="invoiceLine(line)"></p>
@@ -468,8 +511,9 @@
                             <p class="text-sm text-muted font-sans font-light mt-2" x-text="t('awayBody')"></p>
                             <div x-show="provider?.awayPeriods?.length" x-cloak class="mt-4 border border-line divide-y divide-line bg-white">
                                 <template x-for="ap in (provider?.awayPeriods || [])" :key="ap.id">
-                                    <div class="px-4 py-2.5 text-sm font-sans font-light">
-                                        <span x-text="fmtDateShort(ap.from)"></span><span x-show="ap.to && ap.to !== ap.from" x-text="' – ' + fmtDateShort(ap.to)"></span>
+                                    <div class="px-4 py-2.5 flex items-center justify-between gap-3 text-sm font-sans font-light">
+                                        <span><span x-text="fmtDateShort(ap.from)"></span><span x-show="ap.to && ap.to !== ap.from" x-text="' – ' + fmtDateShort(ap.to)"></span></span>
+                                        <button type="button" @click="removeProviderAway(ap)" class="h-link" x-text="t('remove')"></button>
                                     </div>
                                 </template>
                             </div>
@@ -484,7 +528,7 @@
                                 </label>
                             </div>
                             <button type="submit" class="p-btn mt-4" :disabled="providerAway.busy" x-text="providerAway.busy ? t('savingProfile') : t('awaySave')"></button>
-                            <p x-show="providerAway.error" x-cloak class="text-sm text-red-500 font-sans font-light mt-3" x-text="providerAway.error"></p>
+                            <p x-show="providerAway.error" x-cloak class="text-sm text-accent font-sans font-light mt-3" x-text="providerAway.error"></p>
                             <p x-show="providerAway.saved" x-cloak class="text-sm font-sans font-light mt-3" x-text="t('awaySaved')"></p>
                         </form>
 
@@ -532,15 +576,28 @@
                                         <div class="px-4 py-3 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3">
                                             <label class="flex items-center gap-3 cursor-pointer min-w-0 flex-1">
                                                 <input type="checkbox" class="accent-black" :checked="availForm.offeredExtras.includes(ex.id)" @change="toggleOfferedExtra(ex.id)">
-                                                <span class="text-sm font-sans font-light truncate" x-text="lang === 'en' ? (ex.nameEn || ex.name) : ex.name"></span>
+                                                <span class="text-sm font-sans font-light truncate" x-text="svcName(ex)"></span>
                                             </label>
-                                            <input x-show="availForm.offeredExtras.includes(ex.id)" type="text" maxlength="40" :placeholder="ex.priceHint || '45 €'" :aria-label="(lang === 'en' ? (ex.nameEn || ex.name) : ex.name) + ' ' + t('priceLabel')" x-model="availForm.extraPrices[ex.id]" class="h-input sm:w-36 text-sm sm:text-right py-1.5">
+                                            <input x-show="availForm.offeredExtras.includes(ex.id)" type="text" maxlength="40" :placeholder="svcHint(ex) || '45 €'" :aria-label="svcName(ex) + ' ' + t('priceLabel')" x-model="availForm.extraPrices[ex.id]" class="h-input sm:w-36 text-sm sm:text-right py-1.5">
                                         </div>
                                     </template>
                                 </div>
                             </div>
+                            <div x-show="!isEnterprise" class="mt-8 pt-6 border-t border-line">
+                                <label class="flex items-start gap-3 cursor-pointer">
+                                    <input type="checkbox" class="mt-1 accent-black" x-model="availForm.openForNewClients">
+                                    <span>
+                                        <span class="font-sans text-sm block" x-text="t('openNewClientsLabel')"></span>
+                                        <span class="text-xs text-muted font-sans font-light block mt-1 leading-relaxed" x-text="t('openNewClientsHint')"></span>
+                                    </span>
+                                </label>
+                                <div x-show="availForm.openForNewClients" x-cloak class="mt-4">
+                                    <label class="h-label" x-text="t('bioLabel')"></label>
+                                    <input type="text" maxlength="240" x-model="availForm.bio" :placeholder="t('bioPh')" class="h-input">
+                                </div>
+                            </div>
                             <button type="submit" class="p-btn mt-5" :disabled="availSaving" x-text="availSaving ? t('savingProfile') : t('saveAvail')"></button>
-                            <p x-show="availError" x-cloak class="text-sm text-red-500 font-sans font-light mt-3" x-text="availError"></p>
+                            <p x-show="availError" x-cloak class="text-sm text-accent font-sans font-light mt-3" x-text="availError"></p>
                         </form>
 
                         <div x-show="isEnterprise" x-cloak class="border border-line bg-white p-5">
@@ -567,44 +624,53 @@
                                 <button type="submit" class="p-btn w-fit" :disabled="handoverSaving" x-text="handoverSaving ? t('savingProfile') : t('handoverTitle')"></button>
                                 <p x-show="handoverCode" class="font-serif text-3xl font-light sm:col-span-2" x-text="handoverCode"></p>
                                 <p x-show="handoverCode" class="text-sm text-muted font-sans font-light sm:col-span-2" x-text="t('handoverCode')"></p>
-                                <a x-show="handoverCard" class="p-btn-2 no-underline sm:col-span-2 w-fit" :href="handoverCard" target="_blank" rel="noopener" x-text="t('printCard')"></a>
+                                <a x-show="handoverCard" class="p-btn-2 no-underline sm:col-span-2 w-fit" :href="handoverCard" target="_blank" rel="noopener" x-text="t('openDigitalCard')"></a>
                             </form>
                         </div>
 
-                        <!-- Invitation cards: printed codes handed to this provider by SUKODA -->
-                        <div x-show="!isEnterprise">
-                            <div class="flex flex-wrap items-end justify-between gap-4 mb-3">
-                                <p class="eyebrow" x-text="t('inviteCards')"></p>
-                                <p class="text-sm text-muted font-sans font-light" x-show="inviteCards.length" x-text="inviteSummary()"></p>
+                        <!-- 100% Digital personal invite link & QR code -->
+                        <div x-show="!isEnterprise && provider?.inviteUrl" class="border-t border-line pt-6">
+                            <p class="eyebrow mb-2" x-text="t('digitalInviteTitle')"></p>
+                            <p class="text-sm text-muted font-sans font-light mb-4 leading-relaxed" x-text="t('digitalInviteLead')"></p>
+                            <div class="bg-white border border-line p-5 space-y-4">
+                                <div>
+                                    <p class="h-label" x-text="t('appLink')"></p>
+                                    <input type="text" readonly class="h-input font-mono text-sm" :value="provider?.inviteUrl || ''" @focus="$event.target.select()">
+                                </div>
+                                <div class="flex flex-wrap gap-3">
+                                    <button type="button" @click="shareInvite(provider.inviteUrl)" class="p-btn" x-text="t('shareInviteBtn')"></button>
+                                    <button type="button" @click="showInviteQr = !showInviteQr" class="p-btn-2" x-text="showInviteQr ? t('hideQr') : t('showQr')"></button>
+                                </div>
+                                <div x-show="showInviteQr" x-cloak class="pt-4 border-t border-line flex flex-col items-center text-center">
+                                    <div class="w-48 h-48 bg-white p-2 border border-line" x-html="inviteQrSvg()"></div>
+                                    <p class="font-serif text-xl font-light tracking-widest mt-3" x-text="provider?.inviteCode"></p>
+                                    <p class="text-xs text-muted font-sans font-light mt-1" x-text="t('scanQrHint')"></p>
+                                </div>
                             </div>
-                            <p class="text-sm text-muted font-sans font-light mb-4" x-text="t('inviteHint')"></p>
-                            <div class="bg-white border border-line divide-y divide-line" x-show="inviteCards.length">
-                                <template x-for="c in inviteCards" :key="c.code">
-                                    <div class="flex items-center justify-between gap-4 px-5 py-3 text-sm font-sans">
-                                        <span class="font-mono tracking-wider" x-text="c.code"></span>
-                                        <span class="flex items-center gap-3 min-w-0">
-                                            <span x-show="c.status === 'free'" class="h-chip bg-cream text-muted" x-text="t('freeCard')"></span>
-                                            <span x-show="c.status === 'used'" class="font-light text-muted truncate" x-text="usedLine(c)"></span>
-                                        </span>
-                                    </div>
-                                </template>
-                            </div>
-                            <p x-show="!inviteCards.length" class="text-sm text-muted font-sans font-light"><span x-text="t('noInvites')"></span> <a href="mailto:partner@sukoda.ee?subject=Kutsekaardid" class="text-black border-b border-accent hover:text-accent">partner@sukoda.ee</a></p>
                         </div>
 
                         <!-- Profile -->
-                        <div>
+                        <div class="border-t border-line pt-6">
                             <p class="eyebrow mb-3" x-text="t('myDetails')"></p>
                             <form @submit.prevent="saveProfile()" class="bg-white border border-line p-5 grid sm:grid-cols-2 gap-4 font-sans">
                                 <div><label class="h-label" for="profile-name" x-text="t('nameLabel')"></label><input id="profile-name" type="text" x-model="profileForm.name" class="h-input" autocomplete="name"></div>
                                 <div><label class="h-label" for="profile-company" x-text="t('companyLabel')"></label><input id="profile-company" type="text" x-model="profileForm.businessName" class="h-input" autocomplete="organization"></div>
                                 <div><label class="h-label" for="profile-phone" x-text="t('phoneLabel')"></label><input id="profile-phone" type="tel" x-model="profileForm.phone" class="h-input" autocomplete="tel"></div>
-                                <div><label class="h-label" for="profile-notify" x-text="t('notifyEmail')"></label><input id="profile-notify" type="email" x-model="profileForm.notifyEmail" class="h-input" autocomplete="email"></div>
+                                <div><label class="h-label" for="profile-city" x-text="t('areaLabel')"></label><input id="profile-city" type="text" x-model="profileForm.city" :placeholder="t('areaPh')" class="h-input"></div>
+                                <div class="sm:col-span-2"><label class="h-label" for="profile-notify" x-text="t('notifyEmail')"></label><input id="profile-notify" type="email" x-model="profileForm.notifyEmail" class="h-input" autocomplete="email"></div>
+                                <div class="sm:col-span-2" x-show="!isEnterprise">
+                                    <p class="h-label" x-text="t('offerLabel')"></p>
+                                    <div class="flex flex-wrap gap-2 mt-1">
+                                        <template x-for="o in editableServices" :key="'pf-' + o.id">
+                                            <button type="button" @click="toggleProfileService(o.id)" :class="profileForm.services.includes(o.id) ? 'bg-black text-paper border-black' : 'border-line-strong text-muted hover:text-black'" class="min-h-11 px-3 border text-sm font-light transition-colors" :aria-pressed="profileForm.services.includes(o.id)" x-text="t(o.key)"></button>
+                                        </template>
+                                    </div>
+                                </div>
                                 <p class="sm:col-span-2 text-xs text-muted font-light" x-text="t('loginEmailNote', { email: provider?.email || '' })"></p>
                                 <div class="sm:col-span-2 flex items-center gap-4">
                                     <button type="submit" :disabled="profileSaving" class="p-btn" x-text="profileSaving ? t('savingProfile') : t('save')"></button>
                                     <span x-show="profileSaved" x-cloak x-transition class="text-sm font-sans font-light" x-text="t('saved')"></span>
-                                    <span x-show="profileError" x-cloak class="text-sm text-red-500 font-sans font-light" x-text="profileError"></span>
+                                    <span x-show="profileError" x-cloak class="text-sm text-accent font-sans font-light" x-text="profileError"></span>
                                 </div>
                             </form>
                         </div>
@@ -643,11 +709,11 @@
                                 <select id="visit-type" x-model="visitModal.serviceId" @change="if (!visitModal.price && visitModal.serviceId && availForm.extraPrices[visitModal.serviceId]) visitModal.price = availForm.extraPrices[visitModal.serviceId]" class="h-select" :required="!isCleaningProvider">
                                     <option x-show="isCleaningProvider" value="" x-text="t('regularClean')"></option>
                                     <option x-show="!isCleaningProvider" value="" disabled x-text="t('pickVisitType')"></option>
-                                    <template x-for="s in catalogue" :key="s.id"><option :value="s.id" x-text="s.name"></option></template>
+                                    <template x-for="s in catalogue" :key="s.id"><option :value="s.id" x-text="svcName(s)"></option></template>
                                 </select>
                             </div>
                         </div>
-                        <div x-show="!visitModal.bookingId && visitModal.serviceId">
+                        <div x-show="!visitModal.bookingId">
                             <label class="h-label" for="visit-price" x-text="t('priceClientOpt')"></label>
                             <input id="visit-price" type="text" x-model="visitModal.price" placeholder="45 €" class="h-input">
                             <p x-show="ownClientOrder(visitModal.orderId)" class="text-xs text-muted font-light mt-2" x-text="t('priceToInvoice')"></p>
@@ -698,6 +764,10 @@
                     </div>
 
                     <form x-show="!customerModal.done" @submit.prevent="saveCustomer()" class="space-y-6 font-sans">
+                        <div x-show="provider?.inviteUrl" class="bg-cream/60 border border-line p-4 flex flex-wrap items-center justify-between gap-3">
+                            <p class="text-xs text-muted font-light leading-relaxed" x-text="t('quickInviteBanner')"></p>
+                            <button type="button" @click="shareInvite(provider.inviteUrl)" class="p-btn-2 p-btn-sm shrink-0" x-text="t('shareInviteBtn')"></button>
+                        </div>
                         <p class="text-sm text-muted font-light" x-text="t('addClientLead')"></p>
                         <div>
                             <label class="h-label" x-text="t('nameReq')"></label>
@@ -736,7 +806,7 @@
                             </div>
                         </div>
 
-                        <div>
+                        <div x-show="customerModal.form.frequency !== 'none'">
                             <p class="h-label" x-text="t('dayLabel')"></p>
                             <div class="flex flex-wrap gap-2">
                                 <template x-for="d in weekdayChoices" :key="d.n">
@@ -745,7 +815,7 @@
                             </div>
                         </div>
 
-                        <div>
+                        <div x-show="customerModal.form.frequency !== 'none'">
                             <p class="h-label" x-text="t('timeLabel')"></p>
                             <div class="flex flex-wrap gap-2">
                                 <template x-for="tm in hourChoices" :key="tm">
@@ -754,10 +824,10 @@
                             </div>
                         </div>
 
-                        <p class="text-sm font-light" x-text="firstVisitLine()"></p>
+                        <p x-show="customerModal.form.frequency !== 'none'" class="text-sm font-light" x-text="firstVisitLine()"></p>
 
-                        <div>
-                            <label class="h-label" x-text="t('cleanPriceOpt')"></label>
+                        <div x-show="customerModal.form.frequency !== 'none'">
+                            <label class="h-label" x-text="t('visitPriceOpt')"></label>
                             <input type="text" x-model="customerModal.form.price" maxlength="40" placeholder="65 €" class="h-input">
                             <p class="text-xs text-muted font-light mt-1.5" x-text="t('priceToInvoice')"></p>
                         </div>
@@ -777,7 +847,7 @@
                             </div>
                         </div>
 
-                        <div>
+                        <div x-show="isCleaningProvider && offerServices.length">
                             <p class="h-label" x-text="t('whatLabel')"></p>
                             <p class="text-sm text-muted font-light mb-3" x-text="t('whatLead')"></p>
                             <div class="flex flex-wrap gap-2">
@@ -838,7 +908,7 @@
                         </div>
 
                         <!-- Schedule -->
-                        <div class="border border-line p-5" x-show="detail.customer?.role === 'cleaning' && detail.customer?.status === 'paid'">
+                        <div class="border border-line p-5" x-show="detail.customer?.canEditHome && detail.customer?.status === 'paid'">
                             <div class="flex items-center justify-between mb-3">
                                 <p class="h-label mb-0" x-text="t('scheduleTitle')"></p>
                                 <button type="button" x-show="!detail.editSchedule" @click="startEditSchedule()" class="h-link h-link-accent" x-text="t('edit')"></button>
@@ -903,7 +973,7 @@
                         </div>
 
                         <!-- Kodu rütm: what I do at this home as part of my service, and what the household does itself -->
-                        <div class="border border-line p-5" x-show="detail.customer?.role === 'cleaning' && detail.customer?.status === 'paid'">
+                        <div class="border border-line p-5" x-show="detail.customer?.canEditHome && detail.customer?.status === 'paid'">
                             <div class="flex items-center justify-between mb-1">
                                 <p class="h-label mb-0" x-text="t('rhythmTitle')"></p>
                                 <button type="button" @click="detail.maintAdding = !detail.maintAdding; detail.error = ''" class="h-link h-link-accent" x-text="detail.maintAdding ? t('close') : t('addRow')"></button>
@@ -933,7 +1003,7 @@
                                 <p class="text-sm text-muted font-light" x-text="t('rhythmPickLead')"></p>
                                 <div class="flex flex-wrap gap-2">
                                     <template x-for="m in maintSuggestionsFor(detail.customer)" :key="m.id">
-                                        <button type="button" @click="maintAction({ action: 'add', catalogId: m.id })" :disabled="detail.saving" class="min-h-11 px-3 border text-sm font-light transition-colors" :class="m.byProvider ? 'border-black text-black hover:bg-black hover:text-paper' : 'border-line-strong text-muted hover:text-black'" :title="m.hint" x-text="m.name + ' · ' + maintIntervalLabel(m.intervalMonths)"></button>
+                                        <button type="button" @click="maintAction({ action: 'add', catalogId: m.id })" :disabled="detail.saving" class="min-h-11 px-3 border text-sm font-light transition-colors" :class="m.byProvider ? 'border-black text-black hover:bg-black hover:text-paper' : 'border-line-strong text-muted hover:text-black'" :title="lang === 'ru' ? (m.hintRu || m.hint) : lang === 'en' ? (m.hintEn || m.hint) : m.hint" x-text="svcName(m) + ' · ' + maintIntervalLabel(m.intervalMonths)"></button>
                                     </template>
                                 </div>
                                 <div class="grid grid-cols-12 gap-2 items-end">
@@ -946,7 +1016,7 @@
                         </div>
 
                         <!-- Away periods -->
-                        <div class="border border-line p-5" x-show="detail.customer?.role === 'cleaning' && detail.customer?.status === 'paid'">
+                        <div class="border border-line p-5" x-show="detail.customer?.canEditHome && detail.customer?.status === 'paid'">
                             <div class="flex items-center justify-between mb-3">
                                 <p class="h-label mb-0" x-text="t('clientAwayTitle')"></p>
                                 <button type="button" x-show="!detail.editAway" @click="detail.editAway = true; detail.awayForm = { from: '', to: '', note: '' }; detail.error = ''" class="h-link h-link-accent" x-text="t('addPeriod')"></button>
@@ -1036,8 +1106,8 @@
                             <button type="button" x-show="detail.notesDirty" @click="saveNotes()" :disabled="detail.saving" class="p-btn-2 mt-3" x-text="detail.saving ? t('savingProfile') : t('saveNotes')"></button>
                         </div>
 
-                        <div class="flex flex-wrap gap-4 pt-4 border-t border-line" x-show="detail.customer?.canEditHome && detail.customer?.source === 'manual'">
-                            <button type="button" x-show="detail.customer?.status === 'paid'" @click="archiveCustomer()" :disabled="detail.saving" class="h-link text-red-500" x-text="t('endClient')"></button>
+                        <div class="flex flex-wrap gap-4 pt-4 border-t border-line" x-show="detail.customer?.status === 'paid' && (detail.customer?.source === 'manual' || !detail.customer?.canEditHome)">
+                            <button type="button" @click="archiveCustomer()" :disabled="detail.saving" class="h-link text-accent" x-text="t('endClient')"></button>
                         </div>
                     </div>
                 </div>
@@ -1116,19 +1186,29 @@
         const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         const COPY = {
             // ---- shell, nav, login ----
+            deskWord: { et: 'Töölaud', en: 'Desk' },
             langLabel: { et: 'Keel', en: 'Language' },
             loginTitle: { et: 'Sisene töölauale', en: 'Sign in to the desk' },
             loginLead: { et: 'Kirjuta oma e-post. Saadame sulle sisenemislingi.', en: 'Enter your e-mail. We send you a sign-in link.' },
             sendLink: { et: 'Saada link', en: 'Send the link' },
             sending: { et: 'Saadan…', en: 'Sending…' },
             signupTitle: { et: 'Ava oma töölaud', en: 'Open your desk' },
-            signupLead: { et: 'Lisa oma kliendid ja ajad. Iga klient saab äpi ja kalendrikutsed. Sisenemislink tuleb kohe e-postile.', en: 'Add your clients and times. Each client gets the app and calendar invites. The sign-in link arrives by e-mail at once.' },
+            signupLead: { et: 'Lisa oma kliendid ja ajad. Iga klient saab äpi, kalendrikutsed ja automaatsed meeldetuletused. Kood tuleb kohe e-postile.', en: 'Add your clients and times. Each client gets the app, calendar invites and automatic reminders. The code arrives by e-mail at once.' },
+            codeTitle: { et: 'Sisesta kood', en: 'Enter the code' },
+            codeSentLead: { et: 'Saatsime 6-kohalise koodi aadressile {email}. Kirjuta kood siia või vajuta kirjas olevale nupule.', en: 'We sent a 6-digit code to {email}. Enter the code here or tap the button in the e-mail.' },
+            codeLabel: { et: '6-kohaline kood', en: '6-digit code' },
+            checkingCode: { et: 'Kontrollin…', en: 'Checking…' },
+            enterDesk: { et: 'Ava töölaud', en: 'Open the desk' },
+            changeEmail: { et: 'Muuda e-posti', en: 'Change e-mail' },
+            codeWrong: { et: 'Kood ei kehti. Kontrolli numbreid või saada uus.', en: 'The code is not valid. Check the digits or ask for a new one.' },
             companyOpt: { et: 'Ettevõte (valikuline)', en: 'Company (optional)' },
             offerLabel: { et: 'Mida sa teed', en: 'What you do' },
             svcSignCleaning: { et: 'Koristus', en: 'Cleaning' },
             svcSignWarranty: { et: 'Garantii ja maja', en: 'Warranty and building' },
             svcSignFlowers: { et: 'Lilled', en: 'Flowers' },
             svcSignHandyman: { et: 'Remondimees', en: 'Handyman' },
+            svcSignChildcare: { et: 'Lapsehoid', en: 'Childcare' },
+            svcSignPets: { et: 'Lemmikloomad', en: 'Pet care' },
             svcSignBuilding: { et: 'Maja haldus', en: 'Building management' },
             svcSignGarden: { et: 'Aed ja õu', en: 'Garden and yard' },
             areaLabel: { et: 'Piirkond', en: 'Area' },
@@ -1229,6 +1309,26 @@
             dayLabel: { et: 'Nädalapäev', en: 'Weekday' },
             firstVisit: { et: 'Esimene kord on {when} kell {time}. Kestus {hours} tundi.', en: 'The first visit is {when} at {time}. It takes {hours} hours.' },
             cleanPriceOpt: { et: 'Koristuse hind (valikuline)', en: 'Cleaning price (optional)' },
+            visitPriceOpt: { et: 'Visiidi hind (valikuline)', en: 'Visit price (optional)' },
+            schedFlex: { et: 'Kokkuleppel (lisan ajad ise)', en: 'On request (add times manually)' },
+            quickInviteBanner: { et: 'Ei taha kliendi andmeid ise trükkida? Saada talle oma kutselink ja ta täidab andmed ise.', en: 'Prefer not to type client details yourself? Send them your invite link and they fill it in.' },
+            shareInviteBtn: { et: 'Jaga kutselinki', en: 'Share invite link' },
+            digitalInviteTitle: { et: 'Sinu digitaalne kutselink ja QR-kood', en: 'Your digital invite link and QR code' },
+            digitalInviteLead: { et: 'Saada see link kliendile sõnumiga või näita QR-koodi oma telefoni ekraanilt. Paberkaarte pole vaja — klient avab lingi, kirjutab oma andmed ja ilmub kohe sinu kodude alla.', en: 'Send this link to a client in a message or show the QR code on your phone screen. No paper cards needed — the client opens the link, enters their details and appears under your homes.' },
+            showQr: { et: 'Näita QR-koodi', en: 'Show QR code' },
+            hideQr: { et: 'Peida QR-kood', en: 'Hide QR code' },
+            scanQrHint: { et: 'Klient suunab telefoni kaamera ekraanile ja avab oma kodu.', en: 'The client points their phone camera at the screen to open their home.' },
+            openDigitalCard: { et: 'Ava digitaalne kutseleht', en: 'Open digital handover sheet' },
+            exportCsv: { et: 'Laadi tabel alla (CSV)', en: 'Download CSV' },
+            markInvoiced: { et: 'Märgi saadetuks', en: 'Mark invoiced' },
+            invoiceSentDone: { et: 'Arve saadetud', en: 'Invoiced' },
+            openNewClientsLabel: { et: 'Võtan vastu ka uusi kliente oma piirkonnas', en: 'I also accept new clients in my area' },
+            openNewClientsHint: { et: 'Sinu nimi, piirkond, püsikodude arv ja hinnakiri on nähtavad peredele, kes otsivad äpis uut spetsialisti. SUKODA vahendustasu ei võta (0%).', en: 'Your name, area, recurring home count and prices become visible to households looking for a specialist in the app. SUKODA takes 0% commission.' },
+            bioLabel: { et: 'Lühitutvustus (valikuline)', en: 'Short introduction (optional)' },
+            bioPh: { et: 'nt Põhjalik ja rahulik koduhooldaja, 6 a kogemust, oma vahendid kaasas', en: 'e.g. Thorough and calm housekeeper, 6 years of experience, own supplies' },
+            awayRemovedProvider: { et: 'Eemalolek on eemaldatud.', en: 'The away period is removed.' },
+            roleChildcare: { et: 'Lapsehoid', en: 'Childcare' },
+            rolePets: { et: 'Lemmikloomad', en: 'Pet care' },
             addFamilyMember: { et: '+ Lisa teine pereliige', en: '+ Add another household member' },
             familyMemberTitle: { et: 'Teine pereliige', en: 'Second household member' },
             familyMemberHint: { et: 'Saab samad teated ja avab rakenduse oma e-postiga, et jätta tagasisidet ja tellida lisateenuseid.', en: 'Gets the same notices and opens the app with their own e-mail to leave feedback and order extras.' },
@@ -1535,6 +1635,11 @@
         };
         const MONTHS = ['Jaanuar', 'Veebruar', 'Märts', 'Aprill', 'Mai', 'Juuni', 'Juuli', 'August', 'September', 'Oktoober', 'November', 'Detsember'];
         const WEEKDAYS = ['pühapäev', 'esmaspäev', 'teisipäev', 'kolmapäev', 'neljapäev', 'reede', 'laupäev'];
+        if (window.SUKODA_HALDUS_RU) {
+            for (const [k, ruVal] of Object.entries(window.SUKODA_HALDUS_RU)) {
+                if (COPY[k] && typeof ruVal === 'string') COPY[k].ru = ruVal;
+            }
+        }
 
         // Estonian public holidays (mirror of functions/lib/haldus-core.js)
         function easter(y) { const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mo=Math.floor((h+l-7*m+114)/31)-1,da=((h+l-7*m+114)%31)+1; return new Date(Date.UTC(y,mo,da,12)); }
@@ -1551,6 +1656,7 @@
             authenticated: false,
             loading: true,
             loginEmail: '', loginSending: false, loginSent: false, loginPortal: false, loginError: '',
+            signupCodeMode: false, signupCode: '', showInviteQr: false,
             globalError: '', toast: '', refreshing: false,
 
             provider: null, customers: [], bookings: [], requests: [], invoice: { months: [] }, catalogue: [], florists: [], maintenanceCatalogue: [],
@@ -1563,6 +1669,8 @@
                 hours: { start: '08:00', end: '17:00' },
                 districtsText: '',
                 priceNote: '',
+                bio: '',
+                openForNewClients: false,
                 offeredExtras: ['windows', 'deep-clean', 'fridge-oven', 'appliance-care', 'linens', 'ironing', 'laundry', 'rugs', 'away-care', 'flowers', 'extra-clean'],
                 extraPrices: {},
             }, availSaving: false, availError: '',
@@ -1570,11 +1678,15 @@
             handoverForm: { buildingId: '', apartment: '', buyerName: '', buyerEmail: '', keysAt: '' }, handoverSaving: false,
             handoverCode: '',
             handoverCard: '',
-            profileForm: { name: '', businessName: '', phone: '', notifyEmail: '' }, profileSaving: false, profileSaved: false, profileError: '', maintenanceIntervals: [1, 2, 3, 6, 12, 24],
+            profileForm: { name: '', businessName: '', phone: '', city: '', notifyEmail: '', services: ['cleaning'] }, profileSaving: false, profileSaved: false, profileError: '', maintenanceIntervals: [1, 2, 3, 6, 12, 24],
             signupMode: new URLSearchParams(location.search).get('alusta') != null, signupForm: { name: '', businessName: '', email: '', phone: '', services: ['cleaning'], city: '' },
             signupServices: [
-                { id: 'cleaning', key: 'svcSignCleaning' }, { id: 'warranty', key: 'svcSignWarranty' }, { id: 'flowers', key: 'svcSignFlowers' },
-                { id: 'handyman', key: 'svcSignHandyman' }, { id: 'building', key: 'svcSignBuilding' }, { id: 'garden', key: 'svcSignGarden' },
+                { id: 'cleaning', key: 'svcSignCleaning' }, { id: 'handyman', key: 'svcSignHandyman' }, { id: 'garden', key: 'svcSignGarden' },
+                { id: 'flowers', key: 'svcSignFlowers' }, { id: 'childcare', key: 'svcSignChildcare' }, { id: 'pets', key: 'svcSignPets' },
+            ],
+            editableServices: [
+                { id: 'cleaning', key: 'svcSignCleaning' }, { id: 'handyman', key: 'svcSignHandyman' }, { id: 'garden', key: 'svcSignGarden' },
+                { id: 'flowers', key: 'svcSignFlowers' }, { id: 'childcare', key: 'svcSignChildcare' }, { id: 'pets', key: 'svcSignPets' },
             ],
             range: { from: '', to: '' },
             todayStr: '',
@@ -1586,11 +1698,11 @@
             todaySavingId: '',
             activeTab: 'today',
             tabs: [
-                { id: 'today', key: 'tabToday' },
-                { id: 'calendar', key: 'tabCalendar' },
-                { id: 'customers', key: 'tabHomes' },
-                { id: 'requests', key: 'tabWishes' },
-                { id: 'account', key: 'tabAccount' },
+                { id: 'today', key: 'tabToday', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+                { id: 'calendar', key: 'tabCalendar', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
+                { id: 'customers', key: 'tabHomes', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+                { id: 'requests', key: 'tabWishes', icon: 'M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z' },
+                { id: 'account', key: 'tabAccount', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
             ],
             customerSearch: '',
             calMonth: '', selectedDay: '',
@@ -1609,16 +1721,27 @@
 
             // ---------- lifecycle ----------
             async init() {
+                if (window.SUKODA_HALDUS_RU) {
+                    for (const [k, ruVal] of Object.entries(window.SUKODA_HALDUS_RU)) {
+                        if (this.T[k] && typeof ruVal === 'string') this.T[k].ru = ruVal;
+                    }
+                }
                 const storedLang = localStorage.getItem('sukoda_lang');
-                this.lang = storedLang === 'en' ? 'en' : 'et';
+                this.lang = (storedLang === 'en' || storedLang === 'ru') ? storedLang : 'et';
                 document.documentElement.lang = this.lang;
                 this.nowTick = Date.now();
                 setInterval(() => { this.nowTick = Date.now(); }, 30000);
                 this.todayStr = T().getDateString();
                 this.calMonth = this.todayStr.slice(0, 7);
                 const params = new URLSearchParams(location.search);
+                if (params.get('email')) this.signupForm.email = params.get('email').trim();
+                if (params.get('name')) this.signupForm.name = params.get('name').trim();
+                const askedRole = params.get('role');
+                if (askedRole && this.signupServices.some((s) => s.id === askedRole)) {
+                    this.signupForm.services = [askedRole];
+                }
                 const urlToken = params.get('token');
-                if (!urlToken && !this.token) {
+                if (!urlToken && !this.token && !this.signupMode) {
                     window.location.replace('/too');
                     return;
                 }
@@ -1654,7 +1777,14 @@
                     this.provider = d.provider; this.customers = d.customers; this.bookings = d.bookings; this.requests = d.requests; this.invoice = d.invoice || { months: [] }; this.catalogue = d.catalogue; this.florists = d.florists || []; this.maintenanceCatalogue = d.maintenanceCatalogue || []; this.maintenanceIntervals = d.maintenanceIntervals || this.maintenanceIntervals;
                     if (d.billing) this.billing = d.billing;
                     this.inviteCards = d.inviteCards || [];
-                    this.profileForm = { name: d.provider.name || '', businessName: d.provider.businessName || '', phone: d.provider.phone || '', notifyEmail: d.provider.notifyEmail || '' };
+                    this.profileForm = {
+                        name: d.provider.name || '',
+                        businessName: d.provider.businessName || '',
+                        phone: d.provider.phone || '',
+                        city: d.provider.city || '',
+                        notifyEmail: d.provider.notifyEmail || '',
+                        services: Array.isArray(d.provider.services) && d.provider.services.length ? [...d.provider.services] : ['cleaning'],
+                    };
                     const av = d.provider.availability || {};
                     this.availForm = {
                         leadDays: Number.isInteger(av.leadDays) ? av.leadDays : 14,
@@ -1663,6 +1793,8 @@
                         hours: av.hours && av.hours.start && av.hours.end ? { start: av.hours.start, end: av.hours.end } : { start: '08:00', end: '17:00' },
                         districtsText: Array.isArray(av.districts) ? av.districts.join(', ') : '',
                         priceNote: av.priceNote || '',
+                        bio: av.bio || '',
+                        openForNewClients: av.openForNewClients === true,
                         offeredExtras: Array.isArray(av.offeredExtras) ? [...av.offeredExtras] : ['windows', 'deep-clean', 'fridge-oven', 'appliance-care', 'linens', 'ironing', 'laundry', 'rugs', 'away-care', 'flowers', 'extra-clean'],
                         extraPrices: av.extraPrices && typeof av.extraPrices === 'object' ? { ...av.extraPrices } : {},
                     };
@@ -1688,14 +1820,58 @@
                 await this.loadData(from, to);
             },
 
-            toggleSignupService(id) { const i = this.signupForm.services.indexOf(id); if (i >= 0) this.signupForm.services.splice(i, 1); else this.signupForm.services.push(id); },
+            toggleSignupService(id) {
+                const i = this.signupForm.services.indexOf(id);
+                if (i >= 0) { if (this.signupForm.services.length > 1) this.signupForm.services.splice(i, 1); }
+                else this.signupForm.services.push(id);
+            },
+            toggleProfileService(id) {
+                const i = this.profileForm.services.indexOf(id);
+                if (i >= 0) { if (this.profileForm.services.length > 1) this.profileForm.services.splice(i, 1); }
+                else this.profileForm.services.push(id);
+            },
             async signup() {
                 if (!this.signupForm.name || !this.signupForm.email || this.loginSending) return;
                 this.loginSending = true; this.loginError = '';
                 try {
-                    const res = await fetch('/api/haldus/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...this.signupForm, email: this.signupForm.email.trim().toLowerCase() }) });
+                    const email = this.signupForm.email.trim().toLowerCase();
+                    const res = await fetch('/api/haldus/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...this.signupForm, email, lang: this.lang }) });
                     const r = await res.json().catch(() => ({}));
-                    if (res.ok) { this.loginEmail = this.signupForm.email; this.loginSent = true; } else this.loginError = this.errText(r, this.t('signupFailed'));
+                    if (res.ok) {
+                        this.loginEmail = email;
+                        if (r.codeSent) {
+                            this.signupCode = '';
+                            this.signupCodeMode = true;
+                            this.$nextTick(() => this.$refs.signupCodeInput?.focus());
+                        } else {
+                            this.loginSent = true;
+                        }
+                    } else this.loginError = this.errText(r, this.t('signupFailed'));
+                } catch { this.loginError = this.t('netFail'); } finally { this.loginSending = false; }
+            },
+            async verifySignupCode() {
+                const code = String(this.signupCode || '').trim();
+                if (!/^\d{6}$/.test(code) || !this.loginEmail || this.loginSending) return;
+                this.loginSending = true; this.loginError = '';
+                try {
+                    const res = await fetch('/api/haldus/login/verify', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: this.loginEmail, code, app: 'desk' }),
+                    });
+                    const r = await res.json().catch(() => ({}));
+                    if (!res.ok || !r.token) {
+                        this.loginError = this.errText(r, this.t('codeWrong'));
+                        return;
+                    }
+                    this.token = r.token;
+                    localStorage.setItem('sukoda_haldus_token', r.token);
+                    this.signupCodeMode = false;
+                    this.signupMode = false;
+                    history.replaceState({}, '', '/haldus');
+                    this.loading = true;
+                    await this.loadData();
+                    this.loading = false;
                 } catch { this.loginError = this.t('netFail'); } finally { this.loginSending = false; }
             },
             async sendMagicLink() {
@@ -1728,9 +1904,27 @@
             },
             get pendingRequests() { return this.requests.filter((r) => r.status === 'requested'); },
             get handledRequests() { return this.requests.filter((r) => r.status !== 'requested').slice(0, 30); },
+            deskLocale() {
+                return this.lang === 'en' ? 'en-GB' : this.lang === 'ru' ? 'ru-RU' : 'et-EE';
+            },
+            svcName(s) {
+                if (!s) return '';
+                if (this.lang === 'en') return s.nameEn || s.name || '';
+                if (this.lang === 'ru') return s.nameRu || s.name || '';
+                return s.name || '';
+            },
+            svcHint(s) {
+                if (!s) return '';
+                if (this.lang === 'en') return s.priceHintEn || s.priceHint || '';
+                if (this.lang === 'ru') return s.priceHintRu || s.priceHint || '';
+                return s.priceHint || '';
+            },
             get calMonthLabel() {
                 const [y, m] = this.calMonth.split('-').map(Number);
-                if (this.lang === 'en') return T().formatDate(`${this.calMonth}-01T12:00:00`, 'en-GB', { month: 'long', year: 'numeric' });
+                if (this.lang !== 'et') {
+                    const s = T().formatDate(`${this.calMonth}-01T12:00:00`, this.deskLocale(), { month: 'long', year: 'numeric' });
+                    return s.charAt(0).toUpperCase() + s.slice(1);
+                }
                 return `${MONTHS[m - 1]} ${y}`;
             },
             get calCells() {
@@ -1753,10 +1947,10 @@
             dateOf(iso) { return iso ? T().getDateString(iso) : ''; },
             firstName(n) { return String(n || '').trim().split(/\s+/)[0] || ''; },
             fmtTime(iso) { return iso ? T().formatTime(iso, 'et-EE', { hour: '2-digit', minute: '2-digit' }) : ''; },
-            fmtDateShort(v) { if (!v) return ''; const iso = v.length === 10 ? v + 'T12:00:00' : v; const y = this.dateOf(iso).slice(0, 4); const loc = this.lang === 'en' ? 'en-GB' : 'et-EE'; return T().formatDate(iso, loc, { day: 'numeric', month: 'short', ...(this.todayStr && y !== this.todayStr.slice(0, 4) ? { year: 'numeric' } : {}) }); },
+            fmtDateShort(v) { if (!v) return ''; const iso = v.length === 10 ? v + 'T12:00:00' : v; const y = this.dateOf(iso).slice(0, 4); return T().formatDate(iso, this.deskLocale(), { day: 'numeric', month: 'short', ...(this.todayStr && y !== this.todayStr.slice(0, 4) ? { year: 'numeric' } : {}) }); },
             fmtDateLong(v) {
                 if (!v) return '';
-                if (this.lang === 'en') { const iso = v.length === 10 ? v + 'T12:00:00' : v; return T().formatDate(iso, 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' }); }
+                if (this.lang !== 'et') { const iso = v.length === 10 ? v + 'T12:00:00' : v; return T().formatDate(iso, this.deskLocale(), { weekday: 'long', day: 'numeric', month: 'long' }); }
                 const [y, m, d] = (v.length === 10 ? v : this.dateOf(v)).split('-').map(Number); const dow = new Date(Date.UTC(y, m - 1, d, 12)).getUTCDay(); return `${WEEKDAYS[dow]}, ${d}. ${MONTHS[m - 1].toLowerCase()}`;
             },
             holidayName(dateStr) { if (!dateStr || dateStr.length < 10) return null; return holidays(Number(dateStr.slice(0, 4)))[dateStr] || null; },
@@ -1765,8 +1959,8 @@
                 if (!s || s.active === false) return this.t('noSchedule');
                 const freqKey = { weekly: 'schedWeek', biweekly: 'schedTwo', monthly: 'schedMonth' }[s.frequency];
                 const f = freqKey ? this.t(freqKey) : (s.frequency || '');
-                const [y, m, d] = (s.anchorDate || '').split('-').map(Number);
-                const dow = y ? T().formatDate(`${s.anchorDate}T12:00:00`, this.lang === 'en' ? 'en-GB' : 'et-EE', { weekday: 'long' }) : '';
+                const [y] = (s.anchorDate || '').split('-').map(Number);
+                const dow = y ? T().formatDate(`${s.anchorDate}T12:00:00`, this.deskLocale(), { weekday: 'long' }) : '';
                 const base = `${f}, ${dow} ${this.t('atTime')} ${s.time} · ${s.durationMin} ${this.t('minutes')}`;
                 return s.price ? `${base} · ${s.price}` : base;
             },
@@ -1781,6 +1975,11 @@
                     if (s.frequency === 'monthly') return this.t('schedPreviewMonth', { nth: ord(nth), dow, time: s.time });
                     return this.t(s.frequency === 'weekly' ? 'schedPreviewWeek' : 'schedPreviewTwo', { dow, time: s.time, from: this.fmtDateShort(s.anchorDate) });
                 }
+                if (this.lang === 'ru') {
+                    const dow = T().formatDate(`${s.anchorDate}T12:00:00`, 'ru-RU', { weekday: 'long' });
+                    if (s.frequency === 'monthly') return this.t('schedPreviewMonth', { nth, dow, time: s.time });
+                    return this.t(s.frequency === 'weekly' ? 'schedPreviewWeek' : 'schedPreviewTwo', { dow, time: s.time, from: this.fmtDateShort(s.anchorDate) });
+                }
                 const dow = WEEKDAYS[jsDow];
                 if (s.frequency === 'monthly') return this.t('schedPreviewMonth', { nth, dow, time: s.time });
                 const dowOn = dow.replace(/päev$/, 'päeval').replace(/^reede$/, 'reedel');
@@ -1790,8 +1989,8 @@
             dayVisits(date) { return this.bookings.filter((b) => b.status !== 'cancelled' && this.dateOf(b.scheduledAt) === date).sort(this.byTime); },
             nextVisitFor(orderId) { const now = new Date().toISOString(); return this.liveBookings.filter((b) => b.orderId === orderId && b.scheduledAt > now).sort(this.byTime)[0] || null; },
             customerUpcoming(orderId) { const now = new Date().toISOString(); return this.liveBookings.filter((b) => b.orderId === orderId && b.scheduledAt > now).sort(this.byTime); },
-            chipClass(b) { if (b.status === 'completed') return 'bg-green-50 text-green-700'; if (b.kind === 'extra') return 'bg-pink-50 text-pink-600'; return 'bg-accent/15 text-black'; },
-            requestChip(s) { return { confirmed: 'bg-green-50 text-green-700', completed: 'bg-green-50 text-green-700', answered: 'bg-green-50 text-green-700', declined: 'bg-gray-100 text-gray-500', cancelled: 'bg-gray-100 text-gray-500' }[s] || 'bg-accent/10 text-accent'; },
+            chipClass(b) { if (b.status === 'completed') return 'p-badge-ok'; if (b.kind === 'extra') return 'p-badge-warn'; return 'bg-accent/15 text-black'; },
+            requestChip(s) { return { confirmed: 'p-badge-ok', completed: 'p-badge-ok', answered: 'p-badge-ok', declined: 'p-badge-neutral', cancelled: 'p-badge-neutral' }[s] || 'p-badge-warn'; },
             // Same words as the portal and the e-mails: Ootab vastust · Kinnitatud · Vastatud · Tehtud · Vajab uut aega / Vaadatud üle · Tühistatud
             requestStatusLabel(s, r) {
                 if (s === 'declined') return (r && (r.outcome === 'not_covered' || (!r.outcome && r.kind === 'issue'))) ? this.t('statusReviewed') : this.t('statusNewTime');
@@ -1841,7 +2040,7 @@
             },
             greetName() { const p = this.provider; if (!p) return ''; return p.contactName || p.name || ''; },
             fmtStamp(iso) { return iso ? this.fmtDateShort(iso) + ' ' + this.fmtTime(iso) : ''; },
-            fmtDateFull(v) { if (!v) return ''; const iso = v.length === 10 ? v + 'T12:00:00' : v; return T().formatDate(iso, this.lang === 'en' ? 'en-GB' : 'et-EE', { day: 'numeric', month: 'long', year: 'numeric' }); },
+            fmtDateFull(v) { if (!v) return ''; const iso = v.length === 10 ? v + 'T12:00:00' : v; return T().formatDate(iso, this.deskLocale(), { day: 'numeric', month: 'long', year: 'numeric' }); },
             get isEnterprise() { return this.billing?.enterprise === true || this.billing?.plan === 'enterprise'; },
             get isCleaningProvider() { return (this.provider?.services || ['cleaning']).includes('cleaning'); },
             get visibleHomeProfileFields() {
@@ -1850,7 +2049,7 @@
                 return fields.filter((f) => f.key !== 'access');
             },
             roleLabel(role) {
-                const keys = { warranty: 'routeWarranty', handyman: 'roleHandyman', building: 'roleBuilding', flowers: 'roleFlowers', garden: 'roleGarden', cleaning: 'roleCleaning' };
+                const keys = { warranty: 'routeWarranty', handyman: 'roleHandyman', childcare: 'roleChildcare', pets: 'rolePets', building: 'roleBuilding', flowers: 'roleFlowers', garden: 'roleGarden', cleaning: 'roleCleaning' };
                 return keys[role] ? this.t(keys[role]) : '';
             },
             homeWhen(c) {
@@ -1868,9 +2067,8 @@
                 if (!c || c.role !== 'cleaning') return '';
                 const bits = [];
                 if (c.flowers && c.flowers.auto) bits.push(this.t('svcFlowers'));
-                const en = this.lang === 'en';
                 for (const it of (c.maintenance || [])) {
-                    if (it.doneBy === 'provider') bits.push(en ? (it.nameEn || it.name) : it.name);
+                    if (it.doneBy === 'provider') bits.push(this.maintName(it));
                 }
                 return bits.join(' · ');
             },
@@ -1904,10 +2102,10 @@
                 const now = new Date().toISOString();
                 const past = (b.endTime || b.scheduledAt) < now;
                 const live = ['scheduled', 'confirmed'].includes(b.status);
-                const status = b.status === 'completed' ? `<span class="h-chip bg-green-50 text-green-700">${esc(this.t('cardDone'))}</span>`
-                    : b.status === 'cancelled' ? `<span class="h-chip bg-gray-100 text-gray-500">${esc(this.t('cardCancelled'))}</span>`
+                const status = b.status === 'completed' ? `<span class="h-chip p-badge-ok">${esc(this.t('cardDone'))}</span>`
+                    : b.status === 'cancelled' ? `<span class="h-chip p-badge-neutral">${esc(this.t('cardCancelled'))}</span>`
                     : past ? `<span class="h-chip bg-cream text-muted">${esc(this.t('cardUnmarked'))}</span>` : '';
-                const kind = b.kind === 'extra' ? `<span class="h-chip bg-pink-50 text-pink-600">${esc(b.serviceName || this.t('cardExtra'))}</span>` : '';
+                const kind = b.kind === 'extra' ? `<span class="h-chip p-badge-warn">${esc(b.serviceName || this.t('cardExtra'))}</span>` : '';
                 const flowers = b.flowersOrdered && b.status !== 'cancelled' ? `<span class="eyebrow">${esc(this.t('cardFlowers'))}</span>` : '';
                 const actions = live ? `
                     <div class="flex flex-wrap gap-x-3 mt-2">
@@ -2024,7 +2222,16 @@
                 } catch (e) { this.providerAway.error = this.t('saveFailed'); }
                 finally { this.providerAway.busy = false; }
             },
-            /** Backend error → one plain sentence. Objects come as { et, en }; legacy strings are shown as-is unless technical. */
+            async removeProviderAway(ap) {
+                if (!ap?.id) return;
+                try {
+                    const res = await this.api('/api/haldus/away/remove', { method: 'POST', body: JSON.stringify({ periodId: ap.id }) });
+                    await this.okJson(res, this.t('saveFailed'));
+                    this.showToast(this.t('awayRemovedProvider'));
+                    await this.loadData(this.range.from, this.range.to);
+                } catch (e) { this.showToast(e.message); }
+            },
+            /** Backend error → one plain sentence. Objects come as { et, en, ru }; legacy strings are shown as-is unless technical. */
             errText(d, fallback) {
                 const e = d && d.error;
                 const fb = fallback || this.t('saveFailed');
@@ -2040,9 +2247,12 @@
                 return d;
             },
             setLang(code) {
-                this.lang = code === 'en' ? 'en' : 'et';
+                this.lang = (code === 'en' || code === 'ru') ? code : 'et';
                 try { localStorage.setItem('sukoda_lang', this.lang); } catch (e) { /* private mode */ }
                 document.documentElement.lang = this.lang;
+                if (this.authenticated && this.token) {
+                    this.api('/api/haldus/profile', { method: 'POST', body: JSON.stringify({ lang: this.lang }) }).catch(() => {});
+                }
             },
             t(key, vars) {
                 const row = (this.T && this.T[key]) || {};
@@ -2053,8 +2263,7 @@
             calDays() { return this.t('calWeekdays').split(','); },
             todayHeading() {
                 if (!this.todayStr) return '';
-                const loc = this.lang === 'en' ? 'en-GB' : 'et-EE';
-                return T().formatDate(this.todayStr + 'T12:00:00', loc, { weekday: 'long', day: 'numeric', month: 'long' });
+                return T().formatDate(this.todayStr + 'T12:00:00', this.deskLocale(), { weekday: 'long', day: 'numeric', month: 'long' });
             },
             customerOf(b) { return this.customers.find((c) => c.id === b.orderId) || null; },
             visitWhen(b) {
@@ -2162,7 +2371,7 @@
                 const maint = this.customerOf(b)?.maintenance || [];
                 for (const it of maint) {
                     if (it.doneBy !== 'provider' || !it.nextDueAt || it.nextDueAt > this.todayStr) continue;
-                    lines.push(this.lang === 'en' ? (it.nameEn || it.name) : it.name);
+                    lines.push(this.maintName(it));
                 }
                 return lines;
             },
@@ -2220,12 +2429,20 @@
             blankCustomerForm() {
                 const days = Array.isArray(this.availForm?.days) && this.availForm.days.length ? this.availForm.days : [1, 2, 3, 4, 5];
                 const weekday = days.includes(2) ? 2 : days[0];
-                return { name: '', email: '', phone: '', address: '', size: 'medium', frequency: 'biweekly', weekday, time: '10:00', price: '', services: [], showContact2: false, contact2: { name: '', email: '' }, force: false };
+                const freq = this.isCleaningProvider ? 'biweekly' : 'none';
+                return { name: '', email: '', phone: '', address: '', size: 'medium', frequency: freq, weekday, time: '10:00', price: '', services: [], showContact2: false, contact2: { name: '', email: '' }, force: false };
             },
             get sizeChoices() { return [{ id: 'small', key: 'sizeSmall' }, { id: 'medium', key: 'sizeMed' }, { id: 'large', key: 'sizeLarge' }]; },
-            get rhythmChoices() { return [{ id: 'weekly', key: 'schedWeek' }, { id: 'biweekly', key: 'schedTwo' }, { id: 'monthly', key: 'schedMonth' }]; },
+            get rhythmChoices() {
+                return [
+                    { id: 'weekly', key: 'schedWeek' },
+                    { id: 'biweekly', key: 'schedTwo' },
+                    { id: 'monthly', key: 'schedMonth' },
+                    { id: 'none', key: 'schedFlex' },
+                ];
+            },
             get weekdayChoices() {
-                const allLabels = this.lang === 'en' ? ['M', 'T', 'W', 'T', 'F', 'S', 'S'] : ['E', 'T', 'K', 'N', 'R', 'L', 'P'];
+                const allLabels = this.lang === 'en' ? ['M', 'T', 'W', 'T', 'F', 'S', 'S'] : this.lang === 'ru' ? ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'] : ['E', 'T', 'K', 'N', 'R', 'L', 'P'];
                 const workDays = Array.isArray(this.availForm?.days) && this.availForm.days.length ? this.availForm.days : [1, 2, 3, 4, 5];
                 return workDays.map((n) => ({ n, label: allLabels[n - 1] || String(n) }));
             },
@@ -2277,6 +2494,23 @@
                 const line = this.t('firstVisit', { when: this.fmtDateLong(date), time: f.time, hours: this.durationForSize(f.size) / 60 });
                 return this.holidayName(date) ? line + ' ' + this.t('holidaySkip') : line;
             },
+            async shareInvite(url) {
+                if (!url) return;
+                if (navigator.share) {
+                    try {
+                        await navigator.share({ title: 'SUKODA', url });
+                        return;
+                    } catch (e) {
+                        if (e && e.name === 'AbortError') return;
+                    }
+                }
+                await this.copyInvite(url);
+            },
+            inviteQrSvg() {
+                const url = this.provider?.inviteUrl;
+                if (!url || typeof window.SUKODA_QR !== 'function') return '';
+                try { return window.SUKODA_QR(url); } catch (e) { return ''; }
+            },
             async copyInvite(url) {
                 if (!url) return;
                 try {
@@ -2289,6 +2523,7 @@
                 const m = this.customerModal; if (m.saving) return;
                 m.saving = true; m.error = '';
                 const f = m.form;
+                const hasSchedule = f.frequency && f.frequency !== 'none';
                 const anchor = this.nextWeekday(f.weekday);
                 const contacts = [];
                 if (f.showContact2 && f.contact2 && (f.contact2.name || f.contact2.email)) {
@@ -2297,7 +2532,7 @@
                 const body = {
                     name: f.name, email: f.email, phone: f.phone, address: f.address, size: f.size,
                     sendWelcome: true, force: f.force, contacts,
-                    schedule: { frequency: f.frequency, anchorDate: anchor, time: f.time, durationMin: this.durationForSize(f.size), price: f.price || '' },
+                    ...(hasSchedule ? { schedule: { frequency: f.frequency, anchorDate: anchor, time: f.time, durationMin: this.durationForSize(f.size), price: f.price || '' } } : {}),
                 };
                 try {
                     const res = await this.api('/api/haldus/customers', { method: 'POST', body: JSON.stringify(body) });
@@ -2328,7 +2563,7 @@
                     const first = (d.createdVisits || [])[0];
                     const when = first && first.scheduledAt
                         ? (this.fmtDateLong(first.scheduledAt) + ' ' + this.t('atTime') + ' ' + this.fmtTime(first.scheduledAt))
-                        : (this.fmtDateLong(anchor) + ' ' + this.t('atTime') + ' ' + f.time);
+                        : (hasSchedule ? (this.fmtDateLong(anchor) + ' ' + this.t('atTime') + ' ' + f.time) : '');
                     m.done = { name: f.name, email: f.email, when, inviteUrl: d.inviteUrl || '', welcomeSent: !!d.welcomeSent, missed };
                     await this.loadData(this.range.from, this.range.to);
                 } catch (e) { m.error = e.message; } finally { m.saving = false; }
@@ -2359,7 +2594,15 @@
                 if (c.brand) return [c.brand.project, c.brand.name].filter(Boolean).join(' · ') || this.t('sukodaClient');
                 return c.source === 'manual' ? this.t('ownClient') : this.t('sukodaClient');
             },
-            maintName(it) { return this.lang === 'en' ? (it.nameEn || it.name) : it.name; },
+            maintName(it) {
+                if (!it) return '';
+                if (this.lang === 'en') return it.nameEn || it.name;
+                if (this.lang === 'ru') {
+                    const cat = it.catalogId ? (this.maintenanceCatalogue || []).find((m) => m.id === it.catalogId) : null;
+                    return (cat && cat.nameRu) || it.nameRu || it.name;
+                }
+                return it.name;
+            },
             async addCustomerAway() {
                 const f = this.detail.awayForm;
                 if (!f.from) return;
@@ -2455,7 +2698,40 @@
             },
             invoiceMonthLabel(month) {
                 if (!month) return '';
-                return T().formatDate(`${month}-01T12:00:00`, this.lang === 'en' ? 'en-GB' : 'et-EE', { month: 'long', year: 'numeric' });
+                return T().formatDate(`${month}-01T12:00:00`, this.deskLocale(), { month: 'long', year: 'numeric' });
+            },
+            isInvoiced(month, orderId) {
+                const map = this.provider?.invoicedMonths;
+                return Boolean(map && Array.isArray(map[month]) && map[month].includes(orderId));
+            },
+            async toggleInvoiceSent(month, orderId) {
+                if (!month || !orderId) return;
+                try {
+                    const res = await this.api('/api/haldus/invoices/mark', { method: 'POST', body: JSON.stringify({ month, orderId }) });
+                    const d = await this.okJson(res, this.t('saveFailed'));
+                    if (this.provider && d.invoicedMonths) this.provider.invoicedMonths = d.invoicedMonths;
+                } catch (e) { this.showToast(e.message); }
+            },
+            downloadInvoiceCsv(block) {
+                if (!block || !Array.isArray(block.homes)) return;
+                const escCsv = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+                const rows = [['Kuu', 'Klient', 'Kuupäev', 'Teenus', 'Summa EUR', 'Staatus'].map(escCsv).join(';')];
+                for (const home of block.homes) {
+                    const sent = this.isInvoiced(block.month, home.orderId) ? this.t('invoiceSentDone') : '';
+                    for (const line of (home.lines || [])) {
+                        const date = this.dateOf(line.at);
+                        const svc = line.name || this.t('svcSignCleaning');
+                        const eur = line.cents ? (line.cents / 100).toFixed(2).replace('.', ',') : '';
+                        rows.push([block.month, home.customerName, date, svc, eur, sent].map(escCsv).join(';'));
+                    }
+                }
+                const blob = new Blob(['\uFEFF' + rows.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `sukoda-${block.month}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
             },
             invoiceLine(line) {
                 const name = line.name || this.t('svcSignCleaning');
@@ -2471,7 +2747,7 @@
                 return out;
             },
             get allWeekdayChoices() {
-                const labels = this.lang === 'en' ? ['M', 'T', 'W', 'T', 'F', 'S', 'S'] : ['E', 'T', 'K', 'N', 'R', 'L', 'P'];
+                const labels = this.lang === 'en' ? ['M', 'T', 'W', 'T', 'F', 'S', 'S'] : this.lang === 'ru' ? ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'] : ['E', 'T', 'K', 'N', 'R', 'L', 'P'];
                 return [1, 2, 3, 4, 5, 6, 7].map((n, i) => ({ n, label: labels[i] }));
             },
             get cleanerExtraRows() {
@@ -2502,6 +2778,8 @@
                             hours: this.availForm.hours,
                             districts,
                             priceNote: this.availForm.priceNote,
+                            bio: this.availForm.bio,
+                            openForNewClients: this.availForm.openForNewClients,
                             offeredExtras: this.availForm.offeredExtras,
                             extraPrices: this.availForm.extraPrices,
                         }),

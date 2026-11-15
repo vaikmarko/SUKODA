@@ -22,6 +22,21 @@ add({
   pickSeparateDay: { et: 'Eraldi päeval', en: 'Separate day', ru: 'В другой день' },
   moreExtrasShow: { et: '+ Rohkem lisateenuseid', en: '+ More extra services', ru: '+ Ещё допуслуги' },
   moreExtrasHide: { et: 'Peida muud lisateenused', en: 'Hide extra services', ru: 'Скрыть допуслуги' },
+  expandHomeServices: { et: '+ Lisa teine teenus sinu kodule', en: '+ Add another service to your home', ru: '+ Добавить другую услугу к дому' },
+  collapseHomeServices: { et: 'Peida teised teenused', en: 'Hide other services', ru: 'Скрыть другие услуги' },
+  otherServicesLead: { et: 'Too oma kodu juurde ka lapsehoidja, koerajalutaja, remondimees või aednik. Valid spetsialisti, kes juba SUKODA kodudes käib, või kutsud oma usaldatud inimese.', en: 'Add childcare, pet care, a handyman or garden care to your home. Pick a specialist who already serves SUKODA homes, or invite your own trusted person.', ru: 'Подключите к своему дому няню, выгул собаки, мастера или уход за садом. Выберите специалиста, который уже работает в домах SUKODA, или пригласите своего человека.' },
+  trustHomesBadge: { et: 'Püsivalt {homes} kodus · {visits} tehtud visiiti', en: 'Active in {homes} homes · {visits} completed visits', ru: 'Постоянно в домах: {homes} · визитов: {visits}' },
+  trustNewBadge: { et: 'Uus platvormil', en: 'New on SUKODA', ru: 'Новый специалист' },
+  directDealNote: { et: 'Valid ja arveldad otse spetsialistiga. SUKODA vahendustasu ei võta.', en: 'You agree and settle directly with the specialist. SUKODA takes 0% commission.', ru: 'Договорённость и расчёт напрямую со специалистом. Комиссия SUKODA — 0%.' },
+  pickSpecialistBtn: { et: 'Vali ja saada soov', en: 'Select and send a note', ru: 'Выбрать и написать' },
+  connectNoteLabel: { et: 'Kirjuta lühidalt, mida ja millal vajad', en: 'Write briefly what you need and when', ru: 'Коротко напишите, что и когда нужно' },
+  connectSendBtn: { et: 'Ühenda koduga ja saada', en: 'Connect to home and send', ru: 'Подключить к дому и отправить' },
+  connectDoneMsg: { et: '{name} on sinu koduga ühendatud ja sai sinu sõnumi.', en: '{name} is connected to your home and received your note.', ru: '{name} подключён(а) к вашему дому и получил(а) ваше сообщение.' },
+  inviteOwnHeading: { et: 'Kutsu oma tuttav spetsialist', en: 'Invite your own trusted person', ru: 'Пригласить своего специалиста' },
+  inviteOwnHint: { et: 'Saadame talle e-kirjaga tasuta töölaua kutse. Kui ta sisse logib, ilmub ta automaatselt sinu kodu juurde.', en: 'We send them a free desk invite by e-mail. Once they sign in, they appear under your home automatically.', ru: 'Мы отправим приглашение на бесплатный рабочий стол. После входа специалист автоматически появится у вашего дома.' },
+  inviteSendBtn: { et: 'Saada kutse', en: 'Send invite', ru: 'Отправить приглашение' },
+  inviteSentDone: { et: 'Kutse on saadetud. Kui spetsialist töölaua avab, ühendatakse ta sinu koduga.', en: 'Invite sent. Once they open their desk, they are connected to your home.', ru: 'Приглашение отправлено. Когда специалист откроет рабочий стол, он подключится к вашему дому.' },
+  noOpenSpecialists: { et: 'Selles valdkonnas ei ole praegu vabu spetsialiste nimekirjas. Kutsu allpool oma tuttav inimene.', en: 'No open specialists are listed in this category right now. Invite your own trusted person below.', ru: 'Сейчас в этой категории нет свободных специалистов в списке. Пригласите своего человека ниже.' },
   feedbackShortLead: { et: 'Tagasiside eelmise korra kohta või märkus järgmiseks visiidiks.', en: 'Feedback on the last visit or a note for the next one.', ru: 'Отзыв о прошлом визите или заметка к следующему.' },
   noteSentCleaner: { et: 'Sõnum on saadetud. Vastus tuleb siia, Sinu teenuste alla.', en: 'Your message is sent. The reply comes here, under Your services.', ru: 'Сообщение отправлено. Ответ придёт сюда, в раздел «Ваши услуги».' },
   addonFlowers: { et: 'Lilled', en: 'Flowers', ru: 'Цветы' },
@@ -252,6 +267,9 @@ export const telliHtml = `<div x-show="activeTab === 'extras'" x-transition:ente
                 </form>
             </div>
 
+            <!-- Connected childcare, pet care & garden services -->
+            ${extraServiceBlock('telliConnectedPartnerServices')}
+
             <div class="border-b border-line" x-show="!showProvider">
                 <button type="button" class="w-full py-4 text-left" @click="setTelliOpen('warranty')">
                     <span class="flex items-baseline justify-between gap-4">
@@ -288,8 +306,70 @@ export const telliHtml = `<div x-show="activeTab === 'extras'" x-transition:ente
             </div>
         </div>
         <p x-show="telliQuote && telliQuote.unpriced && !showProvider && !telliGathering && telliOpen && telliOpen !== 'warranty' && telliOpen !== 'note'" x-cloak class="text-sm text-muted font-sans font-light mt-3" x-text="t('noPrice')"></p>
-        <p x-show="telliError" x-cloak class="text-sm text-red-500 font-sans font-light mt-3" x-text="telliError"></p>
+        <p x-show="telliError" x-cloak class="text-sm text-accent font-sans font-light mt-3" x-text="telliError"></p>
         <p x-show="telliDone && !telliGathering" x-cloak class="text-sm font-sans font-light mt-3" x-text="telliDone"></p>
+
+        <!-- Quiet expansion: add another home/family service (childcare, pet care, handyman, garden, cleaning) -->
+        <div x-show="expandableCategories.length" x-cloak class="mt-10 pt-6 border-t border-line">
+            <button type="button" @click="showExpandServices = !showExpandServices; expandCategory = ''" class="text-sm font-sans underline underline-offset-4 hover:text-accent transition-colors" x-text="showExpandServices ? t('collapseHomeServices') : t('expandHomeServices')"></button>
+            <div x-show="showExpandServices" x-cloak class="mt-4 space-y-4">
+                <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="t('otherServicesLead')"></p>
+                <div class="flex flex-wrap gap-2">
+                    <template x-for="cat in expandableCategories" :key="cat.id">
+                        <button type="button" @click="selectExpandCategory(cat.id)" :class="expandCategory === cat.id ? 'bg-black text-paper border-black' : 'border-line bg-white text-black hover:border-accent'" class="px-4 py-2.5 border text-sm font-sans transition-colors" x-text="cat.label"></button>
+                    </template>
+                </div>
+
+                <div x-show="expandCategory" x-cloak class="space-y-6 pt-2">
+                    <!-- Open specialists in this category -->
+                    <div x-show="directoryForCategory(expandCategory).length" class="space-y-3">
+                        <p class="text-xs text-muted font-sans font-light" x-text="t('directDealNote')"></p>
+                        <template x-for="sp in directoryForCategory(expandCategory)" :key="sp.id">
+                            <div class="bg-white border border-line p-5">
+                                <div class="flex flex-wrap items-baseline justify-between gap-2">
+                                    <p class="font-serif text-xl font-light" x-text="sp.name + (sp.businessName ? ' · ' + sp.businessName : '')"></p>
+                                    <span class="eyebrow text-accent" x-text="sp.activeHomes > 0 || sp.completedVisits > 0 ? t('trustHomesBadge', { homes: sp.activeHomes, visits: sp.completedVisits }) : t('trustNewBadge')"></span>
+                                </div>
+                                <p x-show="sp.area" class="text-xs text-muted font-sans font-light mt-1" x-text="sp.area"></p>
+                                <p x-show="sp.bio" class="text-sm font-sans font-light mt-2 leading-relaxed" x-text="sp.bio"></p>
+                                <p x-show="sp.priceNote" class="text-xs text-muted font-sans mt-2" x-text="sp.priceNote"></p>
+                                <button type="button" x-show="connectTargetId !== sp.id" @click="connectTargetId = sp.id; connectNote = ''; connectError = ''" class="p-btn-2 p-btn-sm mt-4" x-text="t('pickSpecialistBtn')"></button>
+                                <form x-show="connectTargetId === sp.id" x-cloak class="mt-4 pt-4 border-t border-line space-y-3" @submit.prevent="connectSpecialist(sp)">
+                                    <label class="eyebrow" x-text="t('connectNoteLabel')"></label>
+                                    <textarea x-model="connectNote" rows="3" maxlength="500" required class="w-full bg-paper border border-line focus:border-accent outline-none p-3 font-sans font-light text-base resize-none"></textarea>
+                                    <p x-show="connectError" x-cloak class="text-xs text-accent font-sans" x-text="connectError"></p>
+                                    <div class="flex gap-3">
+                                        <button type="button" @click="connectTargetId = ''" class="p-btn-2 p-btn-sm" x-text="t('docCancel')"></button>
+                                        <button type="submit" :disabled="connectBusy || connectNote.trim().length < 3" class="p-btn p-btn-sm" x-text="connectBusy ? t('telliSending') : t('connectSendBtn')"></button>
+                                    </div>
+                                </form>
+                            </div>
+                        </template>
+                    </div>
+                    <p x-show="!directoryForCategory(expandCategory).length" class="text-sm text-muted font-sans font-light" x-text="t('noOpenSpecialists')"></p>
+
+                    <!-- Invite own trusted specialist -->
+                    <form x-show="!viewer || viewer.primary" class="bg-white border border-line p-5 space-y-4" @submit.prevent="inviteOwnSpecialist()">
+                        <p class="eyebrow" x-text="t('inviteOwnHeading')"></p>
+                        <p class="text-xs text-muted font-sans font-light leading-relaxed" x-text="t('inviteOwnHint')"></p>
+                        <div class="grid sm:grid-cols-2 gap-4">
+                            <label class="block">
+                                <span class="eyebrow mb-1" x-text="t('nameLabel')"></span>
+                                <input type="text" x-model="partnerInvite.name" maxlength="120" class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-2 font-sans font-light text-base">
+                            </label>
+                            <label class="block">
+                                <span class="eyebrow mb-1" x-text="t('emailLabel')"></span>
+                                <input type="email" x-model="partnerInvite.email" required class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-2 font-sans font-light text-base">
+                            </label>
+                        </div>
+                        <button type="submit" :disabled="partnerInvite.busy || !partnerInvite.email" class="p-btn p-btn-sm" x-text="partnerInvite.busy ? t('telliSending') : t('inviteSendBtn')"></button>
+                        <p x-show="partnerInvite.done" x-cloak class="text-sm font-sans font-light" x-text="t('inviteSentDone')"></p>
+                        <p x-show="partnerInvite.error" x-cloak class="text-sm text-accent font-sans font-light" x-text="partnerInvite.error"></p>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <p x-show="connectSuccess" x-cloak class="text-sm font-sans font-light mt-4" x-text="connectSuccess"></p>
 
         <div x-show="pastRequests.length" x-cloak class="mt-8">
             <button type="button" @click="showPastOrders = !showPastOrders" class="eyebrow" x-text="showPastOrders ? t('hideIt') : t('orderPast')"></button>

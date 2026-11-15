@@ -73,11 +73,21 @@
     codeLabel: { et: 'Kood', en: 'Code', ru: 'Код' },
     enter: { et: 'Sisene', en: 'Sign in', ru: 'Войти' },
     cardLine: {
-      et: 'Sul on kaardil kood?',
-      en: 'You have a code on a card?',
-      ru: 'Код на карточке?',
+      et: 'Sul on kutsekood?',
+      en: 'Have an invite code?',
+      ru: 'Есть код приглашения?',
     },
     cardLink: { et: 'Ava see siin', en: 'Open it here', ru: 'Откройте его здесь' },
+    deskSignupLine: {
+      et: 'Pole veel töölauda?',
+      en: 'New here?',
+      ru: 'Ещё нет рабочего стола?',
+    },
+    deskSignupLink: {
+      et: 'Ava tasuta töölaud',
+      en: 'Open a free desk',
+      ru: 'Открыть бесплатно',
+    },
     sending: { et: 'Saadan', en: 'Sending', ru: 'Отправляю' },
     checking: { et: 'Kontrollin', en: 'Checking', ru: 'Проверяю' },
     emailFail: {
@@ -247,8 +257,10 @@ function render() {
     }
 
     later.hidden = true;
-    document.getElementById('card-text').textContent = t('cardLine');
-    document.getElementById('card-link').textContent = t('cardLink');
+    var cardLinkEl = document.getElementById('card-link');
+    document.getElementById('card-text').textContent = isDesk() ? t('deskSignupLine') : t('cardLine');
+    cardLinkEl.textContent = isDesk() ? t('deskSignupLink') : t('cardLink');
+    cardLinkEl.setAttribute('href', isDesk() ? '/haldus?alusta' : '/lunasta');
     document.getElementById('card-line').hidden = mode !== 'email';
     if (mode === 'email') {
       title.textContent = t('signTitle');
