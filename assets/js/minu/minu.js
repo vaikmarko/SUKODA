@@ -52,6 +52,15 @@ add({
   handoverGo: { et: 'Anna üle', en: 'Hand over', ru: 'Передать' },
   handoverSent: { et: 'Link on saadetud. See kodu on nüüd uue omaniku käes.', en: 'The link is sent. This home is now with the new owner.', ru: 'Ссылка отправлена. Дом теперь у нового владельца.' },
   handoverFail: { et: 'Link ei läinud teele. Kontrolli aadressi ja proovi uuesti.', en: 'The link did not go out. Check the address and try again.', ru: 'Ссылка не отправилась. Проверьте адрес и попробуйте снова.' },
+  deleteTitle: { et: 'Kustuta konto', en: 'Delete the account', ru: 'Удалить аккаунт' },
+  deleteOwnerBody: { et: 'Kustutame sinu konto ja kõik, mida oled lisanud: kontaktid, dokumendid, soovid ja pereliikmete ligipääsu. Tulevased visiidid tühistatakse ja kaarditellimus lõpeb. Tehtud visiidid jäävad spetsialisti arvestusse ilma nime ja aadressita. Seda ei saa tagasi võtta.', en: 'We delete your account and everything you added: contacts, documents, requests and the household\'s access. Upcoming visits are cancelled and the card subscription ends. Done visits stay in the specialist\'s records without your name or address. This cannot be undone.', ru: 'Мы удалим ваш аккаунт и всё, что вы добавили: контакты, документы, запросы и доступ членов семьи. Предстоящие визиты будут отменены, подписка по карте закончится. Выполненные визиты останутся в учёте специалиста без имени и адреса. Отменить это нельзя.' },
+  deleteMemberBody: { et: 'Kustutame sinu ligipääsu ja andmed. Kodu jääb teistele alles. Seda ei saa tagasi võtta.', en: 'We delete your access and your data. The home stays for the others. This cannot be undone.', ru: 'Мы удалим ваш доступ и ваши данные. Дом останется у остальных. Отменить это нельзя.' },
+  deleteSendCode: { et: 'Saada kinnituskood', en: 'Send a confirmation code', ru: 'Отправить код подтверждения' },
+  deleteCodeSent: { et: 'Saatsime koodi aadressile {email}.', en: 'We sent a code to {email}.', ru: 'Мы отправили код на {email}.' },
+  deleteCodeLabel: { et: 'Kood', en: 'Code', ru: 'Код' },
+  deleteGo: { et: 'Kustuta lõplikult', en: 'Delete for good', ru: 'Удалить окончательно' },
+  deleteDone: { et: 'Konto on kustutatud.', en: 'The account is deleted.', ru: 'Аккаунт удалён.' },
+  deleteFail: { et: 'Kustutamine ei õnnestunud. Proovi uuesti.', en: 'Deleting did not work. Try again.', ru: 'Удалить не удалось. Попробуйте снова.' },
   homePeopleTitle: { et: 'Inimesed sinu kodu juures', en: 'People caring for your home', ru: 'Люди, заботящиеся о вашем доме' },
   disconnectAsk: { et: 'Eemaldad selle spetsialisti oma kodu juurest?', en: 'Remove this specialist from your home?', ru: 'Отключить этого специалиста от вашего дома?' },
   nameLabel: { et: 'Nimi', en: 'Name', ru: 'Имя' },
@@ -360,6 +369,28 @@ export const minuHtml = `<div x-show="activeTab === 'mine'" x-transition:enter="
                                 <p x-show="handover.error" x-cloak class="text-sm text-accent font-sans font-light mt-3" x-text="handover.error"></p>
                                 <p x-show="handover.sent" x-cloak class="text-sm font-sans font-light mt-3" x-text="t('handoverSent')"></p>
                             </form>
+                        </div>
+
+                        <!-- ── Delete the account (App Store asks for it; collapsed until needed) ── -->
+                        <div x-show="viewer" x-cloak class="bg-white border border-line">
+                            <div class="flex items-center justify-between gap-4 px-6 py-4" :class="deleteOpen ? 'border-b border-line' : ''">
+                                <h2 class="p-h" x-text="t('deleteTitle')"></h2>
+                                <button type="button" @click="deleteOpen = !deleteOpen" class="p-btn-2 p-btn-sm" x-text="deleteOpen ? t('hideIt') : t('showUpkeep')"></button>
+                            </div>
+                            <div x-show="deleteOpen" x-cloak class="p-6">
+                                <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="viewer && viewer.primary ? t('deleteOwnerBody') : t('deleteMemberBody')"></p>
+                                <button type="button" x-show="!del.step" class="p-btn-2 mt-6" :disabled="del.busy" @click="askDeleteCode()" x-text="del.busy ? t('docSaving') : t('deleteSendCode')"></button>
+                                <form x-show="del.step === 'code'" x-cloak class="mt-5" @submit.prevent="deleteAccount()">
+                                    <p class="text-sm font-sans font-light" x-text="t('deleteCodeSent', { email: del.email })"></p>
+                                    <label class="block mt-4">
+                                        <span class="eyebrow" x-text="t('deleteCodeLabel')"></span>
+                                        <input type="text" x-model="del.code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-2 font-sans font-light text-base tracking-[0.3em]">
+                                    </label>
+                                    <button type="submit" class="p-btn mt-6" :disabled="del.busy || del.code.length !== 6" x-text="del.busy ? t('docSaving') : t('deleteGo')"></button>
+                                </form>
+                                <p x-show="del.step === 'done'" x-cloak class="text-sm font-sans font-light mt-5" x-text="t('deleteDone')"></p>
+                                <p x-show="del.error" x-cloak class="text-sm text-accent font-sans font-light mt-3" x-text="del.error"></p>
+                            </div>
                         </div>
 
                         </aside>

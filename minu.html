@@ -163,6 +163,8 @@
     homes: [],
     handoverOpen: false,
     handover: { name: '', email: '', busy: false, error: '', sent: false },
+    deleteOpen: false,
+    del: { step: '', code: '', email: '', busy: false, error: '' },
     contactsError: '',
 
     // Away periods (oleme eemal)
@@ -434,6 +436,51 @@
             this.handover.error = this.t('handoverFail');
         } finally {
             this.handover.busy = false;
+        }
+    },
+    errText(e, fallback) {
+        if (e && typeof e === 'object') return e[this.lang] || e.et || fallback;
+        return e || fallback;
+    },
+    async askDeleteCode() {
+        if (this.del.busy) return;
+        this.del.busy = true;
+        this.del.error = '';
+        try {
+            const res = await fetch('/api/haldus/account/delete-code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) { this.del.error = this.errText(data.error, this.t('deleteFail')); return; }
+            this.del.email = data.email || '';
+            this.del.step = 'code';
+        } catch (e) {
+            this.del.error = this.t('netFail');
+        } finally {
+            this.del.busy = false;
+        }
+    },
+    async deleteAccount() {
+        if (this.del.busy) return;
+        this.del.busy = true;
+        this.del.error = '';
+        try {
+            const res = await fetch('/api/haldus/account/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
+                body: JSON.stringify({ code: this.del.code.trim() }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) { this.del.error = this.errText(data.error, this.t('deleteFail')); return; }
+            this.del.step = 'done';
+            localStorage.removeItem('sukoda_portal_token');
+            this.token = '';
+            setTimeout(() => location.replace('/'), 2500);
+        } catch (e) {
+            this.del.error = this.t('netFail');
+        } finally {
+            this.del.busy = false;
         }
     },
     async saveContacts() {

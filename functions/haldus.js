@@ -3241,6 +3241,214 @@ module.exports = function createHaldus(deps) {
     return { token: raw, desk: false };
   }
 
+  // ============================================================
+  // Account deletion: an e-mail code, then the person and their data go at once
+  // ============================================================
+
+  const DELETE_PARTNER = {
+    et: 'Sinu töölaud käib partnerlepingu järgi. Konto sulgemiseks kirjuta tere@sukoda.ee.',
+    en: 'Your desk runs under a partner agreement. To close the account, write to tere@sukoda.ee.',
+    ru: 'Ваш рабочий стол работает по партнёрскому договору. Чтобы закрыть аккаунт, напишите на tere@sukoda.ee.',
+  };
+
+  function deleteCodeEmail(code, lang) {
+    const L = core.langOf(lang);
+    const subject = core.pick({
+      et: 'SUKODA | Konto kustutamise kood',
+      en: 'SUKODA | Code to delete your account',
+      ru: 'SUKODA | Код для удаления аккаунта',
+    }, L);
+    const intro = core.pick({
+      et: 'Sisesta see kood rakendusse, et konto lõplikult kustutada. Kood kehtib 10 minutit. Kui sa kustutamist ei palunud, ära tee midagi: konto jääb alles.',
+      en: 'Enter this code in the app to delete the account for good. The code is valid for 10 minutes. If you did not ask for this, do nothing: the account stays.',
+      ru: 'Введите этот код в приложении, чтобы окончательно удалить аккаунт. Код действует 10 минут. Если вы не просили об удалении, ничего не делайте: аккаунт останется.',
+    }, L);
+    return { subject, html: wrap(H2(escapeHtml(code)) + P(intro), L) };
+  }
+
+  /** To each household a deleted specialist served: what changed and what to do next. */
+  function providerLeftEmail({ order, provider, lang }) {
+    const L = core.langOf(lang);
+    const name = String(provider?.name || '').trim() || core.pick({ et: 'Sinu spetsialist', en: 'Your specialist', ru: 'Ваш специалист' }, L);
+    const subject = core.pick({
+      et: `SUKODA | ${name} ei käi enam sinu kodus`,
+      en: `SUKODA | ${name} no longer looks after your home`,
+      ru: `SUKODA | ${name} больше не обслуживает ваш дом`,
+    }, L);
+    const body = core.pick({
+      et: `${escapeHtml(name)} sulges oma SUKODA konto. Tulevased visiidid on tühistatud. Kodu, dokumendid ja hooldus on alles. Ava rakendus, et kutsuda uus inimene.`,
+      en: `${escapeHtml(name)} closed their SUKODA account. Upcoming visits are cancelled. The home, the documents and the upkeep are still there. Open the app to invite someone new.`,
+      ru: `${escapeHtml(name)} закрыл(а) свой аккаунт SUKODA. Предстоящие визиты отменены. Дом, документы и уход за домом сохранены. Откройте приложение, чтобы пригласить нового специалиста.`,
+    }, L);
+    const button = core.pick({ et: 'Ava rakendus', en: 'Open the app', ru: 'Открыть приложение' }, L);
+    return {
+      subject,
+      html: wrap(
+        H2(escapeHtml(core.pick({ et: 'Visiidid on tühistatud', en: 'Visits are cancelled', ru: 'Визиты отменены' }, L)))
+        + P(body)
+        + `<div style="text-align:center;margin:32px 0;"><a href="${PORTAL_URL}" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">${button}</a></div>`,
+        L,
+        order?.brand,
+      ),
+    };
+  }
+
+  /** Who is asking: a desk, or a person in a home. The e-mail address is the account. */
+  async function deletionAccount(req) {
+    const provider = await authenticateProvider(req);
+    if (provider) return { kind: 'desk', email: core.normalizeEmail(provider.email), lang: core.langOf(provider), provider };
+    const auth = await authenticateClient(req);
+    if (!auth) return null;
+    const email = core.normalizeEmail(auth.viewer?.primary ? primaryEmail(auth.order) : auth.viewer?.email);
+    if (!email) return null;
+    return { kind: 'home', email, lang: langOf(auth.order), auth };
+  }
+
+  function deleteCodeRef(email) {
+    return db.collection('loginCodes').doc(sha256(`delete:${email}`));
+  }
+
+  async function commitPatches(rows) {
+    let batch = db.batch();
+    let n = 0;
+    for (const [ref, patch] of rows) {
+      if (patch === 'delete') batch.delete(ref);
+      else batch.update(ref, { ...patch, updatedAt: FieldValue.serverTimestamp() });
+      n += 1;
+      if (n === 400) {
+        await batch.commit();
+        batch = db.batch();
+        n = 0;
+      }
+    }
+    if (n) await batch.commit();
+  }
+
+  /** Stop a card plan now. One that Stripe already ended is fine; anything else stops the deletion before data goes. */
+  async function stopStripeSubscription(id) {
+    if (!id) return;
+    try {
+      await getStripe().subscriptions.cancel(id);
+    } catch (e) {
+      const gone = e && (e.code === 'resource_missing' || /cancel/i.test(String(e.message || '')));
+      if (!gone) throw e;
+    }
+  }
+
+  function visitMs(visit) {
+    const when = toDate(visit?.scheduledAt);
+    return when ? when.getTime() : 0;
+  }
+
+  async function ordersOfPerson(email, current) {
+    const [owned, received, member] = await Promise.all([
+      db.collection('orders').where('customer.email', '==', email).limit(50).get(),
+      db.collection('orders').where('recipient.email', '==', email).limit(50).get(),
+      db.collection('orders').where('contactEmails', 'array-contains', email).limit(50).get(),
+    ]);
+    const map = new Map();
+    for (const d of owned.docs.concat(received.docs, member.docs)) map.set(d.id, d);
+    if (current && !map.has(current)) {
+      const cur = await db.collection('orders').doc(current).get();
+      if (cur.exists) map.set(cur.id, cur);
+    }
+    return [...map.values()]
+      .map((d) => ({ ref: d.ref, id: d.id, order: d.data(), role: core.deletionRole(d.data(), email) }))
+      .filter((r) => r.role);
+  }
+
+  /**
+   * A resident leaves. Homes they own go (a developer's apartment stays for the next owner without
+   * them); homes they are a member of only lose them. Done visits stay in the specialist's monthly
+   * summary without name, contact or address. Stripe is stopped first, so a failure leaves nothing half-gone.
+   */
+  async function deleteResidentAccount(email, auth) {
+    const rows = await ordersOfPerson(email, auth?.orderId);
+    const owned = rows.filter((r) => r.role === 'owner');
+    for (const r of owned) {
+      if (r.order.stripeSubscriptionId && r.order.subscriptionStatus !== 'cancelled') await stopStripeSubscription(r.order.stripeSubscriptionId);
+    }
+    const nowMs = Date.now();
+    for (const r of owned) {
+      const ownHome = core.providerBroughtHome(r.order);
+      const visits = await db.collection('bookings').where('orderId', '==', r.id).get();
+      await commitPatches(visits.docs.map((d) => [d.ref, { ...core.residentVisitPatch({ status: d.data().status, scheduledAtMs: visitMs(d.data()) }, nowMs), deletedOwnHome: ownHome }]));
+      await deleteHomeRequests(r.id);
+      const sessions = await db.collection('portalSessions').where('orderId', '==', r.id).get();
+      await commitPatches(sessions.docs.map((d) => [d.ref, 'delete']));
+      const invites = await db.collection('partnerInvites').where('orderId', '==', r.id).get();
+      await commitPatches(invites.docs.map((d) => [d.ref, 'delete']));
+      if (core.keepsHomeRecord(r.order)) {
+        for (const path of core.residentFilesToDelete(r.order)) {
+          await docsBucket().file(path).delete({ ignoreNotFound: true });
+        }
+        await r.ref.update({
+          ...core.residentRecordPatch(r.order),
+          sessionTokenHash: FieldValue.delete(),
+          sessionTokenExpiresAt: FieldValue.delete(),
+          residentDeletedAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      } else {
+        await docsBucket().deleteFiles({ prefix: `homes/${r.id}/` });
+        await r.ref.delete();
+      }
+    }
+    const memberOf = rows.filter((r) => r.role === 'member');
+    for (const r of memberOf) {
+      await r.ref.update({ ...core.withoutMember(r.order, email), updatedAt: FieldValue.serverTimestamp() });
+      const reqs = await db.collection('serviceRequests').where('orderId', '==', r.id).get();
+      await commitPatches(reqs.docs
+        .filter((d) => core.normalizeEmail(d.data().submittedBy?.email) === email)
+        .map((d) => [d.ref, { submittedBy: null }]));
+    }
+    const sessions = await db.collection('portalSessions').where('email', '==', email).get();
+    await commitPatches(sessions.docs.map((d) => [d.ref, 'delete']));
+    const sent = await db.collection('partnerInvites').where('email', '==', email).get();
+    await commitPatches(sent.docs.map((d) => [d.ref, 'delete']));
+    await db.collection('loginCodes').doc(sha256(email)).delete();
+    return { homes: owned.length, memberOf: memberOf.length };
+  }
+
+  /**
+   * A specialist leaves. Their homes stay with the families: the specialist is taken off every category,
+   * a standing schedule that would bring them stops, upcoming visits and open requests are cancelled,
+   * and each family gets one e-mail. The Stripe customer stays for SUKODA's own invoices.
+   */
+  async function deleteDeskAccount(provider) {
+    if (provider.planSubscriptionId) await stopStripeSubscription(provider.planSubscriptionId);
+    const nowMs = Date.now();
+    const told = [];
+    for (const { doc } of await loadProviderOrders(provider.id)) {
+      const order = doc.data();
+      const { patch, categories } = core.providerLeavePatch(order, provider.id);
+      if (!categories.length) continue;
+      await doc.ref.update({ ...patch, updatedAt: FieldValue.serverTimestamp() });
+      if (['paid', 'cancelling'].includes(order.status)) told.push(order);
+    }
+    const visits = await db.collection('bookings').where('providerId', '==', provider.id).get();
+    await commitPatches(visits.docs.map((d) => [d.ref, core.providerVisitPatch({ status: d.data().status, scheduledAtMs: visitMs(d.data()) }, nowMs)]));
+    const reqs = await db.collection('serviceRequests').where('providerId', '==', provider.id).get();
+    await commitPatches(reqs.docs.map((d) => [d.ref, core.providerRequestPatch(d.data())]).filter(([, p]) => p));
+    const email = core.normalizeEmail(provider.email);
+    if (email) {
+      const invites = await db.collection('partnerInvites').where('partnerEmail', '==', email).get();
+      await commitPatches(invites.docs.map((d) => [d.ref, 'delete']));
+      await db.collection('loginCodes').doc(sha256(email)).delete();
+    }
+    await db.collection('providers').doc(provider.id).delete();
+    let mailed = 0;
+    for (const order of told) {
+      try {
+        await notifyOrder(order, providerLeftEmail({ order, provider, lang: langOf(order) }));
+        mailed += 1;
+      } catch (e) {
+        console.error('provider left mail failed', e && e.message);
+      }
+    }
+    return { homes: told.length, visits: visits.size, mailed };
+  }
+
   const haldusHandlers = {
     /** Pick a plan: a live subscription is switched in place (prorated); otherwise Stripe Checkout */
     'POST /api/haldus/billing/checkout': async (req, res) => {
@@ -3417,6 +3625,71 @@ module.exports = function createHaldus(deps) {
         updatedAt: FieldValue.serverTimestamp(),
       });
       return res.status(200).json({ success: true });
+    },
+
+    /** Step 1 of deleting the account: a 6-digit code to the account's own e-mail. */
+    'POST /api/haldus/account/delete-code': async (req, res) => {
+      if (!checkRateLimit(req, res, 'account-delete-code', 5, 300000)) return;
+      const acc = await deletionAccount(req);
+      if (!acc) return res.status(401).json({ error: 'Unauthorized' });
+      if (acc.kind === 'desk' && core.effectivePlan(acc.provider) === 'enterprise') return res.status(403).json({ error: DELETE_PARTNER });
+      const ref = deleteCodeRef(acc.email);
+      const prev = await ref.get();
+      const sentAt = toDate(prev.data()?.createdAt);
+      if (sentAt && sentAt > new Date(Date.now() - 60 * 1000)) return res.status(200).json({ sent: true, email: acc.email });
+      const code = core.generateLoginCode(crypto.randomInt(0, 1000000));
+      if (!code) return res.status(500).json({ error: { et: 'Koodi ei õnnestunud teha. Proovi uuesti.', en: 'Could not make a code. Try again.', ru: 'Не удалось создать код. Попробуйте снова.' } });
+      await ref.set({
+        codeHash: core.hashLoginCode(acc.email, code),
+        expiresAt: Timestamp.fromDate(core.loginCodeExpiresAt(new Date())),
+        attempts: 0,
+        audience: 'delete',
+        createdAt: FieldValue.serverTimestamp(),
+      });
+      try {
+        await sendEmail({ to: acc.email, ...deleteCodeEmail(code, acc.lang) });
+      } catch (e) {
+        console.error('delete code mail failed', sha256(acc.email));
+        return res.status(500).json({ error: { et: 'Kirja ei õnnestunud saata. Proovi uuesti.', en: 'The e-mail could not be sent. Try again.', ru: 'Письмо не удалось отправить. Попробуйте снова.' } });
+      }
+      res.status(200).json({ sent: true, email: acc.email });
+    },
+
+    /** Step 2: the code deletes the account at once. Nothing is kept to undo it. */
+    'POST /api/haldus/account/delete': async (req, res) => {
+      if (!checkRateLimit(req, res, 'account-delete', 10, 300000)) return;
+      const acc = await deletionAccount(req);
+      if (!acc) return res.status(401).json({ error: 'Unauthorized' });
+      if (acc.kind === 'desk' && core.effectivePlan(acc.provider) === 'enterprise') return res.status(403).json({ error: DELETE_PARTNER });
+      const code = String(req.body?.code ?? '').trim();
+      const fail = { error: { et: 'Kood ei kehti. Kontrolli numbreid või küsi uus kood.', en: 'The code is not valid. Check the digits or ask for a new code.', ru: 'Код не подходит. Проверьте цифры или запросите новый код.' } };
+      if (!/^\d{6}$/.test(code)) return res.status(401).json(fail);
+      const ref = deleteCodeRef(acc.email);
+      const ok = await db.runTransaction(async (tx) => {
+        const snap = await tx.get(ref);
+        const data = snap.exists ? snap.data() : null;
+        const result = core.checkLoginCode({
+          email: acc.email,
+          code,
+          record: data ? { codeHash: data.codeHash, expiresAt: toDate(data.expiresAt), attempts: data.attempts } : null,
+          now: new Date(),
+        });
+        if (!result.ok) {
+          if (result.reason === 'mismatch' && snap.exists) tx.update(ref, { attempts: FieldValue.increment(1) });
+          return false;
+        }
+        tx.delete(ref);
+        return true;
+      });
+      if (!ok) return res.status(401).json(fail);
+      try {
+        const done = acc.kind === 'desk' ? await deleteDeskAccount(acc.provider) : await deleteResidentAccount(acc.email, acc.auth);
+        console.log('account deleted', acc.kind, sha256(acc.email), JSON.stringify(done));
+        res.status(200).json({ deleted: true });
+      } catch (e) {
+        console.error('account delete failed', acc.kind, sha256(acc.email), e && e.message);
+        res.status(500).json({ error: { et: 'Kustutamine jäi pooleli. Küsi uus kood ja proovi uuesti või kirjuta tere@sukoda.ee.', en: 'Deleting did not finish. Ask for a new code and try again, or write to tere@sukoda.ee.', ru: 'Удаление не завершилось. Запросите новый код и попробуйте снова или напишите на tere@sukoda.ee.' } });
+      }
     },
 
     'POST /api/haldus/magic-link': async (req, res) => {
@@ -3769,15 +4042,17 @@ module.exports = function createHaldus(deps) {
         return {
           id: d.id,
           orderId: b.orderId || null,
-          customerName: b.customerName || '',
+          customerName: b.anonymized ? 'Kustutatud kodu' : (b.customerName || ''),
           serviceName: b.serviceId ? core.serviceName(b.serviceId, 'et') : '',
+          // A home deleted by its resident is gone from ownIds; its done work still counts for the specialist's invoice
+          deletedOwnHome: b.deletedOwnHome === true,
           kind: b.kind || (b.serviceId ? 'extra' : 'regular'),
           price: b.price || null,
           status: b.status,
           scheduledAt: tsToIso(b.scheduledAt),
           paymentCents: Number(b.payment?.providerCents) || 0,
         };
-      }).filter((row) => ownIds.has(row.orderId)), { months: [core.shiftMonthKey(nowKey, -1), nowKey] });
+      }).filter((row) => ownIds.has(row.orderId) || row.deletedOwnHome), { months: [core.shiftMonthKey(nowKey, -1), nowKey] });
       const requests = requestSnap.docs.filter((d) => d.data().status !== 'awaiting_payment').map((d) => serializeRequest(d.id, d.data()));
 
       // Keep lightweight retention stats fresh on the provider doc for trust badges

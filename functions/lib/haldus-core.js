@@ -1743,6 +1743,109 @@ function orderQuote({ serviceId, addonIds, sponsorCentsAvailable, ownerKind, tod
   };
 }
 
+/* ── Account deletion (App Store 5.1.1(v)): the person goes, the work record stays without them ── */
+
+const OPEN_REQUEST_DONE = new Set(['completed', 'cancelled', 'declined']);
+
+/** A visit row of a deleted resident: no name, contact, address or notes. A future live visit is cancelled. */
+function residentVisitPatch(visit, nowMs) {
+  const patch = {
+    customerName: '', customerEmail: '', customerPhone: '', address: '',
+    customerNote: '', note: '', anonymized: true,
+  };
+  if (LIVE_VISIT.has(visit?.status) && Number(visit?.scheduledAtMs) > Number(nowMs)) {
+    patch.status = 'cancelled';
+    patch.cancelReason = 'home-deleted';
+  }
+  return patch;
+}
+
+/** A visit row of a deleted specialist: the link to them goes. A future live visit is cancelled. */
+function providerVisitPatch(visit, nowMs) {
+  const patch = { providerId: null, providerName: null };
+  if (LIVE_VISIT.has(visit?.status) && Number(visit?.scheduledAtMs) > Number(nowMs)) {
+    patch.status = 'cancelled';
+    patch.cancelReason = 'provider-deleted';
+  }
+  return patch;
+}
+
+/** A request still waiting on a deleted specialist is closed, so the home does not wait forever. */
+function providerRequestPatch(request) {
+  if (!request || OPEN_REQUEST_DONE.has(request.status)) return null;
+  return { status: 'cancelled', cancelReason: 'provider-deleted', providerId: null };
+}
+
+/**
+ * The home keeps everything except the deleted specialist. Every category they held is emptied, and a
+ * standing schedule that would bring them stops, so the 07:00 cron does not book visits for nobody.
+ */
+function providerLeavePatch(order, providerId) {
+  const patch = {};
+  const categories = [];
+  if (!order || !providerId) return { patch, categories };
+  for (const [cat, def] of Object.entries(SERVICE_CATEGORIES)) {
+    if (order[def.orderField] !== providerId) continue;
+    patch[def.orderField] = null;
+    patch[def.nameField] = null;
+    categories.push(cat);
+  }
+  const sched = order.schedule;
+  if (sched && sched.active) {
+    const schedProvider = sched.providerId || order.providerId || null;
+    if (schedProvider === providerId) patch['schedule.active'] = false;
+  }
+  return { patch, categories };
+}
+
+/** How a deleted person relates to a home: the owner takes the home with them, a member only leaves it. */
+function deletionRole(order, email) {
+  const e = normalizeEmail(email);
+  if (!order || !e) return null;
+  const primary = normalizeEmail(order.type === 'gift' ? (order.recipient?.email || order.customer?.email) : order.customer?.email);
+  if (primary === e || normalizeEmail(order.customer?.email) === e) return 'owner';
+  const listed = (order.contacts || []).some((c) => normalizeEmail(c?.email) === e) || (order.contactEmails || []).includes(e);
+  return listed ? 'member' : null;
+}
+
+/** Contacts without the deleted member. */
+function withoutMember(order, email) {
+  const e = normalizeEmail(email);
+  const contacts = (order?.contacts || []).filter((c) => normalizeEmail(c?.email) !== e);
+  const contactEmails = (order?.contactEmails || []).filter((x) => normalizeEmail(x) !== e);
+  return { contacts, contactEmails };
+}
+
+/**
+ * A developer's apartment outlives its buyer: the record stays for the next owner, the buyer's own data
+ * goes. Every other home is removed. Files the developer or the building added stay with a kept home.
+ */
+function keepsHomeRecord(order) {
+  return ownerKindOf(order) === 'developer';
+}
+function residentFilesToDelete(order) {
+  const docs = Array.isArray(order?.documents) ? order.documents : [];
+  return docs
+    .filter((d) => d && d.file && d.file.path && (!keepsHomeRecord(order) || (d.source || 'home') === 'home'))
+    .map((d) => d.file.path);
+}
+function residentRecordPatch(order) {
+  const keep = (order?.documents || []).filter((d) => d && (d.source || 'home') !== 'home');
+  const address = String(order?.customer?.address || order?.recipient?.address || '').trim();
+  return {
+    customer: address ? { address, city: String(order?.customer?.city || '').trim() } : {},
+    recipient: null,
+    contacts: [],
+    contactEmails: [],
+    homeProfile: {},
+    documents: keep,
+    pushSubscriptions: [],
+    pushTokens: [],
+    stripeCustomerId: null,
+    stripeSubscriptionId: null,
+  };
+}
+
 module.exports = {
   LANGS,
   langOf,
@@ -1763,6 +1866,15 @@ module.exports = {
   sessionExpiresAt,
   checkLoginCode,
   ownerKindOf,
+  residentVisitPatch,
+  providerVisitPatch,
+  providerRequestPatch,
+  providerLeavePatch,
+  deletionRole,
+  withoutMember,
+  keepsHomeRecord,
+  residentFilesToDelete,
+  residentRecordPatch,
   sponsorRemainingCents,
   splitVisitPayment,
   earnedCents,
