@@ -476,35 +476,6 @@
                             <p class="font-serif text-2xl font-light mt-1" x-text="earnedLabel()"></p>
                         </div>
 
-                        <!-- Enterprise building handover -->
-                        <div x-show="isEnterprise" x-cloak class="border border-line bg-white p-5">
-                            <p class="eyebrow mb-3" x-text="t('buildingTitle')"></p>
-                            <form class="grid sm:grid-cols-2 gap-4" @submit.prevent="saveBuilding()">
-                                <label class="block sm:col-span-2"><span class="h-label" x-text="t('buildingName')"></span><input class="h-input" x-model="buildingForm.name" required></label>
-                                <label class="block"><span class="h-label" x-text="t('routeWarranty')"></span>
-                                    <select class="h-select" x-model="buildingForm.warranty"><option value="desk" x-text="t('routeDesk')"></option><option value="email" x-text="t('routeMail')"></option><option value="hausing" x-text="t('routeHausing')"></option></select>
-                                </label>
-                                <label class="block"><span class="h-label" x-text="t('routeBuilding')"></span>
-                                    <select class="h-select" x-model="buildingForm.building"><option value="desk" x-text="t('routeDesk')"></option><option value="email" x-text="t('routeMail')"></option><option value="hausing" x-text="t('routeHausing')"></option></select>
-                                </label>
-                                <button type="submit" class="p-btn w-fit" :disabled="buildingSaving" x-text="buildingSaving ? t('savingProfile') : t('saveBuilding')"></button>
-                            </form>
-                            <form class="grid sm:grid-cols-2 gap-4 mt-8 border-t border-line pt-6" @submit.prevent="handOver()">
-                                <div class="sm:col-span-2">
-                                    <p class="eyebrow" x-text="t('handoverTitle')"></p>
-                                    <p class="text-sm text-muted font-sans font-light mt-1" x-text="t('handoverLead')"></p>
-                                </div>
-                                <label class="block"><span class="h-label" x-text="t('aptLabel')"></span><input class="h-input" x-model="handoverForm.apartment" required></label>
-                                <label class="block"><span class="h-label" x-text="t('buyerLabel')"></span><input class="h-input" x-model="handoverForm.buyerName" required></label>
-                                <label class="block"><span class="h-label" x-text="t('emailLabel')"></span><input type="email" class="h-input" x-model="handoverForm.buyerEmail" required></label>
-                                <label class="block"><span class="h-label" x-text="t('keysLabel')"></span><input type="date" class="h-input" x-model="handoverForm.keysAt" required></label>
-                                <button type="submit" class="p-btn w-fit" :disabled="handoverSaving" x-text="handoverSaving ? t('savingProfile') : t('handoverTitle')"></button>
-                                <p x-show="handoverCode" class="font-serif text-3xl font-light sm:col-span-2" x-text="handoverCode"></p>
-                                <p x-show="handoverCode" class="text-sm text-muted font-sans font-light sm:col-span-2" x-text="t('handoverCode')"></p>
-                                <a x-show="handoverCard" class="p-btn-2 no-underline sm:col-span-2 w-fit" :href="handoverCard" target="_blank" rel="noopener" x-text="t('openDigitalCard')"></a>
-                            </form>
-                        </div>
-
                         <!-- 3. Clean Accordion Settings -->
                         <div class="bg-white border border-line divide-y divide-line">
 
@@ -1244,12 +1215,10 @@
             companyOpt: { et: 'Ettevõte (valikuline)', en: 'Company (optional)' },
             offerLabel: { et: 'Mida sa teed', en: 'What you do' },
             svcSignCleaning: { et: 'Koristus', en: 'Cleaning' },
-            svcSignWarranty: { et: 'Garantii ja maja', en: 'Warranty and building' },
             svcSignFlowers: { et: 'Lilled', en: 'Flowers' },
             svcSignHandyman: { et: 'Remondimees', en: 'Handyman' },
             svcSignChildcare: { et: 'Lapsehoid', en: 'Childcare' },
             svcSignPets: { et: 'Lemmikloomad', en: 'Pet care' },
-            svcSignBuilding: { et: 'Maja haldus', en: 'Building management' },
             svcSignGarden: { et: 'Aed ja õu', en: 'Garden and yard' },
             areaLabel: { et: 'Piirkond', en: 'Area' },
             areaPh: { et: 'Tallinn, Viimsi', en: 'Tallinn, Viimsi' },
@@ -1358,7 +1327,6 @@
             showQr: { et: 'Näita QR-koodi', en: 'Show QR code' },
             hideQr: { et: 'Peida QR-kood', en: 'Hide QR code' },
             scanQrHint: { et: 'Klient suunab telefoni kaamera ekraanile ja avab oma kodu.', en: 'The client points their phone camera at the screen to open their home.' },
-            openDigitalCard: { et: 'Ava digitaalne kutseleht', en: 'Open digital handover sheet' },
             exportCsv: { et: 'Laadi tabel alla (CSV)', en: 'Download CSV' },
             markInvoiced: { et: 'Märgi saadetuks', en: 'Mark invoiced' },
             invoiceSentDone: { et: 'Arve saadetud', en: 'Invoiced' },
@@ -1646,23 +1614,9 @@
             extrasOfferLead: { et: 'Märgi lisateenused, mida sinu kliendid saavad äpis tellida, ja kirjuta soovi korral oma hind.', en: 'Tick the extra services your clients can order in the app, and write your price if you wish.' },
             saveAvail: { et: 'Salvesta tööaeg ja teenused', en: 'Save working time and services' },
             availSaved: { et: 'Tööaeg on salvestatud.', en: 'The working time is saved.' },
-            buildingTitle: { et: 'Maja', en: 'Building' },
-            buildingName: { et: 'Maja nimi või aadress', en: 'Building name or address' },
-            saveBuilding: { et: 'Salvesta maja', en: 'Save the building' },
-            buildingSaved: { et: 'Maja on salvestatud.', en: 'The building is saved.' },
             nameLabel: { et: 'Nimi', en: 'Name' },
-            aptLabel: { et: 'Korter', en: 'Apartment' },
-            buyerLabel: { et: 'Ostja nimi', en: 'Buyer’s name' },
             emailLabel: { et: 'E-post', en: 'E-mail' },
-            keysLabel: { et: 'Võtmete kuupäev', en: 'Key date' },
             routeWarranty: { et: 'Garantii teated lähevad', en: 'Warranty notices go to' },
-            routeBuilding: { et: 'Maja teated lähevad', en: 'Building notices go to' },
-            routeDesk: { et: 'Töölauale', en: 'The desk' },
-            routeMail: { et: 'E-postile', en: 'E-mail' },
-            routeHausing: { et: 'Hausingusse', en: 'Hausing' },
-            handoverTitle: { et: 'Anna kodu üle', en: 'Hand over a home' },
-            handoverLead: { et: 'Kirjuta korter ja ostja. Saad koodi, mille ostja sisestab äpis.', en: 'Enter the apartment and the buyer. You get a code the buyer enters in the app.' },
-            handoverCode: { et: 'Kood ostjale. Ostja sisestab koodi aadressil sukoda.ee/lunasta.', en: 'Code for the buyer. The buyer enters the code at sukoda.ee/lunasta.' },
             printCard: { et: 'Prindi kaart', en: 'Print the card' },
             inviteCards: { et: 'Kutsekaardid', en: 'Invitation cards' },
             inviteHint: { et: 'Anna kaart kliendile. Klient sisestab koodi aadressil sukoda.ee/lunasta.', en: 'Give the card to the client. The client enters the code at sukoda.ee/lunasta.' },
@@ -1726,10 +1680,6 @@
                 offeredExtras: ['windows', 'deep-clean', 'fridge-oven', 'appliance-care', 'linens', 'ironing', 'laundry', 'rugs', 'away-care', 'flowers', 'extra-clean'],
                 extraPrices: {},
             }, availSaving: false, availError: '',
-            buildingForm: { name: '', warranty: 'desk', building: 'desk' }, buildingSaving: false,
-            handoverForm: { buildingId: '', apartment: '', buyerName: '', buyerEmail: '', keysAt: '' }, handoverSaving: false,
-            handoverCode: '',
-            handoverCard: '',
             profileForm: { name: '', businessName: '', phone: '', city: '', notifyEmail: '', services: ['cleaning'] }, profileSaving: false, profileSaved: false, profileError: '', maintenanceIntervals: [1, 2, 3, 6, 12, 24],
             signupMode: new URLSearchParams(location.search).get('alusta') != null, signupForm: { name: '', businessName: '', email: '', phone: '', services: ['cleaning'], city: '' },
             signupServices: [
@@ -2875,28 +2825,6 @@
                     await this.okJson(res);
                     this.showToast(this.t('availSaved'));
                 } catch (e) { this.availError = e.message; } finally { this.availSaving = false; }
-            },
-            async saveBuilding() {
-                if (this.buildingSaving) return; this.buildingSaving = true;
-                try {
-                    const res = await this.api('/api/haldus/buildings', { method: 'POST', body: JSON.stringify({ name: this.buildingForm.name, routes: { warranty: this.buildingForm.warranty, building: this.buildingForm.building } }) });
-                    const d = await this.okJson(res);
-                    this.handoverForm.buildingId = d.id || '';
-                    this.showToast(this.t('buildingSaved'));
-                } catch (e) { this.showToast(e.message); } finally { this.buildingSaving = false; }
-            },
-            async handOver() {
-                if (this.handoverSaving) return; this.handoverSaving = true;
-                this.handoverCard = '';
-                try {
-                    const res = await this.api('/api/haldus/buildings/handover', { method: 'POST', body: JSON.stringify(this.handoverForm) });
-                    const d = await this.okJson(res);
-                    if (!d.code) throw new Error(this.t('saveFailed'));
-                    this.handoverCode = d.code;
-                    const address = [this.buildingForm.name, this.handoverForm.apartment].filter(Boolean).join(', ') || d.address || '';
-                    const name = this.handoverForm.buyerName || d.name || '';
-                    this.handoverCard = '/kaart?' + new URLSearchParams({ code: d.code, address, name }).toString();
-                } catch (e) { this.showToast(e.message); } finally { this.handoverSaving = false; }
             },
             async saveProfile() {
                 if (this.profileSaving) return; this.profileSaving = true; this.profileSaved = false; this.profileError = '';
