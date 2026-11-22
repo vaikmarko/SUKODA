@@ -71,7 +71,9 @@ test('owner takes the home, a member only leaves it, a stranger is nobody', () =
   assert.equal(core.deletionRole(home, 'mari@example.com'), null);
   const gift = { type: 'gift', customer: { email: 'buyer@example.com' }, recipient: { email: 'anna@example.com' } };
   assert.equal(core.deletionRole(gift, 'anna@example.com'), 'owner');
-  assert.equal(core.deletionRole(gift, 'buyer@example.com'), 'owner', 'the buyer\'s own data is on the order too');
+  assert.equal(core.deletionRole(gift, 'buyer@example.com'), 'buyer', 'the gifted home stays with Anna');
+  const self = { type: 'gift', customer: { email: 'anna@example.com' }, recipient: { email: 'anna@example.com' } };
+  assert.equal(core.deletionRole(self, 'anna@example.com'), 'owner');
   const left = core.withoutMember(home, 'jaan@example.com');
   assert.deepEqual(left, { contacts: [], contactEmails: [] });
 });

@@ -1812,12 +1812,19 @@ function providerLeavePatch(order, providerId) {
   return { patch, categories };
 }
 
-/** How a deleted person relates to a home: the owner takes the home with them, a member only leaves it. */
+/**
+ * How a deleted person relates to a home: the owner takes the home with them, a member only leaves it,
+ * and the buyer of a gift only takes their own name and contact off it, so the gifted home stays.
+ */
 function deletionRole(order, email) {
   const e = normalizeEmail(email);
   if (!order || !e) return null;
-  const primary = normalizeEmail(order.type === 'gift' ? (order.recipient?.email || order.customer?.email) : order.customer?.email);
-  if (primary === e || normalizeEmail(order.customer?.email) === e) return 'owner';
+  if (order.type === 'gift') {
+    if (normalizeEmail(order.recipient?.email) === e) return 'owner';
+    if (normalizeEmail(order.customer?.email) === e) return 'buyer';
+  } else if (normalizeEmail(order.customer?.email) === e) {
+    return 'owner';
+  }
   const listed = (order.contacts || []).some((c) => normalizeEmail(c?.email) === e) || (order.contactEmails || []).includes(e);
   return listed ? 'member' : null;
 }

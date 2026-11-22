@@ -3396,6 +3396,13 @@ module.exports = function createHaldus(deps) {
         await r.ref.delete();
       }
     }
+    // A gift buyer leaves only their name and contact; the gifted home and its code stay with the recipient
+    for (const r of rows.filter((x) => x.role === 'buyer')) {
+      await r.ref.update({
+        'customer.name': FieldValue.delete(), 'customer.email': FieldValue.delete(), 'customer.phone': FieldValue.delete(),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    }
     const memberOf = rows.filter((r) => r.role === 'member');
     for (const r of memberOf) {
       await r.ref.update({ ...core.withoutMember(r.order, email), updatedAt: FieldValue.serverTimestamp() });
