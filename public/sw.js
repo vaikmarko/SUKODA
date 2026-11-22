@@ -4,7 +4,7 @@
    Push näitab teate ja avab selle aadressi. */
 'use strict';
 
-var CACHE = 'sukoda-shell-v10';
+var CACHE = 'sukoda-shell-v11';
 
 var PRECACHE = [
   '/app.html',
@@ -84,18 +84,25 @@ self.addEventListener('install', function (event) {
 self.addEventListener('activate', function (event) {
   event.waitUntil(
     caches.keys().then(function (keys) {
-      return Promise.all(keys.filter(function (key) {
+      var old = keys.filter(function (key) {
         return key.indexOf('sukoda-shell-') === 0 && key !== CACHE;
-      }).map(function (key) { return caches.delete(key); }));
-    }).then(function () { return self.clients.claim(); })
-      .then(function () {
-        if (!self.clients || !self.clients.matchAll) return;
-        return self.clients.matchAll({ type: 'window' }).then(function (list) {
-          return Promise.all(list.map(function (client) {
-            if (client && client.url && client.navigate) return client.navigate(client.url);
-          }));
+      });
+      return Promise.all(old.map(function (key) { return caches.delete(key); }))
+        .then(function () { return old.length > 0; });
+    }).then(function (updated) {
+      return self.clients.claim().then(function () { return updated; });
+    }).then(function (updated) {
+      /* Reload open pages only when an older shell was replaced. A first
+         visit has nothing stale to replace. The reload is not awaited:
+         a navigation waits for this worker to finish activating, so
+         waiting for it here left the page loading forever. */
+      if (!updated || !self.clients || !self.clients.matchAll) return;
+      self.clients.matchAll({ type: 'window' }).then(function (list) {
+        list.forEach(function (client) {
+          if (client && client.url && client.navigate) client.navigate(client.url).catch(function () {});
         });
-      })
+      });
+    })
   );
 });
 
