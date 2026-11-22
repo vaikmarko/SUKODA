@@ -13,7 +13,7 @@ Mida testida: 1) Cristelle töölaud avaneb ja tänane päev on sama mis enne. 2
 | Lõik | Mis | Failid | Sõltub |
 |---|---|---|---|
 | 1 ✅ | Avalik pind: arendaja leht, Arco pakkumise leht, avalehe arendaja valik, vanad aadressid | `arendajale.html`, `arco-pakkumine.html`, `index.html`, `vite.config.js`, `firebase.json`, `public/robots.txt`, `scripts/ui-lint.js`, `scripts/ui-lint.baseline.json` | otsus 1 |
-| 2 | Elaniku äpp: kingitud esimene koristus, arendaja nimi ja pilt päises, garantiiread, kaust | `minu.html`, `assets/js/minu/*.js` | otsus 2 |
+| 2 ✅ | Elaniku äpp: kingitud esimene koristus, arendaja nimi ja pilt päises, garantiiread, kaust | `minu.html`, `assets/js/minu/*.js` | otsus 2 |
 | 3 | Töölaud: liitumisel valikud „Garantii ja maja“ ja „Maja haldus“, maja üleandmine | `haldus.html`, `assets/js/haldus-ru.js` | lõik 2 |
 | 4 | Koodi lunastamine: Arco üleandmiskaardi haru | `lunasta.html` | otsus 3 |
 | 5 | Taust: maja üleandmise ja kausta käsitlejad, Arco kirjad, garantii meeldetuletused, kataloogi garantiiread, hooldusrütmi garantiiread, testid | `functions/haldus.js`, `functions/index.js`, `functions/lib/haldus-core.js`, `functions/test/*` | lõigud 2 kuni 4, otsus 4, andmete kontroll |
@@ -34,8 +34,27 @@ Järjekord on väljast sisse: kõigepealt kaob see, mida inimene näeb, ja alles
 - Kontrollimata: `npm run build` ei jookse selles keskkonnas (rollup'i macOS-i binaar). Esimene päris ehitus on CI push'i järel või Marko masinas.
 - Jäi alles, otsustada: `assets/images/story-interior*` (viis pildifaili) kasutas ainult Arco pakkumise leht. Ma ei kustutanud neid, sest uus avaleht võib päris fotot vajada.
 
-### Lõigud 2 kuni 4 (kirjeldus, täpne plaan enne iga lõiku)
-- Lõik 2: `pickNextThing` haru `welcome` ja tekstid `welcome*`, `giftRow`, `giftCleanMeta`, `giftNote`, `giftCovers`; päise plokk `brand?.image`; Telli read `reportProblem` ja garantii vorm; `allClearBody`; sakk „Kaust“ ja Kodu vormi „Küsi kodu kohta“. `kodu.test.mjs` uuendatakse samas commit'is.
+### Lõik 2 (ehitatud 23.11.2026)
+Elaniku äpist on väljas kolm asja, mida nägi ainult arendaja kodu või mis kandis Arco nime:
+- Kaart „Vali esimene koristus. Arco kingib esimese koristuse“ ja rida „Esimene koristus · Kingitus“ jaotises „Sinu teenused“.
+- Rida „Teata probleemist · Tasuta“ koos garantiivormiga jaotises „Lisa juurde“. Seda nägi ainult kodu, millel ei olnud oma koristajat.
+- Saki „Kaust“ nupud (arvutis ja telefonis) ning Kodu ekraani vorm „Küsi kodu kohta“. Vanad kirjalingid `/minu?tab=home` ja `?tab=folder` avavad nüüd Kodu ekraani.
+
+Mis jäi teadlikult samaks:
+- Kodu, mille tingimustes on koristus kokkulepitud arvu kordi sees, tellib endiselt ühe koristuse korraga ja ilma kaardita. Sama loogika, uus nimi (`includedCleanLine`), Arco tekstita.
+- Tühja Kodu kaardi nupp on nüüd igal kodul „Telli teenus“.
+
+Jäänukid lõigu 5 jaoks (kasutaja nendeni enam ei jõua, kood on alles):
+- `minu.html`: kausta vaate meetodid (`askFolder`, `askCardFrom`, `canShowAskFolder`, dokumentide lisamine ja eelvaade), garantiipaneeli harud (`'warranty'` võrdlused, `onTelliPhoto`, `telliPhotoName`), `openWarrantyClaim`, arendaja nimi ja pilt päises (`brand`), kodu üleandmine (`handOverHome`).
+- `assets/js/minu/kaust.js` tervikuna; `mount.js` paigaldab selle endiselt.
+- `reportProblem` on sõnastikus alles, sest soovi dialoog kasutab seda.
+
+Kontrollitud:
+- `npm run check` roheline: ui-lint ok, 102 testi (neli Arco kingituse ja garantii testi eemaldatud koos koodiga). Test „iga `t()` võti on sõnastikus kolmes keeles“ läbib.
+- Leht ehitatud Vite'iga eraldi keskkonnas ja avatud peata brauseris jäljendatud andmetega (koristaja hallatav kodu): Kodu, Teenused ja Minu avanevad, konsoolis vigu ei ole, jaluses on kolm nuppu, `?tab=folder` avab Kodu. See kontroll tehti enne viimast väikest parandust (`includedCleanLine`); pärast seda jooksid ainult testid.
+- Kontrollimata: kodu, millel ei ole oma koristajat, ja kodu, mille tingimustes on kordade arv. Päris andmetes selliseid teadaolevalt ei ole.
+
+### Lõigud 3 ja 4 (kirjeldus, täpne plaan enne kumbagi)
 - Lõik 3: `svcSignWarranty`, `svcSignBuilding`, `POST /api/haldus/buildings/handover` kutsuv vaade.
 - Lõik 4: `lunasta.html` haru 2a (Arco kaart). Kutse ja vana kinkekaardi harud jäävad.
 

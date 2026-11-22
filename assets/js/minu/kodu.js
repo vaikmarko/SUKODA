@@ -5,7 +5,6 @@
 Object.assign(dict, {
   tabKodu: { et: 'Kodu', en: 'Home', ru: 'Дом' },
   tabServices: { et: 'Teenused', en: 'Services', ru: 'Услуги' },
-  tabFolder: { et: 'Kaust', en: 'Folder', ru: 'Папка' },
   tabMine: { et: 'Minu', en: 'Profile', ru: 'Профиль' },
   tabHome: { et: 'Kaust', en: 'Folder', ru: 'Папка' },
   tabCalendar: { et: 'Ajad', en: 'Times', ru: 'Время' },
@@ -41,10 +40,6 @@ Object.assign(dict, {
   firstOpenTitle: { et: 'Kolm asja enne esimest visiiti', en: 'Three things before the first visit', ru: 'Три вещи до первого визита' },
   firstOpenBody: { et: 'Kirjuta, kus on voodipesu, milliseid lilli eelistad ja kuidas koristaja sisse saab. Koristaja näeb vastuseid igal visiidil.', en: 'Write where the linens are, which flowers you prefer and how the cleaner gets in. The cleaner sees these answers on every visit.', ru: 'Напишите, где лежит постельное бельё, какие цветы вы предпочитаете и как уборщик попадёт внутрь. Уборщик видит эти ответы на каждом визите.' },
   firstOpenAction: { et: 'Täida', en: 'Fill in', ru: 'Заполнить' },
-  welcomeEyebrow: { et: 'Uus kodu', en: 'New home', ru: 'Новый дом' },
-  welcomeTitle: { et: 'Vali esimene koristus', en: 'Pick the first clean', ru: 'Выберите первую уборку' },
-  welcomeBody: { et: 'Arco kingib esimese koristuse. Vali sobiv päev, maksta ei ole vaja.', en: 'Arco gives the first clean. Pick a day that suits you, there is nothing to pay.', ru: 'Arco дарит первую уборку. Выберите удобный день, платить не нужно.' },
-  welcomeAction: { et: 'Vali aeg', en: 'Pick a time', ru: 'Выбрать время' },
   upcomingTitle: { et: 'Järgmised visiidid', en: 'Upcoming visits', ru: 'Ближайшие визиты' },
   upcomingEmpty: { et: 'Kinnitatud aega veel ei ole. Telli koristus, kui soovid.', en: 'No time is confirmed yet. Order a clean if you wish.', ru: 'Подтверждённого времени пока нет. Закажите уборку, если хотите.' },
   orderCleanBtn: { et: 'Telli koristus', en: 'Order a clean', ru: 'Заказать уборку' },
@@ -56,7 +51,6 @@ Object.assign(dict, {
   writeCleaner: { et: 'Kirjuta koristajale', en: 'Write to the cleaner', ru: 'Написать уборщику' },
   standingTitle: { et: 'Püsikoristus', en: 'Standing clean', ru: 'Постоянная уборка' },
   allClearTitle: { et: 'Järgmist visiiti ei ole plaanis', en: 'No visit is planned', ru: 'Визитов пока не запланировано' },
-  allClearBody: { et: 'Kui kodus on midagi katki, teata probleemist. Garantii ajal on ülevaatus tasuta.', en: 'If something at home is broken, report the problem. During the warranty the inspection is free.', ru: 'Если дома что-то сломалось, сообщите о проблеме. В гарантийный срок осмотр бесплатный.' },
   allClearOrderBody: { et: 'Kui vajad koristust või remondimeest, telli Teenuste alt.', en: 'If you need a clean or a handyman, order it under Services.', ru: 'Если нужна уборка или мастер, закажите в разделе «Услуги».' },
   orderService: { et: 'Telli teenus', en: 'Order a service', ru: 'Заказать услугу' },
   reportProblem: { et: 'Teata probleemist', en: 'Report a problem', ru: 'Сообщить о проблеме' },
@@ -139,10 +133,6 @@ function waitingQuestion(requests) {
   return (requests || []).find((r) => r.status === 'requested' && (r.kind === 'question' || r.kind === 'issue'));
 }
 
-function openClean(requests) {
-  return (requests || []).some((r) => ['requested', 'confirmed'].includes(r.status) && (r.serviceId === 'extra-clean' || r.category === 'cleaning'));
-}
-
 /**
  * One card. Money first, then a reply the resident must act on,
  * then the next visit, then a question still waiting, then away, then calm.
@@ -180,20 +170,6 @@ function pickNextThing(vm) {
       title: t('pendingTitle'),
       body: asked ? t('pendingDropped', { asked }) : t('pendingDroppedShort'),
       action: t('seeCalendar'),
-      thenLine: '',
-    };
-  }
-
-  if (vm.extrasLoaded && !upcoming.length && vm.arcoCleanLine && !openClean(requests)) {
-    return {
-      kind: 'welcome',
-      refId: '',
-      pending: false,
-      eyebrow: t('welcomeEyebrow'),
-      title: t('welcomeTitle'),
-      body: t('welcomeBody'),
-      action: t('welcomeAction'),
-      action2: '',
       thenLine: '',
     };
   }
@@ -303,16 +279,14 @@ function pickNextThing(vm) {
     }
   }
 
-  // Cristelle's own clients have no builder warranty. Developer homes still report a defect.
-  const canReport = !vm.showProvider && ((vm.extras && vm.extras.catalogue) || []).some((s) => s && s.id === 'warranty-claim');
   return {
     kind: 'calm',
     refId: '',
     pending: false,
     eyebrow: t('nextEyebrow'),
     title: t('allClearTitle'),
-    body: t(canReport ? 'allClearBody' : 'allClearOrderBody'),
-    action: t(canReport ? 'reportProblem' : 'orderService'),
+    body: t('allClearOrderBody'),
+    action: t('orderService'),
     thenLine: '',
   };
 }

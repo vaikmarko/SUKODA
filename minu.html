@@ -21,7 +21,6 @@
       var tabs = {
         tabKodu: { et: 'Kodu', en: 'Home', ru: 'Дом' },
         tabServices: { et: 'Teenused', en: 'Services', ru: 'Услуги' },
-        tabFolder: { et: 'Kaust', en: 'Folder', ru: 'Папка' },
         tabMine: { et: 'Minu', en: 'Profile', ru: 'Профиль' }
       };
       Object.keys(tabs).forEach(function (key) { if (!dict[key]) dict[key] = tabs[key]; });
@@ -76,8 +75,6 @@
         const n = this.nextThing;
         const use = kind || (n && n.kind);
         if (!n || use === 'loading') return;
-        if (use === 'welcome') { this.activeTab = 'extras'; this.openTelli('clean'); return; }
-        if (use === 'welcome-fix') { this.activeTab = 'extras'; this.openTelli('fix'); return; }
         if (use === 'unpaid') { this.loadProfile(); return; }
         if (n.kind === 'request') {
             const r = (this.extras.requests || []).find((x) => x.id === n.refId);
@@ -93,11 +90,7 @@
         }
         if (n.kind === 'away') { this.activeTab = 'visits'; return; }
         if (n.kind === 'profile') { this.activeTab = 'mine'; this.profileEditing = true; return; }
-        if (n.kind === 'calm') {
-            const s = !this.showProvider && (this.extras.catalogue || []).find((x) => x.id === 'warranty-claim');
-            if (s) this.openRequest(s);
-            else this.activeTab = 'extras';
-        }
+        if (n.kind === 'calm') this.activeTab = 'extras';
     },
 
     homeProfile: {
@@ -261,7 +254,7 @@
             return;
         }
         // Deep link to a tab (e-mails: /minu?tab=home)
-        const tabAlias = { overview: 'overview', extras: 'extras', visits: 'visits', home: 'folder', folder: 'folder', mine: 'mine' };
+        const tabAlias = { overview: 'overview', extras: 'extras', visits: 'visits', home: 'overview', folder: 'overview', mine: 'mine' };
         if (tabAlias[urlParams.get('tab')]) this.activeTab = tabAlias[urlParams.get('tab')];
 
         // Warm the profile/extras functions in parallel with token validation so the
@@ -865,7 +858,6 @@
         return (this.extras.interests || []).includes(this.telliServiceId);
     },
     get telliButtonLabel() {
-        if (this.telliOpen === 'warranty' || this.telliPanel === 'warranty') return this.t('sendWarranty');
         if (this.telliOpen === 'note') return this.t('sendWord');
         if (this.showProvider || this.quoteHasFloor) return this.t('confirmOrder');
         if (this.telliSumAmount && this.telliQuote && this.telliQuote.cardRequired) {
@@ -898,7 +890,7 @@
         this.telliNote = '';
         this.telliTiming = this.nextCleanDay ? 'next' : 'pick';
         if (!this.flowerTone) this.flowerTone = (this.homeProfile && this.homeProfile.flowerPreference) || '';
-        if (this.telliOpen === 'clean' && (this.arcoCleanLine || this.telliPay)) this.telliRhythm = 'once';
+        if (this.telliOpen === 'clean' && (this.includedCleanLine || this.telliPay)) this.telliRhythm = 'once';
         if (this.telliOpen && this.telliOpen !== 'warranty' && this.telliOpen !== 'note') this.refreshTelliQuote();
         if (this.telliOpen) {
             const svc = this.serviceById(this.telliServiceId);
@@ -991,15 +983,6 @@
                 status: this.t('statusConfirmed'),
                 open: '',
             });
-        } else if (this.arcoCleanLine) {
-            rows.push({
-                id: 'gift-clean',
-                name: this.t('giftRow'),
-                meta: this.t('giftCleanMeta'),
-                status: this.t('giftStatus'),
-                open: 'clean',
-                pick: 'giftPickClean',
-            });
         }
         (this.upcomingBookings || []).forEach((booking) => {
             if (booking.kind !== 'extra') return;
@@ -1031,7 +1014,8 @@
         const request = (this.extras.requests || []).find((item) => item.id === row.requestId);
         if (request) this.openThread(request);
     },
-    get arcoCleanLine() {
+    /** A home whose terms include cleans by a spoken quota orders one clean at a time: no rhythm picker, no card. */
+    get includedCleanLine() {
         const row = (this.extras.categories || []).find((c) => c.id === 'cleaning');
         const quota = row && row.terms && row.terms.quota;
         return quota ? String(quota) : '';
@@ -1088,13 +1072,11 @@
         const flowerBit = (panel === 'flowers' || (panel === 'clean' && this.telliAddons.flowers)) ? this.t('flowerLine', { choice: this.flowerChoice() }) : '';
         const rhythmName = { weekly: 'rhythmWeek', biweekly: 'rhythmTwo', monthly: 'rhythmMonth' }[this.telliRhythm];
         const rhythmBit = panel === 'clean' && rhythmName ? this.t('rhythmNote', { rhythm: this.t(rhythmName).toLowerCase() }) : '';
-        const cleanCovered = panel === 'clean' && this.telliQuote && (this.telliQuote.lines || []).some((line) => line.id === 'extra-clean' && line.covered);
-        const giftBit = cleanCovered && !rhythmName ? this.t('giftNote') : '';
         const note = panel === 'clean'
-            ? [giftBit, rhythmBit, this.t('telliNoteOnce'), names.length ? this.t('telliNoteExtras', { list: names.join(', ') }) : '', flowerBit].filter(Boolean).join(' ')
+            ? [rhythmBit, this.t('telliNoteOnce'), names.length ? this.t('telliNoteExtras', { list: names.join(', ') }) : '', flowerBit].filter(Boolean).join(' ')
             : panel === 'flowers'
                 ? [flowerBit, words].filter(Boolean).join(' ')
-                : [giftBit, words, panel === 'warranty' && this.telliPhotoName ? this.t('photoAttached') : ''].filter(Boolean).join(' ');
+                : [words, panel === 'warranty' && this.telliPhotoName ? this.t('photoAttached') : ''].filter(Boolean).join(' ');
         const serviceId = this.telliServiceId;
         const withNext = !isNote && this.canAttachToNextClean && this.telliTiming === 'next';
         try {
@@ -1124,9 +1106,7 @@
                 ? this.t('noted')
                 : (isNote
                     ? this.t('noteSentCleaner')
-                    : (panel === 'warranty'
-                        ? this.t('orderWarrantySent')
-                        : (this.showProvider && this.providerFace ? this.t('telliSentNamed', { name: this.providerFace }) : this.t('telliSent'))));
+                    : (this.showProvider && this.providerFace ? this.t('telliSentNamed', { name: this.providerFace }) : this.t('telliSent')));
             this.telliAddons = { flowers: false, windows: false, linens: false, 'appliance-care': false };
             this.telliNote = '';
             this.telliPhotoName = '';
@@ -2411,7 +2391,7 @@
             </nav>
 
             <!-- Welcome header: shown on Kodu/Calendar so Teenused, Kaust and Minu open straight at the top -->
-            <div class="grid-line-b overflow-hidden" x-show="(activeTab === 'overview' || activeTab === 'visits') && nextThing.kind !== 'welcome' && nextThing.kind !== 'loading'" x-cloak>
+            <div class="grid-line-b overflow-hidden" x-show="(activeTab === 'overview' || activeTab === 'visits') && nextThing.kind !== 'loading'" x-cloak>
                 <div class="grid grid-cols-1 lg:grid-cols-12 items-stretch min-w-0">
                     <div class="px-6 md:px-12 py-8 md:py-12 flex flex-col justify-center min-w-0" :class="brand?.image ? 'lg:col-span-7' : 'lg:col-span-12'">
                         <div class="accent-line mb-4"></div>
@@ -2438,7 +2418,6 @@
                         <!-- A dot only when a reply waits on the resident's own decision — not a counter -->
                         <span x-show="needsYou" x-cloak class="absolute top-3 -right-3 w-2 h-2 rounded-full bg-accent" aria-hidden="true"></span>
                     </button>
-                    <button type="button" @click="activeTab = 'folder'" :class="activeTab === 'folder' ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black border-b-2 border-transparent'" class="py-4 transition-colors" x-text="t('tabFolder')"></button>
                     <button type="button" @click="activeTab = 'mine'" :class="activeTab === 'mine' ? 'text-black border-b-2 border-accent' : 'text-muted hover:text-black border-b-2 border-transparent'" class="py-4 transition-colors" x-text="t('tabMine')"></button>
                 </div>
             </div>
@@ -2456,10 +2435,6 @@
                     </span>
                     <span x-text="t('tabServices')"></span>
                 </button>
-                <button type="button" @click="activeTab = 'folder'; window.scrollTo({ top: 0, behavior: 'smooth' })" :class="activeTab === 'folder' ? 'is-active' : ''" :aria-current="activeTab === 'folder' ? 'page' : 'false'" class="p-tabbar-btn">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 6.5A2.5 2.5 0 015.5 4h3.38a2 2 0 011.66.89l.92 1.38a1 1 0 00.83.45H18.5A2.5 2.5 0 0121 9.22v8.28A2.5 2.5 0 0118.5 20h-13A2.5 2.5 0 013 17.5v-11z"/></svg>
-                    <span x-text="t('tabFolder')"></span>
-                </button>
                 <button type="button" @click="activeTab = 'mine'; window.scrollTo({ top: 0, behavior: 'smooth' })" :class="activeTab === 'mine' ? 'is-active' : ''" :aria-current="activeTab === 'mine' ? 'page' : 'false'" class="p-tabbar-btn">
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.5 7.5a3.5 3.5 0 11-7 0 3.5 3.5 0 017 0zM4.5 19.5a7.5 7.5 0 0115 0"/></svg>
                     <span x-text="t('tabMine')"></span>
@@ -2467,7 +2442,7 @@
             </nav>
 
             <main id="main-content" class="px-6 md:px-12 py-8 md:py-12 min-w-0">
-                <section id="push-offer" hidden class="border border-line bg-paper p-4 mb-6 max-w-xl" x-show="nextThing.kind !== 'welcome'">
+                <section id="push-offer" hidden class="border border-line bg-paper p-4 mb-6 max-w-xl">
                     <p class="eyebrow" data-push-label></p>
                     <p class="text-sm text-muted font-sans font-light mt-2" data-push-lead></p>
                     <div class="flex gap-3 mt-4">
@@ -2484,7 +2459,6 @@
       </div>
       <div class="p-next-bd">
         <h2 class="font-serif text-2xl md:text-3xl font-light" x-text="nextThing.title"></h2>
-        <p class="text-sm font-sans font-light mt-3" x-show="nextThing.kind === 'welcome'" x-text="order?.customerAddress || order?.address"></p>
         <p class="text-sm text-muted font-sans font-light mt-3 max-w-lg" x-text="nextThing.body"></p>
         <p x-show="nextThing.thenLine" x-cloak class="text-sm text-muted font-sans font-light mt-4" x-text="nextThing.thenLine"></p>
         <button type="button" class="p-btn mt-8 w-full sm:w-auto" x-show="nextThing.action" @click="runNext()" x-text="nextThing.action"></button>
@@ -2492,32 +2466,16 @@
       </div>
     </article>
     <!-- The last visit that happened: one line, cleaner's note if any, and one-tap feedback -->
-    <div x-show="lastVisit && nextThing.kind !== 'welcome' && nextThing.kind !== 'loading'" x-cloak class="mt-8">
+    <div x-show="lastVisit && nextThing.kind !== 'loading'" x-cloak class="mt-8">
         <p class="eyebrow" x-text="t('lastVisitLabel')"></p>
         <p class="text-sm font-sans font-light mt-2" x-text="lastVisitLine(lastVisit)"></p>
         <p x-show="lastVisit?.completedNote" class="text-sm text-muted font-sans font-light mt-1.5" x-text="lastVisit?.completedNote"></p>
         <button type="button" x-show="hasCleaner || lastVisit?.providerName" class="text-sm font-sans mt-3 underline underline-offset-4 hover:text-accent transition-colors" @click="openVisitFeedback(lastVisit)" x-text="t('feedbackAction')"></button>
     </div>
-    <div class="flex flex-wrap items-center gap-x-6 gap-y-2 mt-6" x-show="nextThing.kind !== 'welcome' && nextThing.kind !== 'loading'" x-cloak>
+    <div class="flex flex-wrap items-center gap-x-6 gap-y-2 mt-6" x-show="nextThing.kind !== 'loading'" x-cloak>
         <button type="button" class="text-sm font-sans underline underline-offset-4" x-show="nextThing.kind !== 'away' && !(nextThing.kind === 'visit' && nextThing.pending) && (upcomingBookings.length || pastBookings.length)" @click="activeTab = 'visits'" x-text="t('seeCalendar')"></button>
         <button type="button" class="text-sm font-sans underline underline-offset-4 hover:text-accent transition-colors" x-show="!lastVisit && hasCleaner" @click="openVisitFeedback(null)" x-text="t('writeCleaner')"></button>
     </div>
-    <form class="mt-10 border-t border-line pt-8" x-show="nextThing.kind !== 'welcome' && canShowAskFolder" x-cloak @submit.prevent="askFolder()">
-        <label class="eyebrow" for="ask-home" x-text="t('askHomeLead')"></label>
-        <div class="flex flex-col sm:flex-row gap-3 mt-2">
-            <input id="ask-home" type="text" x-model="askText" maxlength="200" :placeholder="t('askPh')" class="w-full bg-transparent border-b border-line focus:border-accent outline-none py-2 font-sans font-light text-base placeholder:text-line-strong">
-            <button type="submit" class="p-btn shrink-0 disabled:opacity-50" :disabled="askSending || !(askText || '').trim()" x-text="t('askLabel')"></button>
-        </div>
-        <div x-show="askCard" x-cloak class="mt-4 border border-line p-4 text-left">
-            <p class="font-serif text-2xl font-light leading-snug" x-show="askCard && askCard.fact" x-text="askCard && askCard.fact"></p>
-            <p class="eyebrow mt-4" x-show="askCard && askCard.place" x-text="t('askIn')"></p>
-            <p class="text-sm font-sans font-light mt-1" x-show="askCard && askCard.place" x-text="askCard && askCard.place"></p>
-            <p class="text-sm font-sans font-light" x-show="askCard && !askCard.fact && !askCard.error" x-text="t('askEmpty')"></p>
-            <p class="text-sm text-red-500 font-sans font-light" x-show="askCard && askCard.error" x-text="askCard && askCard.error"></p>
-            <button type="button" x-show="askCard && askCard.action === 'open'" class="p-btn mt-4" @click="openHref(askCard.place, askCard.href)" x-text="t('askOpen')"></button>
-            <button type="button" x-show="askCard && askCard.action === 'person'" :disabled="askSending" class="p-btn mt-4 disabled:opacity-50" @click="sendAskToPerson()" x-text="askSending ? t('telliSending') : t('askPerson')"></button>
-        </div>
-    </form>
     <p x-show="brand?.emergencyPhone" x-cloak class="text-sm text-muted font-sans font-light mt-6">
       <span x-text="t('emergency') + ': '"></span><a :href="'tel:' + (brand?.emergencyPhone || '').replace(/\s+/g, '')" class="text-black hover:text-accent" x-text="brand?.emergencyPhone"></a>
     </p>
