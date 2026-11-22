@@ -39,7 +39,7 @@
             </div>
         </nav>
 
-        <!-- The card code opens a home: Arco handover card (welcome), a housekeeper's invitation (invite) or an old gift card (legacy) -->
+        <!-- The code opens a home: a housekeeper's invitation (invite) or an old gift card (legacy) -->
         <main id="main-content" class="flex-1 flex items-start md:items-center justify-center px-6 py-12 md:py-24">
             <div class="w-full max-w-lg">
 
@@ -58,21 +58,8 @@
                     </div>
                 </div>
 
-                <!-- 2a. Arco card: the home is already prepared. Nothing to type. -->
-                <div x-show="state === 'welcome'" x-cloak class="text-center">
-                    <p class="eyebrow text-accent mb-6" x-text="t('welcomeKicker')"></p>
-                    <h1 class="font-serif text-3xl md:text-4xl font-light mb-2 leading-tight" x-text="home.address || t('welcomeTitle')"></h1>
-                    <p class="text-sm text-muted font-sans font-light mb-10" x-show="home.project" x-text="home.project"></p>
-                    <div class="bg-white border border-line divide-y divide-line mb-10 text-left">
-                        <template x-for="(line, i) in welcomeLines()" :key="i">
-                            <p class="px-5 py-4 font-sans text-sm font-light leading-relaxed" x-text="line"></p>
-                        </template>
-                    </div>
-                    <button type="button" @click="openHome()" :disabled="codeBusy" class="p-btn w-full sm:w-auto sm:min-w-[16rem] disabled:opacity-50" x-text="codeBusy ? t('opening') : t('open')"></button>
-                </div>
-
-                <!-- 2b. Housekeeper's invitation: three required fields, the rest optional and folded away -->
-                <div x-show="(state === 'invite' || state === 'sending') && !welcome" x-cloak>
+                <!-- 2. Housekeeper's invitation: three required fields, the rest optional and folded away -->
+                <div x-show="state === 'invite' || state === 'sending'" x-cloak>
                     <div class="text-center mb-10">
                         <p class="eyebrow text-accent mb-6" x-text="t('inviteKicker') + ' · ' + code"></p>
                         <h1 class="font-serif text-3xl md:text-4xl font-light mb-5 leading-tight" x-text="t('inviteTitle', { name: provider.firstName })"></h1>
@@ -162,13 +149,9 @@
         const saved = localStorage.getItem('sukoda_lang');
         return {
             lang: LANGS.includes(saved) ? saved : 'et',
-            state: 'input', // input | checking | invite | welcome | sending | done | used | unassigned | legacy | already
+            state: 'input', // input | checking | invite | sending | done | used | unassigned | legacy | already
             code: '',
             error: '',
-            welcome: false,
-            home: { address: '', project: '', name: '', email: '', warranty: '', lines: [] },
-            codeBusy: false,
-            cardToken: '',
             provider: { firstName: '', name: '', businessName: '' },
             form: { name: '', email: '', phone: '', address: '', size: 'medium', weekday: 2, time: '10:00', flowerPreference: '', linens: '', contact2: { name: '', email: '' }, consent: false },
             showContact2: false,
@@ -181,7 +164,6 @@
                 title: { et: 'Sisesta kutsekood.', en: 'Enter your invite code.', ru: 'Введите код приглашения.' },
                 codeLabel: { et: 'Kood', en: 'Code', ru: 'Код' },
                 open: { et: 'Ava kodu', en: 'Open my home', ru: 'Открыть дом' },
-                opening: { et: 'Avan…', en: 'Opening…', ru: 'Открываем…' },
                 checking: { et: 'Kontrollin…', en: 'Checking…', ru: 'Проверяем…' },
                 sending: { et: 'Saadan…', en: 'Sending…', ru: 'Отправляем…' },
                 errEmpty: { et: 'Kirjuta kutsekood.', en: 'Enter the invite code.', ru: 'Введите код приглашения.' },
@@ -191,8 +173,6 @@
                 errConsent: { et: 'Märgi nõusolek, et jätkata.', en: 'Tick the consent box to continue.', ru: 'Отметьте согласие, чтобы продолжить.' },
                 errRequired: { et: 'Täida nimi, e-post ja aadress.', en: 'Fill in your name, e-mail and address.', ru: 'Заполните имя, электронную почту и адрес.' },
 
-                welcomeKicker: { et: 'Sinu uus kodu', en: 'Your new home', ru: 'Ваш новый дом' },
-                welcomeTitle: { et: 'Kodu on sinu.', en: 'The home is yours.', ru: 'Дом ваш.' },
 
                 inviteKicker: { et: 'Kutse', en: 'Invitation', ru: 'Приглашение' },
                 inviteTitle: { et: '{name} kutsub sind SUKODA-sse.', en: '{name} invites you to SUKODA.', ru: '{name} приглашает вас в SUKODA.' },
@@ -213,8 +193,6 @@
                 otherCode: { et: 'Sisesta teine kood', en: 'Enter another code', ru: 'Ввести другой код' },
 
                 welcomeBack: { et: 'Tere tulemast', en: 'Welcome', ru: 'Добро пожаловать' },
-                doneWelcomeTitle: { et: 'Sinu kodu on valmis.', en: 'Your home is ready.', ru: 'Ваш дом готов.' },
-                doneWelcomeText: { et: 'Saatsime aadressile {email} sisenemislingi. Portaalis valid esimese koristuse aja.', en: 'We sent a login link to {email}. In the portal you pick the time for your first cleaning.', ru: 'Мы отправили ссылку для входа на {email}. В портале вы выберете время первой уборки.' },
                 doneInviteTitle: { et: 'Sinu kodu on portaalis.', en: 'Your home is in the portal.', ru: 'Ваш дом в портале.' },
                 doneInviteText: { et: 'Saatsime aadressile {email} sisenemislingi. {name} lisab ajad ja iga visiit jõuab sulle kalendrikutsena.', en: 'We sent a login link to {email}. {name} adds the times and every visit arrives as a calendar invite.', ru: 'Мы отправили ссылку для входа на {email}. {name} добавит время визитов, и каждый визит придёт приглашением в календарь.' },
                 login: { et: 'Sisene portaali', en: 'Log in to the portal', ru: 'Войти в портал' },
@@ -279,14 +257,9 @@
                     if (!r.ok && !r.data.state) { this.error = this.errText(r.data.error, 'errNotFound'); this.state = 'input'; return; }
                     this.code = r.data.code || code;
                     if (r.data.provider) this.provider = r.data.provider;
-                    if (r.data.state === 'welcome') {
-                        this.welcome = true;
-                        this.home = r.data.home || this.home;
-                        this.cardToken = r.data.token || '';
-                        this.state = 'welcome';
-                    }
-                    else if (r.data.state === 'invite') { this.state = 'invite'; }
-                    else if (r.data.state === 'notfound' || !r.data.state) { this.error = this.t('errNotFound'); this.state = 'input'; }
+                    if (r.data.state === 'invite') { this.state = 'invite'; }
+                    // 'welcome' was the developer's handover card. Those cards are no longer honoured.
+                    else if (r.data.state === 'notfound' || r.data.state === 'welcome' || !r.data.state) { this.error = this.t('errNotFound'); this.state = 'input'; }
                     else this.state = r.data.state;
                 } catch (e) {
                     this.error = this.t('errNet');
@@ -301,47 +274,27 @@
                 try {
                     const r = await this.post('/api/lunasta/redeem', { code: this.code, lang: this.lang, ...this.form });
                     if (r.status === 429) { this.error = this.t('errMany'); this.state = 'invite'; return; }
-                    if (r.ok) { this.doneEmail = r.data.email || this.form.email; this.welcome = !!r.data.welcome || this.welcome; this.state = 'done'; return; }
+                    if (r.ok) { this.doneEmail = r.data.email || this.form.email; this.state = 'done'; return; }
                     if (r.data.state && r.data.state !== 'invite' && r.data.state !== 'welcome' && r.data.state !== 'notfound') { this.state = r.data.state; return; }
                     this.error = this.errText(r.data.error, 'errNet');
-                    this.state = this.welcome ? 'welcome' : 'invite';
+                    this.state = 'invite';
                 } catch (e) {
                     this.error = this.t('errNet');
-                    this.state = this.welcome ? 'welcome' : 'invite';
+                    this.state = 'invite';
                 }
             },
 
             reset() {
-                this.state = 'input'; this.code = ''; this.error = ''; this.welcome = false;
-                this.home = { address: '', project: '', email: '', warranty: '', lines: [] };
+                this.state = 'input'; this.code = ''; this.error = '';
                 history.replaceState({}, '', '/lunasta');
                 this.$nextTick(() => document.getElementById('code')?.focus());
-            },
-
-            // What is already inside the prepared home. Facts come from the developer's handover; the words are ours.
-            welcomeLines() {
-                const lines = [
-                    { et: 'Kodu dokumendid ja seadmete juhendid on juba sees.', en: 'Your home documents and appliance guides are already here.', ru: 'Документы на дом и инструкции к технике уже внутри.' },
-                    { et: 'ARCO Vara kinkis sulle esimese koristuse. Aja valid portaalis.', en: 'ARCO Vara has given you your first cleaning. You pick the time in the portal.', ru: 'ARCO Vara дарит вам первую уборку. Время вы выберете в портале.' },
-                    { et: 'Kui midagi on katki, saada foto ja lühike kirjeldus otse portaalist.', en: 'If something is broken, send a photo and a short description from the portal.', ru: 'Если что-то сломалось, отправьте фото и короткое описание прямо из портала.' },
-                ];
-                return lines.map((row) => row[this.lang] || row.et);
-            },
-
-            openHome() {
-                if (this.codeBusy) return;
-                this.codeBusy = true;
-                if (this.cardToken) localStorage.setItem('sukoda_portal_token', this.cardToken);
-                window.location.href = '/minu';
             },
 
             outcome() {
                 const mailHref = 'mailto:tere@sukoda.ee?subject=SUKODA%20kaart%20' + encodeURIComponent(this.code);
                 const first = this.provider.firstName || '';
                 switch (this.state) {
-                    case 'done': return this.welcome
-                        ? { kicker: this.t('welcomeBack'), title: this.t('doneWelcomeTitle'), text: this.t('doneWelcomeText', { email: this.doneEmail }), href: '/app?email=' + encodeURIComponent(this.doneEmail), cta: this.t('open'), second: '' }
-                        : { kicker: this.t('welcomeBack'), title: this.t('doneInviteTitle'), text: this.t('doneInviteText', { email: this.doneEmail, name: first }), href: '/app?email=' + encodeURIComponent(this.doneEmail), cta: this.t('login'), second: '' };
+                    case 'done': return { kicker: this.t('welcomeBack'), title: this.t('doneInviteTitle'), text: this.t('doneInviteText', { email: this.doneEmail, name: first }), href: '/app?email=' + encodeURIComponent(this.doneEmail), cta: this.t('login'), second: '' };
                     case 'provider_full': return { kicker: this.t('card'), title: this.t('fullTitle', { name: first || 'Partner' }), text: this.t('fullText', { name: first || 'partner' }).trim(), href: '/lunasta', cta: this.t('otherCode'), second: '' };
                     case 'used': return { kicker: this.t('card'), title: this.t('usedTitle'), text: this.t('usedText'), href: '/app', cta: this.t('login'), second: this.t('write'), secondHref: mailHref };
                     case 'already': return { kicker: this.t('alreadyKicker'), title: this.t('alreadyTitle'), text: this.t('alreadyText'), href: '/app?email=' + encodeURIComponent(this.form.email || ''), cta: this.t('login'), second: this.t('otherCode'), secondHref: '' };

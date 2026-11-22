@@ -14,8 +14,8 @@ Mida testida: 1) Cristelle töölaud avaneb ja tänane päev on sama mis enne. 2
 |---|---|---|---|
 | 1 ✅ | Avalik pind: arendaja leht, Arco pakkumise leht, avalehe arendaja valik, vanad aadressid | `arendajale.html`, `arco-pakkumine.html`, `index.html`, `vite.config.js`, `firebase.json`, `public/robots.txt`, `scripts/ui-lint.js`, `scripts/ui-lint.baseline.json` | otsus 1 |
 | 2 ✅ | Elaniku äpp: kingitud esimene koristus, arendaja nimi ja pilt päises, garantiiread, kaust | `minu.html`, `assets/js/minu/*.js` | otsus 2 |
-| 3 | Töölaud: liitumisel valikud „Garantii ja maja“ ja „Maja haldus“, maja üleandmine | `haldus.html`, `assets/js/haldus-ru.js` | lõik 2 |
-| 4 | Koodi lunastamine: Arco üleandmiskaardi haru | `lunasta.html` | otsus 3 |
+| 3 ✅ | Töölaud: liitumisel valikud „Garantii ja maja“ ja „Maja haldus“, maja üleandmine | `haldus.html`, `assets/js/haldus-ru.js` | lõik 2 |
+| 4 ✅ | Koodi lunastamine: Arco üleandmiskaardi haru | `lunasta.html` | otsus 3 |
 | 5 | Taust: maja üleandmise ja kausta käsitlejad, Arco kirjad, garantii meeldetuletused, kataloogi garantiiread, hooldusrütmi garantiiread, testid | `functions/haldus.js`, `functions/index.js`, `functions/lib/haldus-core.js`, `functions/test/*` | lõigud 2 kuni 4, otsus 4, andmete kontroll |
 | 6 | Näidisandmed ja dokumendid | `scripts/seed-arco-demo.js`, `scripts/demo-doc-text.js`, `scripts/make-demo-docs.py`, `scripts/demo-docs/`, `PLATVORMIPLAAN_2026.md`, `.cursor/rules/sukoda.mdc`, `CLAUDE.md`, `TEST_GUIDE.md` | lõik 5 |
 
@@ -54,9 +54,18 @@ Kontrollitud:
 - Leht ehitatud Vite'iga eraldi keskkonnas ja avatud peata brauseris jäljendatud andmetega (koristaja hallatav kodu): Kodu, Teenused ja Minu avanevad, konsoolis vigu ei ole, jaluses on kolm nuppu, `?tab=folder` avab Kodu. See kontroll tehti enne viimast väikest parandust (`includedCleanLine`); pärast seda jooksid ainult testid.
 - Kontrollimata: kodu, millel ei ole oma koristajat, ja kodu, mille tingimustes on kordade arv. Päris andmetes selliseid teadaolevalt ei ole.
 
-### Lõigud 3 ja 4 (kirjeldus, täpne plaan enne kumbagi)
-- Lõik 3: `svcSignWarranty`, `svcSignBuilding`, `POST /api/haldus/buildings/handover` kutsuv vaade.
-- Lõik 4: `lunasta.html` haru 2a (Arco kaart). Kutse ja vana kinkekaardi harud jäävad.
+### Lõik 3 (ehitatud 23.11.2026)
+- Töölaua Konto vaatest on väljas plokk „Maja“ ja „Anna kodu üle“ (maja salvestamine, garantii ja maja teadete suunamine, korteri üleandmine ostjale koodiga). Seda nägi ainult lepinguline partner (`isEnterprise`).
+- Koos plokiga läksid meetodid `saveBuilding` ja `handOver`, nende olek ning 15 ainult selle ploki tekstivõtit (et, en, ru). Lisaks kaks juba varem kasutuseta võtit `svcSignWarranty` ja `svcSignBuilding`: liitumisel neid valikuid enam ei pakutud.
+- Jäänukid lõigu 5 jaoks: `isEnterprise` juhib veel 12 kohas lepingulise partneri vaadet; garantiisoovi vastamise tekstid (`notWarranty`, `declineIssueHint` jt) ja tingimuste read (`termsWarrantyOk`).
+- Kontrollitud: `npm run check` roheline, leht ehitub Vite'iga. Sisselogitud töölauda ma brauseris ei avanud; muudatus puudutab ainult plokki, mida tavaline koristaja ei näe.
+- Märkus, mitte selle lõigu viga: töölaua avamisel ilma sisselogimiseta tekib konsooli viga `Cannot read properties of null (reading 'awayPeriods')`. See oli olemas enne seda lõiku ja ma ei parandanud seda.
+
+### Lõik 4 (ehitatud 23.11.2026)
+- `lunasta.html`: Arco üleandmiskaardi haru on väljas (ekraan „Sinu uus kodu“, kolm rida selle kohta, mis kodus juba sees on, nupp „Ava kodu“ ja lõpuekraan „Sinu kodu on valmis“).
+- Kui keegi sisestab siiski arendaja kaardi koodi, näeb ta sama teadet nagu tundmatu koodi puhul: „Koodi ei leitud. Kontrolli tähti ja numbreid või kirjuta tere@sukoda.ee.“
+- Koristaja kutse ja vana kinkekaardi teed on muutmata.
+- Kontrollitud brauseris jäljendatud vastustega: tühi koodiväli, koristaja kutse vorm ja arendaja kaardi kood (annab „Koodi ei leitud“). Konsoolis vigu ei ole.
 
 ### Lõik 5 (kõige riskantsem, eraldi plaan ja andmete kontroll enne)
 - Käsitlejad: `POST /api/haldus/buildings/handover`, `POST /api/me/handover`, `/api/me/documents*` (viis tükki).
