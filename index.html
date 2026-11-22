@@ -373,12 +373,12 @@
              ═══════════════════════════════════════════════════════════════ -->
         <section id="alusta" x-show="!window.SUKODA_SALES" class="grid md:grid-cols-12 grid-line-b" x-data="{
             role: 'home', homeMode: 'invite', inviteCode: '',
-            name: '', email: '', note: '', partnerEmail: '',
+            email: '', partnerEmail: '',
             sent: '', sending: false, error: '',
             get canSend() {
                 if (this.role === 'home' && this.homeMode === 'invite') return this.partnerEmail && this.email;
                 if (this.role === 'home' && this.homeMode === 'code') return this.inviteCode.trim().length >= 5;
-                return !!this.email;
+                return false;
             },
             async submit() {
                 if (!this.canSend || this.sending) return;
@@ -388,20 +388,12 @@
                 }
                 this.sending = true; this.error = '';
                 try {
-                    let res;
-                    if (this.role === 'home' && this.homeMode === 'invite') {
-                        res = await fetch('/api/haldus/invite-partner', {
-                            method: 'POST', headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ partnerEmail: this.partnerEmail, email: this.email, lang: lang }),
-                        });
-                    } else {
-                        res = await fetch('/api/waitlist', {
-                            method: 'POST', headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ email: this.email, name: this.name, city: 'Arendaja', address: this.note, lang: lang }),
-                        });
-                    }
+                    const res = await fetch('/api/haldus/invite-partner', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ partnerEmail: this.partnerEmail, email: this.email, lang: lang }),
+                    });
                     if (!res.ok) throw new Error('fail');
-                    this.sent = this.role === 'home' && this.homeMode === 'invite' ? 'invite' : 'wait';
+                    this.sent = 'invite';
                 } catch (e) { this.error = this.t('startError'); }
                 this.sending = false;
             }
@@ -418,7 +410,6 @@
                         <div class="flex flex-wrap gap-2 text-xs uppercase tracking-[0.16em] font-sans" role="tablist">
                             <button type="button" @click="role = 'home'" :class="role === 'home' ? 'bg-black text-paper border-black' : 'border-line-strong text-muted hover:text-black'" :aria-selected="role === 'home'" role="tab" class="px-4 py-2 border transition-colors" x-text="t('roleHome')"></button>
                             <button type="button" @click="role = 'partner'" :class="role === 'partner' ? 'bg-black text-paper border-black' : 'border-line-strong text-muted hover:text-black'" :aria-selected="role === 'partner'" role="tab" class="px-4 py-2 border transition-colors" x-text="t('rolePartner')"></button>
-                            <button type="button" @click="role = 'developer'" :class="role === 'developer' ? 'bg-black text-paper border-black' : 'border-line-strong text-muted hover:text-black'" :aria-selected="role === 'developer'" role="tab" class="px-4 py-2 border transition-colors" x-text="t('roleDeveloper')"></button>
                         </div>
 
                         <!-- Homeowner -->
@@ -450,20 +441,9 @@
                             <a href="/haldus?alusta" class="p-btn w-full" x-text="t('openDesk')"></a>
                         </div>
 
-                        <!-- Developer -->
-                        <div x-show="role === 'developer'" x-cloak class="space-y-4">
-                            <p class="text-sm text-muted font-sans font-light" x-text="t('devLead')"></p>
-                            <div class="border-b border-line-strong focus-within:border-accent transition-colors">
-                                <input type="email" x-model="email" autocomplete="email" inputmode="email" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="t('fEmail')" :aria-label="t('fEmail')">
-                            </div>
-                            <div class="border-b border-line-strong focus-within:border-accent transition-colors">
-                                <input type="text" x-model="note" autocomplete="organization" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="t('fCompany')" :aria-label="t('fCompany')">
-                            </div>
-                        </div>
-
                         <p x-show="error" x-cloak class="text-sm text-accent font-sans font-light" x-text="error" role="alert"></p>
                         <button type="button" x-show="role !== 'partner'" @click="submit()" :disabled="sending || !canSend" class="p-btn w-full disabled:opacity-50">
-                            <span x-show="!sending" x-text="role === 'home' ? (homeMode === 'invite' ? t('sendInvite') : t('openWithCode')) : t('leaveContact')"></span>
+                            <span x-show="!sending" x-text="homeMode === 'invite' ? t('sendInvite') : t('openWithCode')"></span>
                             <span x-show="sending" x-cloak x-text="t('sendingShort')"></span>
                         </button>
                     </div>
@@ -471,8 +451,8 @@
                         <div class="w-12 h-12 bg-accent rounded-full flex items-center justify-center mb-5">
                             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"></path></svg>
                         </div>
-                        <p class="font-serif text-2xl font-light mb-2" x-text="sent === 'invite' ? t('sentInviteTitle') : t('sentWaitTitle')"></p>
-                        <p class="text-sm text-muted font-sans font-light" x-text="sent === 'invite' ? t('sentInviteText', { name: t('keeperFallback') }) : t('sentWaitText')"></p>
+                        <p class="font-serif text-2xl font-light mb-2" x-text="t('sentInviteTitle')"></p>
+                        <p class="text-sm text-muted font-sans font-light" x-text="t('sentInviteText', { name: t('keeperFallback') })"></p>
                     </div>
                 </div>
             </div>
@@ -1371,7 +1351,6 @@
                 startError: { et: 'Saatmine ebaõnnestus. Kirjuta tere@sukoda.ee.', en: 'Could not send. Write to tere@sukoda.ee.', ru: 'Ошибка отправки. Напишите на tere@sukoda.ee.' },
                 roleHome: { et: 'Koduomanik', en: 'Homeowner', ru: 'Владелец жилья' },
                 rolePartner: { et: 'Teenusepakkuja', en: 'Provider', ru: 'Специалист' },
-                roleDeveloper: { et: 'Arendaja', en: 'Developer', ru: 'Застройщик' },
                 haveKeeper: { et: 'Kutsu oma inimene', en: 'Invite your person', ru: 'Пригласить' },
                 haveCode: { et: 'Mul on kood', en: 'I have a code', ru: 'Есть код' },
                 inviteLead: {
@@ -1382,8 +1361,6 @@
                 keeperEmail: { et: 'Tema e-post', en: 'Their e-mail', ru: 'Эл. почта специалиста' },
                 keeperFallback: { et: 'spetsialist', en: 'your specialist', ru: 'специалист' },
                 yourEmail: { et: 'Sinu e-post', en: 'Your e-mail', ru: 'Ваша эл. почта' },
-                fEmail: { et: 'E-post', en: 'E-mail', ru: 'Эл. почта' },
-                fCompany: { et: 'Ettevõte ja projekt', en: 'Company and project', ru: 'Компания и проект' },
                 codeLead: {
                     et: 'Sisesta oma kutsekood.',
                     en: 'Enter your invite code.',
@@ -1395,18 +1372,10 @@
                     en: 'Up to 3 homes free · sign in with a 6-digit code.',
                     ru: 'До 3 домов бесплатно · вход по 6-значному коду.',
                 },
-                devLead: {
-                    et: 'Digitaalne kodukaust ja teenused uue kodu üleandmisel.',
-                    en: 'Digital home folder and services at key handover.',
-                    ru: 'Цифровая папка дома и услуги при передаче ключей.',
-                },
                 sendInvite: { et: 'Saada kutse', en: 'Send invite', ru: 'Отправить' },
-                leaveContact: { et: 'Võta ühendust', en: 'Get in touch', ru: 'Связаться' },
                 sendingShort: { et: 'Saadan…', en: 'Sending…', ru: 'Отправляем…' },
                 sentInviteTitle: { et: 'Kutse saadetud.', en: 'Invitation sent.', ru: 'Приглашение отправлено.' },
                 sentInviteText: { et: 'Kui {name} sinu kodu lisab, saad sisenemislingi e-postile.', en: 'Once {name} adds your home, your link arrives by e-mail.', ru: 'Когда {name} добавит дом, ссылка придёт на почту.' },
-                sentWaitTitle: { et: 'Aitäh.', en: 'Thank you.', ru: 'Спасибо.' },
-                sentWaitText: { et: 'Kirjutame sulle peagi.', en: 'We will write to you shortly.', ru: 'Мы скоро напишем вам.' },
 
                 footerTagline: { et: 'Koduportaal ja töölaud. Tallinn, Eesti.', en: 'Home portal and provider desk. Tallinn, Estonia.', ru: 'Портал дома и рабочий стол. Таллинн, Эстония.' },
                 footerLinks: { et: 'Lingid', en: 'Links', ru: 'Ссылки' },

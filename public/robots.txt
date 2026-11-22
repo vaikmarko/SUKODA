@@ -5,7 +5,6 @@ Disallow: /minu
 Disallow: /haldus
 Disallow: /success
 Disallow: /test-payment
-Disallow: /arendajale
 Disallow: /muuk
 Disallow: /sales
 Disallow: /api/

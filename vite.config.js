@@ -72,8 +72,6 @@ export default defineConfig({
         haldus: resolve(__dirname, 'haldus.html'),
         muuk: resolve(__dirname, 'muuk.html'),
         sales: resolve(__dirname, 'sales.html'),
-        arendajale: resolve(__dirname, 'arendajale.html'),
-        pakkumine: resolve(__dirname, 'arco-pakkumine.html'),
       },
     },
   },
