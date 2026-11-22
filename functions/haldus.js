@@ -2158,7 +2158,7 @@ module.exports = function createHaldus(deps) {
     return orders.filter(({ doc }) => ['paid', 'cancelling'].includes(doc.data().status)).length;
   }
 
-  function billingView(provider, homes) {
+  function billingView(provider, homes, inStore = false) {
     const plan = core.effectivePlan(provider);
     const limit = core.planLimit(plan);
     return {
@@ -2172,7 +2172,9 @@ module.exports = function createHaldus(deps) {
       periodEnd: tsToIso(provider.planPeriodEnd),
       cancelAtPeriodEnd: !!provider.planCancelAtPeriodEnd,
       hasSubscription: !!provider.planSubscriptionId && core.PLAN_ACTIVE_STATUSES.includes(provider.planStatus),
-      plans: core.SELF_SERVE_PLANS.map((id) => core.PROVIDER_PLANS[id]).map((p) => ({ id: p.id, name: p.name, price: p.price, homes: p.homes, blurb: p.blurb.et })),
+      // Store apps never see prices or a buy button (core.storeApp); the plan itself is bought on the web
+      purchase: !inStore,
+      plans: inStore ? [] : core.SELF_SERVE_PLANS.map((id) => core.PROVIDER_PLANS[id]).map((p) => ({ id: p.id, name: p.name, price: p.price, homes: p.homes, blurb: p.blurb.et })),
     };
   }
 
@@ -2320,7 +2322,7 @@ module.exports = function createHaldus(deps) {
    * operator. `enforcePlanCap: false` skips the plan limit (an invitation card is the provider's own invite).
    * Throws HomeError for expected failures.
    */
-  async function createHome({ provider, input, createdBy, sendWelcome = true, enforcePlanCap = true, source = 'manual', extraFields = {}, operatorSubject, operatorIntro }) {
+  async function createHome({ provider, input, createdBy, sendWelcome = true, enforcePlanCap = true, source = 'manual', extraFields = {}, operatorSubject, operatorIntro, inStore = false }) {
     const b = input || {};
     const name = str(b.name, 200);
     const email = core.normalizeEmail(b.email);
@@ -2338,7 +2340,7 @@ module.exports = function createHaldus(deps) {
       const limit = core.planLimit(plan);
       const homes = activeHomeCount(await loadProviderOrders(provider.id));
       if (homes >= limit) {
-        throw new HomeError(402, { error: `Paketis „${core.PROVIDER_PLANS[plan].name}“ on kuni ${limit} kodu. Vali suurem pakett, et lisada rohkem.`, upgrade: true, plan, limit, homes });
+        throw new HomeError(402, { ...core.planCapMessage(core.PROVIDER_PLANS[plan].name, limit, inStore), plan, limit, homes });
       }
     }
 
@@ -3458,6 +3460,7 @@ module.exports = function createHaldus(deps) {
       const plan = core.SELF_SERVE_PLANS.includes(planId) ? core.PROVIDER_PLANS[planId] : null;
       if (!plan) return res.status(400).json({ error: 'Vali pakett' });
       if (core.effectivePlan(provider) === 'enterprise') return res.status(400).json({ error: 'Sinu töölaud käib partnerlepingu järgi. Paketti ei ole vaja valida.' });
+      if (core.storeApp(req.headers['x-sukoda-app'])) return res.status(403).json({ error: { et: 'Paketti ei saa rakenduses vahetada.', en: 'The plan cannot be changed in the app.', ru: 'Тариф нельзя сменить в приложении.' } });
       const stripe = getStripe();
       const live = provider.planSubscriptionId && core.PLAN_ACTIVE_STATUSES.includes(provider.planStatus);
       if (plan.id === 'free') {
@@ -3494,6 +3497,7 @@ module.exports = function createHaldus(deps) {
     'POST /api/haldus/billing/resume': async (req, res) => {
       const provider = await authenticateProvider(req);
       if (!provider) return res.status(401).json({ error: 'Unauthorized' });
+      if (core.storeApp(req.headers['x-sukoda-app'])) return res.status(403).json({ error: { et: 'Paketti ei saa rakenduses vahetada.', en: 'The plan cannot be changed in the app.', ru: 'Тариф нельзя сменить в приложении.' } });
       if (!provider.planSubscriptionId) return res.status(400).json({ error: 'Sul ei ole praegu tasulist paketti' });
       const sub = await getStripe().subscriptions.update(provider.planSubscriptionId, { cancel_at_period_end: false });
       await db.collection('providers').doc(provider.id).update({ ...subscriptionFields(sub), updatedAt: FieldValue.serverTimestamp() });
@@ -4003,7 +4007,7 @@ module.exports = function createHaldus(deps) {
       const orders = await loadProviderOrders(provider.id);
       const orderIds = new Set(orders.map((o) => o.doc.id));
       const activeHomes = activeHomeCount(orders);
-      const billingInfo = billingView(provider, activeHomes);
+      const billingInfo = billingView(provider, activeHomes, core.storeApp(req.headers['x-sukoda-app']));
       if (!billingInfo.enterprise && !provider.inviteCode) {
         await ensureProviderInviteCode(provider);
       }
@@ -4176,7 +4180,7 @@ module.exports = function createHaldus(deps) {
       const b = req.body || {};
       let home;
       try {
-        home = await createHome({ provider, input: b, createdBy: `provider:${provider.id}`, sendWelcome: b.sendWelcome !== false });
+        home = await createHome({ provider, input: b, createdBy: `provider:${provider.id}`, sendWelcome: b.sendWelcome !== false, inStore: core.storeApp(req.headers['x-sukoda-app']) });
       } catch (e) {
         if (e instanceof HomeError) return res.status(e.status).json(e.body);
         throw e;

@@ -670,7 +670,7 @@
                                             </div>
                                         </template>
                                     </div>
-                                    <p class="text-xs text-muted font-sans font-light" x-text="t('planNote')"></p>
+                                    <p x-show="billing.plans.length" class="text-xs text-muted font-sans font-light" x-text="t('planNote')"></p>
                                     <p x-show="billingError" x-cloak class="text-sm text-accent font-sans font-light" x-text="billingError"></p>
                                     <div x-show="invoices.length">
                                         <p class="eyebrow mb-2" x-text="t('invoices')"></p>

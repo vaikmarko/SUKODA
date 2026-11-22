@@ -101,3 +101,20 @@ test('any other home is removed with all of its files', () => {
   assert.equal(core.keepsHomeRecord(order), false);
   assert.deepEqual(core.residentFilesToDelete(order), ['homes/o2/a/x.pdf']);
 });
+
+test('only the store apps are store apps', () => {
+  assert.equal(core.storeApp('ios'), true);
+  assert.equal(core.storeApp(' Android '), true);
+  assert.equal(core.storeApp('web'), false);
+  assert.equal(core.storeApp(undefined), false);
+});
+
+test('at the home limit the web points to a bigger plan, a store app only states the limit', () => {
+  const web = core.planCapMessage('Tasuta', 3, false);
+  assert.equal(web.error, 'Paketis „Tasuta“ on kuni 3 kodu. Vali suurem pakett, et lisada rohkem.');
+  assert.equal(web.upgrade, true);
+  const store = core.planCapMessage('Tasuta', 3, true);
+  assert.equal(store.error, 'Paketis „Tasuta“ on kuni 3 kodu.');
+  assert.equal(store.upgrade, false);
+  assert.doesNotMatch(store.error, /pakett,|€/);
+});

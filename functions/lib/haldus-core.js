@@ -1184,6 +1184,20 @@ function planLimit(planId) {
   const p = PROVIDER_PLANS[planId] || PROVIDER_PLANS.free;
   return p.homes === null ? Infinity : p.homes;
 }
+/**
+ * A request from the App Store or Google Play app (header `X-Sukoda-App: ios|android`). Store rules keep
+ * buying a plan out of the app: the app shows the plan and its limit, never a price or a buy button.
+ */
+function storeApp(value) {
+  return ['ios', 'android'].includes(String(value || '').trim().toLowerCase());
+}
+
+/** What the desk says at the plan's home limit. On the web it points to a bigger plan, in a store app it only states the limit. */
+function planCapMessage(planName, limit, inStore) {
+  const base = `Paketis „${planName}“ on kuni ${limit} kodu.`;
+  return inStore ? { error: base, upgrade: false } : { error: `${base} Vali suurem pakett, et lisada rohkem.`, upgrade: true };
+}
+
 function planByLookupKey(key) {
   return Object.values(PROVIDER_PLANS).find((p) => p.lookupKey && p.lookupKey === key) || null;
 }
@@ -1857,6 +1871,8 @@ module.exports = {
   effectivePlan,
   planLimit,
   planByLookupKey,
+  storeApp,
+  planCapMessage,
   SESSION_DAYS,
   LOGIN_CODE_TTL_MS,
   LOGIN_CODE_MAX_ATTEMPTS,
