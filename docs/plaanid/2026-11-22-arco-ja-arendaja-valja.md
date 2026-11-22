@@ -26,7 +26,7 @@ Järjekord on väljast sisse: kõigepealt kaob see, mida inimene näeb, ja alles
 ### Lõik 1 (ehitatud 23.11.2026)
 - `arendajale.html` ja `arco-pakkumine.html` on gitist eemaldatud. Ajalugu jääb alles.
 - `vite.config.js`: sisendid `arendajale` ja `pakkumine` väljas.
-- `firebase.json`: seitse ajutist ümbersuunamist (302) avalehele: `/arco`, `/arendajale`, `/arendajale/`, `/arendajale.html`, `/arco-pakkumine`, `/arco-pakkumine/`, `/arco-pakkumine.html`. 302, mitte 301, sest brauser jätab 301 jäädavalt meelde ja seda ei saa tagasi võtta. Kui otsus on lõplik, saab hiljem muuta 301-ks.
+- `firebase.json`: seitse püsivat ümbersuunamist (301) avalehele: `/arco`, `/arendajale`, `/arendajale/`, `/arendajale.html`, `/arco-pakkumine`, `/arco-pakkumine/`, `/arco-pakkumine.html`. Alguses olid need ajutised (302); Marko kinnitas 23.11.2026, et Arco on lõplikult maas, seega püsivad.
 - `public/robots.txt`: rida `Disallow: /arendajale` väljas, et otsimootor näeks ümbersuunamist.
 - `index.html`, jaotis „Alusta“: rolli nupp „Arendaja“ ja tema vorm on väljas. Koos nendega läks kood, mida ainult see haru kasutas: päring aadressile `/api/waitlist` väljaga `city: 'Arendaja'`, olek `name` ja `note`, teade „Aitäh. Kirjutame sulle peagi.“ ning sõnastiku võtmed `roleDeveloper`, `fCompany`, `fEmail`, `devLead`, `leaveContact`, `sentWaitTitle`, `sentWaitText` (et, en, ru). Koduomaniku kaks teed (kutsu oma inimene, mul on kood) ja teenusepakkuja tee on muutmata. `canSend` tagastab teenusepakkuja rollis nüüd alati väära, enne piisas e-postist.
 - `scripts/ui-lint.js`: `arendajale.html` loendist `PAGES` väljas. Baasjoones selle faili kohta ridu ei olnud.
