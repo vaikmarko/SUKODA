@@ -1,4 +1,10 @@
-# Design review — read-only audit of every portal page for one voice
+---
+name: design-review
+description: Read-only audit of every portal page for one voice: token and type drift, information density, the six points of the standard, et/en/ru parity, the communication loop, accessibility and speed. Use before a demo, after a sprint, or whenever a page "feels busy". Writes no code; every finding is a proposal with file:line, and the brief is saved to docs/reviews/.
+argument-hint: "[page or focus, or nothing for all portal pages]"
+---
+
+# /design-review: read-only audit of every portal page for one voice
 
 Run before a demo, after a sprint, or whenever a page "feels busy". Do not write code. Every finding is a proposal with `file:line`.
 
