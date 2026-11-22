@@ -2,9 +2,10 @@
  * Five push notifications. Title and body are the same sentences as the
  * resident or desk e-mail for that event. Missing language falls back to et.
  *
- * Web Push subscriptions go out with VAPID. FCM string tokens still need an
- * injected messaging client. Without a key the send logs and returns; it does
- * not throw. The 07:00 cron calls send('morning') once per provider with visits today.
+ * Two channels to the same people: web subscriptions (PWA) go out with VAPID,
+ * App Store and Google Play apps through FCM (iOS onward through APNs, set up in
+ * the Firebase console). A missing key or client logs and returns; nothing throws.
+ * The 07:00 cron calls send('morning') once per provider with visits today.
  */
 
 const core = require('./lib/haldus-core');
@@ -265,14 +266,51 @@ function text(type, lang, vars = {}) {
   return { title: line(lang, copy.title), body: line(lang, copy.body) };
 }
 
+const PLATFORMS = ['ios', 'android'];
+
+/** A native device token from the App Store or Google Play app. FCM carries both; iOS goes on through APNs. */
+function tokenOf(item) {
+  const raw = typeof item === 'string' ? item : item && (item.token || item.fcmToken);
+  const token = typeof raw === 'string' ? raw.trim() : '';
+  if (!/^[\w:.-]{20,1000}$/.test(token)) return null;
+  const platform = item && PLATFORMS.includes(item.platform) ? item.platform : '';
+  return { token, platform };
+}
+
 function tokensOf(tokens) {
   const list = Array.isArray(tokens) ? tokens : [];
   const out = [];
   for (const item of list) {
-    const token = typeof item === 'string' ? item : item && (item.token || item.fcmToken);
-    if (token) out.push(String(token));
+    const t = tokenOf(item);
+    if (t && !out.includes(t.token)) out.push(t.token);
   }
   return out;
+}
+
+/** Native tokens live in pushTokens; web subscriptions in pushSubscriptions. Each channel reads only its own list. */
+function tokensFrom(record) {
+  return tokensOf(record && record.pushTokens);
+}
+
+/** Same phone registering again replaces its old row; the newest eight stay. */
+function mergeTokens(existing, item, max = 8) {
+  const clean = tokenOf(item);
+  const list = (Array.isArray(existing) ? existing : []).map(tokenOf).filter(Boolean);
+  if (!clean) return list;
+  const next = list.filter((t) => t.token !== clean.token);
+  next.push(clean);
+  const cap = Number.isInteger(max) && max > 0 ? max : 8;
+  return next.slice(-cap);
+}
+
+/** Sign-out on a phone: its token or web endpoint stops getting this account's notifications. */
+function withoutDevice(record, { token, endpoint } = {}) {
+  const t = typeof token === 'string' ? token.trim() : '';
+  const e = typeof endpoint === 'string' ? endpoint.trim() : '';
+  return {
+    pushTokens: (Array.isArray(record?.pushTokens) ? record.pushTokens : []).map(tokenOf).filter((x) => x && x.token !== t),
+    pushSubscriptions: subscriptionsFrom(record).filter((s) => s.endpoint !== e),
+  };
 }
 
 function dataOf(type, data) {
@@ -283,21 +321,6 @@ function dataOf(type, data) {
     out[key] = typeof value === 'string' ? value : String(value);
   }
   return out;
-}
-
-function fcmKey(explicit) {
-  if (explicit != null) return String(explicit).trim();
-  const env = process.env;
-  return String(env.SUKODA_FCM_KEY || env.FCM_SERVER_KEY || env.VAPID_PRIVATE_KEY || '').trim();
-}
-
-async function dispatch(messaging, message) {
-  if (typeof messaging.sendEachForMulticast === 'function') return messaging.sendEachForMulticast(message);
-  if (typeof messaging.sendMulticast === 'function') return messaging.sendMulticast(message);
-  for (const token of message.tokens) {
-    await messaging.send({ token, notification: message.notification, data: message.data });
-  }
-  return { successCount: message.tokens.length };
 }
 
 /** Payload for notifyOrder. Explicit title and body are the e-mail's own sentences. */
@@ -312,10 +335,6 @@ function message({ type, lang, title, body, url, audience } = {}) {
     url: url || '',
     audience: audience || '',
   };
-}
-
-function tokensFrom(order) {
-  return tokensOf(order && (order.pushSubscriptions || order.pushTokens));
 }
 
 function subscriptionOf(item) {
@@ -398,96 +417,107 @@ async function deliverWeb(payload, options, subs) {
     console.error('push: VAPID key missing, skipped', payload && payload.type);
     return { sent: false, reason: 'no-key' };
   }
+  return sendWeb(subs, payload, pair, options.webPush);
+}
+
+/** The Admin SDK's own messaging client: the functions' service account signs it, no extra key. */
+function defaultMessaging() {
+  try {
+    const admin = require('firebase-admin');
+    if (!admin.apps.length) return null;
+    return require('firebase-admin/messaging').getMessaging();
+  } catch (err) {
+    return null;
+  }
+}
+
+const DEAD_TOKEN = new Set(['messaging/registration-token-not-registered', 'messaging/invalid-registration-token', 'messaging/invalid-argument']);
+
+/** One FCM multicast. iOS gets a sound through APNs, Android a high-priority notification. */
+async function deliverNative(payload, options, tokens) {
+  const messaging = options.messaging !== undefined ? options.messaging : defaultMessaging();
+  if (!messaging) {
+    console.error('push: FCM client missing, skipped', payload && payload.type);
+    return { sent: false, reason: 'no-client' };
+  }
+  const multicast = {
+    tokens,
+    notification: { title: payload.title, body: payload.body || '' },
+    data: dataOf(payload.type, { ...(payload.data || {}), url: payload.url || '' }),
+    apns: { payload: { aps: { sound: 'default' } } },
+    android: { priority: 'high', notification: { sound: 'default' } },
+  };
+  let result;
+  try {
+    if (typeof messaging.sendEachForMulticast === 'function') {
+      result = await messaging.sendEachForMulticast(multicast);
+    } else {
+      const { tokens: list, ...one } = multicast;
+      const responses = [];
+      for (const token of list) {
+        try {
+          await messaging.send({ ...one, token });
+          responses.push({ success: true });
+        } catch (error) {
+          responses.push({ success: false, error });
+        }
+      }
+      result = { responses, successCount: responses.filter((r) => r.success).length };
+    }
+  } catch (err) {
+    console.error('push: FCM failed', payload && payload.type, err && err.message);
+    return { sent: false, reason: 'error' };
+  }
+  const dead = [];
+  (result.responses || []).forEach((r, i) => {
+    if (r && !r.success && r.error && DEAD_TOKEN.has(r.error.code)) dead.push(tokens[i]);
+    else if (r && !r.success) console.error('push: FCM token failed', r.error && (r.error.code || r.error.message));
+  });
+  const count = Number(result.successCount) || 0;
+  if (!count) return { sent: false, reason: dead.length ? 'gone' : 'error', dead, count: 0 };
+  return { sent: true, count, dead };
+}
+
+/**
+ * Send to every phone the record has: web subscriptions through VAPID, App Store and Google Play
+ * apps through FCM. A missing key or client is logged per channel; nothing throws, so a cron that
+ * already sent the e-mail keeps going.
+ */
+async function deliver(payload, options = {}) {
   if (!payload || !payload.title) {
     console.error('push: unknown type', payload && payload.type);
     return { sent: false, reason: 'unknown-type' };
   }
-  return sendWeb(subs, payload, pair, options.webPush);
-}
-
-/**
- * Send a payload from message(). No FCM key → log and return. Never throws,
- * so a cron that already sent the e-mail keeps going.
- */
-async function deliver(payload, options = {}) {
   const subs = subscriptionsOf(options.subscriptions);
-  if (subs.length) return deliverWeb(payload, options, subs);
-  const type = payload && payload.type;
-  const key = fcmKey(options.serverKey);
-  if (!key) {
-    console.error('push: FCM key missing, skipped', type);
-    return { sent: false, reason: 'no-key' };
-  }
-  if (!payload || !payload.title) {
-    console.error('push: unknown type', type);
-    return { sent: false, reason: 'unknown-type' };
-  }
   const tokens = tokensOf(options.tokens);
-  if (!tokens.length) return { sent: false, reason: 'no-tokens' };
-  const messaging = options.messaging;
-  if (!messaging) {
-    console.error('push: FCM messaging unavailable', type);
-    return { sent: false, reason: 'no-client' };
-  }
-  try {
-    await dispatch(messaging, {
-      tokens,
-      notification: { title: payload.title, body: payload.body || '' },
-      data: dataOf(type, { url: payload.url || '' }),
-    });
-  } catch (err) {
-    console.error('push: deliver failed', type, err && err.message);
-    return { sent: false, reason: 'error' };
-  }
-  return { sent: true, count: tokens.length };
+  if (!subs.length && !tokens.length) return { sent: false, reason: 'no-devices' };
+  const results = [];
+  if (subs.length) results.push(await deliverWeb(payload, options, subs));
+  if (tokens.length) results.push(await deliverNative(payload, options, tokens));
+  const count = results.reduce((n, r) => n + (r.count || 0), 0);
+  const gone = results.flatMap((r) => r.gone || []);
+  const dead = results.flatMap((r) => r.dead || []);
+  if (!count) return { sent: false, reason: results.length === 1 ? results[0].reason : 'error', gone, dead, count: 0 };
+  return { sent: true, count, gone, dead };
 }
 
-/**
- * Send one of the five types. No FCM key → log and return { sent: false }.
- * A messaging error is logged and returned; it does not throw.
- */
+/** Send one of the five types in the record's language. */
 async function send(type, options = {}) {
-  const subs = subscriptionsOf(options.subscriptions);
-  if (subs.length) {
-    const note = text(type, options.lang, options.vars);
-    return deliverWeb({
-      type,
-      title: note && note.title,
-      body: note && note.body,
-      url: (options.data && options.data.url) || '',
-      audience: options.audience || '',
-    }, options, subs);
-  }
-  const key = fcmKey(options.serverKey);
-  if (!key) {
-    console.error('push: FCM key missing, skipped', type);
-    return { sent: false, reason: 'no-key' };
-  }
   const note = text(type, options.lang, options.vars);
   if (!note) {
     console.error('push: unknown type', type);
     return { sent: false, reason: 'unknown-type' };
   }
-  const tokens = tokensOf(options.tokens);
-  if (!tokens.length) return { sent: false, reason: 'no-tokens' };
-  const messaging = options.messaging;
-  if (!messaging) {
-    console.error('push: FCM messaging unavailable', type);
-    return { sent: false, reason: 'no-client' };
-  }
-  try {
-    await dispatch(messaging, {
-      tokens,
-      notification: { title: note.title, body: note.body },
-      data: dataOf(type, options.data),
-    });
-  } catch (err) {
-    console.error('push: deliver failed', type, err && err.message);
-    return { sent: false, reason: 'error' };
-  }
-  return { sent: true, count: tokens.length };
+  return deliver({
+    type,
+    title: note.title,
+    body: note.body,
+    url: (options.data && options.data.url) || '',
+    data: options.data,
+    audience: options.audience || '',
+  }, options);
 }
 
 module.exports = {
-  TYPES, text, message, tokensFrom, subscriptionsFrom, subscriptionOf, mergeSubscriptions, deliver, send,
+  TYPES, text, message, tokenOf, tokensFrom, mergeTokens, withoutDevice, subscriptionsFrom, subscriptionOf, mergeSubscriptions, deliver, send,
 };

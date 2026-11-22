@@ -3599,11 +3599,16 @@ module.exports = function createHaldus(deps) {
       res.status(200).json({ token: session.token, desk: session.desk });
     },
 
-    /** Phone push subscription for the signed-in home or the signed-in desk. */
+    /**
+     * A phone signs up for notifications for the signed-in home or desk: a web subscription from the
+     * PWA, or a native token ({ token, platform: 'ios' | 'android' }) from the App Store or Google Play app.
+     */
     'POST /api/haldus/push': async (req, res) => {
       if (!checkRateLimit(req, res, 'push-sub', 20, 60000)) return;
-      const sub = push.subscriptionOf(req.body);
-      if (!sub) {
+      const b = req.body || {};
+      const sub = push.subscriptionOf(b);
+      const native = sub ? null : push.tokenOf(b);
+      if (!sub && !native) {
         return res.status(400).json({
           error: {
             et: 'Teavitusi ei saanud sisse lülitada. Proovi uuesti.',
@@ -3612,22 +3617,32 @@ module.exports = function createHaldus(deps) {
           },
         });
       }
+      const fields = (record) => (sub
+        ? { pushSubscriptions: push.mergeSubscriptions(record && record.pushSubscriptions, sub) }
+        : { pushTokens: push.mergeTokens(record && record.pushTokens, b) });
       const provider = await authenticateProvider(req);
       if (provider) {
-        const next = push.mergeSubscriptions(provider.pushSubscriptions, sub);
-        await db.collection('providers').doc(provider.id).update({
-          pushSubscriptions: next,
-          updatedAt: FieldValue.serverTimestamp(),
-        });
+        await db.collection('providers').doc(provider.id).update({ ...fields(provider), updatedAt: FieldValue.serverTimestamp() });
         return res.status(200).json({ success: true });
       }
       const auth = await authenticateClient(req);
       if (!auth) return res.status(401).json({ error: 'Unauthorized' });
-      const next = push.mergeSubscriptions(auth.order && auth.order.pushSubscriptions, sub);
-      await db.collection('orders').doc(auth.orderId).update({
-        pushSubscriptions: next,
-        updatedAt: FieldValue.serverTimestamp(),
-      });
+      await db.collection('orders').doc(auth.orderId).update({ ...fields(auth.order), updatedAt: FieldValue.serverTimestamp() });
+      return res.status(200).json({ success: true });
+    },
+
+    /** Sign-out on a phone: call before the token is dropped, so this phone stops getting the account's notifications. */
+    'POST /api/haldus/push/remove': async (req, res) => {
+      if (!checkRateLimit(req, res, 'push-sub', 20, 60000)) return;
+      const target = { token: req.body?.token, endpoint: req.body?.endpoint };
+      const provider = await authenticateProvider(req);
+      if (provider) {
+        await db.collection('providers').doc(provider.id).update({ ...push.withoutDevice(provider, target), updatedAt: FieldValue.serverTimestamp() });
+        return res.status(200).json({ success: true });
+      }
+      const auth = await authenticateClient(req);
+      if (!auth) return res.status(401).json({ error: 'Unauthorized' });
+      await db.collection('orders').doc(auth.orderId).update({ ...push.withoutDevice(auth.order, target), updatedAt: FieldValue.serverTimestamp() });
       return res.status(200).json({ success: true });
     },
 

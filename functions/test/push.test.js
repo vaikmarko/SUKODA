@@ -1,5 +1,5 @@
 /**
- * Push copy matches the e-mail subjects, and a missing FCM key does not throw.
+ * Push copy matches the e-mail subjects; web and store-app phones both get it, and nothing throws.
  */
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -41,108 +41,113 @@ test('morning line is the plan sentence; a missing language stays Estonian', () 
   assert.equal(push.text('morning', {}, { count: 1 }).title, 'Tänane päev');
 });
 
-test('message keeps the e-mail sentence, and deliver without a key does not throw', async () => {
+const TOKEN_A = 'fcm-token-aaaaaaaaaaaaaaaaaaaaaaaa:APA91b';
+const TOKEN_B = 'fcm-token-bbbbbbbbbbbbbbbbbbbbbbbb:APA91b';
+
+test('message keeps the e-mail sentence; each channel reads only its own list', () => {
   const payload = push.message({
-    type: 'visit_tomorrow',
-    lang: 'et',
-    title: 'Homme on koristus',
-    body: 'Meeldetuletus sinu homsest visiidist.',
-    url: 'https://sukoda.ee/minu',
+    type: 'visit_tomorrow', lang: 'et', title: 'Homme on koristus', body: 'Meeldetuletus sinu homsest visiidist.', url: 'https://sukoda.ee/minu',
   });
   assert.equal(payload.title, 'Homme on koristus');
   assert.equal(payload.type, 'visit_tomorrow');
-  assert.deepEqual(push.tokensFrom({ pushSubscriptions: [{ token: 'a' }, 'b', { fcmToken: 'c' }] }), ['a', 'b', 'c']);
-  const prev = process.env.FCM_SERVER_KEY;
-  const prevNamed = process.env.SUKODA_FCM_KEY;
-  const prevVapid = process.env.VAPID_PRIVATE_KEY;
-  delete process.env.FCM_SERVER_KEY;
-  delete process.env.SUKODA_FCM_KEY;
-  delete process.env.VAPID_PRIVATE_KEY;
-  const lines = [];
-  const orig = console.error;
-  console.error = (...args) => lines.push(args.map(String).join(' '));
-  try {
-    const result = await push.deliver(payload, { tokens: ['abc'] });
-    assert.equal(result.reason, 'no-key');
-    assert.match(lines.join('\n'), /FCM key missing/);
-  } finally {
-    console.error = orig;
-    if (prev != null) process.env.FCM_SERVER_KEY = prev;
-    if (prevNamed != null) process.env.SUKODA_FCM_KEY = prevNamed;
-    if (prevVapid != null) process.env.VAPID_PRIVATE_KEY = prevVapid;
-  }
+  const record = {
+    pushSubscriptions: [{ endpoint: 'https://push.example/a', keys: { p256dh: 'p', auth: 'a' } }],
+    pushTokens: [{ token: TOKEN_A, platform: 'ios' }, TOKEN_B, { token: 'short' }],
+  };
+  assert.deepEqual(push.tokensFrom(record), [TOKEN_A, TOKEN_B], 'web subscriptions no longer hide the native tokens');
+  assert.equal(push.subscriptionsFrom(record).length, 1);
 });
 
-test('send without an FCM key logs and does not throw', async () => {
-  const prev = process.env.FCM_SERVER_KEY;
-  const prevNamed = process.env.SUKODA_FCM_KEY;
-  const prevVapid = process.env.VAPID_PRIVATE_KEY;
-  delete process.env.FCM_SERVER_KEY;
-  delete process.env.SUKODA_FCM_KEY;
-  delete process.env.VAPID_PRIVATE_KEY;
+test('a phone registering again replaces its row, a bad token is refused, sign-out removes the phone', () => {
+  assert.equal(push.tokenOf({ token: 'x' }), null);
+  assert.equal(push.tokenOf({ token: 'has spaces in it and is long enough' }), null);
+  assert.deepEqual(push.tokenOf({ token: TOKEN_A, platform: 'android' }), { token: TOKEN_A, platform: 'android' });
+  assert.equal(push.tokenOf({ token: TOKEN_A, platform: 'windows' }).platform, '');
+  const once = push.mergeTokens([], { token: TOKEN_A, platform: 'ios' });
+  const twice = push.mergeTokens(once, { token: TOKEN_A, platform: 'ios' });
+  assert.equal(twice.length, 1);
+  const many = Array.from({ length: 10 }, (_, i) => ({ token: `${TOKEN_A}${i}` })).reduce((list, t) => push.mergeTokens(list, t), []);
+  assert.equal(many.length, 8);
+  const sub = { endpoint: 'https://push.example/a', keys: { p256dh: 'p', auth: 'a' } };
+  const left = push.withoutDevice({ pushTokens: [{ token: TOKEN_A }, { token: TOKEN_B }], pushSubscriptions: [sub] }, { token: TOKEN_A, endpoint: sub.endpoint });
+  assert.deepEqual(left.pushTokens.map((t) => t.token), [TOKEN_B]);
+  assert.deepEqual(left.pushSubscriptions, []);
+});
+
+test('no devices and no FCM client both return quietly, so the cron still sends e-mail', async () => {
+  const none = await push.send('morning', { lang: 'et', vars: { count: 1 } });
+  assert.equal(none.reason, 'no-devices');
   const lines = [];
   const orig = console.error;
   console.error = (...args) => lines.push(args.map(String).join(' '));
   try {
-    const result = await push.send('visit_tomorrow', { lang: 'ru', tokens: ['abc'] });
+    const result = await push.send('visit_tomorrow', { lang: 'ru', tokens: [TOKEN_A], messaging: null });
     assert.equal(result.sent, false);
-    assert.equal(result.reason, 'no-key');
-    assert.match(lines.join('\n'), /FCM key missing/);
-    const explicit = await push.send('morning', { serverKey: '   ', lang: 'et' });
-    assert.equal(explicit.reason, 'no-key');
+    assert.equal(result.reason, 'no-client');
+    assert.match(lines.join('\n'), /FCM client missing/);
   } finally {
     console.error = orig;
-    if (prev != null) process.env.FCM_SERVER_KEY = prev;
-    if (prevNamed != null) process.env.SUKODA_FCM_KEY = prevNamed;
-    if (prevVapid != null) process.env.VAPID_PRIVATE_KEY = prevVapid;
   }
 });
 
-test('send with a key delivers the e-mail sentence and does not call messaging when the key is absent', async () => {
+test('a native phone gets the e-mail sentence with a sound on iOS and high priority on Android', async () => {
   const seen = [];
-  const result = await push.send('visit_tomorrow', {
-    serverKey: 'test-key',
-    lang: 'et',
-    tokens: [{ token: 'tok-1' }],
-    data: { orderId: 'home-1' },
-    messaging: {
-      async send(message) {
-        seen.push(message);
-      },
-    },
-  });
+  const messaging = {
+    async sendEachForMulticast(m) { seen.push(m); return { successCount: m.tokens.length, responses: m.tokens.map(() => ({ success: true })) }; },
+  };
+  const result = await push.send('visit_tomorrow', { lang: 'et', tokens: [{ token: TOKEN_A, platform: 'ios' }], data: { url: 'https://sukoda.ee/minu', orderId: 'home-1' }, messaging });
   assert.equal(result.sent, true);
   assert.equal(result.count, 1);
   assert.equal(seen[0].notification.title, 'SUKODA | Homme on koristus');
+  assert.deepEqual(seen[0].tokens, [TOKEN_A]);
   assert.equal(seen[0].data.type, 'visit_tomorrow');
   assert.equal(seen[0].data.orderId, 'home-1');
-  assert.equal(seen[0].token, 'tok-1');
+  assert.equal(seen[0].data.url, 'https://sukoda.ee/minu');
+  assert.equal(seen[0].apns.payload.aps.sound, 'default');
+  assert.equal(seen[0].android.priority, 'high');
 });
 
-test('a key without an injected client does not call FCM', async () => {
-  const prevFetch = global.fetch;
-  const saved = {
-    FCM_SERVER_KEY: process.env.FCM_SERVER_KEY,
-    SUKODA_FCM_KEY: process.env.SUKODA_FCM_KEY,
-    VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY,
-  };
-  let called = false;
-  global.fetch = () => { called = true; throw new Error('network'); };
-  delete process.env.FCM_SERVER_KEY;
-  delete process.env.SUKODA_FCM_KEY;
-  process.env.VAPID_PRIVATE_KEY = 'vapid-test';
+test('the same notice reaches the PWA and the store app together', async () => {
+  const web = [];
+  const native = [];
+  const sub = { endpoint: 'https://push.example/abc', keys: { p256dh: 'p256', auth: 'authkey' } };
+  const result = await push.deliver(push.message({
+    type: 'new_request', lang: 'et', title: 'Uus soov', body: 'Anna soovib teenust.', url: 'https://sukoda.ee/haldus?tab=requests', audience: 'provider',
+  }), {
+    subscriptions: [sub, 'tok', { endpoint: 'http://insecure.example', keys: { p256dh: 'p', auth: 'a' } }],
+    tokens: [TOKEN_A],
+    publicKey: 'pub',
+    privateKey: 'priv',
+    webPush: async (item, body) => { web.push({ item, body }); },
+    messaging: { async sendEachForMulticast(m) { native.push(m); return { successCount: 1, responses: [{ success: true }] }; } },
+  });
+  assert.equal(result.sent, true);
+  assert.equal(result.count, 2);
+  const parsed = JSON.parse(web[0].body);
+  assert.equal(parsed.title, 'Uus soov');
+  assert.equal(parsed.icon, '/icons/desk-192.png');
+  assert.equal(parsed.url, 'https://sukoda.ee/haldus?tab=requests');
+  assert.equal(native[0].notification.body, 'Anna soovib teenust.');
+});
+
+test('a web key missing does not stop the store app, and the other way round', async () => {
+  const saved = { VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY };
+  delete process.env.VAPID_PUBLIC_KEY;
+  delete process.env.VAPID_PRIVATE_KEY;
+  const orig = console.error;
+  console.error = () => {};
   try {
-    const result = await push.deliver(push.message({
-      type: 'morning', lang: 'et', title: 'Tänane päev', body: 'Täna 1 kodu.',
-    }), { tokens: ['tok'], serverKey: 'not-a-real-key' });
-    assert.equal(result.sent, false);
-    assert.equal(result.reason, 'no-client');
-    assert.equal(called, false);
-    const vapid = await push.send('morning', { lang: 'et', tokens: ['tok'], vars: { count: 1 } });
-    assert.equal(vapid.reason, 'no-client');
-    assert.equal(called, false);
+    const sub = { endpoint: 'https://push.example/abc', keys: { p256dh: 'p256', auth: 'authkey' } };
+    const result = await push.deliver(push.message({ type: 'morning', lang: 'et', title: 'Tänane päev', body: 'Täna 1 kodu.' }), {
+      subscriptions: [sub],
+      tokens: [TOKEN_A],
+      webPush: async () => { throw new Error('should not send without a key'); },
+      messaging: { async sendEachForMulticast() { return { successCount: 1, responses: [{ success: true }] }; } },
+    });
+    assert.equal(result.sent, true);
+    assert.equal(result.count, 1);
   } finally {
-    global.fetch = prevFetch;
+    console.error = orig;
     for (const [key, value] of Object.entries(saved)) {
       if (value == null) delete process.env[key];
       else process.env[key] = value;
@@ -150,65 +155,42 @@ test('a key without an injected client does not call FCM', async () => {
   }
 });
 
-test('a web subscription sends the e-mail sentence and ignores a token string', async () => {
-  const seen = [];
-  const sub = { endpoint: 'https://push.example/abc', keys: { p256dh: 'p256', auth: 'authkey' } };
-  const saved = {
-    VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY,
-    VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY,
-  };
-  delete process.env.VAPID_PUBLIC_KEY;
-  delete process.env.VAPID_PRIVATE_KEY;
+test('an uninstalled app is reported as dead, other failures are not', async () => {
+  const orig = console.error;
+  console.error = () => {};
   try {
-    const missing = await push.deliver(push.message({
-      type: 'new_request', lang: 'et', title: 'Uus soov', body: 'Anna soovib teenust.', audience: 'provider',
-    }), { subscriptions: [sub], webPush: async () => { throw new Error('should not send'); } });
-    assert.equal(missing.reason, 'no-key');
-    const result = await push.deliver(push.message({
-      type: 'new_request',
-      lang: 'et',
-      title: 'Uus soov',
-      body: 'Anna soovib teenust.',
-      url: 'https://sukoda.ee/haldus?tab=requests',
-      audience: 'provider',
-    }), {
-      subscriptions: [sub, 'tok', { endpoint: 'http://insecure.example', keys: { p256dh: 'p', auth: 'a' } }],
-      publicKey: 'pub',
-      privateKey: 'priv',
-      webPush: async (item, body) => { seen.push({ item, body }); },
+    const result = await push.send('morning', {
+      lang: 'et', vars: { count: 1 }, tokens: [TOKEN_A, TOKEN_B],
+      messaging: {
+        async sendEachForMulticast() {
+          return {
+            successCount: 0,
+            responses: [
+              { success: false, error: { code: 'messaging/registration-token-not-registered' } },
+              { success: false, error: { code: 'messaging/internal-error' } },
+            ],
+          };
+        },
+      },
     });
-    assert.equal(result.sent, true);
-    assert.equal(result.count, 1);
-    const parsed = JSON.parse(seen[0].body);
-    assert.equal(parsed.title, 'Uus soov');
-    assert.equal(parsed.body, 'Anna soovib teenust.');
-    assert.equal(parsed.icon, '/icons/desk-192.png');
-    assert.equal(parsed.url, 'https://sukoda.ee/haldus?tab=requests');
-    assert.equal(seen[0].item.endpoint, sub.endpoint);
-    assert.deepEqual(
-      push.mergeSubscriptions(
-        [{ endpoint: 'https://push.example/old', keys: { p256dh: 'p', auth: 'a' } }, sub],
-        sub,
-      ).map((s) => s.endpoint),
-      ['https://push.example/old', sub.endpoint],
-    );
-    assert.equal(push.subscriptionOf({ endpoint: 'not-a-url', keys: { p256dh: 'p', auth: 'a' } }), null);
+    assert.equal(result.sent, false);
+    assert.deepEqual(result.dead, [TOKEN_A]);
   } finally {
-    for (const [key, value] of Object.entries(saved)) {
-      if (value == null) delete process.env[key];
-      else process.env[key] = value;
-    }
+    console.error = orig;
   }
 });
 
 test('a messaging error does not throw, so the cron can still send e-mail', async () => {
-  const result = await push.send('morning', {
-    serverKey: 'test-key',
-    lang: 'et',
-    tokens: ['tok'],
-    vars: { count: 1 },
-    messaging: { async send() { throw new Error('fcm down'); } },
-  });
-  assert.equal(result.sent, false);
-  assert.equal(result.reason, 'error');
+  const orig = console.error;
+  console.error = () => {};
+  try {
+    const result = await push.send('morning', {
+      lang: 'et', tokens: [TOKEN_A], vars: { count: 1 },
+      messaging: { async sendEachForMulticast() { throw new Error('fcm down'); } },
+    });
+    assert.equal(result.sent, false);
+    assert.equal(result.reason, 'error');
+  } finally {
+    console.error = orig;
+  }
 });
