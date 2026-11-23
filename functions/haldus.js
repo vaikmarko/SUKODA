@@ -13,7 +13,6 @@
 const crypto = require('crypto');
 const core = require('./lib/haldus-core');
 const push = require('./push');
-const homePass = require('./lib/home-pass');
 
 module.exports = function createHaldus(deps) {
   const {
@@ -222,7 +221,6 @@ module.exports = function createHaldus(deps) {
       welcomeTitle: 'Sinu kodu on valmis',
       welcomeIntro: (p) => (p ? `${p} lisas sinu kodu. Ava rakendus, vaata järgmist aega ja kirjuta, kui aeg ei sobi.` : 'Ava rakendus ja vaata järgmist aega.'),
       welcomeIntroPartner: (p) => (p ? `${p} lisas sinu kodu. Ava rakendus ja vaata oma aegu.` : 'Ava rakendus ja vaata oma aegu.'),
-      welcomeIntroArco: 'ARCO Vara andis su kodu üle. Dokumendid, küsimused, garantii, remont ja koristus on ühes kohas. Ava rakendus.',
       welcomeFirst: (when) => `Esimene kord on ${when}.`,
       welcomeBtn: 'Ava rakendus',
       welcomeContacts: 'Kui nupp ei avane, mine aadressile sukoda.ee/app ja sisesta sama e-posti aadress. Saadame sulle kuuekohalise koodi.',
@@ -327,7 +325,6 @@ module.exports = function createHaldus(deps) {
       welcomeTitle: 'Your home is ready',
       welcomeIntro: (p) => (p ? `${p} added your home. Open the app, see the next time and write if it does not suit.` : 'Open the app and see the next time.'),
       welcomeIntroPartner: (p) => (p ? `${p} added your home. Open the app and see your times.` : 'Open the app and see your times.'),
-      welcomeIntroArco: 'ARCO Vara has handed your home over. Documents, questions, warranty, repairs and cleaning are in one place. Open the app.',
       welcomeFirst: (when) => `The first visit is ${when}.`,
       welcomeBtn: 'Open the app',
       welcomeContacts: 'If the button does not open, go to sukoda.ee/app and enter the same e-mail address. We will send you a six-digit code.',
@@ -433,7 +430,6 @@ module.exports = function createHaldus(deps) {
       welcomeTitle: 'Ваш дом готов',
       welcomeIntro: (p) => (p ? `Ваш дом добавлен, ваш специалист по дому — ${p}. Откройте приложение, посмотрите ближайшее время и напишите, если оно не подходит.` : 'Откройте приложение и посмотрите ближайшее время.'),
       welcomeIntroPartner: (p) => (p ? `Ваш дом добавлен, ваш контакт — ${p}. Откройте приложение и посмотрите своё время.` : 'Откройте приложение и посмотрите своё время.'),
-      welcomeIntroArco: 'ARCO Vara передала вам дом. Документы, вопросы, гарантия, ремонт и уборка — в одном месте. Откройте приложение.',
       welcomeFirst: (when) => `Первый визит — ${when}.`,
       welcomeBtn: 'Открыть приложение',
       welcomeContacts: 'Если кнопка не открывается, зайдите на sukoda.ee/app и введите тот же адрес эл. почты. Мы отправим вам шестизначный код.',
@@ -734,9 +730,7 @@ module.exports = function createHaldus(deps) {
     const tt = t(lang);
     providerName = faceOf(order, providerName);
     const name = firstName(primaryName(order));
-    let intro = !providerName
-      ? tt.welcomeIntroArco
-      : (role === 'cleaning' ? tt.welcomeIntro(providerName) : tt.welcomeIntroPartner(providerName));
+    let intro = role === 'cleaning' ? tt.welcomeIntro(providerName) : tt.welcomeIntroPartner(providerName);
     if (firstWhen) intro = `${intro} ${tt.welcomeFirst(firstWhen)}`;
     const html = wrap(
       H2(tt.welcomeTitle) + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(intro)}`)
@@ -2416,9 +2410,7 @@ module.exports = function createHaldus(deps) {
       stripeCustomerId: null,
       stripeSubscriptionId: null,
       createdBy,
-      ownerKind: String(createdBy).startsWith('welcome:')
-        ? 'developer'
-        : (String(createdBy).startsWith('provider:') || String(createdBy).startsWith('invite:') ? 'provider-invited' : 'sukoda'),
+      ownerKind: (String(createdBy).startsWith('provider:') || String(createdBy).startsWith('invite:') ? 'provider-invited' : 'sukoda'),
       createdAt: Timestamp.fromDate(now),
       paidAt: Timestamp.fromDate(now), // manual orders: "started at" — required by portal magic-link ordering
       updatedAt: Timestamp.fromDate(now),
@@ -2672,146 +2664,10 @@ module.exports = function createHaldus(deps) {
     };
   }
 
-  // The printed card left with Arco: a new home already includes cleaning, flowers and a handyman.
-  // The old gift booking on this code does not count — the card opens the welcome once.
-  const WELCOME_CODE = 'SK1349-9EMK-4W47';
-  const WELCOME_IDS = {
-    providerId: 'FrvUr0xjpeFJzaraIvF1',
-    floristId: 'YaDtAZBn67jaHGUhXP5J',
-    handymanId: 'kodulahe-haldus-tehnik',
-  };
-
-  function welcomeAnchor(weekday) {
-    const start = core.parseDateStr(todayTallinnStr(1));
-    for (let i = 0; i < 7; i++) {
-      const d = core.addDays(start, i);
-      if (d.getUTCDay() === weekday) return core.toDateStr(d);
-    }
-    return core.toDateStr(start);
-  }
-
-  async function redeemWelcome(req, res, code) {
-    const b = req.body || {};
-    if (b.consent !== true) return res.status(400).json({ error: 'Nõustu tingimustega, et jätkata' });
-    const found = await findCardByCode(code);
-    if (found?.card?.welcomeRedeemedAt) return res.status(409).json({ state: 'used', error: 'See kaart on juba kasutatud' });
-    if (!str(b.name, 200)) return res.status(400).json({ error: 'Nimi on kohustuslik' });
-    if (!core.isValidEmail(core.normalizeEmail(b.email))) return res.status(400).json({ error: 'E-posti aadress ei ole õige' });
-    if (!str(b.address, 500)) return res.status(400).json({ error: 'Aadress on kohustuslik' });
-    const weekday = Number(b.weekday);
-    if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6) return res.status(400).json({ error: 'Vali koristuse päev' });
-    const time = str(b.time, 5);
-    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) return res.status(400).json({ error: 'Vali kellaaeg' });
-    const size = core.ORDER_SIZES.includes(b.size) ? b.size : 'medium';
-    const provider = await loadProvider(WELCOME_IDS.providerId);
-    const florist = await loadProvider(WELCOME_IDS.floristId);
-    const handyman = await loadProvider(WELCOME_IDS.handymanId);
-    if (!provider) return res.status(500).json({ error: 'Koduhooldajat ei leitud' });
-
-    const contacts = [];
-    if (b.contact2 && (b.contact2.email || b.contact2.name)) {
-      contacts.push({ name: str(b.contact2.name, 120), email: core.normalizeEmail(b.contact2.email), notify: true });
-    }
-    const contactsCheck = core.sanitizeContacts(contacts);
-    if (contactsCheck.error) return res.status(400).json({ error: 'Teise kontakti e-posti aadress ei ole õige' });
-
-    const cardRef = found?.ref || null;
-    const claimedAt = Timestamp.fromDate(new Date());
-    if (cardRef) {
-      try {
-        await db.runTransaction(async (tx) => {
-          const fresh = await tx.get(cardRef);
-          const c = fresh.data() || {};
-          if (c.welcomeRedeemedAt) throw new HomeError(409, { state: 'used', error: 'See kaart on juba kasutatud' });
-          tx.update(cardRef, { welcomeRedeemedAt: claimedAt, usedAt: claimedAt, usedByEmail: core.normalizeEmail(b.email), kind: 'welcome', updatedAt: FieldValue.serverTimestamp() });
-        });
-      } catch (e) {
-        if (e instanceof HomeError) return res.status(e.status).json(e.body);
-        throw e;
-      }
-    }
-
-    const flowerPreference = str(b.flowerPreference, 300);
-    const linens = str(b.linens, 300);
-    let home;
-    try {
-      home = await createHome({
-        provider,
-        input: {
-          name: b.name, email: b.email, phone: b.phone, address: b.address, size, lang: b.lang, contacts, force: true,
-          schedule: { frequency: 'biweekly', anchorDate: welcomeAnchor(weekday), time, durationMin: { small: 120, medium: 180, large: 240 }[size] },
-          homeProfile: { flowerPreference, linens },
-        },
-        createdBy: 'welcome:SK1349-9EMK-4W47',
-        enforcePlanCap: false,
-        extraFields: {
-          source: 'welcome',
-          flowers: { auto: true, leadDays: 2, pickup: 'partner', note: flowerPreference },
-          floristId: florist?.id || null,
-          floristName: florist?.name || '',
-          handymanId: handyman?.id || null,
-          handymanName: handyman?.name || '',
-          terms: {
-            cleaning: { included: true, services: ['regular'], quota: 'kaks korda kuus', after: '', billedBy: '' },
-            handyman: { included: true, services: ['hang-mount', 'assembly', 'curtains', 'appliance-install'], quota: 'neli korda aastas', after: 'alates 45 €', billedBy: handyman?.businessName || '' },
-          },
-        },
-        operatorSubject: `SUKODA | Uue kodu kaart lunastati: ${str(b.name, 200)}`,
-        operatorIntro: `Kaart ${escapeHtml(code)} avas kodu. Koristus kaks korda kuus, lilled igal visiidil, remondimees neli korda aastas.`,
-      });
-    } catch (e) {
-      if (cardRef) await cardRef.update({ welcomeRedeemedAt: FieldValue.delete(), usedAt: FieldValue.delete(), usedByEmail: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() }).catch(() => {});
-      if (e instanceof HomeError) {
-        if (e.status === 409) return res.status(409).json({ state: 'already', error: 'Selle e-posti aadressiga on kodu juba olemas. Sisene rakendusse sama aadressiga.', code: e.body.code });
-        return res.status(e.status).json(e.body);
-      }
-      throw e;
-    }
-
-    if (cardRef) await cardRef.update({ usedOrderId: home.orderId, usedByName: home.orderData.customer.name, updatedAt: FieldValue.serverTimestamp() });
-    try {
-      await sendEmail({ to: providerReplyTo(provider) || provider.email, ...inviteProviderEmail({ provider, order: home.orderData }) });
-    } catch (e) { console.error('Welcome provider mail failed (non-fatal):', e); }
-
-    res.status(200).json({ state: 'done', success: true, welcome: true, welcomeSent: home.welcomeSent, email: home.orderData.customer.email });
-  }
-
   const lunastaHandlers = {
     'POST /api/lunasta/validate': async (req, res) => {
       const code = normalizeCardCode(req.body?.code);
       if (!code) return res.status(400).json({ state: 'notfound', error: 'Sisesta kood' });
-      if (code === WELCOME_CODE) {
-        // The card opens the prepared home. Arco does not type a person. Who lives here comes later.
-        const target = await findLoginTarget('vaikmarko+anna@gmail.com');
-        let token = null;
-        if (target?.orderDoc) {
-          const { raw, hash } = newToken();
-          const order = target.orderDoc.data();
-          await db.collection('portalSessions').doc(hash).set({
-            orderId: target.orderDoc.id,
-            email: core.normalizeEmail(order.customer?.email),
-            name: order.customer?.name || '',
-            expiresAt: Timestamp.fromDate(core.sessionExpiresAt(new Date())),
-            source: 'welcome-card',
-            createdAt: FieldValue.serverTimestamp(),
-          });
-          token = raw;
-        }
-        return res.status(200).json({
-          state: 'welcome',
-          code,
-          token,
-          home: {
-            address: 'Iili 8-14',
-            project: 'Kodulahe',
-            lines: [
-              'Akt ja seadmete juhendid on siin.',
-              'Arco kingib esimese koristuse.',
-              'Kui midagi on katki, saada pilt ja kirjeldus.',
-            ],
-          },
-        });
-      }
       const v = await validateCard(code);
       res.status(200).json({ state: v.state, code, provider: v.provider || null });
     },
@@ -2821,7 +2677,6 @@ module.exports = function createHaldus(deps) {
       const b = req.body || {};
       const code = normalizeCardCode(b.code);
       if (!code) return res.status(400).json({ state: 'notfound', error: 'Sisesta kood' });
-      if (code === WELCOME_CODE) return redeemWelcome(req, res, code);
       if (b.consent !== true) return res.status(400).json({ error: 'Nõustu tingimustega, et jätkata' });
       const v = await validateCard(code);
       if (v.state !== 'invite') return res.status(409).json({ state: v.state, error: 'Seda kutset ei saa praegu kasutada' });
@@ -4988,35 +4843,12 @@ module.exports = function createHaldus(deps) {
     };
   }
 
-  function approvedFacts(order) {
-    return (Array.isArray(order.facts) ? order.facts : []).filter((fact) => fact && fact.status === 'approved' && fact.value).map((fact) => ({
-      key: String(fact.key || '').slice(0, 40),
-      value: String(fact.value).slice(0, 500),
-      page: Number.isInteger(Number(fact.page)) && Number(fact.page) > 0 ? Number(fact.page) : null,
-      sourceDocId: fact.sourceDocId ? String(fact.sourceDocId).slice(0, 80) : null,
-    }));
-  }
-
   function portalRole(auth) {
     return core.viewerRole(auth?.order, auth?.viewer?.email);
   }
 
   function viewOrder(auth) {
     return portalRole(auth) === 'tenant' ? core.withoutOwnership(auth.order) : auth.order;
-  }
-
-  function serializeDocuments(order, lang, role) {
-    const row = (d, source) => ({
-      id: d.id, title: d.title, url: d.url || null, category: d.category, categoryLabel: core.DOCUMENT_CATEGORIES[d.category]?.[lang] || core.DOCUMENT_CATEGORIES.other[lang], note: d.note || '', addedAt: d.addedAt || null,
-      page: Number.isInteger(Number(d.page)) && Number(d.page) > 0 ? Number(d.page) : null,
-      text: String(d.text || '').slice(0, 4000),
-      source: source || d.source || 'home', sourceName: d.sourceName || '',
-      file: d.file ? { name: d.file.name, size: d.file.size || 0, contentType: d.file.contentType || 'application/octet-stream' } : null,
-    });
-    const sourceOrder = role === 'tenant' ? core.withoutOwnership(order) : order;
-    const inherited = (Array.isArray(sourceOrder.buildingDocuments) ? sourceOrder.buildingDocuments : []).map((d) => row(d, 'building'));
-    const docs = (Array.isArray(sourceOrder.documents) ? sourceOrder.documents : []).map((d) => row(d));
-    return { items: inherited.concat(docs), categories: Object.entries(core.DOCUMENT_CATEGORIES).map(([id, c]) => ({ id, label: c[lang] || c.et })), facts: approvedFacts(sourceOrder) };
   }
 
   function handoverMail({ order, name, address, url, lang }) {
@@ -5076,30 +4908,9 @@ module.exports = function createHaldus(deps) {
     if (n) await batch.commit();
   }
 
-  // ---- Home folder files (GCS bucket, uniform access, no public URLs) ----
+  // ---- Home folder files (GCS bucket). The folder screen is gone; the bucket is still emptied when an account is deleted ----
   const DOCS_BUCKET = 'sukoda-77b52-home-docs';
-  const DOC_FILE_MAX_BYTES = 8 * 1024 * 1024;
-  const DOC_FILE_TYPES = { 'application/pdf': 'pdf', 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/heic': 'heic' };
   function docsBucket() { return admin.storage().bucket(DOCS_BUCKET); }
-  function safeFileName(name) { return String(name || 'fail').replace(/[^\w.\-äöüõšžÄÖÜÕŠŽ ]+/g, '_').slice(0, 100) || 'fail'; }
-
-  /** Store an uploaded file for a home and return the document entry to push onto order.documents */
-  async function storeHomeFile({ orderId, body, source, sourceName }) {
-    const contentType = String(body.contentType || '');
-    if (!DOC_FILE_TYPES[contentType]) return { error: 'Lisa PDF või pilt (JPG, PNG, WEBP, HEIC)' };
-    const base64 = String(body.data || '').replace(/^data:[^;]+;base64,/, '');
-    const buf = Buffer.from(base64, 'base64');
-    if (!buf.length) return { error: 'Fail on tühi' };
-    if (buf.length > DOC_FILE_MAX_BYTES) return { error: 'Fail on suurem kui 8 MB. Lisa väiksem fail.' };
-    const r = core.sanitizeDocument({ ...body, url: '' });
-    if (r.error) return { error: r.error };
-    const doc = r.document;
-    const name = safeFileName(body.fileName || `${doc.title}.${DOC_FILE_TYPES[contentType]}`);
-    const path = `homes/${orderId}/${doc.id}/${name}`;
-    await docsBucket().file(path).save(buf, { contentType, resumable: false, metadata: { cacheControl: 'private, max-age=0' } });
-    return { document: { ...doc, source: source || 'home', sourceName: sourceName || '', file: { path, name, size: buf.length, contentType } } };
-  }
-
   /** To the household: what is coming up, one line per item, with a way to get it done from the portal */
   function maintenanceReminderEmail({ order, items, lang }) {
     const rows = items.map((it) => {
@@ -5488,7 +5299,6 @@ module.exports = function createHaldus(deps) {
         away: liveAway(order),
         maxAwayDays: core.MAX_AWAY_DAYS,
         maintenance: serializeMaintenance(order, lang, { routes, provider, partners: partnerDocs }),
-        documents: serializeDocuments(viewOrder(auth), lang, portalRole(auth)),
       });
     },
 
@@ -5516,99 +5326,6 @@ module.exports = function createHaldus(deps) {
     },
 
     /** Kodu dokumendid: links (contracts, manuals, warranties, work done) kept with the home */
-    'POST /api/me/documents': async (req, res) => {
-      if (!checkRateLimit(req, res, 'portal-documents', 30, 60000)) return;
-      const auth = await authenticateClient(req);
-      if (!auth) return res.status(401).json({ error: 'Unauthorized' });
-      const { orderId, order } = auth;
-      const lang = langOf(order);
-      const b = req.body || {};
-      let docs = Array.isArray(order.documents) ? [...order.documents] : [];
-      if (b.action === 'add') {
-        if (docs.length >= core.MAX_DOCUMENTS) return res.status(400).json({ error: lang === 'et' ? `Kausta mahub kuni ${core.MAX_DOCUMENTS} dokumenti` : `The folder can hold up to ${core.MAX_DOCUMENTS} documents` });
-        const r = core.sanitizeDocument(b);
-        if (r.error) return res.status(400).json({ error: r.error });
-        docs.push(r.document);
-      } else if (b.action === 'remove') {
-        const gone = docs.find((d) => d.id === String(b.documentId || ''));
-        if (!gone) return res.status(404).json({ error: lang === 'et' ? 'Dokumenti ei leitud' : 'Document not found' });
-        // The handover folder is the developer's record of the home — the household cannot delete it
-        if (gone.source === 'developer') return res.status(403).json({ error: lang === 'et' ? 'Selle dokumendi lisas arendaja ja eemaldada saab selle ainult arendaja' : 'The developer added this document and only the developer can remove it' });
-        docs = docs.filter((d) => d !== gone);
-        if (gone.file?.path) await docsBucket().file(gone.file.path).delete({ ignoreNotFound: true }).catch((e) => console.warn('doc file delete', e.message));
-      } else {
-        return res.status(400).json({ error: 'Unknown action' });
-      }
-      await db.collection('orders').doc(orderId).update({ documents: docs, updatedAt: FieldValue.serverTimestamp() });
-      res.status(200).json({ success: true, documents: serializeDocuments({ ...order, documents: docs }, lang, portalRole(auth)) });
-    },
-
-    /** Upload a real file into the home's folder. body: { title, category, note, fileName, contentType, data(base64) } */
-    'POST /api/me/documents/upload': async (req, res) => {
-      if (!checkRateLimit(req, res, 'portal-doc-upload', 20, 60000)) return;
-      const auth = await authenticateClient(req);
-      if (!auth) return res.status(401).json({ error: 'Unauthorized' });
-      const { orderId, order } = auth;
-      const lang = langOf(order);
-      const docs = Array.isArray(order.documents) ? [...order.documents] : [];
-      if (docs.length >= core.MAX_DOCUMENTS) return res.status(400).json({ error: lang === 'et' ? `Kausta mahub kuni ${core.MAX_DOCUMENTS} dokumenti` : `The folder can hold up to ${core.MAX_DOCUMENTS} documents` });
-      const r = await storeHomeFile({ orderId, body: req.body || {}, source: 'home', sourceName: auth.viewer?.name || primaryName(order) || '' });
-      if (r.error) return res.status(400).json({ error: r.error });
-      docs.push(r.document);
-      await db.collection('orders').doc(orderId).update({ documents: docs, updatedAt: FieldValue.serverTimestamp() });
-      res.status(200).json({ success: true, documents: serializeDocuments({ ...order, documents: docs }, lang, portalRole(auth)) });
-    },
-
-    /** Open a file from the home's folder. Token may come as ?token= because the browser opens this in a new tab. */
-    'POST /api/me/documents/ask': async (req, res) => {
-      const auth = await authenticateClient(req);
-      if (!auth) return res.status(401).json({ error: 'Unauthorized' });
-      const order = viewOrder(auth);
-      res.status(200).json(homePass.askHome({
-        question: req.body?.question,
-        facts: order.facts,
-        documents: { building: order.buildingDocuments, home: order.documents },
-      }));
-    },
-
-    'GET /api/me/documents/export': async (req, res) => {
-      const auth = await authenticateClient(req);
-      if (!auth) return res.status(401).json({ error: 'Unauthorized' });
-      const [bookingsSnap, requestsSnap] = await Promise.all([
-        db.collection('bookings').where('orderId', '==', auth.orderId).limit(200).get(),
-        db.collection('serviceRequests').where('orderId', '==', auth.orderId).limit(200).get(),
-      ]);
-      const visits = bookingsSnap.docs.map((doc) => {
-        const row = doc.data() || {};
-        return { id: doc.id, status: row.status, at: tsToIso(row.scheduledAt), serviceId: row.serviceId || null, note: row.completedNote || row.customerNote || '' };
-      });
-      const wishes = requestsSnap.docs.map((doc) => {
-        const row = doc.data() || {};
-        return { id: doc.id, status: row.status, at: tsToIso(row.createdAt), serviceId: row.serviceId || null, note: row.note || '' };
-      });
-      const zip = homePass.exportZip({ id: auth.orderId, ...viewOrder(auth), history: { visits, wishes } });
-      res.setHeader('Content-Type', 'application/zip');
-      res.setHeader('Content-Disposition', 'attachment; filename="kodu.zip"');
-      res.status(200).send(zip);
-    },
-
-    'GET /api/me/documents/file': async (req, res) => {
-      if (req.query?.token && !req.headers.authorization) req.headers.authorization = `Bearer ${String(req.query.token)}`;
-      const auth = await authenticateClient(req);
-      if (!auth) return res.status(401).json({ error: 'Unauthorized' });
-      const doc = (Array.isArray(auth.order.documents) ? auth.order.documents : []).find((d) => d.id === String(req.query?.id || ''));
-      if (!doc || !doc.file?.path) return res.status(404).json({ error: 'Not found' });
-      if (portalRole(auth) === 'tenant' && doc.category === 'ownership') return res.status(404).json({ error: 'Not found' });
-      const file = docsBucket().file(doc.file.path);
-      const [exists] = await file.exists();
-      if (!exists) return res.status(404).json({ error: 'File missing' });
-      res.setHeader('Content-Type', doc.file.contentType || 'application/octet-stream');
-      res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(doc.file.name || 'fail')}"`);
-      res.setHeader('Cache-Control', 'private, no-store');
-      await new Promise((resolve, reject) => file.createReadStream().on('error', reject).on('end', resolve).pipe(res));
-    },
-
-    /** Persist the household's portal language choice so e-mails and push match the screen. */
     'POST /api/me/lang': async (req, res) => {
       if (!checkRateLimit(req, res, 'portal-lang', 20, 60000)) return;
       const auth = await authenticateClient(req);

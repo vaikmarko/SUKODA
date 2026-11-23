@@ -200,7 +200,6 @@
     connectSuccess: '',
     partnerInvite: { name: '', email: '', busy: false, done: false, error: '' },
     upkeepOpen: false,
-    docPreview: null,
     telliAddons: { flowers: false, windows: false, linens: false, 'appliance-care': false },
     telliOpen: '',
     telliPay: false,
@@ -235,16 +234,8 @@
     maintError: '',
     maintShowSuggestions: false,
     maintOpen: null,
-    docAdding: false,
-    askText: '',
-    askCard: null,
-    askSending: false,
     profileError: '',
     pauseError: '',
-    docForm: { title: '', url: '', category: 'other', note: '' },
-    docFile: null,
-    docBusy: false,
-    docError: '',
 
     async init() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -683,9 +674,6 @@
     get hasCleaner() {
         return Boolean(this.order?.provider || this.extras?.provider);
     },
-    get canShowAskFolder() {
-        return !this.showProvider || (this.documents?.items?.length || 0) > 0 || (this.folderFacts?.length || 0) > 0;
-    },
     openVisitFeedback(visit = null) {
         const base = this.serviceById('cleaning-note') || {
             id: 'cleaning-note',
@@ -1027,18 +1015,6 @@
     },
     get nextCleanVisit() {
         return (this.upcomingBookings || []).find((b) => b.kind !== 'extra') || null;
-    },
-    openDoc(d) {
-        const href = this.docHref(d);
-        if (!href) return;
-        this.docPreview = { title: d.title || '', href };
-    },
-    openHref(title, href) {
-        if (!href) return;
-        this.docPreview = { title: title || '', href };
-    },
-    closeDoc() {
-        this.docPreview = null;
     },
     async refreshTelliQuote() {
         if (!this.token) return;
@@ -1517,246 +1493,6 @@
     monthShort(iso) { return iso ? window.SUKODA_TIME.formatDate(iso, this.locale(), { month: 'short' }).replace('.', '') : ''; },
 
     // ---- Dokumendid ----
-    get documents() { return this.extras.documents || { items: [], categories: [], facts: [] }; },
-    get folderFacts() {
-        const label = {
-            küte: 'factHeat', kütte: 'factHeat', heating: 'factHeat', 'floor-heating': 'factHeat',
-            filter: 'factFilter', 'filter-size': 'factFilter',
-            vesi: 'factWater', water: 'factWater', 'water-main': 'factWater',
-            elekter: 'factPower', electric: 'factPower', electricity: 'factPower', breaker: 'factPower',
-            garantii: 'factWarranty', 'warranty-end': 'factWarranty', 'garantii-lopp': 'factWarranty',
-        };
-        const order = ['factHeat', 'factFilter', 'factWater', 'factPower', 'factWarranty'];
-        const items = this.documents.items || [];
-        const rows = [];
-        (this.documents.facts || []).forEach((fact) => {
-            if (!fact || !String(fact.value || '').trim()) return;
-            if (fact.status && fact.status !== 'approved') return;
-            const labelKey = label[String(fact.key || '').trim().toLowerCase()];
-            if (!labelKey) return;
-            const docId = fact.sourceDocId && items.some((item) => item.id === fact.sourceDocId) ? fact.sourceDocId : '';
-            rows.push({
-                id: String(fact.key || labelKey) + '-' + rows.length,
-                labelKey,
-                value: String(fact.value).trim(),
-                docId,
-                page: fact.page || null,
-            });
-        });
-        rows.sort((a, b) => order.indexOf(a.labelKey) - order.indexOf(b.labelKey));
-        return rows;
-    },
-    foldAsk(value) {
-        return String(value || '').toLowerCase()
-            .replace(/filtr[a-zõäöüšž]*/g, 'filter')
-            .replace(/filter[a-zõäöüšž]*/g, 'filter')
-            .replace(/mõõ[a-zõäöüšž]*/g, 'mõõt')
-            .replace(/moot[a-zõäöüšž]*/g, 'mõõt')
-            .replace(/suurus[a-zõäöüšž]*/g, 'mõõt');
-    },
-    askWords(question) {
-        const stop = { mis: 1, on: 1, ja: 1, kui: 1, kus: 1, kust: 1, see: 1, seda: 1, kuidas: 1, palun: 1, the: 1, and: 1, what: 1, where: 1, how: 1, from: 1 };
-        return this.foldAsk(question).split(/\s+/).filter((word) => word.length > 3 && !stop[word]);
-    },
-    askScore(text, words) {
-        const blob = this.foldAsk(text);
-        return words.reduce((score, word) => score + (blob.includes(word) || (word.length >= 5 && blob.includes(word.slice(0, 5))) ? word.length : 0), 0);
-    },
-    get passLines() {
-        const facts = (this.documents.facts || []).filter((fact) => fact && fact.value);
-        if (facts.length) {
-            return facts.map((fact) => {
-                const doc = (this.documents.items || []).find((item) => item.id === fact.sourceDocId);
-                return { id: fact.key || fact.value, text: fact.value, docId: fact.sourceDocId || '', page: fact.page || null, title: (doc && doc.title) || '' };
-            });
-        }
-        return (this.documents.items || []).filter((doc) => doc.note && /filtr|filter|×|kood|garantii|peakraan|avarii/i.test(doc.note)).slice(0, 8).map((doc) => ({
-            id: doc.id, text: doc.note, docId: doc.id, page: doc.page || null, title: doc.title || '',
-        }));
-    },
-    askSentence(text, words) {
-        const parts = String(text || '').split(/\n+|(?<=[.!?])\s+/).map((part) => part.trim()).filter((part) => part.length > 12);
-        let best = '';
-        let bestScore = 0;
-        parts.forEach((part) => {
-            const score = this.askScore(part, words);
-            if (score > bestScore) { bestScore = score; best = part; }
-        });
-        return best.slice(0, 500);
-    },
-    localAsk(question) {
-        const words = this.askWords(question);
-        if (!words.length) return null;
-        let best = null;
-        let bestScore = 0;
-        const take = (text, title, doc, score) => {
-            if (score > bestScore) { bestScore = score; best = { text, title, doc }; }
-        };
-        this.passLines.forEach((item) => {
-            const doc = (this.documents.items || []).find((row) => row.id === item.docId);
-            take(item.text, item.title, doc, this.askScore(`${item.text} ${item.title}`, words));
-        });
-        (this.documents.items || []).forEach((item) => {
-            const score = this.askScore(`${item.title || ''} ${item.note || ''} ${item.text || ''}`, words);
-            if (score <= bestScore) return;
-            const sentence = this.askSentence(`${item.text || ''}\n${item.note || ''}`, words) || item.note || item.title;
-            bestScore = score;
-            best = { text: sentence, title: item.title, doc: item };
-        });
-        if (!best) return null;
-        const text = best.text;
-        const doc = best.doc;
-        if (!text) return null;
-        const href = doc ? this.docHref(doc) : '';
-        return { fact: text, place: (doc && doc.title) || '', action: href ? 'open' : '', href };
-    },
-    openPassLine(line) {
-        const doc = (this.documents.items || []).find((item) => item.id === line.docId);
-        if (!doc) return;
-        const href = this.docHref({ ...doc, page: line.page || doc.page });
-        this.openHref(line.title || doc.title, href);
-    },
-    get documentsByCategory() {
-        const out = [];
-        for (const c of this.documents.categories) {
-            const items = this.documents.items.filter((d) => d.category === c.id);
-            if (items.length) out.push({ ...c, items });
-        }
-        return out;
-    },
-    async documentAction(body) {
-        this.docBusy = true; this.docError = '';
-        try {
-            const res = await fetch('/api/me/documents', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token }, body: JSON.stringify(body) });
-            const data = await res.json();
-            if (!res.ok) { this.docError = data.error || this.t('docFail'); return false; }
-            this.extras = { ...this.extras, documents: data.documents };
-            return true;
-        } catch (e) { this.docError = this.t('netFail'); return false; } finally { this.docBusy = false; }
-    },
-    get docsFromDeveloper() { return this.documents.items.filter((d) => d.source === 'developer').length; },
-    docKind(d) {
-        if (d.file) { const t = d.file.contentType || ''; return t.includes('pdf') ? 'PDF' : t.includes('jpeg') ? 'JPG' : t.includes('png') ? 'PNG' : t.includes('webp') ? 'WEBP' : t.includes('heic') ? 'HEIC' : (this.lang === 'et' ? 'Fail' : 'File'); }
-        return d.url ? (this.lang === 'et' ? 'Link' : 'Link') : (this.lang === 'et' ? 'Märge' : 'Note');
-    },
-    docSourceLabel(d) {
-        if (d.source === 'developer') return this.brand?.name || (this.lang === 'et' ? 'Arendaja' : 'Developer');
-        if (d.source === 'provider') return d.sourceName || (this.lang === 'et' ? 'Partner' : 'Partner');
-        return d.sourceName ? d.sourceName.split(' ')[0] : (this.lang === 'et' ? 'Sina' : 'You');
-    },
-    /** Files are streamed through the API with the session token — the bucket itself is never public */
-    fileHref(d) { return '/api/me/documents/file?id=' + encodeURIComponent(d.id) + '&token=' + encodeURIComponent(this.token); },
-    docHref(d) {
-        const base = d && d.file ? this.fileHref(d) : (d && d.url ? d.url : '');
-        const page = Number(d && d.page);
-        if (!base || !Number.isInteger(page) || page < 1) return base;
-        return base + '#page=' + page;
-    },
-    askDocHref(doc) {
-        if (!doc) return '';
-        const local = (this.documents.items || []).find((d) => d.id === doc.id);
-        if (local) return this.docHref(local);
-        const page = Number(doc.page);
-        const hash = Number.isInteger(page) && page > 0 ? '#page=' + page : '';
-        if (doc.hasFile && doc.id) return this.fileHref({ id: doc.id }) + hash;
-        return doc.url ? doc.url + hash : '';
-    },
-    askCardFrom(data) {
-        const fact = data && data.fact && data.fact.value ? data.fact : null;
-        const docOnly = data && data.document;
-        if (!fact && docOnly) {
-            const href = this.askDocHref(docOnly);
-            return { fact: docOnly.title || '', place: '', action: href ? 'open' : 'person', href };
-        }
-        if (!fact) return { fact: '', place: '', action: 'person', href: '' };
-        const doc = data.document || null;
-        const pageNo = fact.page || (doc && doc.page) || null;
-        const page = pageNo ? this.t('askPage', { page: pageNo }) : '';
-        const title = doc && doc.title ? doc.title : '';
-        const place = [title, page].filter(Boolean).join(' · ');
-        if (data.suggestTechnician) {
-            const href = this.askDocHref(doc);
-            if (href) return { fact: fact.value, place, action: 'open', href, also: 'tech' };
-            return { fact: fact.value, place, action: 'tech', href: '', also: '' };
-        }
-        const href = this.askDocHref(doc);
-        if (href) return { fact: fact.value, place, action: 'open', href };
-        return { fact: fact.value, place, action: 'person', href: '' };
-    },
-    async askFolder() {
-        const question = String(this.askText || '').trim();
-        if (!question || this.askSending) return;
-        this.askCard = null;
-        this.askSending = true;
-        try {
-            const res = await fetch('/api/me/documents/ask', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + this.token }, body: JSON.stringify({ question }) });
-            const data = await res.json();
-            if (res.ok) { this.askCard = this.askCardFrom(data); return; }
-        } catch (e) { /* the phone keeps the answer it can read offline */ } finally { this.askSending = false; }
-        const local = this.localAsk(question);
-        this.askCard = local && local.fact ? local : { fact: '', place: '', action: 'person', href: '' };
-    },
-    orderTechnician() {
-        const svc = this.serviceById('systems-tuning');
-        if (!svc) return;
-        this.openRequest(svc);
-        this.requestNote = String(this.askText || '').trim();
-    },
-    async sendAskToPerson() {
-        const question = String(this.askText || '').trim();
-        if (this.askSending) return;
-        if (question.length < 5) { this.askCard = { fact: '', place: '', action: 'person', href: '', error: this.t('askTooShort') }; return; }
-        this.askSending = true;
-        const serviceId = this.showProvider ? 'cleaning-note' : 'home-manual';
-        try {
-            const res = await fetch('/api/me/requests', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + this.token }, body: JSON.stringify({ serviceId, note: question }) });
-            const data = await res.json();
-            if (!res.ok) { this.askCard = { fact: '', place: '', action: 'person', href: '', error: (data && data.error) || this.t('askFailed') }; return; }
-            this.askCard = { fact: this.t('askSent'), place: '', action: '', href: '' };
-            if (data.request) this.extras = { ...this.extras, requests: [data.request].concat(this.extras.requests || []) };
-        } catch (e) { this.askCard = { fact: '', place: '', action: 'person', href: '', error: this.t('netFail') }; } finally { this.askSending = false; }
-    },
-    async downloadHome() {
-        try {
-            const res = await fetch('/api/me/documents/export', { headers: { Authorization: 'Bearer ' + this.token } });
-            if (!res.ok) return;
-            const blob = await res.blob();
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'kodu.zip';
-            a.click();
-            URL.revokeObjectURL(url);
-        } catch (e) {}
-    },
-    onDocFile(e) {
-        const f = e.target.files && e.target.files[0];
-        this.docFile = f || null;
-        if (f && !this.docForm.title) this.docForm.title = f.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').slice(0, 120);
-        e.target.value = '';
-    },
-    async addDocument() {
-        if (!this.docForm.title) return;
-        if (this.docFile) {
-            const f = this.docFile;
-            if (f.size > 8 * 1024 * 1024) { this.docError = this.t('docTooBig'); return; }
-            const data = await new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result)); r.onerror = reject; r.readAsDataURL(f); });
-            this.docBusy = true; this.docError = '';
-            try {
-                const res = await fetch('/api/me/documents/upload', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token }, body: JSON.stringify({ ...this.docForm, url: '', fileName: f.name, contentType: f.type || 'application/octet-stream', data }) });
-                const out = await res.json();
-                if (!res.ok) { this.docError = out.error || this.t('docFail'); return; }
-                this.extras = { ...this.extras, documents: out.documents };
-                this.docAdding = false; this.docFile = null; this.docForm = { title: '', url: '', category: 'other', note: '' };
-            } catch (e) { this.docError = this.t('netFail'); } finally { this.docBusy = false; }
-            return;
-        }
-        if (await this.documentAction({ action: 'add', ...this.docForm })) { this.docAdding = false; this.docForm = { title: '', url: '', category: 'other', note: '' }; }
-    },
-    async removeDocument(d) {
-        if (!confirm(this.t('docRemoveAsk'))) return;
-        await this.documentAction({ action: 'remove', documentId: d.id });
-    },
     async submitRequest() {
         if (!this.requestService || this.requestProcessing) return;
         this.requestProcessing = true;
@@ -2485,7 +2221,6 @@
                 <!-- ─────────────────────────────────── -->
                 <!-- TAB 2: HOME PROFILE                  -->
                 <!-- ─────────────────────────────────── -->
-                <div id="minu-kaust"></div>
                 <div id="minu-minu"></div>
 
 

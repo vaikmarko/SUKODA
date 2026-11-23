@@ -1128,32 +1128,6 @@ function maintenanceNextDue(items) {
 }
 
 // ============================================================
-// Kodu dokumendid — links the household wants to keep with the home
-// ============================================================
-
-const DOCUMENT_CATEGORIES = {
-  // Pre-filled by the developer at handover: the folder the owner otherwise never finds again
-  handover: { et: 'Üleandmine ja garantii', en: 'Handover and warranty', ru: 'Передача и гарантия' },
-  ownership: { et: 'Omand ja lepingud', en: 'Ownership and contracts', ru: 'Собственность и договоры' },
-  appliances: { et: 'Seadmed, juhendid, garantiid', en: 'Appliances, manuals, warranties', ru: 'Техника, инструкции, гарантии' },
-  building: { et: 'Maja ja ühistu', en: 'Building and association', ru: 'Дом и товарищество' },
-  insurance: { et: 'Kindlustus', en: 'Insurance', ru: 'Страхование' },
-  works: { et: 'Tehtud tööd', en: 'Work done', ru: 'Выполненные работы' },
-  other: { et: 'Muu', en: 'Other', ru: 'Прочее' },
-};
-const MAX_DOCUMENTS = 40;
-
-function sanitizeDocument(input) {
-  if (!input || typeof input !== 'object') return { error: 'Kirjuta dokumendi pealkiri' };
-  const title = String(input.title || '').trim().slice(0, 120);
-  if (title.length < 2) return { error: 'Kirjuta dokumendi pealkiri' };
-  const url = String(input.url || '').trim().slice(0, 1000);
-  if (url && !/^https:\/\/[^\s]+$/i.test(url)) return { error: 'Link peab algama https://' };
-  const category = DOCUMENT_CATEGORIES[input.category] ? input.category : 'other';
-  return { document: { id: randomId(), title, url: url || null, category, note: String(input.note || '').trim().slice(0, 300), addedAt: new Date().toISOString() } };
-}
-
-// ============================================================
 // Provider plans — what the desk costs, stated up front
 // ============================================================
 
@@ -1893,9 +1867,6 @@ module.exports = {
   maintenanceName,
   maintenanceState,
   maintenanceNextDue,
-  DOCUMENT_CATEGORIES,
-  MAX_DOCUMENTS,
-  sanitizeDocument,
   TALLINN_TIME_ZONE,
   MAX_AWAY_PERIODS,
   MAX_AWAY_DAYS,

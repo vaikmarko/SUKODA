@@ -98,11 +98,13 @@ Marko otsus 23.11: Cristelle kahe kodu Arco pärandväljad ei loe, tema lisatud 
 - Teenuste kataloogi, pakette ega koristaja profiili ei puudutatud: Cristelle teenused ja hinnad loetakse täpselt nagu enne.
 - Firestore'ist ei kustutatud midagi. Kogu `buildings` ja vanad üleandmiskaardid jäävad andmebaasi, kood neid enam ei loe ega kirjuta.
 
-### Lõik 5b (tegemata, vajab emulaatoriga kontrolli)
-Need osad on põimitud kirjadesse ja elaniku API-sse, mida Cristelle ja tema kliendid iga päev kasutavad. Pimesi eemaldada ei ole ohutu.
-- Valge silt (`order.brand`) kirjade pealkirjades ja elaniku vaates, `welcomeIntroArco`, garantiivisiidi meeldetuletus.
-- Kategooriad `warranty` ja `building` kataloogis, tingimustes ja soovi suunamises.
-- Pakett `enterprise` ja omaniku liik `developer`.
-- Dokumentide otspunktid `/api/me/documents*`, `lib/home-pass.js`, `assets/js/minu/kaust.js` ja `minu.html` jäänukid.
-- Koodi lunastamise taustapoole `welcome` haru ja kaardi kvoot (`terms.quota`).
+### Lõik 5b (ehitatud 23.11.2026, Marko otsusel ilma emulaatorita)
+- Kodu kaust on koodist väljas: viis otspunkti `/api/me/documents*`, `lib/home-pass.js`, `assets/js/minu/kaust.js` ja kogu kausta loogika failis `minu.html`. Elaniku vastusest `/api/me/extras` kadus väli `documents`. Juba üles laaditud failid jäävad Cloud Storage'isse ja väli `order.documents` Firestore'i; konto kustutamine tühjendab ämbri nagu enne.
+- Trükitud Arco kaardi kood on väljas. See haru andis koodi teadjale ilma sisselogimiseta sessiooni ühe kindla konto koju; nüüd vastab kood nagu iga tundmatu kood. Koos sellega läks kaardi lunastamine, mis lõi kodu kvoodiga „kaks korda kuus“.
+- Tervituskirja varutekst „ARCO Vara andis su kodu üle“ on väljas. Kui koristaja nime ei ole, saab elanik sama üldise lause, mis oli juba olemas („Ava rakendus ja vaata järgmist aega“).
+- Neli üldist sõnastikuvõtit (Salvestan, Loobu, Eemalda, Sulge) kolisid kausta moodulist ühisesse sõnastikku, sest neid kasutavad ka teised vaated.
+- Kontrollitud: taustateenus laeb, `npm run check` roheline (96 testi; kausta ja SharePointi testid läksid koos koodiga). Emulaatoris ega brauseris sisselogituna kontrollimata.
 
+### Lõik 5c (ootab Marko otsust)
+- **Lepingulise partneri pakett.** `effectivePlan` loeb lepinguliseks iga koristaja, kelle konto lõi admin. Selline koristaja ei saa praegu ise kliente lisada, tal ei ole kutselinki ega paketi valikut. Paketi eemaldamine paneb ta tasuta paketile (kuni 3 kodu). Kui Cristelle konto on admini loodud, muudab see tema piiranguid ja arveldust.
+- Valge silt (`order.brand`), kategooriad `warranty` ja `building`, garantiivisiidi meeldetuletus, omaniku liik `developer` makse jagamises (`splitVisitPayment`, sponsori eelarve) ja `terms.quota`.

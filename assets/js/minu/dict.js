@@ -158,6 +158,10 @@ export const dict = {
   footerRun: { et: 'Portaali haldab SUKODA · Epic Ship OÜ', en: 'The portal is run by SUKODA · Epic Ship OÜ', ru: 'Портал ведёт SUKODA · Epic Ship OÜ' },
   terms: { et: 'Tingimused', en: 'Terms', ru: 'Условия' },
   privacy: { et: 'Privaatsus', en: 'Privacy', ru: 'Конфиденциальность' },
+  docSaving: { et: 'Salvestan…', en: 'Saving…', ru: 'Сохраняю…' },
+  docCancel: { et: 'Loobu', en: 'Cancel', ru: 'Отмена' },
+  docRemove: { et: 'Eemalda', en: 'Remove', ru: 'Удалить' },
+  docClose: { et: 'Sulge', en: 'Close', ru: 'Закрыть' },
 };
 
 export function add(partial) {

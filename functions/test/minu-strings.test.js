@@ -24,13 +24,6 @@ test('last visit and done-on copy are in the served kodu script', () => {
   assert.match(served, /feedbackAction: \{ et: 'Jäta tagasiside või märkus'/);
 });
 
-test('ask-the-home copy is in the module dictionary', () => {
-  const kaust = read('assets/js/minu/kaust.js');
-  assert.match(kaust, /askHomeLead: \{ et: 'Küsi kodu kohta'/);
-  assert.match(kaust, /askPh: \{ et: 'nt ventilatsioonifiltri mõõt'/);
-  assert.match(kaust, /askLabel: \{ et: 'Küsi'/);
-});
-
 test('Alpine starts after the portal dictionary is merged', () => {
   const main = read('assets/js/main.js');
   assert.match(main, /queueMicrotask\(\(\) => Alpine\.start\(\)\)/);
@@ -47,7 +40,7 @@ test('every t() key used in minu.html and minu modules exists in the resident di
     .replace(/^export\s+const\s+dict\s*=/m, 'Object.assign(dict,')
     .replace(/\};\s*export\s+function\s+add[\s\S]*$/m, '});');
   vm.runInContext(dictCode, sandbox);
-  for (const rel of ['assets/js/minu/telli.js', 'assets/js/minu/minu.js', 'assets/js/minu/kaust.js']) {
+  for (const rel of ['assets/js/minu/telli.js', 'assets/js/minu/minu.js']) {
     const raw = read(rel).replace(/^import\s+[^\n]+$/gm, '');
     const cut = raw.indexOf('\n});');
     vm.runInContext(raw.slice(0, cut + 4), sandbox);
@@ -66,7 +59,7 @@ test('every t() key used in minu.html and minu modules exists in the resident di
   }
 
   const missing = [];
-  const files = ['minu.html', 'assets/js/minu/telli.js', 'assets/js/minu/minu.js', 'assets/js/minu/kaust.js', 'assets/js/minu/kodu.js'];
+  const files = ['minu.html', 'assets/js/minu/telli.js', 'assets/js/minu/minu.js', 'assets/js/minu/kodu.js'];
   const callRe = /\bt\(\s*'([a-zA-Z0-9_]+)'/g;
   for (const rel of files) {
     const src = read(rel);

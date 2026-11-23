@@ -32,7 +32,6 @@ test('service catalogue: every entry has et+en name and description, a known cat
 test('service categories, time windows, document categories, plans: et+en+ru', () => {
   for (const [k, c] of Object.entries(core.SERVICE_CATEGORIES)) assert.ok(c.et && c.en && c.ru, `category ${k}`);
   for (const [k, w] of Object.entries(core.TIME_WINDOWS)) assert.ok(w.et && w.en && w.ru, `time window ${k}`);
-  for (const [k, d] of Object.entries(core.DOCUMENT_CATEGORIES)) assert.ok(d.et && d.en && d.ru, `document category ${k}`);
   for (const [k, p] of Object.entries(core.PROVIDER_PLANS)) assert.ok(p.blurb?.et && p.blurb?.en && p.blurb?.ru, `plan ${k}`);
 });
 
@@ -49,7 +48,6 @@ test('ru is present on every et+en text, and blank only when et is blank', () =>
   walk(core.SERVICE_CATEGORIES, 'SERVICE_CATEGORIES');
   walk(core.SERVICE_CATALOGUE, 'SERVICE_CATALOGUE');
   walk(core.MAINTENANCE_CATALOGUE, 'MAINTENANCE_CATALOGUE');
-  walk(core.DOCUMENT_CATEGORIES, 'DOCUMENT_CATEGORIES');
   walk(core.TIME_WINDOWS, 'TIME_WINDOWS');
   walk(core.PROVIDER_PLANS, 'PROVIDER_PLANS');
 });
@@ -502,19 +500,6 @@ test('resolveRecipients: primary customer or gift recipient plus notifying conta
   const gift = { type: 'gift', recipient: { email: 'saaja@sukoda.ee', name: 'Saaja' }, customer: { email: 'ostja@sukoda.ee' } };
   assert.deepEqual(core.resolveRecipients(gift).map((r) => r.email), ['saaja@sukoda.ee'], 'gift goes to the recipient, not the buyer');
   assert.deepEqual(core.resolveRecipients(null), []);
-});
-
-// ------------------------------------------------------------
-// Documents
-// ------------------------------------------------------------
-
-test('sanitizeDocument requires a title, https link, known category', () => {
-  assert.ok(core.sanitizeDocument({ title: 'A' }).error);
-  assert.ok(core.sanitizeDocument({ title: 'Juhend', url: 'http://insecure' }).error);
-  const r = core.sanitizeDocument({ title: 'Kasutusjuhend', url: 'https://x.ee/a.pdf', category: 'nope' });
-  assert.equal(r.document.category, 'other');
-  assert.equal(r.document.url, 'https://x.ee/a.pdf');
-  assert.equal(core.sanitizeDocument({ title: 'Ilma lingita' }).document.url, null);
 });
 
 // ------------------------------------------------------------
