@@ -1139,20 +1139,53 @@ const PROVIDER_PLANS = {
   free: { id: 'free', name: 'Tasuta', price: 0, homes: 3, lookupKey: null, blurb: { et: 'Kuni 3 kodu. Kõik võimalused, ajapiiranguta.', en: 'Up to 3 homes. Every feature, no time limit.', ru: 'До 3 домов. Все возможности, без ограничения по времени.' } },
   pro: { id: 'pro', name: 'Standard', price: 19, homes: 20, lookupKey: 'sukoda_provider_pro_monthly', blurb: { et: 'Kuni 20 kodu. Lõpeta igal ajal.', en: 'Up to 20 homes. Cancel any time.', ru: 'До 20 домов. Отмена в любое время.' } },
   studio: { id: 'studio', name: 'Stuudio', price: 39, homes: null, lookupKey: 'sukoda_provider_studio_monthly', blurb: { et: 'Piiramatult kodusid. Lõpeta igal ajal.', en: 'Unlimited homes. Cancel any time.', ru: 'Без ограничения числа домов. Отмена в любое время.' } },
-  // Contracted partners (a developer's after-sales team, a building manager): set up by SUKODA, no cap, no card, no self-serve billing
-  enterprise: { id: 'enterprise', name: 'Partner', price: 0, homes: null, lookupKey: null, blurb: { et: 'Kokkuleppel SUKODA-ga. Piiramatult kodusid.', en: 'By agreement with SUKODA. Unlimited homes.', ru: 'По договорённости с SUKODA. Без ограничения числа домов.' } },
 };
 const PLAN_ACTIVE_STATUSES = ['active', 'trialing', 'past_due'];
 
-/** Plans a provider can pick on the desk (enterprise is assigned by the operator) */
+/** Plans a provider can pick on the desk */
 const SELF_SERVE_PLANS = ['free', 'pro', 'studio'];
 
 /** The plan that counts right now: a paid plan only while Stripe says the subscription is alive */
-function effectivePlan(provider) {
-  if (provider?.plan === 'enterprise' || provider?.createdBy === 'admin') return 'enterprise';
+function paidPlan(provider) {
   const p = provider?.plan && PROVIDER_PLANS[provider.plan] ? provider.plan : 'free';
   if (p === 'free') return 'free';
   return PLAN_ACTIVE_STATUSES.includes(provider.planStatus) ? p : 'free';
+}
+
+/** A free month won by inviting a colleague: the date it lasts to, while it lasts. */
+function grantUntil(provider, now = new Date()) {
+  const g = provider?.planGrant;
+  if (!g || !PROVIDER_PLANS[g.plan] || !parseDateStr(g.until)) return null;
+  return g.until >= toDateStr(now) ? g.until : null;
+}
+
+/** A free month lifts a free desk; it never lowers a paid plan. */
+function effectivePlan(provider, now = new Date()) {
+  const paid = paidPlan(provider);
+  if (paid !== 'free') return paid;
+  return grantUntil(provider, now) ? provider.planGrant.plan : 'free';
+}
+
+// One free month of Standard for both sides of a colleague invite (Marko 23.11.2026)
+const REFERRAL_PLAN = 'pro';
+const REFERRAL_DAYS = 30;
+const REFERRAL_CREDIT_CENTS = 1900;
+
+/**
+ * What one free month means for this desk. A paying desk gets the month as Stripe credit against its next invoice;
+ * any other desk gets Standard for 30 days, counted on from a month it already has.
+ */
+function referralReward(provider, now = new Date()) {
+  if (paidPlan(provider) !== 'free' && provider?.stripeCustomerId) return { kind: 'credit', cents: REFERRAL_CREDIT_CENTS };
+  const from = parseDateStr(grantUntil(provider, now)) || parseDateStr(toDateStr(now));
+  return { kind: 'grant', planGrant: { plan: REFERRAL_PLAN, until: toDateStr(addDays(from, REFERRAL_DAYS)) } };
+}
+
+/** The colleague link carries the inviter's invite code. Only a different, active desk can be the inviter. */
+function referralInviter(inviter, newEmail) {
+  if (!inviter || inviter.status === 'disabled') return null;
+  if (normalizeEmail(inviter.email) === normalizeEmail(newEmail)) return null;
+  return inviter.id || null;
 }
 function planLimit(planId) {
   const p = PROVIDER_PLANS[planId] || PROVIDER_PLANS.free;
@@ -1803,6 +1836,10 @@ module.exports = {
   PLAN_ACTIVE_STATUSES,
   SELF_SERVE_PLANS,
   effectivePlan,
+  grantUntil,
+  referralReward,
+  referralInviter,
+  REFERRAL_CREDIT_CENTS,
   planLimit,
   planByLookupKey,
   storeApp,

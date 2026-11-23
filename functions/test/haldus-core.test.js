@@ -506,9 +506,9 @@ test('resolveRecipients: primary customer or gift recipient plus notifying conta
 // Provider plans
 // ------------------------------------------------------------
 
-test('effectivePlan: admin-created or enterprise → enterprise; paid plan counts only while Stripe says alive', () => {
-  assert.equal(core.effectivePlan({ createdBy: 'admin' }), 'enterprise');
-  assert.equal(core.effectivePlan({ plan: 'enterprise' }), 'enterprise');
+test('effectivePlan: an admin-made desk is a free desk; paid plan counts only while Stripe says alive', () => {
+  assert.equal(core.effectivePlan({ createdBy: 'admin' }), 'free');
+  assert.equal(core.effectivePlan({ plan: 'enterprise' }), 'free');
   assert.equal(core.effectivePlan({ plan: 'pro', planStatus: 'active' }), 'pro');
   assert.equal(core.effectivePlan({ plan: 'pro', planStatus: 'past_due' }), 'pro');
   assert.equal(core.effectivePlan({ plan: 'pro', planStatus: 'canceled' }), 'free');
@@ -847,3 +847,29 @@ test('primaryTrade, providerInviteCode and toggleInvoicedHome support all trades
   assert.equal(JSON.stringify(card).includes('555'), false);
 });
 
+test('colleague invite: a free desk gets Standard for 30 days, counted on from a month it already has', () => {
+  const now = new Date('2026-11-23T10:00:00Z');
+  const first = core.referralReward({ plan: 'free' }, now);
+  assert.deepEqual(first, { kind: 'grant', planGrant: { plan: 'pro', until: '2026-12-23' } });
+  const desk = { plan: 'free', planGrant: first.planGrant };
+  assert.equal(core.effectivePlan(desk, now), 'pro');
+  assert.equal(core.effectivePlan(desk, new Date('2026-12-23T20:00:00Z')), 'pro');
+  assert.equal(core.effectivePlan(desk, new Date('2026-12-24T08:00:00Z')), 'free');
+  assert.equal(core.referralReward(desk, now).planGrant.until, '2027-01-22');
+  assert.equal(core.grantUntil({ planGrant: { plan: 'nope', until: '2030-01-01' } }, now), null);
+});
+
+test('colleague invite: a paying desk gets one Standard month as Stripe credit, never a lower plan', () => {
+  const now = new Date('2026-11-23T10:00:00Z');
+  const paying = { plan: 'studio', planStatus: 'active', stripeCustomerId: 'cus_1', planGrant: { plan: 'pro', until: '2026-12-30' } };
+  assert.deepEqual(core.referralReward(paying, now), { kind: 'credit', cents: 1900 });
+  assert.equal(core.effectivePlan(paying, now), 'studio');
+  assert.equal(core.referralReward({ plan: 'pro', planStatus: 'canceled', stripeCustomerId: 'cus_1' }, now).kind, 'grant');
+});
+
+test('colleague invite: nobody invites themselves or from a closed desk', () => {
+  assert.equal(core.referralInviter({ id: 'a', email: 'Kristi@x.ee' }, 'kristi@x.ee'), null);
+  assert.equal(core.referralInviter({ id: 'a', email: 'kristi@x.ee', status: 'disabled' }, 'mari@x.ee'), null);
+  assert.equal(core.referralInviter({ id: 'a', email: 'kristi@x.ee' }, 'mari@x.ee'), 'a');
+  assert.equal(core.referralInviter(null, 'mari@x.ee'), null);
+});

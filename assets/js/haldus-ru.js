@@ -175,7 +175,6 @@ export const haldusRu = {
   homesEmpty: 'У вас пока нет ни одного дома',
   homesNoMatch: 'Дома с таким именем или адресом не найдено',
   homesEmptyAdd: 'Добавьте клиента или отправьте свою ссылку приглашения — клиент откроет приложение.',
-  homesEmptyAssigned: 'Дома, назначенные вам SUKODA, появятся здесь.',
   ownClient: 'Ваш клиент',
   sukodaClient: 'Клиент SUKODA',
   nextVisit: 'Следующий',
@@ -367,7 +366,6 @@ export const haldusRu = {
 
   // ---- Konto ----
   tabAccount: 'Аккаунт',
-  coop: 'Партнёрство',
   planLabel: 'Тариф',
   homesWord: 'домов',
   currentPlan: 'Текущий',
@@ -445,6 +443,14 @@ export const haldusRu = {
   addNoteBtn: '+ Добавить заметку',
   moreOptions: '+ Дополнительные поля (телефон, семья, допуслуги)',
   lessOptions: 'Скрыть доп. поля',
+  colleagueTitle: 'Пригласить коллегу',
+  colleagueSub: 'Месяц бесплатно вам обоим',
+  colleagueLead: 'Знаете специалиста по уборке, который ведёт записи в блокноте? Отправьте ему ссылку. Его клиенты и цены остаются его.',
+  colleagueGift: 'Когда коллега добавит первого клиента, вы оба получите месяц Standard бесплатно.',
+  colleagueShare: 'Поделиться ссылкой',
+  colleagueWaiting: 'Ждём первого клиента',
+  colleagueRewarded: 'Бесплатный месяц получен',
+  freeUntil: 'бесплатно до {date}',
 };
 
 if (typeof window !== 'undefined') {

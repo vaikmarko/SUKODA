@@ -2156,8 +2156,8 @@ module.exports = function createHaldus(deps) {
     return {
       plan,
       planName: core.PROVIDER_PLANS[plan].name,
-      // Contracted partners (set up by SUKODA): no cap, no self-serve billing, no invite cards on the desk
-      enterprise: plan === 'enterprise',
+      // A free month from a colleague invite: the last day it counts
+      grantUntil: core.grantUntil(provider),
       homes,
       limit: limit === Infinity ? null : limit,
       status: provider.planStatus || null,
@@ -2479,6 +2479,10 @@ module.exports = function createHaldus(deps) {
       html: `<p>${operatorIntro || `${escapeHtml(provider.name)} (${escapeHtml(provider.email)}) lisas haldusesse uue kliendi.`}</p><p><strong>${escapeHtml(name)}</strong> · ${escapeHtml(email)} · ${escapeHtml(address)}</p><p>Graafik: ${schedule ? `${schedule.frequency}, ${schedule.time}` : 'puudub'} · Loodud visiite: ${created.length}</p><p>Tellimus: ${orderId}</p>`,
     });
 
+    if (provider.referredBy && !provider.referralRewardedAt) {
+      try { await rewardColleagueInvite(provider.id); } catch (e) { console.error('Colleague invite reward failed (non-fatal):', provider.id, e); }
+    }
+
     return { ref, orderId, orderData, role, created, skipped, welcomeSent, portalUrl };
   }
 
@@ -2583,6 +2587,36 @@ module.exports = function createHaldus(deps) {
     if (snap.empty) return null;
     const doc = snap.docs[0];
     return { id: doc.id, ...doc.data() };
+  }
+
+  /** One free month to one desk: Stripe credit when it pays, otherwise Standard for 30 days (core.referralReward). */
+  async function giveFreeMonth(providerId, colleagueId) {
+    const ref = db.collection('providers').doc(providerId);
+    const snap = await ref.get();
+    if (!snap.exists) return;
+    const reward = core.referralReward(snap.data());
+    if (reward.kind === 'credit') {
+      await getStripe().customers.createBalanceTransaction(snap.data().stripeCustomerId, {
+        amount: -reward.cents, currency: 'eur', description: 'SUKODA: kuu tasuta, kolleegi kutse',
+      }, { idempotencyKey: `colleague-${colleagueId}-${providerId}` });
+    } else {
+      await ref.update({ planGrant: reward.planGrant, updatedAt: FieldValue.serverTimestamp() });
+    }
+  }
+
+  /** The invited desk added its first client: mark it once in a transaction, then a free month to both sides. */
+  async function rewardColleagueInvite(providerId) {
+    const ref = db.collection('providers').doc(providerId);
+    const inviterId = await db.runTransaction(async (tx) => {
+      const p = (await tx.get(ref)).data();
+      if (!p?.referredBy || p.referralRewardedAt) return null;
+      tx.update(ref, { referralRewardedAt: FieldValue.serverTimestamp() });
+      return p.referredBy;
+    });
+    if (!inviterId) return;
+    for (const id of [providerId, inviterId]) {
+      try { await giveFreeMonth(id, providerId); } catch (e) { console.error('Free month failed', id, e); }
+    }
   }
 
   async function ensureProviderInviteCode(provider) {
@@ -3100,12 +3134,6 @@ module.exports = function createHaldus(deps) {
   // Account deletion: an e-mail code, then the person and their data go at once
   // ============================================================
 
-  const DELETE_PARTNER = {
-    et: 'Sinu töölaud käib partnerlepingu järgi. Konto sulgemiseks kirjuta tere@sukoda.ee.',
-    en: 'Your desk runs under a partner agreement. To close the account, write to tere@sukoda.ee.',
-    ru: 'Ваш рабочий стол работает по партнёрскому договору. Чтобы закрыть аккаунт, напишите на tere@sukoda.ee.',
-  };
-
   function deleteCodeEmail(code, lang) {
     const L = core.langOf(lang);
     const subject = core.pick({
@@ -3319,7 +3347,6 @@ module.exports = function createHaldus(deps) {
       const planId = String(req.body?.plan || '');
       const plan = core.SELF_SERVE_PLANS.includes(planId) ? core.PROVIDER_PLANS[planId] : null;
       if (!plan) return res.status(400).json({ error: 'Vali pakett' });
-      if (core.effectivePlan(provider) === 'enterprise') return res.status(400).json({ error: 'Sinu töölaud käib partnerlepingu järgi. Paketti ei ole vaja valida.' });
       if (core.storeApp(req.headers['x-sukoda-app'])) return res.status(403).json({ error: { et: 'Paketti ei saa rakenduses vahetada.', en: 'The plan cannot be changed in the app.', ru: 'Тариф нельзя сменить в приложении.' } });
       const stripe = getStripe();
       const live = provider.planSubscriptionId && core.PLAN_ACTIVE_STATUSES.includes(provider.planStatus);
@@ -3341,6 +3368,9 @@ module.exports = function createHaldus(deps) {
         return res.status(200).json({ success: true, switched: true, plan: plan.id });
       }
       const customer = await ensureStripeCustomer(provider);
+      // A free month already won is not paid twice: the first charge waits until it ends. Stripe wants 48 h ahead at least.
+      const grantEnd = core.parseDateStr(core.grantUntil(provider));
+      const trialEnd = grantEnd && grantEnd.getTime() - Date.now() > 48 * 3600 * 1000 ? Math.floor(core.addDays(grantEnd, 1).getTime() / 1000) : null;
       const session = await stripe.checkout.sessions.create({
         mode: 'subscription', customer, locale: 'et',
         line_items: [{ price: price.id, quantity: 1 }],
@@ -3348,7 +3378,7 @@ module.exports = function createHaldus(deps) {
         success_url: `${HALDUS_URL}?tab=account&billing=success`,
         cancel_url: `${HALDUS_URL}?tab=account&billing=cancel`,
         metadata: { kind: 'provider_plan', providerId: provider.id, plan: plan.id },
-        subscription_data: { metadata: { kind: 'provider_plan', providerId: provider.id, plan: plan.id } },
+        subscription_data: { metadata: { kind: 'provider_plan', providerId: provider.id, plan: plan.id }, ...(trialEnd ? { trial_end: trialEnd } : {}) },
       });
       res.status(200).json({ success: true, url: session.url });
     },
@@ -3511,7 +3541,6 @@ module.exports = function createHaldus(deps) {
       if (!checkRateLimit(req, res, 'account-delete-code', 5, 300000)) return;
       const acc = await deletionAccount(req);
       if (!acc) return res.status(401).json({ error: 'Unauthorized' });
-      if (acc.kind === 'desk' && core.effectivePlan(acc.provider) === 'enterprise') return res.status(403).json({ error: DELETE_PARTNER });
       const ref = deleteCodeRef(acc.email);
       const prev = await ref.get();
       const sentAt = toDate(prev.data()?.createdAt);
@@ -3539,7 +3568,6 @@ module.exports = function createHaldus(deps) {
       if (!checkRateLimit(req, res, 'account-delete', 10, 300000)) return;
       const acc = await deletionAccount(req);
       if (!acc) return res.status(401).json({ error: 'Unauthorized' });
-      if (acc.kind === 'desk' && core.effectivePlan(acc.provider) === 'enterprise') return res.status(403).json({ error: DELETE_PARTNER });
       const code = String(req.body?.code ?? '').trim();
       const fail = { error: { et: 'Kood ei kehti. Kontrolli numbreid või küsi uus kood.', en: 'The code is not valid. Check the digits or ask for a new code.', ru: 'Код не подходит. Проверьте цифры или запросите новый код.' } };
       if (!/^\d{6}$/.test(code)) return res.status(401).json(fail);
@@ -3630,6 +3658,8 @@ module.exports = function createHaldus(deps) {
           const candidate = core.providerInviteCode(crypto.randomBytes(8));
           if (candidate && !(await findProviderByInviteCode(candidate))) { inviteCode = candidate; break; }
         }
+        // A colleague link counts only when a new desk is opened, never for an existing one
+        const referredBy = core.referralInviter(await findProviderByInviteCode(str(b.kolleeg, 40).toUpperCase()), email);
         const ref = await db.collection('providers').add({
           name,
           email,
@@ -3642,6 +3672,7 @@ module.exports = function createHaldus(deps) {
           lang,
           plan: 'free',
           ...(inviteCode ? { inviteCode } : {}),
+          ...(referredBy ? { referredBy } : {}),
           createdBy: 'self',
           createdAt: FieldValue.serverTimestamp(),
           updatedAt: FieldValue.serverTimestamp(),
@@ -3800,9 +3831,10 @@ module.exports = function createHaldus(deps) {
       const orderIds = new Set(orders.map((o) => o.doc.id));
       const activeHomes = activeHomeCount(orders);
       const billingInfo = billingView(provider, activeHomes, core.storeApp(req.headers['x-sukoda-app']));
-      if (!billingInfo.enterprise && !provider.inviteCode) {
+      if (!provider.inviteCode) {
         await ensureProviderInviteCode(provider);
       }
+      const colleagueSnap = await db.collection('providers').where('referredBy', '==', provider.id).limit(30).get();
       const customers = orders
         .map(({ doc, role }) => serializeCustomer(doc.id, doc.data(), role, provider.id))
         .sort((a, b) => a.name.localeCompare(b.name, 'et'));
@@ -3900,6 +3932,9 @@ module.exports = function createHaldus(deps) {
         })),
         maintenanceIntervals: core.MAINTENANCE_INTERVALS,
         billing: billingInfo,
+        // Colleague invite: one free Standard month for both once the colleague adds a first client
+        colleagueUrl: provider.inviteCode ? `${HALDUS_URL}?alusta&kolleeg=${encodeURIComponent(provider.inviteCode)}` : null,
+        colleagues: colleagueSnap.docs.map((d) => ({ name: d.data().businessName || d.data().name || '', rewarded: !!d.data().referralRewardedAt })),
         // Printed invitation cards the operator has handed to this provider (code + free/used)
         inviteCards: inviteCards.map((c) => ({ code: c.code, status: c.status, usedAt: c.usedAt, usedByName: c.usedByName, assignedAt: c.assignedAt })),
         serverTime: new Date().toISOString(),

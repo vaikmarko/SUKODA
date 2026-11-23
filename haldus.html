@@ -312,16 +312,15 @@
                 <div x-show="activeTab === 'customers'">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                         <input type="text" x-model="customerSearch" :placeholder="t('searchHomes')" :aria-label="t('searchHomes')" class="h-input font-sans sm:max-w-xs">
-                        <div class="flex flex-wrap gap-2" x-show="!isEnterprise && (filteredCustomers.length || customerSearch)">
+                        <div class="flex flex-wrap gap-2" x-show="filteredCustomers.length || customerSearch">
                             <button type="button" x-show="provider?.inviteUrl" @click="shareInvite(provider.inviteUrl)" class="p-btn-2" x-text="t('shareInviteBtn')"></button>
                             <button type="button" @click="openCustomerModal()" class="p-btn" x-text="t('addClient')"></button>
                         </div>
                     </div>
                     <div x-show="filteredCustomers.length === 0" class="bg-cream/40 border border-line p-10 text-center">
                         <p class="font-serif text-xl font-light mb-2" x-text="customerSearch ? t('homesNoMatch') : t('homesEmpty')"></p>
-                        <p class="text-sm text-muted font-sans font-light" x-show="!isEnterprise && !customerSearch" x-text="t('homesEmptyAdd')"></p>
-                        <p class="text-sm text-muted font-sans font-light" x-show="isEnterprise && !customerSearch" x-text="t('homesEmptyAssigned')"></p>
-                        <div class="flex flex-wrap justify-center gap-3 mt-6" x-show="!isEnterprise && !customerSearch">
+                        <p class="text-sm text-muted font-sans font-light" x-show="!customerSearch" x-text="t('homesEmptyAdd')"></p>
+                        <div class="flex flex-wrap justify-center gap-3 mt-6" x-show="!customerSearch">
                             <button type="button" @click="openCustomerModal()" class="p-btn" x-text="t('addClient')"></button>
                             <button type="button" x-show="provider?.inviteUrl" @click="shareInvite(provider.inviteUrl)" class="p-btn-2" x-text="t('shareInviteBtn')"></button>
                         </div>
@@ -412,14 +411,8 @@
                 <div x-show="activeTab === 'account'" x-cloak>
                     <div class="max-w-3xl space-y-6">
 
-                        <!-- Contracted partner (set up by SUKODA) -->
-                        <div x-show="isEnterprise" x-cloak>
-                            <p class="eyebrow mb-1" x-text="t('coop')"></p>
-                            <p class="font-serif text-2xl font-light" x-text="provider?.businessName || provider?.name"></p>
-                        </div>
-
                         <!-- 1. Personal invite link & QR code (top priority for self-serve growth) -->
-                        <div x-show="!isEnterprise && provider?.inviteUrl" class="bg-white border border-line p-5 space-y-4">
+                        <div x-show="provider?.inviteUrl" class="bg-white border border-line p-5 space-y-4">
                             <div class="flex flex-wrap items-start justify-between gap-3">
                                 <div>
                                     <p class="eyebrow mb-1" x-text="t('digitalInviteTitle')"></p>
@@ -536,7 +529,7 @@
                                             </template>
                                         </div>
                                     </div>
-                                    <div x-show="!isEnterprise" class="mt-6 pt-5 border-t border-line">
+                                    <div class="mt-6 pt-5 border-t border-line">
                                         <label class="flex items-start gap-3 cursor-pointer">
                                             <input type="checkbox" class="mt-1 accent-black" x-model="availForm.openForNewClients">
                                             <span>
@@ -598,7 +591,7 @@
                                     <div><label class="h-label" for="profile-phone" x-text="t('phoneLabel')"></label><input id="profile-phone" type="tel" x-model="profileForm.phone" class="h-input" autocomplete="tel"></div>
                                     <div><label class="h-label" for="profile-city" x-text="t('areaLabel')"></label><input id="profile-city" type="text" x-model="profileForm.city" :placeholder="t('areaPh')" class="h-input"></div>
                                     <div class="sm:col-span-2"><label class="h-label" for="profile-notify" x-text="t('notifyEmail')"></label><input id="profile-notify" type="email" x-model="profileForm.notifyEmail" class="h-input" autocomplete="email"></div>
-                                    <div class="sm:col-span-2" x-show="!isEnterprise">
+                                    <div class="sm:col-span-2">
                                         <p class="h-label" x-text="t('offerLabel')"></p>
                                         <div class="flex flex-wrap gap-2 mt-1">
                                             <template x-for="o in editableServices" :key="'pf-' + o.id">
@@ -616,11 +609,11 @@
                             </div>
 
                             <!-- Plan & SUKODA subscription invoices -->
-                            <div x-show="!isEnterprise">
+                            <div>
                                 <button type="button" @click="accountOpen = accountOpen === 'plan' ? '' : 'plan'" class="w-full px-5 py-4 flex items-center justify-between gap-4 text-left hover:bg-cream/30 transition-colors">
                                     <div class="min-w-0">
                                         <p class="font-sans text-base" x-text="t('planLabel')"></p>
-                                        <p class="text-xs text-muted font-sans font-light mt-0.5 truncate"><span x-text="billing.planName"></span> <span x-text="planHomes()"></span><span x-show="billing.hasSubscription && billing.periodEnd" x-text="' · ' + planRenewal()"></span></p>
+                                        <p class="text-xs text-muted font-sans font-light mt-0.5 truncate"><span x-text="billing.planName"></span> <span x-text="planHomes()"></span><span x-show="billing.hasSubscription && billing.periodEnd" x-text="' · ' + planRenewal()"></span><span x-show="billing.grantUntil && !billing.hasSubscription" x-text="' · ' + t('freeUntil', { date: fmtDateShort(billing.grantUntil) })"></span></p>
                                     </div>
                                     <span class="text-xs font-sans text-muted shrink-0" x-text="accountOpen === 'plan' ? t('close') : t('seePlans')"></span>
                                 </button>
@@ -635,7 +628,7 @@
                                                 <p class="font-serif text-2xl font-light mb-1"><span x-text="p.price"></span><span class="text-sm text-muted" x-text="' ' + t('perMonth')"></span></p>
                                                 <p class="text-xs text-muted font-sans font-light leading-relaxed flex-1" x-text="p.blurb"></p>
                                                 <div class="mt-4">
-                                                    <button type="button" x-show="billing.plan !== p.id" @click="choosePlan(p)" :disabled="billingBusy" class="w-full" :class="p.price ? 'p-btn p-btn-sm' : 'p-btn-2 p-btn-sm'" x-text="planButton(p)"></button>
+                                                    <button type="button" x-show="billing.grantUntil && !billing.hasSubscription ? p.price > 0 : billing.plan !== p.id" @click="choosePlan(p)" :disabled="billingBusy" class="w-full" :class="p.price ? 'p-btn p-btn-sm' : 'p-btn-2 p-btn-sm'" x-text="planButton(p)"></button>
                                                     <button type="button" x-show="billing.plan === p.id && billing.cancelAtPeriodEnd" @click="resumePlan()" :disabled="billingBusy" class="p-btn-2 p-btn-sm w-full" x-text="t('resumePlan')"></button>
                                                 </div>
                                             </div>
@@ -657,8 +650,33 @@
                                 </div>
                             </div>
 
-                            <!-- Delete the account: App Store asks for it. Partner desks close through SUKODA -->
-                            <div x-show="!isEnterprise">
+                            <!-- Colleague invite: one free Standard month for both (docs/plaanid/2026-11-23-partneripakett-ja-kolleegi-kutse.md) -->
+                            <div x-show="colleagueUrl">
+                                <button type="button" @click="accountOpen = accountOpen === 'colleague' ? '' : 'colleague'" class="w-full px-5 py-4 flex items-center justify-between gap-4 text-left hover:bg-cream/30 transition-colors">
+                                    <div class="min-w-0">
+                                        <p class="font-sans text-base" x-text="t('colleagueTitle')"></p>
+                                        <p class="text-xs text-muted font-sans font-light mt-0.5 truncate" x-text="t('colleagueSub')"></p>
+                                    </div>
+                                    <span class="text-xs font-sans text-muted shrink-0" x-text="accountOpen === 'colleague' ? t('close') : t('edit')"></span>
+                                </button>
+                                <div x-show="accountOpen === 'colleague'" x-cloak class="px-5 pb-6 pt-4 border-t border-line space-y-4">
+                                    <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="t('colleagueLead')"></p>
+                                    <p class="text-sm font-sans" x-text="t('colleagueGift')"></p>
+                                    <input type="text" readonly class="h-input font-mono text-xs" :value="colleagueUrl || ''" @focus="$event.target.select()" :aria-label="t('colleagueTitle')">
+                                    <button type="button" @click="shareInvite(colleagueUrl)" class="p-btn" x-text="t('colleagueShare')"></button>
+                                    <div x-show="colleagues.length" class="border border-line divide-y divide-line">
+                                        <template x-for="(c, i) in colleagues" :key="i">
+                                            <div class="flex items-center justify-between gap-4 px-4 py-2.5 text-sm font-sans">
+                                                <span class="font-light truncate" x-text="c.name"></span>
+                                                <span class="text-muted shrink-0" x-text="c.rewarded ? t('colleagueRewarded') : t('colleagueWaiting')"></span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Delete the account: App Store asks for it -->
+                            <div>
                                 <button type="button" @click="accountOpen = accountOpen === 'delete' ? '' : 'delete'" class="w-full px-5 py-4 flex items-center justify-between gap-4 text-left hover:bg-cream/30 transition-colors">
                                     <p class="font-sans text-base" x-text="t('deleteTitle')"></p>
                                     <span class="text-xs font-sans text-muted shrink-0" x-text="accountOpen === 'delete' ? t('close') : t('edit')"></span>
@@ -1368,7 +1386,6 @@
             homesEmpty: { et: 'Sul pole veel ühtki kodu', en: 'You have no homes yet' },
             homesNoMatch: { et: 'Sellise nime või aadressiga kodu ei ole', en: 'No home matches that name or address' },
             homesEmptyAdd: { et: 'Lisa kliendi nimi, aadress ja päev. Klient saab lingi ja avab äpi.', en: 'Add the client’s name, address and day. The client gets a link and opens the app.' },
-            homesEmptyAssigned: { et: 'Kodud, mille SUKODA sulle määrab, ilmuvad siia.', en: 'Homes that SUKODA assigns to you appear here.' },
             ownClient: { et: 'Sinu klient', en: 'Your client' },
             sukodaClient: { et: 'SUKODA klient', en: 'SUKODA client' },
             nextVisit: { et: 'Järgmine', en: 'Next' },
@@ -1560,9 +1577,16 @@
 
             // ---- Konto ----
             tabAccount: { et: 'Konto', en: 'Account' },
-            coop: { et: 'Koostöö', en: 'Partnership' },
             planLabel: { et: 'Pakett', en: 'Plan' },
             homesWord: { et: 'kodu', en: 'homes' },
+            colleagueTitle: { et: 'Kutsu kolleeg', en: 'Invite a colleague' },
+            colleagueSub: { et: 'Kuu tasuta mõlemale', en: 'A free month for both of you' },
+            colleagueLead: { et: 'Tead koristajat, kes peab aegu märkmikus? Saada talle link. Tema kliendid ja hinnad jäävad tema omaks.', en: 'Know a cleaner who keeps times in a notebook? Send them the link. Their clients and prices stay their own.' },
+            colleagueGift: { et: 'Kui kolleeg lisab oma esimese kliendi, saate mõlemad ühe kuu Standardit tasuta.', en: 'When your colleague adds their first client, you both get a month of Standard free.' },
+            colleagueShare: { et: 'Jaga linki', en: 'Share the link' },
+            colleagueWaiting: { et: 'Ootab esimest klienti', en: 'Waiting for a first client' },
+            colleagueRewarded: { et: 'Kuu tasuta saadud', en: 'Free month received' },
+            freeUntil: { et: 'tasuta kuni {date}', en: 'free until {date}' },
             currentPlan: { et: 'Praegune', en: 'Current' },
             perMonth: { et: '€/kuus', en: '€/month' },
             switchPlan: { et: 'Vaheta', en: 'Switch' },
@@ -1666,6 +1690,7 @@
             globalError: '', toast: '', refreshing: false,
 
             provider: null, customers: [], bookings: [], requests: [], invoice: { months: [] }, catalogue: [], florists: [], maintenanceCatalogue: [],
+            colleagueUrl: '', colleagues: [],
             billing: { plan: 'free', planName: 'Tasuta', homes: 0, limit: 3, plans: [], hasSubscription: false, cancelAtPeriodEnd: false, periodEnd: null, status: null }, billingBusy: false, billingError: '', invoices: [], inviteCards: [],
             earnedCents: null,
             availForm: {
@@ -1681,7 +1706,7 @@
                 extraPrices: {},
             }, availSaving: false, availError: '',
             profileForm: { name: '', businessName: '', phone: '', city: '', notifyEmail: '', services: ['cleaning'] }, profileSaving: false, profileSaved: false, profileError: '', maintenanceIntervals: [1, 2, 3, 6, 12, 24],
-            signupMode: new URLSearchParams(location.search).get('alusta') != null, signupForm: { name: '', businessName: '', email: '', phone: '', services: ['cleaning'], city: '' },
+            signupMode: new URLSearchParams(location.search).get('alusta') != null, signupForm: { name: '', businessName: '', email: '', phone: '', services: ['cleaning'], city: '', kolleeg: '' },
             signupServices: [
                 { id: 'cleaning', key: 'svcSignCleaning' }, { id: 'handyman', key: 'svcSignHandyman' }, { id: 'garden', key: 'svcSignGarden' },
                 { id: 'flowers', key: 'svcSignFlowers' }, { id: 'childcare', key: 'svcSignChildcare' }, { id: 'pets', key: 'svcSignPets' },
@@ -1741,6 +1766,7 @@
                 const params = new URLSearchParams(location.search);
                 if (params.get('email')) this.signupForm.email = params.get('email').trim();
                 if (params.get('name')) this.signupForm.name = params.get('name').trim();
+                if (params.get('kolleeg')) this.signupForm.kolleeg = params.get('kolleeg').trim().slice(0, 40);
                 const askedRole = params.get('role');
                 if (askedRole && this.signupServices.some((s) => s.id === askedRole)) {
                     this.signupForm.services = [askedRole];
@@ -1782,6 +1808,8 @@
                     this.provider = d.provider; this.customers = d.customers; this.bookings = d.bookings; this.requests = d.requests; this.invoice = d.invoice || { months: [] }; this.catalogue = d.catalogue; this.florists = d.florists || []; this.maintenanceCatalogue = d.maintenanceCatalogue || []; this.maintenanceIntervals = d.maintenanceIntervals || this.maintenanceIntervals;
                     if (d.billing) this.billing = d.billing;
                     this.inviteCards = d.inviteCards || [];
+                    this.colleagueUrl = d.colleagueUrl || '';
+                    this.colleagues = d.colleagues || [];
                     this.profileForm = {
                         name: d.provider.name || '',
                         businessName: d.provider.businessName || '',
@@ -2074,7 +2102,6 @@
             greetName() { const p = this.provider; if (!p) return ''; return p.contactName || p.name || ''; },
             fmtStamp(iso) { return iso ? this.fmtDateShort(iso) + ' ' + this.fmtTime(iso) : ''; },
             fmtDateFull(v) { if (!v) return ''; const iso = v.length === 10 ? v + 'T12:00:00' : v; return T().formatDate(iso, this.deskLocale(), { day: 'numeric', month: 'long', year: 'numeric' }); },
-            get isEnterprise() { return this.billing?.enterprise === true || this.billing?.plan === 'enterprise'; },
             get isCleaningProvider() { return (this.provider?.services || ['cleaning']).includes('cleaning'); },
             get visibleHomeProfileFields() {
                 const role = this.detail.customer?.role || 'cleaning';
@@ -2707,7 +2734,6 @@
                 } catch (e) { this.billingError = e.message; } finally { this.billingBusy = false; }
             },
             async loadInvoices() {
-                if (this.isEnterprise) return;
                 try { const res = await this.api('/api/haldus/billing/invoices'); const d = await res.json(); if (res.ok) this.invoices = d.invoices || []; } catch (e) {}
             },
             earnedLabel() {
