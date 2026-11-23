@@ -971,6 +971,8 @@ body {
 }
 
 .w-hero { display: flex; flex-wrap: wrap; align-items: center; gap: 48px; padding: 56px 0 104px; }
+/* On a wide screen the first block fills the window under the 80px header, so the dark section starts at the fold on every display. */
+@media (min-width: 761px) { .w-hero { min-height: calc(100svh - 80px); box-sizing: border-box; } }
 .w-hero-text { flex: 1 1 440px; min-width: 0; }
 .w-hero-art { flex: 0 0 auto; margin: 0 auto; position: relative; }
 .w-acc { display: block; width: 40px; height: 1px; background: var(--color-accent); margin-bottom: 18px; }
