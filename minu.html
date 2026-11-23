@@ -1214,6 +1214,8 @@
             if (!res.ok) this.proposalError = (typeof data.error === 'string' && data.error) || this.t('proposalFailed');
             // Either way the card must show what is true now: the new visit, or the wish back in line
             await this.loadProfile();
+            // loadProfile only starts the wishes reload; the button stays busy until the card has them
+            await this.loadExtras();
         } catch (e) {
             this.proposalError = this.t('proposalFailed');
         } finally {
