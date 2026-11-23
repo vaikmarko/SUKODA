@@ -13,7 +13,7 @@ Mida testida: ava elaniku Kodu telefonilaiuses, kui visiit on olemas ja kui seda
 2. Telli ja selle alamekraanid (koristus, lilled). Ehitatud. Nimekiri on „Töös“ ja „{nimi} pakub“. Koristus, lilled ja muu soov avanevad tagasilingiga, ilma jaluseta. Lillede summa on olemasolev hind, astet ei ole, sest see muudaks raha. Kui rida läheb maksele, on rütm „Üks kord“ ja seda ei saa vahetada. Teised rütmid jäävad alles siis, kui makset ei küsita.
 3. Konto ja selle read (kokkulepe, soovita, keel, väljalogimine). Ehitatud. Keel ja väljalogimine on Kontol, telefoni ülemises ribas neid enam ei ole. Soovita jagab koristaja olemasolevat kutselinki, kui see on olemas. Kutselinki pole, kui koristajal koodi ei ole.
 4. Koristaja jalus ja Töölaud. Ehitatud. Telefonis on jalus Tööd · Soovid · Kodud ja Konto ikoon paremal. Kalender ja üksiku visiidi, kuu, teenuste ja kliendi vormid jäid senisesse vormi, uue kaardi sees seal, kus rida juba oli. „Juhata kohale“ avab iPhone’is Apple Mapsi ja mujal Google Mapsi.
-5. Veebi avaleht (`index.html`), et telefonipilt ei näitaks enam Kausta.
+5. Veebi avaleht (`index.html`), et telefonipilt ei näitaks enam Kausta. Ehitatud. Telefonis on Kodu · Telli · Konto ja töölaual Tööd · Soovid · Kodud. Kolmas sammas on „Kliendile tasuta“, mitte kaust ega garantii. Sisenemise kest on sama voog, ümarama välja ja nupuga.
 
 ## Tehniline plaan
 - Ekraan: `minu.html` Kodu plokk ja alumine nav. Andmeid ei kirjutata, `fetch` jääb samaks. `runNext()` ja `openVisitFeedback()` jäävad nuppude taha.

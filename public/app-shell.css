@@ -21,6 +21,7 @@
   --color-paper: #faf8f5;
   --color-accent: #8f6e43;
   --color-muted: #5f5a54;
+  --color-line-strong: #d1c9bf;
   --font-serif: "Cormorant Garamond", Georgia, serif;
   --font-sans: Inter, system-ui, sans-serif;
 }
@@ -71,11 +72,11 @@ html.js:not(.stay) .shell {
 }
 
 .p-h {
-  margin: 0.75rem 0 0;
+  margin: 1.5rem 0 0;
   font-family: var(--font-serif);
-  font-size: 1.875rem;
-  line-height: 1.15;
-  font-weight: 400;
+  font-size: 2.75rem;
+  line-height: 1.05;
+  font-weight: 500;
   color: var(--color-black);
 }
 
@@ -90,11 +91,12 @@ html.js:not(.stay) .shell {
   display: block;
   width: 100%;
   box-sizing: border-box;
+  height: 3.25rem;
   margin-top: 0.5rem;
-  padding: 0.75rem 0;
-  border: 0;
-  border-bottom: 1px solid var(--color-black);
-  background: transparent;
+  padding: 0 1rem;
+  border: 1px solid var(--color-line-strong);
+  border-radius: 14px;
+  background: #fff;
   color: var(--color-black);
   font-family: var(--font-sans);
   font-size: 1rem;
@@ -102,7 +104,7 @@ html.js:not(.stay) .shell {
 
 .field:focus {
   outline: none;
-  border-bottom-color: var(--color-accent);
+  border-color: var(--color-accent);
 }
 
 .err {
@@ -136,13 +138,15 @@ html.js:not(.stay) .shell {
   justify-content: center;
   box-sizing: border-box;
   width: 100%;
-  min-height: 2.75rem;
-  padding: 0.75rem 1.25rem;
+  height: 3.5rem;
+  min-height: 3.5rem;
+  padding: 0 1.25rem;
+  border-radius: 16px;
   font-family: var(--font-sans);
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  font-weight: 500;
+  font-size: 1rem;
+  letter-spacing: 0;
+  text-transform: none;
+  font-weight: 600;
   text-align: center;
   text-decoration: none;
   line-height: 1.3;
