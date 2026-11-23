@@ -35,6 +35,7 @@
         <!-- 2. Housekeeper's invitation: three required fields, the rest optional and folded away -->
         <div x-show="state === 'invite' || state === 'sending'" x-cloak class="mt-8">
             <h1 class="p-sub-title" x-text="t('inviteTitle', { name: provider.firstName })"></h1>
+            <p class="text-sm text-muted mt-2" x-show="providerFullName() !== provider.firstName" x-text="providerFullName()"></p>
             <p class="text-muted mt-3 leading-relaxed" x-text="t('inviteLead')"></p>
 
             <form @submit.prevent="redeem()" novalidate>
@@ -182,6 +183,11 @@
                 const fromPath = location.pathname.replace(/^\/lunasta\/?/, '').split('/')[0];
                 const raw = p.get('code') || p.get('kood') || (location.hash || '').replace(/^#/, '') || fromPath || '';
                 if (raw) { this.code = decodeURIComponent(raw).trim().toUpperCase(); this.check(); }
+            },
+
+            // The resident shares an address and a phone number, so the screen names the inviter in full.
+            providerFullName() {
+                return this.provider.businessName ? `${this.provider.name} · ${this.provider.businessName}` : this.provider.name;
             },
 
             // Backend errors arrive as { et, en, ru } or, from older handlers, as one Estonian sentence.

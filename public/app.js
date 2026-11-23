@@ -72,9 +72,9 @@
     },
     codeLabel: { et: 'Kood', en: 'Code', ru: 'Код' },
     stay: {
-      et: 'Jääd selles telefonis sisse logituks.',
-      en: 'You stay signed in on this phone.',
-      ru: 'На этом телефоне вы останетесь в системе.',
+      et: 'Jääd selles seadmes sisse logituks.',
+      en: 'You stay signed in on this device.',
+      ru: 'На этом устройстве вы останетесь в системе.',
     },
     enter: { et: 'Sisene', en: 'Sign in', ru: 'Войти' },
     cardLine: {
