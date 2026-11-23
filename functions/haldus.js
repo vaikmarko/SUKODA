@@ -1951,12 +1951,15 @@ module.exports = function createHaldus(deps) {
     return raw;
   }
 
-  async function issueClientToken(orderRef, days = TOKEN_DAYS) {
+  // The greeting names the cleaner as the one who invited, so only the cleaner's own home gets it.
+  const invitedByCleaner = (order, role) => role === 'cleaning' && core.providerBroughtHome(order);
+  async function issueClientToken(orderRef, days = TOKEN_DAYS, greet = false) {
     const { raw, hash } = newToken();
     const exp = new Date();
     exp.setDate(exp.getDate() + days);
     await orderRef.update({ sessionTokenHash: hash, sessionTokenExpiresAt: Timestamp.fromDate(exp) });
-    return `${PORTAL_URL}?token=${raw}`;
+    // kutse=1: the resident app greets with "{cleaner} invited you" on this link (Kutse.html).
+    return `${PORTAL_URL}?token=${raw}${greet ? '&kutse=1' : ''}`;
   }
 
   async function sendProviderMagicLink(providerDoc) {
@@ -2628,7 +2631,7 @@ module.exports = function createHaldus(deps) {
     let portalUrl = null;
     if (sendWelcome) {
       try {
-        portalUrl = await issueClientToken(ref);
+        portalUrl = await issueClientToken(ref, TOKEN_DAYS, invitedByCleaner(orderData, role));
         const first = created.find((v) => v.status !== 'completed');
         const firstWhen = first
           ? `${formatDate(first.scheduledAt, lang)}, ${formatTime(first.scheduledAt)}`
@@ -2937,7 +2940,7 @@ module.exports = function createHaldus(deps) {
           const mergedOrder = { ...attachable.data(), [orderField]: provider.id, [nameField]: provider.name || '' };
           let welcomeSent = false;
           try {
-            const portalUrl = await issueClientToken(attachable.ref);
+            const portalUrl = await issueClientToken(attachable.ref, TOKEN_DAYS, invitedByCleaner(mergedOrder, role));
             await sendEmail({ to: email, ...welcomeEmail({ order: mergedOrder, providerName: provider.name, portalUrl, lang: core.langOf({ lang: b.lang || mergedOrder.lang }), role }), replyTo: providerReplyTo(provider) });
             welcomeSent = true;
           } catch (e) { console.error('Attach welcome mail failed:', e); }
@@ -4381,7 +4384,7 @@ module.exports = function createHaldus(deps) {
       }
       const email = primaryEmail(acc.order);
       if (!core.isValidEmail(email)) return res.status(400).json({ error: 'Kliendil ei ole e-posti aadressi' });
-      const portalUrl = await issueClientToken(acc.ref);
+      const portalUrl = await issueClientToken(acc.ref, TOKEN_DAYS, invitedByCleaner(acc.order, acc.role));
       await sendCustomerMail(acc.order, welcomeEmail({ order: acc.order, providerName: provider.name, portalUrl, lang: langOf(acc.order), role: acc.role }), { to: email, replyTo: providerReplyTo(provider) });
       res.status(200).json({ success: true, inviteUrl: portalUrl });
     },

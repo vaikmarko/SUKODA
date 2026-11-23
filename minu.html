@@ -36,7 +36,7 @@
     </script>
     <script src="/push.js"></script>
     <script src="/assets/js/et-name.js?v=1"></script>
-    <script src="/assets/js/minu/kodu.js?v=20"></script>
+    <script src="/assets/js/minu/kodu.js?v=21"></script>
     <script type="module" src="/assets/js/minu/mount.js"></script>
     <script type="module" src="/assets/js/main.js"></script>
 </head>
@@ -234,6 +234,7 @@
 
     // Open request thread (past or current) — the conversation lives here, e-mail only notifies
     viewRequest: null,
+    greeting: false,
     proposalBusy: false,
     proposalError: '',
     threadDeclinesOffer: false,
@@ -298,6 +299,8 @@
         if (this.token) {
             await this.loadProfile();
             if (!this.authenticated) return;
+            // Kutse.html: the invitation link greets before the home opens. In memory only, so a reload goes straight in.
+            if (urlToken && urlParams.get('kutse') === '1') this.greeting = true;
             const paid = urlParams.get('makstud');
             if (paid === '1' || paid === '0') {
                 this.activeTab = 'extras';
@@ -2095,6 +2098,12 @@
         const who = this.showProvider ? (b.providerName || this.order?.provider?.name || '') : '';
         return [this.t('doneOn', { date: this.formatDateLong(b.scheduledAt) }), this.visitLabel(b), who].filter(Boolean).join(' · ');
     },
+    greetText() {
+        const name = this.cleanerFirst(null);
+        if (!name) return this.t('greetBodyAny');
+        const decline = this.lang === 'et' && window.SUKODA_ET && window.SUKODA_ET.etAllative;
+        return this.t('greetBody', { name, to: decline ? decline(name) : name });
+    },
     /** Address before the comma. A home with no address keeps the first name so the title is never empty. */
     homeTitle() {
         const address = String(this.order?.customerAddress || this.order?.address || '').trim();
@@ -2357,7 +2366,26 @@
         <!-- ═══════════════════════════════════════════════ -->
         <!-- STATE 2: LOGGED IN                              -->
         <!-- ═══════════════════════════════════════════════ -->
-        <div x-show="!loading && authenticated" x-cloak class="min-w-0 overflow-x-clip p-has-dock">
+        <!-- docs/disain/ekraanid/Kutse.html: shown on the personal invitation link, after the link has signed the client in.
+             Reads the booking itself, not the Kodu card: a new home's card asks for the profile first. -->
+        <div x-show="!loading && authenticated && greeting" x-cloak>
+            <main class="max-w-md mx-auto px-6 pt-8 pb-16 font-sans p-entry">
+                <p class="w-logo">SUKODA</p>
+                <div class="mt-8"><h1 class="p-sub-title" x-text="cleanerFirst(null) ? t('greetTitle', { name: cleanerFirst(null) }) : t('greetTitleAny')"></h1></div>
+                <article class="p-sheet p-6 mt-6" x-show="nextCleanVisit">
+                    <p class="eyebrow" x-text="t('nextVisitEyebrow')"></p>
+                    <p class="p-clock" x-text="nextCleanVisit ? formatTime(nextCleanVisit.scheduledAt) : ''"></p>
+                    <p class="mt-1.5 text-lg" x-text="nextCleanVisit ? homeWeekdayDate(nextCleanVisit.scheduledAt) : ''"></p>
+                    <p class="text-muted mt-1" x-show="order?.customerAddress || order?.address" x-text="homeTitle()"></p>
+                </article>
+                <p class="text-muted mt-5" x-text="greetText()"></p>
+                <div class="p-actbar">
+                    <button type="button" class="p-go is-wide" @click="greeting = false; window.scrollTo({ top: 0 })" x-text="t('greetOpen')"></button>
+                </div>
+            </main>
+        </div>
+
+        <div x-show="!loading && authenticated && !greeting" x-cloak class="min-w-0 overflow-x-clip p-has-dock">
 
             <!-- Navigation -->
             <nav class="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm grid-line-b hidden md:block" aria-label="Main navigation">
