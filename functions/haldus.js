@@ -181,14 +181,14 @@ module.exports = function createHaldus(deps) {
       addToCalendar: 'Lisa kalendrisse',
       google: 'Google Calendar',
       apple: 'Apple / Outlook',
-      portalNote: 'Ajad, soovid ja dokumendid on rakenduses. Kui aeg ei sobi või tahad midagi lisada, kirjuta rakenduses.',
+      portalNote: 'Kui aeg ei sobi või tahad midagi lisada, kirjuta rakenduses. Seal on ka kõik sinu ajad ja dokumendid.',
       portalBtn: 'Ava rakendus',
       calTitle: 'SUKODA koristus',
       calTitleService: (s, brand) => `${brand || 'SUKODA'} · ${s}`,
 
       subjConfirmed: 'SUKODA | Sinu aeg on kinnitatud',
       confirmedTitle: 'Sinu aeg on kinnitatud',
-      confirmedIntro: (p) => (p ? `${p} tuleb sinu koju. Aeg on allpool.` : 'Aeg on allpool.'),
+      confirmedIntro: (p) => (p ? `Kõik on paigas. ${p} tuleb sinu juurde, aeg on allpool.` : 'Kõik on paigas. Aeg on allpool.'),
       confirmedServiceIntro: (p, s) => (p ? `${p} kinnitas sinu soovi „${s}“. Aeg on allpool.` : (s ? `„${s}“ on kinnitatud. Aeg on allpool.` : 'Aeg on allpool.')),
 
       subjRescheduled: 'SUKODA | Visiidi aeg muutus',
@@ -199,7 +199,7 @@ module.exports = function createHaldus(deps) {
 
       subjCancelled: 'SUKODA | Visiit jääb ära',
       cancelledTitle: 'Visiit jääb ära',
-      cancelledIntro: (p) => (p ? `${p} tühistas visiidi. Aeg on allpool.` : 'Visiit jääb ära. Aeg on allpool.'),
+      cancelledIntro: (p) => (p ? `${p} jätab selle visiidi ära. Ära jääv aeg on allpool.` : 'See visiit jääb ära. Ära jääv aeg on allpool.'),
       reason: 'Põhjus',
 
       subjReminder: 'SUKODA | Homme on koristus',
@@ -218,7 +218,7 @@ module.exports = function createHaldus(deps) {
 
       subjWelcome: 'SUKODA | Sinu kodu on valmis',
       welcomeTitle: 'Sinu kodu on valmis',
-      welcomeIntro: (p) => (p ? `${p} lisas sinu kodu. Ava rakendus, vaata järgmist aega ja kirjuta, kui aeg ei sobi.` : 'Ava rakendus ja vaata järgmist aega.'),
+      welcomeIntro: (p) => (p ? `${p} lisas sinu kodu rakendusse. Seal näed oma järgmist aega ja saad kirjutada, kui aeg ei sobi.` : 'Ava rakendus ja vaata järgmist aega.'),
       welcomeIntroPartner: (p) => (p ? `${p} lisas sinu kodu. Ava rakendus ja vaata oma aegu.` : 'Ava rakendus ja vaata oma aegu.'),
       welcomeFirst: (when) => `Esimene kord on ${when}.`,
       welcomeBtn: 'Ava rakendus',
@@ -230,13 +230,13 @@ module.exports = function createHaldus(deps) {
       requestReceivedTitle: 'Soov vastu võetud',
       questionSentTitle: 'Küsimus saadetud',
       issueSentTitle: 'Teade saadetud',
-      requestReceivedIntro: (p) => (p ? `${p} sai sinu soovi ja kinnitab aja tavaliselt sama päeva jooksul.` : 'Sinu soov on kirjas. Kinnitame aja tavaliselt sama päeva jooksul.'),
+      requestReceivedIntro: (p) => (p ? `Aitäh. ${p} sai sinu soovi kätte ja kinnitab aja tavaliselt samal päeval.` : 'Aitäh. Sinu soov on kirjas. Kinnitame aja tavaliselt samal päeval.'),
       subjRescheduleSent: 'SUKODA | Uus aeg on kinnitamisel',
       rescheduleSentTitle: 'Uus aeg on kinnitamisel',
       rescheduleSentIntro: () => 'Senine aeg jääb ära. Uus aeg on kinnitamisel.',
       droppedTime: 'Jääb ära',
       questionSentIntro: (p) => (p ? `${p} sai sinu küsimuse ja vastab kirjalikult, tavaliselt sama tööpäeva jooksul.` : 'Sinu küsimus on kirjas. Vastame kirjalikult, tavaliselt sama tööpäeva jooksul.'),
-      issueSentIntro: (p) => (p ? `${p} sai sinu teate ja pakub ülevaatuse aja tavaliselt 2 tööpäeva jooksul.` : 'Sinu teade on kirjas. Pakume ülevaatuse aja tavaliselt 2 tööpäeva jooksul.'),
+      issueSentIntro: (p) => (p ? `Aitäh, et teada andsid. ${p} sai sinu teate kätte ja pakub ülevaatuse aja tavaliselt 2 tööpäeva jooksul.` : 'Aitäh, et teada andsid. Sinu teade on kirjas. Pakume ülevaatuse aja tavaliselt 2 tööpäeva jooksul.'),
       preferredDate: 'Soovitud päev',
       preferredTime: 'Soovitud aeg',
       asap: 'Esimesel võimalusel',
@@ -244,7 +244,7 @@ module.exports = function createHaldus(deps) {
 
       subjRequestDeclined: (s) => `SUKODA | „${s}“ vajab uut aega`,
       requestDeclinedTitle: 'Vali uus aeg',
-      requestDeclinedIntro: (p) => (p ? `${p} ei saa soovitud ajal tulla. Ava rakendus ja vali uus aeg.` : 'Soovitud aeg ei sobi. Ava rakendus ja vali uus aeg.'),
+      requestDeclinedIntro: (p) => (p ? `${p} ei saa kahjuks soovitud ajal tulla. Vali rakenduses uus aeg, mis sulle sobib.` : 'Soovitud aeg kahjuks ei sobi. Vali rakenduses uus aeg, mis sulle sobib.'),
       subjIssueReviewed: (s) => `SUKODA | Vastus sinu teatele: ${s}`,
       issueReviewedTitle: 'Vastus sinu teatele',
       issueReviewedIntro: (p) => (p ? `${p} vaatas sinu teate üle. Kirjeldatud puudus ei ole garantii all. Selgitus on allpool.` : 'Vaatasime sinu teate üle. Kirjeldatud puudus ei ole garantii all. Selgitus on allpool.'),
@@ -255,7 +255,7 @@ module.exports = function createHaldus(deps) {
       subjCompleted: (s) => `SUKODA | Tehtud: ${s}`,
       completedTitle: 'Tehtud',
       completedIntro: (p, s) => (p ? `${p} märkis töö „${s}“ tehtuks.` : (s ? `„${s}“ on tehtud.` : 'Töö on tehtud.')),
-      completedNote: 'Kui midagi jäi tegemata, kirjuta rakenduses töö juurde.',
+      completedNote: 'Kui midagi jäi tegemata või tahad midagi öelda, kirjuta rakenduses töö juurde.',
 
       subjRequestCancelled: 'SUKODA | Soov tühistatud',
 
@@ -285,14 +285,14 @@ module.exports = function createHaldus(deps) {
       addToCalendar: 'Add to calendar',
       google: 'Google Calendar',
       apple: 'Apple / Outlook',
-      portalNote: 'Times, requests and documents are in the app. If a time does not suit or you want to add something, write in the app.',
+      portalNote: 'If the time does not suit or you want to add something, write in the app. All your times and documents are there too.',
       portalBtn: 'Open the app',
       calTitle: 'SUKODA cleaning',
       calTitleService: (s, brand) => `${brand || 'SUKODA'} · ${s}`,
 
       subjConfirmed: 'SUKODA | Your time is confirmed',
       confirmedTitle: 'Your time is confirmed',
-      confirmedIntro: (p) => (p ? `${p} is coming to your home. The time is below.` : 'The time is below.'),
+      confirmedIntro: (p) => (p ? `All set. ${p} is coming to your home, the time is below.` : 'All set. The time is below.'),
       confirmedServiceIntro: (p, s) => (p ? `${p} confirmed your request "${s}". The time is below.` : (s ? `"${s}" is confirmed. The time is below.` : 'The time is below.')),
 
       subjRescheduled: 'SUKODA | Your visit time changed',
@@ -303,7 +303,7 @@ module.exports = function createHaldus(deps) {
 
       subjCancelled: 'SUKODA | Visit cancelled',
       cancelledTitle: 'Visit cancelled',
-      cancelledIntro: (p) => (p ? `${p} cancelled the visit. The time is below.` : 'The visit is cancelled. The time is below.'),
+      cancelledIntro: (p) => (p ? `${p} has cancelled this visit. The cancelled time is below.` : 'This visit is cancelled. The cancelled time is below.'),
       reason: 'Reason',
 
       subjReminder: 'SUKODA | Cleaning tomorrow',
@@ -322,7 +322,7 @@ module.exports = function createHaldus(deps) {
 
       subjWelcome: 'SUKODA | Your home is ready',
       welcomeTitle: 'Your home is ready',
-      welcomeIntro: (p) => (p ? `${p} added your home. Open the app, see the next time and write if it does not suit.` : 'Open the app and see the next time.'),
+      welcomeIntro: (p) => (p ? `${p} added your home to the app. There you see your next time and can write if it does not suit.` : 'Open the app and see the next time.'),
       welcomeIntroPartner: (p) => (p ? `${p} added your home. Open the app and see your times.` : 'Open the app and see your times.'),
       welcomeFirst: (when) => `The first visit is ${when}.`,
       welcomeBtn: 'Open the app',
@@ -334,13 +334,13 @@ module.exports = function createHaldus(deps) {
       requestReceivedTitle: 'Request received',
       questionSentTitle: 'Question sent',
       issueSentTitle: 'Report sent',
-      requestReceivedIntro: (p) => (p ? `${p} received your request and usually confirms a time the same day.` : 'Your request is in. We usually confirm a time the same day.'),
+      requestReceivedIntro: (p) => (p ? `Thank you. ${p} has your request and usually confirms a time the same day.` : 'Thank you. Your request is in. We usually confirm a time the same day.'),
       subjRescheduleSent: 'SUKODA | A new time is waiting for confirmation',
       rescheduleSentTitle: 'A new time is waiting for confirmation',
       rescheduleSentIntro: () => 'The previous time is cancelled. The new time is waiting for confirmation.',
       droppedTime: 'Cancelled',
       questionSentIntro: (p) => (p ? `${p} received your question and replies in writing, usually the same working day.` : 'Your question is in. We reply in writing, usually the same working day.'),
-      issueSentIntro: (p) => (p ? `${p} received your report and usually offers an inspection time within 2 working days.` : 'Your report is in. We usually offer an inspection time within 2 working days.'),
+      issueSentIntro: (p) => (p ? `Thank you for letting us know. ${p} has your report and usually offers an inspection time within 2 working days.` : 'Thank you for letting us know. Your report is in. We usually offer an inspection time within 2 working days.'),
       preferredDate: 'Preferred day',
       preferredTime: 'Preferred time',
       asap: 'As soon as possible',
@@ -348,7 +348,7 @@ module.exports = function createHaldus(deps) {
 
       subjRequestDeclined: (s) => `SUKODA | "${s}" needs a new time`,
       requestDeclinedTitle: 'Pick a new time',
-      requestDeclinedIntro: (p) => (p ? `${p} cannot come at the requested time. Open the app and pick a new time.` : 'The requested time does not work. Open the app and pick a new time.'),
+      requestDeclinedIntro: (p) => (p ? `Unfortunately ${p} cannot come at the requested time. Pick a new time that suits you in the app.` : 'Unfortunately the requested time does not work. Pick a new time that suits you in the app.'),
       subjIssueReviewed: (s) => `SUKODA | Reply to your report: ${s}`,
       issueReviewedTitle: 'Reply to your report',
       issueReviewedIntro: (p) => (p ? `${p} reviewed your report. The described defect is not covered by the warranty. The explanation is below.` : 'We reviewed your report. The described defect is not covered by the warranty. The explanation is below.'),
@@ -359,7 +359,7 @@ module.exports = function createHaldus(deps) {
       subjCompleted: (s) => `SUKODA | Done: ${s}`,
       completedTitle: 'Done',
       completedIntro: (p, s) => (p ? `${p} marked "${s}" as done.` : (s ? `"${s}" is done.` : 'The work is done.')),
-      completedNote: 'If anything was left undone, write on the job in the app.',
+      completedNote: 'If anything was left undone or you want to say something, write on the job in the app.',
 
       subjRequestCancelled: 'SUKODA | Request cancelled',
 
@@ -390,14 +390,14 @@ module.exports = function createHaldus(deps) {
       addToCalendar: 'Добавить в календарь',
       google: 'Google Calendar',
       apple: 'Apple / Outlook',
-      portalNote: 'Время визитов, заявки и документы находятся в приложении. Если время не подходит или вы хотите что-то добавить, напишите в приложении.',
+      portalNote: 'Если время не подходит или вы хотите что-то добавить, напишите в приложении. Там же время ваших визитов и документы.',
       portalBtn: 'Открыть приложение',
       calTitle: 'Уборка SUKODA',
       calTitleService: (s, brand) => `${brand || 'SUKODA'} · ${s}`,
 
       subjConfirmed: 'SUKODA | Ваше время подтверждено',
       confirmedTitle: 'Ваше время подтверждено',
-      confirmedIntro: (p) => (p ? `${p} придёт к вам домой. Время указано ниже.` : 'Время указано ниже.'),
+      confirmedIntro: (p) => (p ? `Всё готово. ${p} придёт к вам домой, время указано ниже.` : 'Всё готово. Время указано ниже.'),
       confirmedServiceIntro: (p, s) => (p ? `Ваша заявка «${s}» подтверждена (${p}). Время указано ниже.` : (s ? `«${s}» подтверждено. Время указано ниже.` : 'Время указано ниже.')),
 
       subjRescheduled: 'SUKODA | Время визита изменилось',
@@ -408,7 +408,7 @@ module.exports = function createHaldus(deps) {
 
       subjCancelled: 'SUKODA | Визит отменён',
       cancelledTitle: 'Визит отменён',
-      cancelledIntro: (p) => (p ? `Визит отменён (${p}). Время указано ниже.` : 'Визит отменён. Время указано ниже.'),
+      cancelledIntro: (p) => (p ? `Этот визит отменён (${p}). Отменённое время указано ниже.` : 'Этот визит отменён. Отменённое время указано ниже.'),
       reason: 'Причина',
 
       subjReminder: 'SUKODA | Завтра уборка',
@@ -427,7 +427,7 @@ module.exports = function createHaldus(deps) {
 
       subjWelcome: 'SUKODA | Ваш дом готов',
       welcomeTitle: 'Ваш дом готов',
-      welcomeIntro: (p) => (p ? `Ваш дом добавлен, ваш специалист по дому — ${p}. Откройте приложение, посмотрите ближайшее время и напишите, если оно не подходит.` : 'Откройте приложение и посмотрите ближайшее время.'),
+      welcomeIntro: (p) => (p ? `Ваш дом добавлен в приложение, ваш специалист по дому — ${p}. Там вы увидите ближайшее время и сможете написать, если оно не подходит.` : 'Откройте приложение и посмотрите ближайшее время.'),
       welcomeIntroPartner: (p) => (p ? `Ваш дом добавлен, ваш контакт — ${p}. Откройте приложение и посмотрите своё время.` : 'Откройте приложение и посмотрите своё время.'),
       welcomeFirst: (when) => `Первый визит — ${when}.`,
       welcomeBtn: 'Открыть приложение',
@@ -439,13 +439,13 @@ module.exports = function createHaldus(deps) {
       requestReceivedTitle: 'Заявка принята',
       questionSentTitle: 'Вопрос отправлен',
       issueSentTitle: 'Обращение отправлено',
-      requestReceivedIntro: (p) => (p ? `${p} получил(а) вашу заявку и обычно подтверждает время в тот же день.` : 'Ваша заявка записана. Обычно мы подтверждаем время в тот же день.'),
+      requestReceivedIntro: (p) => (p ? `Спасибо. ${p} получил(а) вашу заявку и обычно подтверждает время в тот же день.` : 'Спасибо. Ваша заявка записана. Обычно мы подтверждаем время в тот же день.'),
       subjRescheduleSent: 'SUKODA | Новое время ждёт подтверждения',
       rescheduleSentTitle: 'Новое время ждёт подтверждения',
       rescheduleSentIntro: () => 'Прежнее время отменяется. Новое время ждёт подтверждения.',
       droppedTime: 'Отменяется',
       questionSentIntro: (p) => (p ? `${p} получил(а) ваш вопрос и ответит письменно, обычно в тот же рабочий день.` : 'Ваш вопрос записан. Мы ответим письменно, обычно в тот же рабочий день.'),
-      issueSentIntro: (p) => (p ? `${p} получил(а) ваше обращение и обычно предлагает время осмотра в течение 2 рабочих дней.` : 'Ваше обращение записано. Обычно мы предлагаем время осмотра в течение 2 рабочих дней.'),
+      issueSentIntro: (p) => (p ? `Спасибо, что сообщили. ${p} получил(а) ваше обращение и обычно предлагает время осмотра в течение 2 рабочих дней.` : 'Спасибо, что сообщили. Ваше обращение записано. Обычно мы предлагаем время осмотра в течение 2 рабочих дней.'),
       preferredDate: 'Желаемый день',
       preferredTime: 'Желаемое время',
       asap: 'При первой возможности',
@@ -453,7 +453,7 @@ module.exports = function createHaldus(deps) {
 
       subjRequestDeclined: (s) => `SUKODA | «${s}»: нужно новое время`,
       requestDeclinedTitle: 'Выберите новое время',
-      requestDeclinedIntro: (p) => (p ? `${p} не может прийти в желаемое время. Откройте приложение и выберите новое время.` : 'Желаемое время не подходит. Откройте приложение и выберите новое время.'),
+      requestDeclinedIntro: (p) => (p ? `К сожалению, ${p} не может прийти в желаемое время. Выберите в приложении новое удобное время.` : 'К сожалению, желаемое время не подходит. Выберите в приложении новое удобное время.'),
       subjIssueReviewed: (s) => `SUKODA | Ответ на ваше обращение: ${s}`,
       issueReviewedTitle: 'Ответ на ваше обращение',
       issueReviewedIntro: (p) => (p ? `${p} рассмотрел(а) ваше обращение. Описанный недостаток не входит в гарантию. Пояснение ниже.` : 'Мы рассмотрели ваше обращение. Описанный недостаток не входит в гарантию. Пояснение ниже.'),
@@ -464,7 +464,7 @@ module.exports = function createHaldus(deps) {
       subjCompleted: (s) => `SUKODA | Сделано: ${s}`,
       completedTitle: 'Сделано',
       completedIntro: (p, s) => (p ? `Работа «${s}» выполнена (${p}).` : (s ? `Работа «${s}» выполнена.` : 'Работа выполнена.')),
-      completedNote: 'Если что-то осталось несделанным, напишите в приложении.',
+      completedNote: 'Если что-то осталось несделанным или вы хотите что-то сказать, напишите в приложении.',
 
       subjRequestCancelled: 'SUKODA | Заявка отменена',
 
