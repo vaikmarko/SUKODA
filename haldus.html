@@ -1956,7 +1956,7 @@
             }, availSaving: false, availError: '',
             profileForm: { name: '', businessName: '', phone: '', city: '', notifyEmail: '', services: ['cleaning'] }, profileSaving: false, profileSaved: false, profileError: '', maintenanceIntervals: [1, 2, 3, 6, 12, 24],
             signupMode: new URLSearchParams(location.search).get('alusta') != null, signupForm: { name: '', businessName: '', email: '', phone: '', services: ['cleaning'], city: '', kolleeg: '' },
-            // Alusta.html: an own service typed at signup and the one-time price step after the code. Both live in memory only.
+            // Alusta.html: an own service typed at signup and the one-time price step after it (startPricing).
             signupOwn: '', signupOwnOpen: false, pricingStep: false,
             signupServices: [
                 { id: 'cleaning', key: 'svcSignCleaning' }, { id: 'handyman', key: 'svcSignHandyman' }, { id: 'garden', key: 'svcSignGarden' },
@@ -2045,6 +2045,7 @@
                     } catch (e) { console.error(e); }
                 }
                 if (this.token) await this.loadData();
+                if (this.authenticated) await this.startPricing();
                 this.loading = false;
             },
 
@@ -2131,6 +2132,11 @@
                     const r = await res.json().catch(() => ({}));
                     if (res.ok) {
                         this.loginEmail = email;
+                        // An e-mail that already has a desk gets an ordinary login, not the price step.
+                        try {
+                            if (!r.existing && this.signupForm.services.includes('cleaning')) localStorage.setItem('sukoda_signup_step', JSON.stringify({ email, own: this.signupOwnOpen ? this.signupOwn : '' }));
+                            else localStorage.removeItem('sukoda_signup_step');
+                        } catch { /* private mode: the desk opens without the price step */ }
                         if (r.codeSent) {
                             this.signupCode = '';
                             this.signupCodeMode = true;
@@ -2164,16 +2170,21 @@
                     this.loading = true;
                     await this.loadData();
                     this.loading = false;
-                    if (this.provider && this.isCleaningProvider) {
-                        if (!Array.isArray(this.availForm.ownServices)) this.availForm.ownServices = [];
-                        const own = String(this.signupOwn || '').trim();
-                        this.signupOwn = '';
-                        if (own) this.availForm.ownServices.push({ id: 'own-' + Math.random().toString(36).slice(2, 10).replace(/[^a-z0-9]/g, 'x').padEnd(6, 'x'), name: own, price: '' });
-                        this.pricingStep = true; this.activeTab = 'services';
-                        // Saved now, so the service is kept even when the price step is skipped.
-                        if (own) await this.saveAvailability(true);
-                    }
+                    await this.startPricing();
                 } catch { this.loginError = this.t('netFail'); } finally { this.loginSending = false; }
+            },
+            /** The price step after a new signup. The note is left by signup() on this device and used once,
+                so it also works when the desk is opened from the link in the mail instead of the code. */
+            async startPricing() {
+                let note = null;
+                try { note = JSON.parse(localStorage.getItem('sukoda_signup_step') || 'null'); localStorage.removeItem('sukoda_signup_step'); } catch { note = null; }
+                if (!note || !this.provider || !this.isCleaningProvider || note.email !== String(this.provider.email || '').toLowerCase()) return;
+                if (!Array.isArray(this.availForm.ownServices)) this.availForm.ownServices = [];
+                const own = String(note.own || '').trim().slice(0, 60);
+                if (own) this.availForm.ownServices.push({ id: 'own-' + Math.random().toString(36).slice(2, 10).replace(/[^a-z0-9]/g, 'x').padEnd(6, 'x'), name: own, price: '' });
+                this.pricingStep = true; this.activeTab = 'services';
+                // Saved now, so the service is kept even when the price step is skipped.
+                if (own) await this.saveAvailability(true);
             },
             async sendMagicLink() {
                 if (!this.loginEmail || this.loginSending) return;
