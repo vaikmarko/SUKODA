@@ -5288,6 +5288,8 @@ module.exports = function createHaldus(deps) {
           priceNote: avail ? avail.priceNote : '',
           offeredExtras: avail ? avail.offeredExtras : core.CLEANER_EXTRA_IDS,
           extraPrices: avail ? avail.extraPrices : {},
+          // The resident's Soovita screen shares the link the cleaner already has. No mail is sent.
+          inviteUrl: provider.inviteCode ? `${SITE}/lunasta?code=${encodeURIComponent(provider.inviteCode)}` : '',
         } : null,
         florist: florist ? { name: florist.name, businessName: florist.businessName || '' } : null,
         source: order.source || 'stripe',

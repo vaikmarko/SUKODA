@@ -204,6 +204,8 @@
     telliAddons: { flowers: false, windows: false, linens: false, 'appliance-care': false },
     telliOpen: '',
     telliCalOpen: false,
+    minePane: '',
+    linkCopied: false,
     telliPay: false,
     flowerMode: 'season',
     flowerTone: '',
@@ -2065,6 +2067,101 @@
         const decline = window.SUKODA_ET && window.SUKODA_ET.etAllative;
         return decline ? decline(name) : name;
     },
+    /** Estonian case for a cleaner’s given name. Other languages keep the name. */
+    nameIn(kind) {
+        const name = this.providerFirstName || this.cleanerFirst(null);
+        if (!name || this.lang !== 'et') return name;
+        const api = window.SUKODA_ET || {};
+        const fn = { ga: api.etComitative, t: api.etPartitive, l: api.etAdessive, le: api.etAllative }[kind];
+        return fn ? fn(name) : name;
+    },
+    openMine(id) {
+        this.minePane = id;
+        this.linkCopied = false;
+        if (id === 'upkeep') this.upkeepOpen = true;
+        if (id === 'handover') this.handoverOpen = true;
+        if (id === 'delete') this.deleteOpen = true;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+    get minePaneTitle() {
+        const ga = this.nameIn('ga');
+        const part = this.nameIn('t');
+        const titles = {
+            deal: ga ? this.t('dealWith', { name: ga }) : this.t('dealPlain'),
+            people: this.t('whoNotified'),
+            away: this.t('awayRow'),
+            notes: this.t('profileTitle'),
+            share: part ? this.t('recommendName', { name: part }) : this.t('recommendPlain'),
+            notify: this.t('notifyRow'),
+            lang: this.t('langLabel'),
+            upkeep: this.t('upkeep'),
+            handover: this.t('handoverTitle'),
+            delete: this.t('deleteTitle'),
+            partners: this.t('homePeopleTitle'),
+        };
+        return titles[this.minePane] || this.t('tabMine');
+    },
+    get dealRhythm() {
+        const s = this.order && this.order.schedule;
+        if (!s || s.active === false || !s.frequency) return this.getPackageName(this.order && this.order.package);
+        const freq = { weekly: this.t('rhythmWeek'), biweekly: this.t('rhythmTwo'), monthly: this.t('rhythmMonth'), once: this.t('rhythmOnce') }[s.frequency] || '';
+        let day = '';
+        if (Number.isInteger(s.weekday)) {
+            const label = new Intl.DateTimeFormat(this.locale(), { weekday: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(2026, 0, 4 + s.weekday)));
+            day = label ? label.charAt(0).toUpperCase() + label.slice(1) : '';
+        }
+        const when = [day, s.time].filter(Boolean).join(' ');
+        return [freq, when].filter(Boolean).join(', ') || this.t('pkgAgreed');
+    },
+    get dealPrice() {
+        const amount = this.order && this.order.schedule && this.order.schedule.price;
+        if (amount) return this.t('pricePerVisit', { amount });
+        const cat = (this.extras.categories || []).find((c) => c.id === 'cleaning');
+        return (cat && cat.priceLabel && cat.priceLabel.text) || '';
+    },
+    get dealIncludes() {
+        const note = this.order && this.order.schedule && this.order.schedule.note;
+        if (note) return note;
+        const cat = (this.extras.categories || []).find((c) => c.id === 'cleaning');
+        if (cat && cat.terms && cat.terms.quota) return cat.terms.quota;
+        if (cat && cat.priceLabel && cat.priceLabel.included && cat.priceLabel.text) return cat.priceLabel.text;
+        return this.t('includedShort');
+    },
+    get peopleRowValue() {
+        return (this.contacts || []).map((c) => c.name).filter(Boolean).join(', ');
+    },
+    get awayRowValue() {
+        const list = (this.extras && this.extras.away) || [];
+        if (!list.length) return this.t('awayAddDates');
+        return list.map((p) => this.formatDateShort(p.from) + (p.to && p.to !== p.from ? ' – ' + this.formatDateShort(p.to) : '')).join(', ');
+    },
+    get notifyState() {
+        return this.maintenance && this.maintenance.remindersEnabled === false ? this.t('notifyOff') : this.t('notifyOn');
+    },
+    get langName() {
+        return { et: this.t('langEt'), en: this.t('langEn'), ru: this.t('langRu') }[this.lang] || this.t('langEt');
+    },
+    async copyCleanerLink() {
+        const url = this.extras && this.extras.provider && this.extras.provider.inviteUrl;
+        if (!url || !navigator.clipboard) return;
+        try {
+            await navigator.clipboard.writeText(url);
+            this.linkCopied = true;
+        } catch (e) { /* the link stays on screen */ }
+    },
+    async shareCleanerLink() {
+        const url = this.extras && this.extras.provider && this.extras.provider.inviteUrl;
+        if (!url) return;
+        if (navigator.share) {
+            try {
+                await navigator.share({ url });
+                return;
+            } catch (e) {
+                if (e && e.name === 'AbortError') return;
+            }
+        }
+        await this.copyCleanerLink();
+    },
     /** Requests that wait on the resident's own decision (a declined time, a reply to act on) — the only thing worth a badge */
     get needsYou() {
         return (this.extras.requests || []).filter(r => r.status === 'declined').length;
@@ -2203,19 +2300,9 @@
         <div x-show="!loading && authenticated" x-cloak class="min-w-0 overflow-x-clip p-has-dock">
 
             <!-- Navigation -->
-            <nav class="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm grid-line-b" aria-label="Main navigation">
+            <nav class="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm grid-line-b hidden md:block" aria-label="Main navigation">
                 <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12 gap-3 min-w-0">
                     <a href="index.html" class="font-serif text-xl md:text-3xl tracking-[0.08em] font-light shrink-0">SUKODA</a>
-                    <div class="flex items-center gap-3 md:gap-5 min-w-0">
-                        <div class="flex text-xs uppercase tracking-[0.14em] font-sans gap-1.5 text-muted">
-                            <button type="button" @click="setPortalLang('et')" :class="lang === 'et' ? 'text-black' : 'hover:text-black'" class="transition-colors">ET</button>
-                            <span class="text-muted-light">/</span>
-                            <button type="button" @click="setPortalLang('en')" :class="lang === 'en' ? 'text-black' : 'hover:text-black'" class="transition-colors">EN</button>
-                            <span class="text-muted-light">/</span>
-                            <button type="button" @click="setPortalLang('ru')" :class="lang === 'ru' ? 'text-black' : 'hover:text-black'" class="transition-colors">RU</button>
-                        </div>
-                        <button type="button" @click="logout()" class="text-sm font-sans font-light text-muted hover:text-black transition-colors shrink-0" x-text="t('logOut')"></button>
-                    </div>
                 </div>
             </nav>
 
@@ -2252,7 +2339,7 @@
             </div>
 
             <!-- Mobile bottom tab bar -->
-            <nav class="p-dock" :class="activeTab === 'extras' && telliOpen ? 'is-away' : ''" aria-label="Mobile navigation">
+            <nav class="p-dock" :class="(activeTab === 'extras' && telliOpen) || (activeTab === 'mine' && minePane) ? 'is-away' : ''" aria-label="Mobile navigation">
                 <button type="button" @click="activeTab = 'overview'; window.scrollTo({ top: 0, behavior: 'smooth' })" :class="(activeTab === 'overview' || activeTab === 'visits') ? 'is-active' : ''" :aria-current="(activeTab === 'overview' || activeTab === 'visits') ? 'page' : null" class="p-dock-btn">
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"/></svg>
                     <span x-text="t('tabKodu')"></span>

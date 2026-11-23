@@ -92,31 +92,203 @@ add({
   maintRemoveAsk: { et: 'Eemaldad selle rea hooldusest?', en: 'Remove this item from the upkeep?', ru: 'Удалить этот пункт из ухода за домом?' },
   maintFailed: { et: 'Muudatus ei salvestunud. Proovi uuesti.', en: 'The change was not saved. Try again.', ru: 'Изменение не сохранилось. Попробуйте снова.' },
   contactsSaveFailed: { et: 'Salvestamine ei õnnestunud. Kontrolli e-posti aadresse ja proovi uuesti.', en: 'Saving did not work. Check the e-mail addresses and try again.', ru: 'Сохранить не удалось. Проверьте адреса электронной почты и попробуйте снова.' },
+  dealWith: { et: 'Kokkulepe {name}', en: 'Agreement with {name}', ru: 'Договорённость с {name}' },
+  dealPlain: { et: 'Kokkulepe', en: 'Agreement', ru: 'Договорённость' },
+  recommendName: { et: 'Soovita {name}', en: 'Recommend {name}', ru: 'Порекомендовать {name}' },
+  recommendPlain: { et: 'Soovita', en: 'Recommend', ru: 'Порекомендовать' },
+  awayRow: { et: 'Olen eemal', en: 'I am away', ru: 'Меня не будет' },
+  awayAddDates: { et: 'Lisa kuupäevad', en: 'Add dates', ru: 'Добавить даты' },
+  notifyRow: { et: 'Teavitused', en: 'Notices', ru: 'Уведомления' },
+  notifyOn: { et: 'Sees', en: 'On', ru: 'Включены' },
+  notifyOff: { et: 'Väljas', en: 'Off', ru: 'Выключены' },
+  langEt: { et: 'Eesti', en: 'Estonian', ru: 'Эстонский' },
+  langEn: { et: 'Inglise', en: 'English', ru: 'Английский' },
+  langRu: { et: 'Vene', en: 'Russian', ru: 'Русский' },
+  priceWord: { et: 'Hind', en: 'Price', ru: 'Цена' },
+  rhythmWord: { et: 'Rütm', en: 'Rhythm', ru: 'Ритм' },
+  includedLabel: { et: 'Hinna sees', en: 'Included', ru: 'Входит в цену' },
+  pricePerVisit: { et: '{amount} kord', en: '{amount} a visit', ru: '{amount} за раз' },
+  alsoEach: { et: 'Lisaks iga korraga', en: 'With every visit', ru: 'К каждому визиту' },
+  writeIfChanges: { et: 'Kirjuta {name}, kui midagi muutub', en: 'Write to {name} if something changes', ru: 'Напишите {name}, если что-то изменится' },
+  writeIfChangesPlain: { et: 'Kirjuta, kui midagi muutub', en: 'Write if something changes', ru: 'Напишите, если что-то изменится' },
+  recommendLead: { et: '{name} on vabu aegu. Saada link sõbrale või naabrile. Aja ja hinna lepivad nad omavahel kokku.', en: '{name} has open times. Send the link to a friend or a neighbour. They agree the time and the price between them.', ru: 'У {name} есть свободное время. Отправьте ссылку другу или соседу. Время и цену они согласуют между собой.' },
+  recommendLeadPlain: { et: 'Saada link sõbrale või naabrile. Aja ja hinna lepivad nad omavahel kokku.', en: 'Send the link to a friend or a neighbour. They agree the time and the price between them.', ru: 'Отправьте ссылку другу или соседу. Время и цену они согласуют между собой.' },
+  friendSees: { et: 'Seda näeb sinu sõber', en: 'This is what your friend sees', ru: 'Это увидит ваш друг' },
+  recommendsLine: { et: 'Soovitab {name}', en: '{name} recommends', ru: 'Рекомендует {name}' },
+  copyWord: { et: 'Kopeeri', en: 'Copy', ru: 'Копировать' },
+  copiedWord: { et: 'Kopeeritud', en: 'Copied', ru: 'Скопировано' },
+  shareLink: { et: 'Jaga linki', en: 'Share the link', ru: 'Поделиться ссылкой' },
+  noInviteYet: { et: 'Kutselinki veel ei ole.', en: 'There is no invite link yet.', ru: 'Ссылки-приглашения пока нет.' },
 });
 
+const mineChev = `<svg class="p-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/></svg>`;
+const mineBack = `<svg class="p-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6"/></svg>`;
+
 export const minuHtml = `<div x-show="activeTab === 'mine'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
-                    <div x-show="homes.length > 1" x-cloak class="bg-white border border-line mb-6">
-                        <div class="px-6 py-4 border-b border-line">
-                            <h2 class="p-h" x-text="t('homesTitle')"></h2>
+                    <div x-show="!minePane" class="max-w-xl">
+                        <h1 class="p-home-title" x-text="t('tabMine')"></h1>
+                        <div class="p-sheet mt-5 p-5 flex items-center gap-4">
+                            <span class="font-serif text-2xl w-14 h-14 rounded-full bg-cream inline-flex items-center justify-center shrink-0" x-text="(order?.customerName || '?').charAt(0)"></span>
+                            <div class="min-w-0">
+                                <p class="text-lg font-medium truncate" x-text="order?.customerName"></p>
+                                <p class="text-sm text-muted truncate" x-show="order?.customerAddress || order?.address" x-text="order?.customerAddress || order?.address"></p>
+                            </div>
                         </div>
-                        <div class="divide-y divide-line">
-                            <template x-for="h in homes" :key="h.id">
-                                <div class="px-6 py-4 flex items-center justify-between gap-4">
-                                    <div class="min-w-0">
-                                        <p class="font-sans text-sm truncate" x-text="h.address || t('tabKodu')"></p>
-                                        <p class="eyebrow mt-1" x-show="h.current" x-text="t('currentHome')"></p>
+                        <div class="p-rows mt-3.5">
+                            <button type="button" class="p-row" x-show="hasCleaner" @click="openMine('deal')">
+                                <span class="p-row-name" x-text="nameIn('ga') ? t('dealWith', { name: nameIn('ga') }) : t('dealPlain')"></span>
+                                <span class="p-row-side">${mineChev}</span>
+                            </button>
+                            <button type="button" class="p-row" @click="openMine('people')">
+                                <span class="p-row-name" x-text="t('whoNotified')"></span>
+                                <span class="p-row-side"><span class="text-muted" x-show="peopleRowValue" x-text="peopleRowValue"></span>${mineChev}</span>
+                            </button>
+                            <button type="button" class="p-row" x-show="order?.status === 'paid'" @click="openMine('away')">
+                                <span class="p-row-name" x-text="t('awayRow')"></span>
+                                <span class="p-row-side"><span class="text-muted" x-text="awayRowValue"></span>${mineChev}</span>
+                            </button>
+                            <button type="button" class="p-row" @click="openMine('notes')">
+                                <span class="p-row-name" x-text="t('profileTitle')"></span>
+                                <span class="p-row-side">${mineChev}</span>
+                            </button>
+                            <button type="button" class="p-row" x-show="hasCleaner" @click="openMine('share')">
+                                <span class="p-row-name" x-text="nameIn('t') ? t('recommendName', { name: nameIn('t') }) : t('recommendPlain')"></span>
+                                <span class="p-row-side">${mineChev}</span>
+                            </button>
+                        </div>
+                        <div class="p-rows mt-3.5">
+                            <button type="button" class="p-row" @click="openMine('notify')">
+                                <span class="p-row-name" x-text="t('notifyRow')"></span>
+                                <span class="p-row-side"><span class="text-muted" x-text="notifyState"></span>${mineChev}</span>
+                            </button>
+                            <button type="button" class="p-row" @click="openMine('lang')">
+                                <span class="p-row-name" x-text="t('langLabel')"></span>
+                                <span class="p-row-side"><span class="text-muted" x-text="langName"></span>${mineChev}</span>
+                            </button>
+                        </div>
+                        <div class="p-rows mt-3.5" x-show="(partners && partners.length) || (viewer && viewer.primary) || viewer">
+                            <button type="button" class="p-row" x-show="partners.length" @click="openMine('partners')">
+                                <span class="p-row-name" x-text="t('homePeopleTitle')"></span>
+                                <span class="p-row-side">${mineChev}</span>
+                            </button>
+                            <button type="button" class="p-row" @click="openMine('upkeep')">
+                                <span class="p-row-name" x-text="t('upkeep')"></span>
+                                <span class="p-row-side">${mineChev}</span>
+                            </button>
+                            <button type="button" class="p-row" x-show="viewer && viewer.primary" @click="openMine('handover')">
+                                <span class="p-row-name" x-text="t('handoverTitle')"></span>
+                                <span class="p-row-side">${mineChev}</span>
+                            </button>
+                            <button type="button" class="p-row" x-show="viewer" @click="openMine('delete')">
+                                <span class="p-row-name" x-text="t('deleteTitle')"></span>
+                                <span class="p-row-side">${mineChev}</span>
+                            </button>
+                        </div>
+                        <div x-show="homes.length > 1" x-cloak class="p-sheet mt-3.5">
+                            <div class="px-5 py-4 border-b border-line">
+                                <h2 class="p-h" x-text="t('homesTitle')"></h2>
+                            </div>
+                            <div class="divide-y divide-line">
+                                <template x-for="h in homes" :key="h.id">
+                                    <div class="px-5 py-4 flex items-center justify-between gap-4">
+                                        <div class="min-w-0">
+                                            <p class="truncate" x-text="h.address || t('tabKodu')"></p>
+                                            <p class="eyebrow mt-1" x-show="h.current" x-text="t('currentHome')"></p>
+                                        </div>
+                                        <button type="button" class="p-sheet-btn mt-0 w-auto px-4" x-show="!h.current" @click="openHome(h.id)" x-text="t('openThisHome')"></button>
                                     </div>
-                                    <button type="button" class="p-btn-2 shrink-0" x-show="!h.current" @click="openHome(h.id)" x-text="t('openThisHome')"></button>
-                                </div>
-                            </template>
+                                </template>
+                            </div>
                         </div>
+                        <button type="button" class="text-base mt-4 h-11" @click="logout()" x-text="t('logOut')"></button>
                     </div>
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start min-w-0">
+                    <div x-show="minePane" x-cloak class="max-w-xl p-sub">
+                        <button type="button" class="p-back" @click="minePane = ''">${mineBack}<span x-text="t('tabMine')"></span></button>
+                        <h1 class="p-sub-title" x-text="minePaneTitle"></h1>
+                        <div x-show="minePane === 'deal'">
+                            <div class="p-rows mt-5">
+                                <div class="p-row">
+                                    <span class="text-muted" x-text="t('rhythmWord')"></span>
+                                    <span class="font-medium text-right" x-text="dealRhythm"></span>
+                                </div>
+                                <div class="p-row">
+                                    <span class="text-muted" x-text="t('priceWord')"></span>
+                                    <span class="font-medium text-right" x-text="dealPrice"></span>
+                                </div>
+                                <div class="px-5 py-4">
+                                    <p class="text-muted" x-text="t('includedLabel')"></p>
+                                    <p class="mt-1.5" x-text="dealIncludes"></p>
+                                </div>
+                            </div>
+                            <p class="eyebrow mt-5" x-show="serviceById('flowers')" x-text="t('alsoEach')"></p>
+                            <div class="p-rows mt-2.5" x-show="serviceById('flowers')">
+                                <button type="button" class="p-row" @click="activeTab = 'extras'; setTelliOpen('flowers')">
+                                    <span class="p-row-name" x-text="t('addonFlowers')"></span>
+                                    <span class="p-row-side"><span class="text-muted" x-text="t('addShort')"></span>${mineChev}</span>
+                                </button>
+                            </div>
+                            <button type="button" class="p-sheet-btn" @click="openVisitFeedback()" x-text="nameIn('le') ? t('writeIfChanges', { name: nameIn('le') }) : t('writeIfChangesPlain')"></button>
+                        </div>
+                        <div x-show="minePane === 'away'">
+                            <p class="text-sm text-muted mt-4" x-text="t('awayLead')"></p>
+                            <div x-show="extras.away?.length" x-cloak class="p-rows mt-4">
+                                <template x-for="p in extras.away" :key="p.id">
+                                    <div class="p-row">
+                                        <span><span x-text="formatDateShort(p.from)"></span><span x-show="p.to && p.to !== p.from"> – <span x-text="formatDateShort(p.to)"></span></span></span>
+                                        <button type="button" class="text-sm text-muted" @click="removeAway(p)" :disabled="awayProcessing" x-text="t('docRemove')"></button>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 mt-4">
+                                <label class="block"><span class="eyebrow" x-text="t('fromLabel')"></span><input id="konto-away-from" type="date" x-model="awayFrom" :min="todayStr()" class="p-field"></label>
+                                <label class="block"><span class="eyebrow" x-text="t('untilLabel')"></span><input id="konto-away-to" type="date" x-model="awayTo" :min="awayFrom || todayStr()" class="p-field"></label>
+                            </div>
+                            <input type="text" x-model="awayNote" maxlength="300" :placeholder="t('awayNotePh')" :aria-label="t('awayNotePh')" class="p-field">
+                            <div class="flex gap-4 mt-2 text-sm">
+                                <button type="button" @click="presetAwayMonth(1)" x-text="t('awayNextMonth')"></button>
+                                <button type="button" @click="presetAwayMonth(0)" x-text="t('awayThisMonth')"></button>
+                            </div>
+                            <button type="button" class="p-go is-wide mt-5" @click="addAway()" :disabled="awayProcessing || !awayFrom" x-text="awayProcessing ? t('docSaving') : t('awaySave')"></button>
+                            <p x-show="awayError" x-cloak class="text-sm text-accent mt-3" x-text="awayError"></p>
+                            <p x-show="awayDone" x-cloak class="text-sm mt-3" x-text="awayDone"></p>
+                        </div>
+                        <div x-show="minePane === 'share'">
+                            <p class="text-sm text-muted mt-3" x-text="nameIn('l') ? t('recommendLead', { name: nameIn('l') }) : t('recommendLeadPlain')"></p>
+                            <p class="eyebrow mt-6" x-text="t('friendSees')"></p>
+                            <div class="p-sheet mt-2.5 p-5 flex items-center gap-4">
+                                <span class="font-serif text-2xl w-14 h-14 rounded-full bg-cream inline-flex items-center justify-center shrink-0" x-text="(providerFirstName || '?').charAt(0)"></span>
+                                <div>
+                                    <p class="text-lg font-medium" x-text="extras.provider?.name || order?.provider?.name"></p>
+                                    <p class="text-sm text-muted" x-text="t('cleaning')"></p>
+                                    <p class="text-sm text-accent mt-1.5" x-show="order?.customerName" x-text="t('recommendsLine', { name: order?.customerName })"></p>
+                                </div>
+                            </div>
+                            <div class="p-sheet mt-3.5 pl-5 pr-2 h-16 flex items-center justify-between gap-3" x-show="extras.provider && extras.provider.inviteUrl">
+                                <span class="truncate" x-text="extras.provider && extras.provider.inviteUrl"></span>
+                                <button type="button" class="p-seg shrink-0" @click="copyCleanerLink()" x-text="linkCopied ? t('copiedWord') : t('copyWord')"></button>
+                            </div>
+                            <p x-show="!(extras.provider && extras.provider.inviteUrl)" class="text-sm text-muted mt-4" x-text="t('noInviteYet')"></p>
+                            <div class="p-order-bar is-stack" x-show="extras.provider && extras.provider.inviteUrl">
+                                <button type="button" class="p-go is-wide" @click="shareCleanerLink()" x-text="t('shareLink')"></button>
+                            </div>
+                        </div>
+                        <div x-show="minePane === 'notify'">
+                            <label class="flex items-start gap-3 mt-5 text-sm cursor-pointer">
+                                <input type="checkbox" class="mt-0.5 accent-black" :checked="maintenance.remindersEnabled !== false" @change="maintenanceAction({ action: 'reminders', enabled: $event.target.checked }, 'reminders')">
+                                <span x-text="t('reminderMail')"></span>
+                            </label>
+                        </div>
+                        <div x-show="minePane === 'lang'" class="p-rows mt-5">
+                            <button type="button" class="p-row" @click="setPortalLang('et')"><span :class="lang === 'et' ? 'font-medium' : ''" x-text="t('langEt')"></span></button>
+                            <button type="button" class="p-row" @click="setPortalLang('en')"><span :class="lang === 'en' ? 'font-medium' : ''" x-text="t('langEn')"></span></button>
+                            <button type="button" class="p-row" @click="setPortalLang('ru')"><span :class="lang === 'ru' ? 'font-medium' : ''" x-text="t('langRu')"></span></button>
+                        </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start min-w-0 mt-6" x-show="['notes','upkeep','people','partners','handover','delete'].includes(minePane)">
 
                         <div class="lg:col-span-7 space-y-6 lg:space-y-8 min-w-0">
 
                         <!-- ── Kodu: what the cleaner should know. Compact read mode; edits in place ── -->
-                        <div class="bg-white border border-line">
+                        <div x-show="minePane === 'notes'" class="bg-white border border-line">
                             <div class="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-line">
                                 <h2 class="p-h"><span x-text="t('profileTitle')"></span></h2>
                                 <button type="button" x-show="!profileEditing" @click="profileEditing = true" class="p-btn-2 p-btn-sm" x-text="t('edit')"></button>
@@ -166,7 +338,7 @@ export const minuHtml = `<div x-show="activeTab === 'mine'" x-transition:enter="
                         </div>
 
                         <!-- ── Hooldusrütm: compact header until opened ── -->
-                        <div id="hooldus" class="bg-white border border-line">
+                        <div id="hooldus" x-show="minePane === 'upkeep'" class="bg-white border border-line">
                             <div class="flex items-center justify-between gap-4 px-6 py-4" :class="upkeepOpen ? 'border-b border-line' : ''">
                                 <div class="min-w-0">
                                     <h2 class="p-h"><span x-text="t('upkeep')"></span></h2>
@@ -270,7 +442,7 @@ export const minuHtml = `<div x-show="activeTab === 'mine'" x-transition:enter="
                         <aside class="lg:col-span-5 space-y-6 lg:space-y-8 min-w-0">
 
                         <!-- ── Connected specialists ── -->
-                        <div x-show="partners.length" x-cloak class="bg-white border border-line">
+                        <div x-show="minePane === 'partners' && partners.length" x-cloak class="bg-white border border-line">
                             <div class="px-6 py-4 border-b border-line">
                                 <h2 class="p-h" x-text="t('homePeopleTitle')"></h2>
                             </div>
@@ -289,7 +461,7 @@ export const minuHtml = `<div x-show="activeTab === 'mine'" x-transition:enter="
                         </div>
 
                         <!-- ── Household contacts (compact rows until edited) ── -->
-                        <div class="bg-white border border-line">
+                        <div x-show="minePane === 'people'" class="bg-white border border-line">
                             <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-line">
                                 <h2 class="p-h" x-text="t('whoNotified')"></h2>
                                 <button type="button" x-show="viewer && viewer.primary && contacts.length && !contactsEditing" @click="contactsEditing = true" class="p-btn-2 p-btn-sm" x-text="t('edit')"></button>
@@ -350,7 +522,7 @@ export const minuHtml = `<div x-show="activeTab === 'mine'" x-transition:enter="
                         </div>
 
                         <!-- ── Hand over home (collapsed until needed) ── -->
-                        <div x-show="viewer && viewer.primary" x-cloak class="bg-white border border-line">
+                        <div x-show="minePane === 'handover' && viewer && viewer.primary" x-cloak class="bg-white border border-line">
                             <div class="flex items-center justify-between gap-4 px-6 py-4" :class="handoverOpen ? 'border-b border-line' : ''">
                                 <h2 class="p-h" x-text="t('handoverTitle')"></h2>
                                 <button type="button" @click="handoverOpen = !handoverOpen" class="p-btn-2 p-btn-sm" x-text="handoverOpen ? t('hideIt') : t('showUpkeep')"></button>
@@ -372,7 +544,7 @@ export const minuHtml = `<div x-show="activeTab === 'mine'" x-transition:enter="
                         </div>
 
                         <!-- ── Delete the account (App Store asks for it; collapsed until needed) ── -->
-                        <div x-show="viewer" x-cloak class="bg-white border border-line">
+                        <div x-show="minePane === 'delete' && viewer" x-cloak class="bg-white border border-line">
                             <div class="flex items-center justify-between gap-4 px-6 py-4" :class="deleteOpen ? 'border-b border-line' : ''">
                                 <h2 class="p-h" x-text="t('deleteTitle')"></h2>
                                 <button type="button" @click="deleteOpen = !deleteOpen" class="p-btn-2 p-btn-sm" x-text="deleteOpen ? t('hideIt') : t('showUpkeep')"></button>
@@ -395,5 +567,6 @@ export const minuHtml = `<div x-show="activeTab === 'mine'" x-transition:enter="
 
                         </aside>
 
+                    </div>
                     </div>
                 </div>`;

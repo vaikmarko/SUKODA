@@ -89,5 +89,58 @@
     return stem ? stem + 'le' : '';
   }
 
-  return { etGenitive: etGenitive, etAllative: etAllative };
+  /** Comitative is the genitive plus -ga: Kristiga, Toomasega, Peetriga. */
+  function etComitative(name) {
+    var stem = etGenitive(name);
+    return stem ? stem + 'ga' : '';
+  }
+
+  /** Adessive is the genitive plus -l: Kristil, Toomasel, Peetril. */
+  function etAdessive(name) {
+    var stem = etGenitive(name);
+    return stem ? stem + 'l' : '';
+  }
+
+  /**
+   * Partitive. Vowel-final names add -t (Kristit). Names in -s whose
+   * genitive only adds -e add -t to the nominative (Toomast, Andrest).
+   * A genitive in -i adds -t (Peetrit). Names in -rt with a -di genitive
+   * take -ti on the nominative stem (Marti). A few short names are listed.
+   */
+  var PARTITIVE = {
+    ott: 'Otti',
+    epp: 'Eppu',
+    hepp: 'Heppu',
+    jaak: 'Jaaku',
+    priit: 'Priitu',
+    tiit: 'Tiitu',
+  };
+
+  function etPartitive(name) {
+    var raw = String(name || '').trim();
+    if (!raw) return '';
+    var cut = raw.lastIndexOf('-');
+    if (cut > 0 && cut < raw.length - 1) {
+      return raw.slice(0, cut + 1) + etPartitive(raw.slice(cut + 1));
+    }
+    var listed = PARTITIVE[raw.toLowerCase()];
+    if (listed) return matchCase(raw, listed);
+    var gen = etGenitive(raw);
+    if (/[aeiouõäöü]s$/i.test(raw) && syllables(raw) > 1 && gen.toLowerCase() === (raw + 'e').toLowerCase()) {
+      return raw + 't';
+    }
+    if (VOWEL_END.test(raw)) return raw + 't';
+    if (/rt$/i.test(raw) && /di$/i.test(gen)) return raw.slice(0, -1) + 'ti';
+    if (/u$/i.test(gen)) return gen;
+    if (/i$/i.test(gen) || /e$/i.test(gen)) return gen + 't';
+    return gen;
+  }
+
+  return {
+    etGenitive: etGenitive,
+    etAllative: etAllative,
+    etComitative: etComitative,
+    etAdessive: etAdessive,
+    etPartitive: etPartitive,
+  };
 });
