@@ -523,9 +523,22 @@
                                 </div>
                             </template>
                         </div>
-                        <p x-show="!offeredRows.length" class="text-sm text-muted mt-5" x-text="t('servicesEmpty')"></p>
-                        <button type="button" x-show="addableRows.length" class="p-sheet-btn mt-3" @click="servicePickerOpen = !servicePickerOpen" x-text="'+ ' + t('addService')"></button>
-                        <div class="p-rows mt-2" x-show="servicePickerOpen && addableRows.length" x-cloak>
+                        <div class="p-rows mt-3" x-show="(availForm.ownServices || []).length">
+                            <template x-for="(own, i) in availForm.ownServices" :key="own.id">
+                                <div class="p-line h-pad">
+                                    <input type="text" maxlength="60" class="min-w-0 flex-1 bg-transparent border-0 p-0 text-base" :placeholder="t('ownServicePh')" :aria-label="t('ownServicePh')" x-model="own.name">
+                                    <input type="text" maxlength="40" class="h-price-in" placeholder="20 €" :aria-label="(own.name || t('ownServicePh')) + ' ' + t('priceLabel')" x-model="own.price">
+                                    <button type="button" class="w-11 h-11 flex items-center justify-center text-muted shrink-0" @click="availForm.ownServices.splice(i, 1)" :aria-label="t('removeService', { name: own.name || t('ownServicePh') })"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+                                </div>
+                            </template>
+                        </div>
+                        <p x-show="!offeredRows.length && !(availForm.ownServices || []).length" class="text-sm text-muted mt-5" x-text="t('servicesEmpty')"></p>
+                        <button type="button" class="p-sheet-btn mt-3" @click="servicePickerOpen = !servicePickerOpen" x-text="'+ ' + t('addService')"></button>
+                        <div class="p-rows mt-2" x-show="servicePickerOpen" x-cloak>
+                            <button type="button" class="p-row" @click="addOwnService()">
+                                <span class="p-row-name" x-text="t('ownServiceRow')"></span>
+                                <span class="p-row-side text-muted" x-text="t('ownServiceHint')"></span>
+                            </button>
                             <template x-for="ex in addableRows" :key="'add-' + ex.id">
                                 <button type="button" class="p-row" @click="toggleOfferedExtra(ex.id); servicePickerOpen = false">
                                     <span class="p-row-name" x-text="svcName(ex)"></span>
@@ -1405,6 +1418,9 @@
             servicesLead: { et: 'Klient näeb neid oma äpis. Lillede summat saab klient tellides muuta.', en: 'Clients see these in their app. The client can change the flower amount when ordering.' },
             servicesEmpty: { et: 'Lisa teenused, mida pakud. Klient näeb neid koos hinnaga.', en: 'Add the services you offer. The client sees them with the price.' },
             addService: { et: 'Lisa teenus', en: 'Add a service' },
+            ownServiceRow: { et: 'Oma teenus', en: 'Your own service' },
+            ownServiceHint: { et: 'nimi ja hind', en: 'name and price' },
+            ownServicePh: { et: 'Teenuse nimi', en: 'Service name' },
             removeService: { et: 'Eemalda {name}', en: 'Remove {name}' },
             newClientsRow: { et: 'Võtan uusi kliente', en: 'I take new clients' },
             namePh: { et: 'Ees- ja perekonnanimi', en: 'First and last name' },
@@ -1984,6 +2000,7 @@
                         openForNewClients: av.openForNewClients === true,
                         offeredExtras: Array.isArray(av.offeredExtras) ? [...av.offeredExtras] : ['windows', 'deep-clean', 'fridge-oven', 'appliance-care', 'linens', 'ironing', 'laundry', 'rugs', 'away-care', 'flowers', 'extra-clean'],
                         extraPrices: av.extraPrices && typeof av.extraPrices === 'object' ? { ...av.extraPrices } : {},
+                        ownServices: Array.isArray(av.ownServices) ? av.ownServices.map((o) => ({ ...o })) : [],
                     };
                     if (this.activeTab === 'account') { this.loadInvoices(); this.loadEarned(); }
                     this.range = d.range; this.authenticated = true;
@@ -3111,7 +3128,18 @@
                 const flowers = lines.some((l) => l.serviceId === 'flowers');
                 return [times ? this.countWord(times, 'time') : '', flowers ? this.t('flowersWord').toLocaleLowerCase() : ''].filter(Boolean).join(' · ');
             },
-            get offeredRows() { return this.cleanerExtraRows.filter((ex) => this.availForm.offeredExtras.includes(ex.id)); },
+            // Koristus first, like on the design: it is the price every home starts from
+            get offeredRows() {
+                const rows = this.cleanerExtraRows.filter((ex) => this.availForm.offeredExtras.includes(ex.id));
+                return rows.filter((ex) => ex.id === 'extra-clean').concat(rows.filter((ex) => ex.id !== 'extra-clean'));
+            },
+            addOwnService() {
+                const id = 'own-' + Math.random().toString(36).slice(2, 10).replace(/[^a-z0-9]/g, 'x').padEnd(6, 'x');
+                if (!Array.isArray(this.availForm.ownServices)) this.availForm.ownServices = [];
+                this.availForm.ownServices.push({ id, name: '', price: '' });
+                this.servicePickerOpen = false;
+                this.$nextTick(() => { const inputs = document.querySelectorAll('[x-model="own.name"]'); if (inputs.length) inputs[inputs.length - 1].focus(); });
+            },
             get addableRows() { return this.cleanerExtraRows.filter((ex) => !this.availForm.offeredExtras.includes(ex.id)); },
             invoiceLine(line) {
                 const name = line.name || this.t('svcSignCleaning');
@@ -3162,6 +3190,7 @@
                             openForNewClients: this.availForm.openForNewClients,
                             offeredExtras: this.availForm.offeredExtras,
                             extraPrices: this.availForm.extraPrices,
+                            ownServices: (this.availForm.ownServices || []).filter((o) => String(o.name || '').trim()),
                         }),
                     });
                     await this.okJson(res);
@@ -3268,7 +3297,7 @@
                 let dur = r.type === 'reschedule' && r.targetBookingId ? (() => { const b = this.bookings.find((x) => x.id === r.targetBookingId); return b ? Math.round((new Date(b.endTime) - new Date(b.scheduledAt)) / 60000) : 180; })() : (svc?.durationMin || 60);
                 if (!this.durationOptions.includes(dur)) dur = 60;
                 // Flowers carry the amount the client chose; that is what she spends and bills
-                const chosenFlowers = r.serviceId === 'flowers' && r.price ? r.price : '';
+                const chosenFlowers = r.price && (r.serviceId === 'flowers' || r.ownService) ? r.price : '';
                 const includedPrice = !chosenFlowers && this.termsIncluded(r) && r.kind !== 'issue' && r.category !== 'warranty' ? this.t('termsIncluded') : '';
                 const customPrice = !includedPrice && r.serviceId && this.availForm?.extraPrices?.[r.serviceId] ? this.availForm.extraPrices[r.serviceId] : '';
                 this.confirmModal = { open: true, request: r, date, time: tw, durationMin: dur, price: chosenFlowers || includedPrice || customPrice, message: '', force: false, conflicts: [], error: '', saving: false };
@@ -3277,7 +3306,7 @@
                 const m = this.confirmModal; if (m.saving) return; m.saving = true; m.error = '';
                 try {
                     // Included by the home's terms → the client already sees "hinnas sees"; never send an invented price
-                    const res = await this.api('/api/haldus/requests/confirm', { method: 'POST', body: JSON.stringify({ requestId: m.request.id, date: m.date, time: m.time, durationMin: m.durationMin, price: this.termsIncluded(m.request) && !(m.request.serviceId === 'flowers' && m.request.price) ? '' : m.price, message: m.message, force: m.force }) });
+                    const res = await this.api('/api/haldus/requests/confirm', { method: 'POST', body: JSON.stringify({ requestId: m.request.id, date: m.date, time: m.time, durationMin: m.durationMin, price: this.termsIncluded(m.request) && !(m.request.price && (m.request.serviceId === 'flowers' || m.request.ownService)) ? '' : m.price, message: m.message, force: m.force }) });
                     const d = await res.json().catch(() => ({}));
                     if (res.status === 409 && d.code === 'CONFLICT') { m.conflicts = d.conflicts || []; return; }
                     if (res.status === 401) { this.logout(); return; }

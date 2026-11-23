@@ -910,3 +910,18 @@ test('the cleaner is reminded to buy the bouquet two days ahead, not three', () 
   assert.equal(core.flowerReminderDue('2026-11-22', '2026-11-23'), false);
   assert.equal(core.flowerReminderDue('', '2026-11-23'), false);
 });
+
+test('a cleaner can name her own services with a price; anything malformed is dropped', () => {
+  const av = core.sanitizeAvailability({ ownServices: [
+    { id: 'own-ab12cd', name: '  Triikimine ', price: '15 €' },
+    { id: 'own-ab12cd', name: 'Duplikaat', price: '1 €' },
+    { id: 'windows', name: 'Not own', price: '' },
+    { id: 'own-zz99zz', name: '', price: '5 €' },
+    { id: 'own-xy34xy', name: 'Rõdu pesu' },
+  ] });
+  assert.deepEqual(av.ownServices, [
+    { id: 'own-ab12cd', name: 'Triikimine', price: '15 €' },
+    { id: 'own-xy34xy', name: 'Rõdu pesu', price: '' },
+  ]);
+  assert.deepEqual(core.sanitizeAvailability({}).ownServices, []);
+});

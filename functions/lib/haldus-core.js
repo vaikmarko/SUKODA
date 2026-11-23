@@ -1469,6 +1469,15 @@ function sanitizeAvailability(input) {
       if (val) extraPrices[id] = val;
     }
   }
+  // Services the cleaner names herself ("Triikimine", "Akende pesu rõdult"): own id, name and price
+  const ownServices = [];
+  for (const row of Array.isArray(input?.ownServices) ? input.ownServices : []) {
+    const id = String(row?.id || '');
+    const name = String(row?.name || '').trim().slice(0, 60);
+    if (!/^own-[a-z0-9]{4,16}$/.test(id) || !name || ownServices.some((x) => x.id === id)) continue;
+    ownServices.push({ id, name, price: String(row?.price || '').trim().slice(0, 40) });
+    if (ownServices.length >= 12) break;
+  }
   return {
     days: days.length ? days : [1, 2, 3, 4, 5],
     hours: { start, end },
@@ -1480,6 +1489,7 @@ function sanitizeAvailability(input) {
     openForNewClients: input?.openForNewClients === true,
     offeredExtras,
     extraPrices,
+    ownServices,
   };
 }
 

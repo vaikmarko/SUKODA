@@ -620,7 +620,14 @@
         } catch (e) { /* the written price line stays */ }
     },
     serviceById(id) {
-        return (this.extras.catalogue || []).find((s) => s.id === id) || null;
+        return (this.extras.catalogue || []).find((s) => s.id === id) || this.ownServiceRows.find((s) => s.id === id) || null;
+    },
+    // Services the cleaner named herself: ordered as other, with her name and price on the row
+    get ownServiceRows() {
+        return (this.extras?.provider?.ownServices || []).map((o) => ({
+            id: o.id, name: o.name, description: '', kind: 'visit', category: 'cleaning', own: true,
+            priceLabel: o.price ? { text: o.price } : null,
+        }));
     },
     get telliDateMin() {
         const saved = this.extras?.provider?.leadDays;
@@ -699,7 +706,7 @@
     },
     get telliPrimaryExtras() {
         const ids = ['windows', 'deep-clean', 'fridge-oven', 'appliance-care', 'flowers'];
-        return ids.map((id) => this.serviceById(id)).filter((s) => s && (!this.showProvider || this.isOrderable(s)));
+        return ids.map((id) => this.serviceById(id)).filter((s) => s && (!this.showProvider || this.isOrderable(s))).concat(this.ownServiceRows);
     },
     get telliMoreExtras() {
         const ids = ['linens', 'ironing', 'laundry', 'rugs', 'away-care', 'other'];
@@ -837,6 +844,7 @@
     get telliServiceId() {
         if (!this.telliOpen || this.telliOpen === 'clean') return 'extra-clean';
         const mapped = { warranty: 'warranty-claim', fix: 'small-repairs', note: 'cleaning-note' }[this.telliOpen];
+        if (String(this.telliOpen).startsWith('own-')) return 'other';
         return mapped || this.telliOpen;
     },
     /** No partner for this service yet: the press records interest, it does not book a visit. */
@@ -1145,6 +1153,7 @@
                     ...(panel === 'clean' && !this.telliPay && this.telliRhythm && this.telliRhythm !== 'once' ? { rhythm: this.telliRhythm } : {}),
                     ...(panel === 'clean' && this.telliPay ? { pay: true } : {}),
                     ...(panel === 'flowers' || (panel === 'clean' && this.telliAddons.flowers) ? { flowerAmount: this.flowerSum } : {}),
+                    ...(String(panel).startsWith('own-') ? { ownServiceId: panel } : {}),
                 }),
             });
             const data = await res.json();

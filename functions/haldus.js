@@ -1398,7 +1398,7 @@ module.exports = function createHaldus(deps) {
       status: b.status,
       kind: b.kind || (b.serviceId ? 'extra' : 'regular'),
       serviceId: b.serviceId || null,
-      serviceName: b.serviceId ? core.serviceName(b.serviceId, 'et') : null,
+      serviceName: b.title || (b.serviceId ? core.serviceName(b.serviceId, 'et') : null),
       price: b.price || null,
       note: b.note || '',
       customerNote: b.customerNote || '',
@@ -1489,7 +1489,7 @@ module.exports = function createHaldus(deps) {
     };
   }
 
-  async function createVisit({ order, orderId, provider, start, durationMin, note, customerNote, source, serviceId, price, scheduleOccurrence, requestId, status = 'scheduled' }) {
+  async function createVisit({ order, orderId, provider, start, durationMin, note, customerNote, source, serviceId, price, scheduleOccurrence, requestId, status = 'scheduled', title }) {
     const end = new Date(start.getTime() + durationMin * 60000);
     const data = {
       ...bookingBase(order, orderId, provider),
@@ -1498,6 +1498,7 @@ module.exports = function createHaldus(deps) {
       status,
       kind: serviceId ? 'extra' : 'regular',
       serviceId: serviceId || null,
+      ...(title ? { title: String(title).slice(0, 60) } : {}),
       price: price || null,
       note: note || '',
       customerNote: customerNote || '',
@@ -2111,6 +2112,7 @@ module.exports = function createHaldus(deps) {
   /** Display name for a request: catalogue service or the special "reschedule" type */
   function requestName(r, lang) {
     if (r.type === 'reschedule') return core.pick({ et: 'Aja muutmine', en: 'Reschedule visit', ru: 'Перенос визита' }, lang);
+    if (r.ownService && r.ownService.name) return String(r.ownService.name);
     return core.serviceName(r.serviceId, lang);
   }
 
@@ -2142,6 +2144,7 @@ module.exports = function createHaldus(deps) {
       outcome: r.outcome || null,
       price: r.price || null,
       flowerPrice: r.flowerPrice || null,
+      ownService: r.ownService && r.ownService.name ? { id: String(r.ownService.id || ''), name: String(r.ownService.name) } : null,
       providerMessage: r.providerMessage || '',
       bookingId: r.bookingId || null,
       scheduledAt: tsToIso(r.scheduledAt),
@@ -3959,7 +3962,7 @@ module.exports = function createHaldus(deps) {
           id: d.id,
           orderId: b.orderId || null,
           customerName: b.anonymized ? 'Kustutatud kodu' : (b.customerName || ''),
-          serviceName: b.serviceId ? core.serviceName(b.serviceId, 'et') : '',
+          serviceName: b.title || (b.serviceId ? core.serviceName(b.serviceId, 'et') : ''),
           serviceId: b.serviceId || null,
           // A home deleted by its resident is gone from ownIds; its done work still counts for the specialist's invoice
           deletedOwnHome: b.deletedOwnHome === true,
@@ -4569,6 +4572,7 @@ module.exports = function createHaldus(deps) {
         order, orderId: request.orderId, provider, start, durationMin: Math.max(15, durationMin),
         note: str(b.note, 500), customerNote: str(b.message, 300),
         source: 'request', serviceId: request.serviceId, price, requestId: reqRef.id,
+        title: request.ownService?.name || '',
       });
       // Flowers added to this clean: their own line at the same start, so the amount the client chose
       // reaches the month summary and the two-day reminder; Tehtud on the clean closes it too.
@@ -5387,6 +5391,8 @@ module.exports = function createHaldus(deps) {
           priceNote: avail ? avail.priceNote : '',
           offeredExtras: avail ? avail.offeredExtras : core.CLEANER_EXTRA_IDS,
           extraPrices: avail ? avail.extraPrices : {},
+          // Services the cleaner named herself, ordered as "other" with their own name and price
+          ownServices: avail ? avail.ownServices : [],
           // The resident's Soovita screen shares the link the cleaner already has. No mail is sent.
           inviteUrl: provider.inviteCode ? `${SITE}/lunasta?code=${encodeURIComponent(provider.inviteCode)}` : '',
         } : null,
@@ -5764,11 +5770,18 @@ module.exports = function createHaldus(deps) {
         preferredDate = b.preferredDate;
       }
       const timeWindow = core.TIME_WINDOWS[b.timeWindow] ? b.timeWindow : 'any';
-      const note = str(b.note, 500);
+      // A service the cleaner named herself: its name and price come from her settings, not from the client
+      let ownService = null;
+      if (svc.id === 'other' && b.ownServiceId && order.providerId) {
+        const own = await loadProvider(order.providerId);
+        const row = core.sanitizeAvailability(own?.availability || {}).ownServices.find((x) => x.id === String(b.ownServiceId));
+        if (row) ownService = row;
+      }
+      const note = ownService ? str([ownService.name, str(b.note, 400)].filter(Boolean).join('. '), 500) : str(b.note, 500);
       const access = str(b.access, 400);
       const urgent = b.urgent === true;
       const kind = svc.kind || 'visit';
-      if ((svc.id === 'other' || kind !== 'visit') && note.length < 5) return res.status(400).json({ error: lang === 'et' ? (kind === 'question' ? 'Kirjuta oma küsimus' : 'Kirjelda, mis on katki ja kus') : (kind === 'question' ? 'Write your question' : 'Describe what is wrong and where') });
+      if (!ownService && (svc.id === 'other' || kind !== 'visit') && note.length < 5) return res.status(400).json({ error: lang === 'et' ? (kind === 'question' ? 'Kirjuta oma küsimus' : 'Kirjelda, mis on katki ja kus') : (kind === 'question' ? 'Write your question' : 'Describe what is wrong and where') });
       if (kind === 'question') preferredDate = null;
 
       const homeProvider = order.providerId ? await loadProvider(order.providerId) : null;
@@ -5865,6 +5878,7 @@ module.exports = function createHaldus(deps) {
         ...(rhythm ? { rhythm } : {}),
         ...(flowerPrice && svc.id === 'flowers' ? { price: flowerPrice } : {}),
         ...(flowerPrice && svc.id !== 'flowers' ? { flowerPrice } : {}),
+        ...(ownService ? { ownService: { id: ownService.id, name: ownService.name }, ...(ownService.price ? { price: ownService.price } : {}) } : {}),
         messages: firstMsg,
         status: charge ? 'awaiting_payment' : 'requested',
         ...(charge ? { payment: { priceCents: quote.priceCents, residentCents: quote.residentCents, sponsorCents: quote.sponsorCents, currency: 'eur', status: 'pending' } } : {}),

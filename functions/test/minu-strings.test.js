@@ -135,3 +135,11 @@ test('every t() key used in haldus.html exists in COPY with et, en and ru', () =
   }
   assert.deepEqual(missing, []);
 });
+
+test('the resident app object in minu.html is one attribute: no double quote cuts it short', () => {
+  const html = read('minu.html');
+  const start = html.indexOf('x-data="{') + 'x-data="'.length;
+  const end = html.indexOf('"', start);
+  assert.match(html.slice(end - 3, end + 2), /}\s*">/);
+  assert.doesNotThrow(() => new Function('return (' + html.slice(start, end) + ');'));
+});
