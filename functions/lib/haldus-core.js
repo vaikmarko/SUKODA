@@ -1652,53 +1652,6 @@ function toggleInvoicedHome(invoicedMonths, month, orderId, explicitState) {
   return { invoicedMonths: next, invoiced: shouldHave };
 }
 
-function routeChoice(value) {
-  return value === 'hausing' || value === 'email' || value === 'desk' ? value : 'desk';
-}
-
-/** A building the developer keeps: name, where warranty goes, documents the homes inherit. No secrets. */
-function sanitizeBuilding(input) {
-  const name = String(input?.name || '').trim().slice(0, 80);
-  if (!name) return { error: 'name' };
-  const documents = (Array.isArray(input?.documents) ? input.documents : []).slice(0, 40).map((d, i) => {
-    const title = String(d?.title || '').trim().slice(0, 120);
-    if (!title) return null;
-    const category = DOCUMENT_CATEGORIES[d?.category] ? d.category : 'other';
-    const url = /^https:\/\//.test(String(d?.url || '')) ? String(d.url).slice(0, 500) : '';
-    const page = Number(d?.page);
-    return {
-      id: String(d?.id || `b${i + 1}`).replace(/[^\w-]/g, '').slice(0, 40) || `b${i + 1}`,
-      title,
-      category,
-      url,
-      page: Number.isInteger(page) && page > 0 && page < 1000 ? page : null,
-      source: 'building',
-    };
-  }).filter(Boolean);
-  const budget = Math.max(0, Math.min(20000000, Math.round(Number(input?.sponsor?.budgetCents) || 0)));
-  const until = parseDateStr(input?.sponsor?.validUntil);
-  return {
-    building: {
-      name,
-      routes: {
-        warranty: routeChoice(input?.routes?.warranty),
-        building: routeChoice(input?.routes?.building),
-      },
-      documents,
-      sponsor: budget ? { budgetCents: budget, usedCents: 0, validUntil: until ? toDateStr(until) : null } : null,
-    },
-  };
-}
-
-function sanitizeHandover(input) {
-  const apartment = String(input?.apartment || '').trim().slice(0, 40);
-  const buyerName = String(input?.buyerName || '').trim().slice(0, 120);
-  const buyerEmail = normalizeEmail(input?.buyerEmail);
-  const keysAt = parseDateStr(input?.keysAt);
-  if (!apartment || !buyerName || !isValidEmail(buyerEmail) || !keysAt) return { error: 'fields' };
-  return { handover: { apartment, buyerName, buyerEmail, keysAt: toDateStr(keysAt) } };
-}
-
 /** Extras on the resident order card. Unknown ids are dropped. */
 const TELLI_ADDONS = ['flowers', 'linens', 'windows', 'appliance-care'];
 
@@ -1930,8 +1883,6 @@ module.exports = {
   providerInviteCode,
   primaryTrade,
   toggleInvoicedHome,
-  sanitizeBuilding,
-  sanitizeHandover,
   MAINTENANCE_CATALOGUE,
   MAINTENANCE_INTERVALS,
   MAX_MAINTENANCE_ITEMS,

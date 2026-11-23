@@ -13,8 +13,6 @@
 const crypto = require('crypto');
 const core = require('./lib/haldus-core');
 const push = require('./push');
-const hausing = require('./lib/hausing');
-const sharepoint = require('./lib/sharepoint');
 const homePass = require('./lib/home-pass');
 
 module.exports = function createHaldus(deps) {
@@ -3932,89 +3930,6 @@ module.exports = function createHaldus(deps) {
       const availability = core.sanitizeAvailability(req.body || {});
       await db.collection('providers').doc(provider.id).update({ availability, updatedAt: FieldValue.serverTimestamp() });
       res.status(200).json({ success: true, availability });
-    },
-
-    'POST /api/haldus/buildings': async (req, res) => {
-      const provider = await authenticateProvider(req);
-      if (!provider) return res.status(401).json({ error: 'Unauthorized' });
-      if (core.effectivePlan(provider) !== 'enterprise') return res.status(403).json({ error: 'Forbidden' });
-      const built = core.sanitizeBuilding(req.body || {});
-      if (built.error) return res.status(400).json({ error: built.error });
-      const ref = db.collection('buildings').doc();
-      await ref.set({ ...built.building, providerId: provider.id, createdAt: FieldValue.serverTimestamp() });
-      res.status(200).json({ id: ref.id, building: built.building });
-    },
-
-    'POST /api/haldus/buildings/handover': async (req, res) => {
-      const provider = await authenticateProvider(req);
-      if (!provider) return res.status(401).json({ error: 'Unauthorized' });
-      if (core.effectivePlan(provider) !== 'enterprise') return res.status(403).json({ error: 'Forbidden' });
-      const draft = core.sanitizeHandover(req.body || {});
-      if (draft.error) return res.status(400).json({ error: draft.error });
-      const code = core.handoverCode(crypto.randomBytes(8));
-      if (!code) return res.status(500).json({ error: 'code' });
-      const clash = await db.collection('orders').where('giftCode', '==', code).limit(1).get();
-      if (!clash.empty) return res.status(409).json({ error: 'retry' });
-      let buildingDocuments = [];
-      let sponsor = null;
-      let address = draft.handover.apartment;
-      let buildingId = String(req.body?.buildingId || '').slice(0, 80);
-      if (buildingId) {
-        const buildingSnap = await db.collection('buildings').doc(buildingId).get();
-        const building = buildingSnap.exists ? buildingSnap.data() : null;
-        if (!building || building.providerId !== provider.id) return res.status(404).json({ error: 'building' });
-        buildingDocuments = Array.isArray(building.documents) ? building.documents : [];
-        sponsor = building.sponsor || null;
-        if (building.name) address = `${building.name}, ${draft.handover.apartment}`;
-      }
-      const orderRef = db.collection('orders').doc();
-      await orderRef.set({
-        type: 'gift',
-        package: 'moment',
-        size: 'medium',
-        customer: { name: 'SUKODA (Handover)', email: 'tere@sukoda.ee' },
-        recipient: { name: draft.handover.buyerName, email: draft.handover.buyerEmail },
-        deliveryMethod: 'physical',
-        giftCode: code,
-        lang: 'et',
-        status: 'paid',
-        physicalCard: true,
-        kind: 'invite',
-        assignedProviderId: provider.id,
-        assignedProviderName: provider.name || '',
-        assignedAt: Timestamp.fromDate(new Date()),
-        handover: draft.handover,
-        buildingId: buildingId || null,
-        buildingDocuments,
-        sponsor,
-        createdAt: FieldValue.serverTimestamp(),
-      });
-      res.status(200).json({
-        code,
-        path: '/lunasta',
-        url: `https://sukoda.ee/lunasta?code=${code}`,
-        address,
-        name: draft.handover.buyerName,
-      });
-    },
-
-    'POST /api/haldus/hausing/preview': async (req, res) => {
-      const provider = await authenticateProvider(req);
-      if (!provider) return res.status(401).json({ error: 'Unauthorized' });
-      const result = await hausing.relayTicket({
-        building: req.body?.building || {},
-        text: req.body?.text,
-        email: req.body?.email,
-        client: null,
-      });
-      res.status(200).json(result);
-    },
-
-    'POST /api/haldus/sharepoint/status': async (req, res) => {
-      const provider = await authenticateProvider(req);
-      if (!provider) return res.status(401).json({ error: 'Unauthorized' });
-      const result = await sharepoint.deltaSync({ building: req.body?.building || {}, graph: null });
-      res.status(200).json(result);
     },
 
     'GET /api/haldus/me': async (req, res) => {

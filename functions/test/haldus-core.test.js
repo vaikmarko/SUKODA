@@ -681,16 +681,6 @@ test('visit split never charges and keeps sponsor, resident and provider in bala
   assert.equal(covered.cardRequired, false);
   assert.equal(covered.payLater, false);
   assert.equal(covered.residentCents, 0);
-  const building = core.sanitizeBuilding({ name: 'Iili 8', routes: { warranty: 'hausing', building: 'nope' }, documents: [{ title: 'Juhend', url: 'https://example.com/a.pdf', page: 14 }], sponsor: { budgetCents: 10000, validUntil: '2027-05-01' } });
-  assert.equal(building.building.routes.warranty, 'hausing');
-  assert.equal(building.building.routes.building, 'desk');
-  assert.equal(building.building.documents[0].page, 14);
-  assert.equal(building.building.sponsor.budgetCents, 10000);
-  assert.equal(core.sanitizeBuilding({ name: '  ' }).error, 'name');
-  const hand = core.sanitizeHandover({ apartment: '12', buyerName: 'Mari', buyerEmail: 'Mari@Kodu.ee', keysAt: '2026-11-01' });
-  assert.equal(hand.handover.buyerEmail, 'mari@kodu.ee');
-  assert.equal(hand.handover.keysAt, '2026-11-01');
-  assert.equal(core.sanitizeHandover({ apartment: '12' }).error, 'fields');
   const code = core.handoverCode(Buffer.from([0, 1, 2, 3, 4, 5, 6, 7]));
   assert.equal(code.length, 8);
   assert.equal(/[01OI]/.test(code), false);

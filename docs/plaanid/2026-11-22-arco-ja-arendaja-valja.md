@@ -90,5 +90,19 @@ Marko vastused 22.11.2026:
 - Kustutatud Arco näidiskodu külvaja `scripts/seed-arco-demo.js`, selle tekstid `scripts/demo-doc-text.js`, PDF-ide tegija `scripts/make-demo-docs.py` ja kümme näidis-PDF-i kaustas `scripts/demo-docs/`. Andmebaasi see ei puuduta: varem külvatud näidiskodu jääb Firestore'i alles.
 - Reeglid ja oskused (`CLAUDE.md`, `.cursor/rules/sukoda.mdc`, `.cursor/rules/portal-html.mdc`, `/review`, `/verify`, `/design-review`) ei viita enam arendaja vaatele ega Arcole. Näidiskonto jaoks viitavad nad skriptile `scripts/seed-demo-account.js`.
 - `PLATVORMIPLAAN_2026.md` algusse on lisatud seisu märkus; plaani ennast ma ümber ei kirjutanud, see on Marko otsus.
-- Tegemata: `.cursor/README.md` sprindiagentide jaotus viitab veel Arco pakkumisele ja Kausta vaatele; see fail kirjeldab vana sprinti ja vajab Marko otsust, kas see üldse alles jääb.
+- `.cursor/README.md` (vana sprindi agentide jaotus) on Marko otsusel kustutatud.
+
+### Lõik 5a (ehitatud 23.11.2026)
+Marko otsus 23.11: Cristelle kahe kodu Arco pärandväljad ei loe, tema lisatud teenused peavad jääma samaks.
+- Taustateenusest on väljas neli otspunkti, mida ükski ekraan enam ei kutsu: maja salvestamine, kodu üleandmine ostjale, Hausingu eelvaade ja SharePointi seis. Koos nendega `functions/lib/hausing.js`, `functions/lib/sharepoint.js` ning `sanitizeBuilding` ja `sanitizeHandover`.
+- Teenuste kataloogi, pakette ega koristaja profiili ei puudutatud: Cristelle teenused ja hinnad loetakse täpselt nagu enne.
+- Firestore'ist ei kustutatud midagi. Kogu `buildings` ja vanad üleandmiskaardid jäävad andmebaasi, kood neid enam ei loe ega kirjuta.
+
+### Lõik 5b (tegemata, vajab emulaatoriga kontrolli)
+Need osad on põimitud kirjadesse ja elaniku API-sse, mida Cristelle ja tema kliendid iga päev kasutavad. Pimesi eemaldada ei ole ohutu.
+- Valge silt (`order.brand`) kirjade pealkirjades ja elaniku vaates, `welcomeIntroArco`, garantiivisiidi meeldetuletus.
+- Kategooriad `warranty` ja `building` kataloogis, tingimustes ja soovi suunamises.
+- Pakett `enterprise` ja omaniku liik `developer`.
+- Dokumentide otspunktid `/api/me/documents*`, `lib/home-pass.js`, `assets/js/minu/kaust.js` ja `minu.html` jäänukid.
+- Koodi lunastamise taustapoole `welcome` haru ja kaardi kvoot (`terms.quota`).
 

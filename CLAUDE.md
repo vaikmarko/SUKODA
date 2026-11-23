@@ -91,7 +91,6 @@ Both work from the same files, so it makes no difference which one Marko is in.
 - Rules and skills are changed only in these files. No separate copies are made for Cursor.
 - The two MCP files have the same content. When you change one, change the other in the same commit.
 - The skills name Claude's tools. In Cursor use the equivalent: a subagent (`Agent`, `Explore`) is a Cursor subagent or the same work done in sequence, `AskUserQuestion` is one question in the chat with the options, and instead of an Artifact make an HTML file in the session's scratch folder.
-- Sprint agents and the split that keeps them out of each other's files: `.cursor/README.md`.
 
 ## Summary for Marko
 
