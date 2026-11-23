@@ -21,6 +21,7 @@
   --color-paper: #faf8f5;
   --color-accent: #8f6e43;
   --color-muted: #5f5a54;
+  --color-line: #e6e0d8;
   --color-line-strong: #d1c9bf;
   --font-serif: "Cormorant Garamond", Georgia, serif;
   --font-sans: Inter, system-ui, sans-serif;
@@ -98,12 +99,17 @@ form .eyebrow {
   color: var(--color-muted);
 }
 
+.field-wrap {
+  position: relative;
+  margin-top: 0.5rem;
+}
+
 .field {
   display: block;
   width: 100%;
   box-sizing: border-box;
   height: 3.25rem;
-  margin-top: 0.5rem;
+  margin-top: 0;
   padding: 0 1rem;
   border: 1px solid var(--color-line-strong);
   border-radius: 14px;
@@ -116,6 +122,62 @@ form .eyebrow {
 .field:focus {
   outline: none;
   border-color: var(--color-accent);
+}
+
+/* Six drawn cells over one transparent field: one-time-code autofill and paste need a single input. */
+.cells {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.cells span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 4rem;
+  border: 1px solid var(--color-line-strong);
+  border-radius: 14px;
+  background: #fff;
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  font-variant-numeric: lining-nums;
+}
+
+.field-wrap:focus-within .cells span.is-on {
+  border-color: var(--color-accent);
+}
+
+.field.is-code {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: transparent;
+  caret-color: transparent;
+}
+
+.field.is-code::selection {
+  background: transparent;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  margin-top: 0.75rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  color: var(--color-black);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
 }
 
 .err {
@@ -189,9 +251,31 @@ form .eyebrow {
   outline-offset: 2px;
 }
 
+/* Phone: the column fills the screen and the primary action stays on a bar at its bottom.
+   Sticky, not fixed: a fixed bar ends up under the iOS keyboard. */
 @media (max-width: 40rem) {
   body {
-    align-items: flex-end;
+    align-items: stretch;
+    box-sizing: border-box;
+  }
+
+  .shell {
+    display: flex;
+    flex-direction: column;
+    max-width: none;
+  }
+
+  .actions {
+    position: sticky;
+    bottom: 0;
+    margin: auto -1.5rem calc(-1 * max(1.5rem, env(safe-area-inset-bottom)));
+    padding: 1rem 1.5rem max(1.5rem, env(safe-area-inset-bottom));
+    background: #fff;
+    border-top: 1px solid var(--color-line);
+  }
+
+  .langs {
+    margin-bottom: 1.5rem;
   }
 }
 

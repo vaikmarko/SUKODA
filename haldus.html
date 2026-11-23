@@ -52,7 +52,7 @@
         <!-- ═══════════════ LOGIN ═══════════════ -->
         <div x-show="!loading && !authenticated" x-cloak>
             <!-- docs/disain/ekraanid/Sisene.html, Kood.html, Alusta.html. The steps and what is sent stay as they were. -->
-            <main class="max-w-md mx-auto px-6 pt-8 pb-16 font-sans">
+            <main class="max-w-md mx-auto px-6 pt-8 pb-16 font-sans p-entry">
                 <a href="/" class="w-logo block" x-show="!signupCodeMode">SUKODA</a>
                 <div x-show="signupCodeMode" x-cloak><button type="button" class="p-back" @click="signupCodeMode = false; loginError = ''"><svg class="p-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6"/></svg><span x-text="t('emailLabel')"></span></button></div>
                 <div :class="signupCodeMode ? 'mt-1' : 'mt-8'"><h1 class="p-sub-title" x-text="signupCodeMode ? t('codeTitle') : (signupMode && !loginSent ? t('signupTitle') : t('loginTitle'))"></h1></div>
@@ -60,16 +60,15 @@
 
                 <div x-show="!loginSent && !signupMode && !signupCodeMode">
                     <p class="text-muted mt-3 leading-relaxed" x-text="t('loginLead')"></p>
-                    <form @submit.prevent="sendMagicLink()">
+                    <form id="login-form" @submit.prevent="sendMagicLink()">
                         <label class="eyebrow mt-5" for="login-email" x-text="t('emailLabel')"></label>
                         <input id="login-email" type="email" x-model="loginEmail" required autocomplete="email" inputmode="email" class="p-field">
                         <p x-show="loginError" x-cloak class="text-sm text-err mt-3" x-text="loginError" role="alert"></p>
-                        <button type="submit" :disabled="loginSending || !loginEmail" class="p-go is-wide mt-6" x-text="loginSending ? t('sending') : t('sendLink')"></button>
                     </form>
                 </div>
                 <!-- Self-serve onboarding: name, e-mail, trade and area, then the 6-digit code right here -->
                 <div x-show="!loginSent && signupMode && !signupCodeMode" x-cloak>
-                    <form @submit.prevent="signup()">
+                    <form id="signup-form" @submit.prevent="signup()">
                         <label class="eyebrow mt-5" for="signup-name" x-text="t('nameLabel')"></label>
                         <input id="signup-name" type="text" x-model="signupForm.name" required autocomplete="name" class="p-field" :placeholder="t('fullNamePh')">
                         <label class="eyebrow mt-5" for="signup-email" x-text="t('emailLabel')"></label>
@@ -83,19 +82,21 @@
                         <label class="eyebrow mt-5" for="signup-city" x-text="t('areaLabel')"></label>
                         <input id="signup-city" type="text" x-model="signupForm.city" autocomplete="address-level2" class="p-field" :placeholder="t('areaPh')">
                         <p x-show="loginError" x-cloak class="text-sm text-err mt-3" x-text="loginError" role="alert"></p>
-                        <button type="submit" :disabled="loginSending || !signupForm.name || !signupForm.email" class="p-go is-wide mt-6" x-text="loginSending ? t('opening') : t('openDesk')"></button>
-                        <p class="text-sm text-muted text-center mt-2.5" x-text="t('signupPricing')"></p>
                     </form>
                 </div>
                 <!-- Instant 6-digit code step after signup -->
                 <div x-show="signupCodeMode" x-cloak>
                     <p class="text-muted mt-3 leading-relaxed" x-text="t('codeSentLead', { email: loginEmail })"></p>
-                    <form @submit.prevent="verifySignupCode()">
+                    <form id="code-form" @submit.prevent="verifySignupCode()">
                         <label class="sr-only" for="signup-code" x-text="t('codeLabel')"></label>
-                        <input id="signup-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" x-model="signupCode" x-ref="signupCodeInput" class="p-field p-code">
+                        <!-- One real field under six drawn cells, so one-time-code autofill and paste keep working (Kood.html) -->
+                        <div class="p-code-grid">
+                            <template x-for="i in 6" :key="i">
+                                <span class="p-code-cell" :class="{ 'is-on': Math.min(signupCode.length, 5) === i - 1 }" x-text="signupCode[i - 1] || ''" aria-hidden="true"></span>
+                            </template>
+                            <input id="signup-code" type="text" inputmode="numeric" autocomplete="one-time-code" x-model="signupCode" @input="signupCode = signupCode.replace(/\D/g, '').slice(0, 6)" x-ref="signupCodeInput" class="p-code-input">
+                        </div>
                         <p x-show="loginError" x-cloak class="text-sm text-err mt-3" x-text="loginError" role="alert"></p>
-                        <button type="submit" :disabled="loginSending || signupCode.trim().length !== 6" class="p-go is-wide mt-6" x-text="loginSending ? t('checkingCode') : t('enterDesk')"></button>
-                        <p class="text-sm text-muted text-center mt-2.5" x-text="t('staySignedIn')"></p>
                     </form>
                 </div>
                 <div x-show="loginSent && !signupCodeMode" x-cloak>
@@ -103,10 +104,18 @@
                     <p x-show="loginPortal" x-cloak class="text-muted mt-2" x-text="t('linkIsHome')"></p>
                     <p class="text-muted mt-2"><span x-text="t('linkMissing')"></span> <a href="mailto:tere@sukoda.ee" class="text-black underline underline-offset-4">tere@sukoda.ee</a></p>
                 </div>
+                <!-- The primary action sits on a bar at the bottom of the screen; each button submits its own form -->
+                <div class="p-actbar" x-show="!loginSent || signupCodeMode">
+                    <button type="submit" form="login-form" x-show="!loginSent && !signupMode && !signupCodeMode" :disabled="loginSending || !loginEmail" class="p-go is-wide" x-text="loginSending ? t('sending') : t('sendLink')"></button>
+                    <button type="submit" form="signup-form" x-show="!loginSent && signupMode && !signupCodeMode" x-cloak :disabled="loginSending || !signupForm.name || !signupForm.email" class="p-go is-wide" x-text="loginSending ? t('opening') : t('openDesk')"></button>
+                    <p class="text-sm text-muted text-center mt-2.5" x-show="!loginSent && signupMode && !signupCodeMode" x-cloak x-text="t('signupPricing')"></p>
+                    <button type="submit" form="code-form" x-show="signupCodeMode" x-cloak :disabled="loginSending || signupCode.trim().length !== 6" class="p-go is-wide" x-text="loginSending ? t('checkingCode') : t('enterDesk')"></button>
+                    <p class="text-sm text-muted text-center mt-2.5" x-show="signupCodeMode" x-cloak x-text="t('staySignedIn')"></p>
+                </div>
                 <div class="mt-6" x-show="!loginSent && !signupCodeMode">
                     <button type="button" @click="signupMode = !signupMode; loginError = ''" class="inline-flex items-center min-h-11 underline underline-offset-4" x-text="signupMode ? t('haveAccess') : t('newHere')"></button>
                 </div>
-                <div class="flex items-center gap-1 mt-2 -ml-2" role="group" :aria-label="t('langLabel')">
+                <div class="flex items-center gap-1 mt-2 mb-6 -ml-2" role="group" :aria-label="t('langLabel')">
                     <button type="button" @click="setLang('et')" class="min-h-11 px-2" :class="{ 'text-black': lang === 'et', 'text-muted': lang !== 'et' }" :aria-pressed="lang === 'et'">Eesti</button>
                     <button type="button" @click="setLang('en')" class="min-h-11 px-2" :class="{ 'text-black': lang === 'en', 'text-muted': lang !== 'en' }" :aria-pressed="lang === 'en'">English</button>
                     <button type="button" @click="setLang('ru')" class="min-h-11 px-2" :class="{ 'text-black': lang === 'ru', 'text-muted': lang !== 'ru' }" :aria-pressed="lang === 'ru'">Русский</button>
@@ -1752,7 +1761,7 @@
             colleagueGift: { et: 'Kui kolleeg lisab oma esimese kliendi, saate mõlemad ühe kuu Standardit tasuta.', en: 'When your colleague adds their first client, you both get a month of Standard free.' },
             colleagueShare: { et: 'Jaga linki', en: 'Share the link' },
             colleagueWaiting: { et: 'Ootab esimest klienti', en: 'Waiting for a first client' },
-            colleagueRewarded: { et: 'Kuu tasuta saadud', en: 'Free month received' },
+            colleagueRewarded: { et: 'Liitus · kuu teenitud', en: 'Joined · month earned' },
             freeUntil: { et: 'tasuta kuni {date}', en: 'free until {date}' },
             colleagueRewardToast: { et: '{name} lisas esimese kliendi. Teil mõlemal on nüüd kuu Standardit tasuta.', en: '{name} added a first client. You both have a free month of Standard now.' },
             freeMonthToast: { et: 'Sul on Standard tasuta kuni {date}.', en: 'You have Standard free until {date}.' },

@@ -485,7 +485,7 @@ export const haldusRu = {
   colleagueGift: 'Когда коллега добавит первого клиента, вы оба получите месяц тарифа «Стандарт» бесплатно.',
   colleagueShare: 'Поделиться ссылкой',
   colleagueWaiting: 'Ждём первого клиента',
-  colleagueRewarded: 'Бесплатный месяц получен',
+  colleagueRewarded: 'Уже с нами · месяц получен',
   freeUntil: 'бесплатно до {date}',
   colleagueRewardToast: 'У {name} появился первый клиент. Теперь у вас обоих бесплатный месяц тарифа «Стандарт».',
   freeMonthToast: 'У вас бесплатный тариф «Стандарт» до {date}.',

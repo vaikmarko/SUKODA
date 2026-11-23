@@ -616,6 +616,29 @@ body {
   font-family: var(--font-sans); font-size: 0.9375rem; font-weight: 500;
 }
 .p-chip.is-on { background: var(--color-black); border-color: var(--color-black); color: var(--color-paper); }
+/* Entry screens: the column fills the screen and the primary action stays on a bar at its bottom.
+   Sticky, not fixed: a fixed bar ends up under the iOS keyboard. */
+.p-actbar { margin-top: 1.5rem; }
+@media (max-width: 40rem) {
+  .p-entry { display: flex; flex-direction: column; min-height: 100dvh; max-width: none; padding-bottom: 0; }
+  .p-actbar {
+    order: 1; position: sticky; bottom: 0; margin: auto -1.5rem 0; padding: 1rem 1.5rem calc(1rem + env(safe-area-inset-bottom));
+    background: #fff; border-top: 1px solid var(--color-line);
+  }
+}
+/* Six drawn cells over one transparent field (Kood.html) */
+.p-code-grid { position: relative; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.5rem; margin-top: 1.5rem; }
+.p-code-cell {
+  display: flex; align-items: center; justify-content: center; height: 4rem;
+  border: 1px solid var(--color-line-strong); border-radius: 14px; background: #fff;
+  font-family: var(--font-serif); font-size: 2rem; font-variant-numeric: lining-nums;
+}
+.p-code-grid:focus-within .p-code-cell.is-on { border-color: var(--color-accent); }
+.p-code-input {
+  position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; outline: 0;
+  background: transparent; color: transparent; caret-color: transparent; font-size: 1rem;
+}
+.p-code-input::selection { background: transparent; }
 .p-field.p-code.is-long { font-size: 1.375rem; letter-spacing: 0.12em; }
 .p-field.p-code { height: 4rem; margin-top: 1.5rem; text-align: center; font-family: var(--font-serif); font-size: 2rem; letter-spacing: 0.3em; font-variant-numeric: lining-nums; }
 .p-go {

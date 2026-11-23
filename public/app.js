@@ -248,6 +248,16 @@ function render() {
       stay.hidden = mode !== 'code';
     }
     primary.disabled = busy;
+    // Code step: six drawn cells over the one field, and "new code" is a link under them (Kood.html).
+    // An old cached shell has no #cells and keeps the plain field.
+    var cells = document.getElementById('cells');
+    var coded = mode === 'code' && !!cells;
+    if (cells) cells.hidden = !coded;
+    field.classList.toggle('is-code', coded);
+    later.className = coded ? 'link' : 'p-btn-2';
+    if (coded) { if (later.parentNode !== login) login.appendChild(later); }
+    else if (later.nextElementSibling !== primary) primary.parentNode.insertBefore(later, primary);
+    paintCells();
     if (!signing) {
       title.textContent = t('hintTitle');
       if (onIos()) {
@@ -292,8 +302,21 @@ function render() {
     field.type = 'text';
     field.inputMode = 'numeric';
     field.autocomplete = 'one-time-code';
-    field.maxLength = 6;
+    // Room for a pasted code with a stray space; paintCells keeps six digits
+    field.maxLength = cells ? 12 : 6;
     primary.textContent = busy ? t('checking') : t('enter');
+  }
+
+  function paintCells() {
+    var cells = document.getElementById('cells');
+    var field = document.getElementById('field');
+    if (!cells || mode !== 'code') return;
+    var digits = String(field.value || '').replace(/\D/g, '').slice(0, 6);
+    if (field.value !== digits) field.value = digits;
+    Array.prototype.forEach.call(cells.children, function (cell, i) {
+      cell.textContent = digits.charAt(i);
+      cell.classList.toggle('is-on', Math.min(digits.length, 5) === i);
+    });
   }
 
   function errorText(data, fallback) {
@@ -399,6 +422,7 @@ function render() {
       event.preventDefault();
       onLogin();
     });
+    document.getElementById('field').addEventListener('input', paintCells);
     document.getElementById('field').addEventListener('keydown', function (event) {
       if (event.key === 'Enter') {
         event.preventDefault();
