@@ -14,6 +14,7 @@ Mida testida: logi sisse kuue kastiga (ka kood e-kirjast kleepides); paku soovil
 2. **Paku teist aega.** Ehitatud. Pakkumine kannab hinda, mille koristaja oleks kinnitades saatnud, nii et „Sobib“ peale tehtud visiit on sama hinnaga; makstud soovil on hind makstud summa. Emulaatoriga läbi mängimata (arvutis on Java 8); kliendi kaarti ei ole päris kontoga nähtud.
 3. **Töölaua avamise sammud.** Ehitatud. Hinnasammu märge on selles seadmes `localStorage`-is ja kulub ühe korraga, et samm avaneks ka kirjas oleva lingi kaudu; olemasoleva e-postiga sisenejale seda ei tule. Hinnasamm avaneb ainult koristajale, sest teenuste vaade on ainult temal; teistel jääb nupp „Ava töölaud“. Oma teenus salvestatakse kohe pärast koodi, et see jääks alles ka siis, kui hinnasamm jäetakse vahele. „+ Lisa oma“ teenus ja samm „Edasi: hinnad“ pärast koodi. Kasutab olemasolevat teenuste salvestust.
 4. **Isiklik kutse ekraan.** Ehitatud. Tervitus avaneb tervituskirja lingil ainult siis, kui kodu lisas koristaja ise; remondimehe, aedniku ja SUKODA enda kodu kiri avab kodu otse. Lingi uuesti avamisel on tervitus uuesti näha. Kliendi isiklik link näitab järgmist koristust enne kodu avamist. Vajab otsust 2.
+5. **Paketi valik avalehelt.** Ehitatud. „Vali Standard“ ja „Vali Stuudio“ kannavad paketi registreerimisse (`?pakett=pro|studio`); pärast koodi läheb koristaja olemasolevasse Stripe’i makseaknasse ja tagasi tulles avaneb hinnasamm. Sisselogitud koristaja läheb makseaknasse kohe. Kehtivat tellimust lingilt ei vahetata, see avab Konto. Serverit ei muudetud.
 
 ## Tehniline plaan
 

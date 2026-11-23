@@ -84,7 +84,7 @@
                         <label class="eyebrow mt-5" for="signup-city" x-text="t('areaLabel')"></label>
                         <input id="signup-city" type="text" x-model="signupForm.city" autocomplete="address-level2" class="p-field" :placeholder="t('areaPh')">
                         <!-- Alusta.html: the currency is shown and locked, the platform bills in euros only. -->
-                        <div class="p-rows mt-5"><div class="p-line h-pad"><span x-text="t('currencyLabel')"></span><span class="text-muted">EUR</span></div></div>
+                        <div class="p-rows mt-5"><div class="p-line h-pad" x-show="signupPlan" x-cloak><span x-text="t('planLabel')"></span><span class="text-muted" x-text="t(signupPlan === 'studio' ? 'planPickStudio' : 'planPickPro')"></span></div><div class="p-line h-pad"><span x-text="t('currencyLabel')"></span><span class="text-muted">EUR</span></div></div>
                         <p x-show="loginError" x-cloak class="text-sm text-err mt-3" x-text="loginError" role="alert"></p>
                     </form>
                 </div>
@@ -112,7 +112,7 @@
                 <div class="p-actbar" x-show="!loginSent || signupCodeMode">
                     <button type="submit" form="login-form" x-show="!loginSent && !signupMode && !signupCodeMode" :disabled="loginSending || !loginEmail" class="p-go is-wide" x-text="loginSending ? t('sending') : t('sendLink')"></button>
                     <button type="submit" form="signup-form" x-show="!loginSent && signupMode && !signupCodeMode" x-cloak :disabled="loginSending || !signupForm.name || !signupForm.email" class="p-go is-wide" x-text="loginSending ? t('opening') : t(signupForm.services.includes('cleaning') ? 'nextPrices' : 'openDesk')"></button>
-                    <p class="text-sm text-muted text-center mt-2.5" x-show="!loginSent && signupMode && !signupCodeMode" x-cloak x-text="t('signupPricing')"></p>
+                    <p class="text-sm text-muted text-center mt-2.5" x-show="!loginSent && signupMode && !signupCodeMode" x-cloak x-text="t(signupPlan ? 'signupPays' : 'signupPricing')"></p>
                     <button type="submit" form="code-form" x-show="signupCodeMode" x-cloak :disabled="loginSending || signupCode.trim().length !== 6" class="p-go is-wide" x-text="loginSending ? t('checkingCode') : t('enterDesk')"></button>
                     <p class="text-sm text-muted text-center mt-2.5" x-show="signupCodeMode" x-cloak x-text="t('staySignedIn')"></p>
                 </div>
@@ -1436,6 +1436,10 @@
             nextPrices: { et: 'Edasi: hinnad', en: 'Next: prices' },
             addOwnChip: { et: '+ Lisa oma', en: '+ Add your own' },
             currencyLabel: { et: 'Valuuta', en: 'Currency' },
+            planLabel: { et: 'Pakett', en: 'Plan' },
+            planPickPro: { et: 'Standard · 19 € kuus', en: 'Standard · 19 € a month' },
+            planPickStudio: { et: 'Stuudio · 39 € kuus', en: 'Studio · 39 € a month' },
+            signupPays: { et: 'Maksad kaardiga pärast koodi sisestamist. Lõpetada saad igal ajal.', en: 'You pay by card after entering the code. Cancel any time.' },
             pricingTitle: { et: 'Pane hinnad paika', en: 'Set your prices' },
             skipStep: { et: 'Jäta vahele', en: 'Skip' },
             opening: { et: 'Avan…', en: 'Opening…' },
@@ -1956,8 +1960,8 @@
             }, availSaving: false, availError: '',
             profileForm: { name: '', businessName: '', phone: '', city: '', notifyEmail: '', services: ['cleaning'] }, profileSaving: false, profileSaved: false, profileError: '', maintenanceIntervals: [1, 2, 3, 6, 12, 24],
             signupMode: new URLSearchParams(location.search).get('alusta') != null, signupForm: { name: '', businessName: '', email: '', phone: '', services: ['cleaning'], city: '', kolleeg: '' },
-            // Alusta.html: an own service typed at signup and the one-time price step after it (startPricing).
-            signupOwn: '', signupOwnOpen: false, pricingStep: false,
+            // Alusta.html: an own service typed at signup and the one-time price step after it (afterEntry). signupPlan: the paid plan picked on the landing page, ?pakett=pro|studio.
+            signupOwn: '', signupOwnOpen: false, pricingStep: false, signupPlan: '',
             signupServices: [
                 { id: 'cleaning', key: 'svcSignCleaning' }, { id: 'handyman', key: 'svcSignHandyman' }, { id: 'garden', key: 'svcSignGarden' },
                 { id: 'flowers', key: 'svcSignFlowers' }, { id: 'childcare', key: 'svcSignChildcare' }, { id: 'pets', key: 'svcSignPets' },
@@ -2024,6 +2028,7 @@
                 if (params.get('email')) this.signupForm.email = params.get('email').trim();
                 if (params.get('name')) this.signupForm.name = params.get('name').trim();
                 if (params.get('kolleeg')) this.signupForm.kolleeg = params.get('kolleeg').trim().slice(0, 40);
+                if (['pro', 'studio'].includes(params.get('pakett'))) this.signupPlan = params.get('pakett');
                 const askedRole = params.get('role');
                 if (askedRole && this.signupServices.some((s) => s.id === askedRole)) {
                     this.signupForm.services = [askedRole];
@@ -2045,7 +2050,7 @@
                     } catch (e) { console.error(e); }
                 }
                 if (this.token) await this.loadData();
-                if (this.authenticated) await this.startPricing();
+                if (this.authenticated) await this.afterEntry();
                 this.loading = false;
             },
 
@@ -2134,7 +2139,8 @@
                         this.loginEmail = email;
                         // An e-mail that already has a desk gets an ordinary login, not the price step.
                         try {
-                            if (!r.existing && this.signupForm.services.includes('cleaning')) localStorage.setItem('sukoda_signup_step', JSON.stringify({ email, own: this.signupOwnOpen ? this.signupOwn : '' }));
+                            const pricing = !r.existing && this.signupForm.services.includes('cleaning');
+                            if (pricing || this.signupPlan) localStorage.setItem('sukoda_signup_step', JSON.stringify({ email, pricing, own: pricing && this.signupOwnOpen ? this.signupOwn : '', plan: this.signupPlan }));
                             else localStorage.removeItem('sukoda_signup_step');
                         } catch { /* private mode: the desk opens without the price step */ }
                         if (r.codeSent) {
@@ -2169,29 +2175,55 @@
                     history.replaceState({}, '', '/haldus');
                     this.loading = true;
                     await this.loadData();
-                    this.loading = false;
-                    await this.startPricing();
+                    // Still loading while the plan is sent to Stripe, so the desk does not flash before the redirect.
+                    try { await this.afterEntry(); } finally { this.loading = false; }
                 } catch { this.loginError = this.t('netFail'); } finally { this.loginSending = false; }
             },
-            /** The price step after a new signup. The note is left by signup() on this device and used once,
-                so it also works when the desk is opened from the link in the mail instead of the code. */
-            async startPricing() {
+            /** What a new signup still owes after the desk opens: the own service, the paid plan picked on the
+                landing page (Stripe Checkout) and the price step. The note is left by signup() on this device, so it
+                also works through the link in the mail; the price step survives the trip to Stripe and back. */
+            async afterEntry() {
+                const KEY = 'sukoda_signup_step';
                 let note = null;
-                try { note = JSON.parse(localStorage.getItem('sukoda_signup_step') || 'null'); localStorage.removeItem('sukoda_signup_step'); } catch { note = null; }
-                if (!note || !this.provider || !this.isCleaningProvider || note.email !== String(this.provider.email || '').toLowerCase()) return;
-                if (!Array.isArray(this.availForm.ownServices)) this.availForm.ownServices = [];
-                const own = String(note.own || '').trim().slice(0, 60);
-                if (own) this.availForm.ownServices.push({ id: 'own-' + Math.random().toString(36).slice(2, 10).replace(/[^a-z0-9]/g, 'x').padEnd(6, 'x'), name: own, price: '' });
-                this.pricingStep = true; this.activeTab = 'services';
-                // Saved now, so the service is kept even when the price step is skipped.
-                if (own) await this.saveAvailability(true);
+                try { note = JSON.parse(localStorage.getItem(KEY) || 'null'); localStorage.removeItem(KEY); } catch { note = null; }
+                if (!this.provider) return;
+                const mine = note && note.email === String(this.provider.email || '').toLowerCase();
+                // A signed-in provider who pressed a plan button on the landing page has no note, only the link.
+                const plan = (mine && note.plan) || this.signupPlan;
+                const pricing = !!mine && note.pricing !== false && this.isCleaningProvider;
+                this.signupPlan = '';
+                const own = mine && this.isCleaningProvider ? String(note.own || '').trim().slice(0, 60) : '';
+                if (own) {
+                    if (!Array.isArray(this.availForm.ownServices)) this.availForm.ownServices = [];
+                    this.availForm.ownServices.push({ id: 'own-' + Math.random().toString(36).slice(2, 10).replace(/[^a-z0-9]/g, 'x').padEnd(6, 'x'), name: own, price: '' });
+                    // Saved now, so the service is kept even when the price step is skipped.
+                    await this.saveAvailability(true);
+                }
+                if (['pro', 'studio'].includes(plan) && this.billing.purchase !== false) {
+                    // A live subscription is never switched from a link: the provider does that on Konto, with the question.
+                    if (this.billing.hasSubscription) { this.activeTab = 'account'; return; }
+                    try {
+                        const res = await this.api('/api/haldus/billing/checkout', { method: 'POST', body: JSON.stringify({ plan }) });
+                        const d = await this.okJson(res, this.t('actionFailed'));
+                        if (d.url) {
+                            try { if (pricing) localStorage.setItem(KEY, JSON.stringify({ email: note.email, pricing: true })); } catch { /* the price step is skipped */ }
+                            location.href = d.url;
+                            return;
+                        }
+                    } catch (e) { this.billingError = e.message; this.activeTab = 'account'; return; }
+                }
+                if (pricing) { this.pricingStep = true; this.activeTab = 'services'; }
             },
             async sendMagicLink() {
                 if (!this.loginEmail || this.loginSending) return;
                 this.loginSending = true; this.loginError = '';
                 try {
                     const res = await fetch('/api/haldus/magic-link', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: this.loginEmail.trim().toLowerCase() }) });
-                    if (res.ok) { const d = await res.json().catch(() => ({})); this.loginPortal = !!d.portal; this.loginSent = true; } else this.loginError = this.t('linkFailed');
+                    if (res.ok) {
+                        const d = await res.json().catch(() => ({})); this.loginPortal = !!d.portal; this.loginSent = true;
+                        // The plan picked on the landing page follows an existing provider through the login link.
+                        try { if (this.signupPlan) localStorage.setItem('sukoda_signup_step', JSON.stringify({ email: this.loginEmail.trim().toLowerCase(), pricing: false, plan: this.signupPlan })); } catch { /* the plan is picked on Konto instead */ }
+                    } else this.loginError = this.t('linkFailed');
                 } catch { this.loginError = this.t('netFail'); } finally { this.loginSending = false; }
             },
 
