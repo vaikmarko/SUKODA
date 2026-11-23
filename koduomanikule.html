@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <style>[x-cloak] { display: none !important; }</style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SUKODA | Tead alati, millal koristaja tuleb.</title>
+    <title>SUKODA | Tead alati, millal koduhooldaja tuleb.</title>
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="assets/logo/icon-s-black.svg">
@@ -17,7 +17,7 @@
     </script>
     
     <!-- Open Graph -->
-    <meta property="og:title" content="SUKODA | Tead alati, millal koristaja tuleb.">
+    <meta property="og:title" content="SUKODA | Tead alati, millal koduhooldaja tuleb.">
     <meta property="og:description" content="Järgmine aeg on sinu telefonis. Aja muutmine ja lisasoovid käivad ühe puutega. Sulle on see tasuta.">
     <meta property="og:image" content="https://sukoda.ee/assets/images/product/minu-ulevaade.png">
     <meta property="og:url" content="https://sukoda.ee/koduomanikule">
@@ -53,8 +53,8 @@
                 <nav class="w-nav" :aria-label="t('menu')">
                     <span class="w-nav-links">
                     <a class="w-nv" href="#sammud" x-text="t('navHow')">Kuidas see käib</a>
-                    <a class="w-nv" href="/" x-text="t('navCleaner')">Koristajale</a>
-                    <a class="w-nv" href="#kutsu" x-text="t('navInvite')">Kutsu koristaja</a>
+                    <a class="w-nv" href="/" x-text="t('navCleaner')">Koduhooldajale</a>
+                    <a class="w-nv" href="#kutsu" x-text="t('navInvite')">Kutsu koduhooldaja</a>
                     </span>
                     <span class="w-lang" x-data="{ open: false }" @click.outside="open = false" @keydown.escape="open = false">
                         <button type="button" class="w-nv w-lang-btn" @click="open = !open" :aria-expanded="open" :aria-label="t('langLabel')"><span x-text="lang.toUpperCase()">ET</span><svg viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -73,10 +73,10 @@
                 <div class="w-hero-text">
                     <span class="w-acc"></span>
                     <p class="eyebrow" x-text="t('heroKicker')">Koduomanikule</p>
-                    <h1 class="w-h1"><span x-text="t('heroTitle1')">Tead alati, millal</span> <span class="w-it" x-text="t('heroTitle2')">koristaja tuleb.</span></h1>
+                    <h1 class="w-h1"><span x-text="t('heroTitle1')">Tead alati, millal</span> <span class="w-it" x-text="t('heroTitle2')">koduhooldaja tuleb.</span></h1>
                     <p class="w-lead" x-text="t('heroLead')">Järgmine aeg on sinu telefonis. Aja muutmine ja lisasoovid käivad ühe puutega, ilma helistamata. Sulle on see tasuta.</p>
                     <div class="w-actions">
-                        <a class="w-btn" href="#kutsu" x-text="t('inviteCta')">Kutsu oma koristaja</a>
+                        <a class="w-btn" href="#kutsu" x-text="t('inviteCta')">Kutsu oma koduhooldaja</a>
                         <a class="w-btn-2" href="/lunasta" x-text="t('haveInvite')">Mul on kutse</a>
                     </div>
                 </div>
@@ -120,7 +120,7 @@
                 <div class="w-step">
                     <p class="w-step-num">01</p>
                     <p class="eyebrow" x-text="t('step1Eyebrow')">Sina</p>
-                    <h3 x-text="t('step1Title')">Kutsu oma koristaja</h3>
+                    <h3 x-text="t('step1Title')">Kutsu oma koduhooldaja</h3>
                     <p class="w-step-text" x-text="t('step1Text')">Kirjuta tema e-post. Saadame talle tasuta töölaua kutse.</p>
                 </div>
                 <div class="w-step">
@@ -150,7 +150,7 @@
                         </div>
                         <div class="w-feat">
                             <h3 x-text="t('what2Title')">Muudad aega</h3>
-                            <p x-text="t('what2Text')">Valid uue päeva ja koristaja kinnitab. Kumbki ei pea helistama.</p>
+                            <p x-text="t('what2Text')">Valid uue päeva ja koduhooldaja kinnitab. Kõik käib äpis.</p>
                         </div>
                         <div class="w-feat">
                             <h3 x-text="t('what3Title')">Lisad soove</h3>
@@ -183,7 +183,7 @@
         }
     }">
         <div class="w-wrap">
-            <h2 class="w-h2-xl" x-text="sent ? t('sentTitle') : t('inviteCta')">Kutsu oma koristaja</h2>
+            <h2 class="w-h2-xl" x-text="sent ? t('sentTitle') : t('inviteCta')">Kutsu oma koduhooldaja</h2>
             <p class="w-lead" x-text="sent ? t('sentText') : t('inviteLead')">Talle on esimesed kolm kodu tasuta, sulle alati.</p>
             <form class="w-form" x-show="!sent" @submit.prevent="submit()">
                 <input class="w-input" type="email" x-model="partnerEmail" required autocomplete="off" inputmode="email" :placeholder="t('keeperEmail')" :aria-label="t('keeperEmail')">
@@ -198,13 +198,13 @@
         <div class="w-wrap w-foot-main">
             <div>
                 <span class="w-logo">SUKODA</span>
-                <p class="w-foot-text" x-text="t('footTagline')">Koristaja ja klient näevad sama aega, samu soove ja sama hinda.</p>
+                <p class="w-foot-text" x-text="t('footTagline')">Koduhooldaja ja klient näevad sama aega, samu soove ja sama hinda.</p>
             </div>
             <nav :aria-label="t('footSite')">
                 <p class="eyebrow" x-text="t('footSite')">Leht</p>
                 <a class="w-fl" href="#sammud" x-text="t('navHow')">Kuidas see käib</a>
-                <a class="w-fl" href="/" x-text="t('navCleaner')">Koristajale</a>
-                <a class="w-fl" href="#kutsu" x-text="t('navInvite')">Kutsu koristaja</a>
+                <a class="w-fl" href="/" x-text="t('navCleaner')">Koduhooldajale</a>
+                <a class="w-fl" href="#kutsu" x-text="t('navInvite')">Kutsu koduhooldaja</a>
                 <a class="w-fl" href="/app" x-text="t('login')">Sisene</a>
             </nav>
             <div>
@@ -278,9 +278,9 @@
                 pvTabAccount: { et: 'Konto', en: 'Account', ru: 'Профиль' },
 
                 footTagline: {
-                    et: 'Koristaja ja klient näevad sama aega, samu soove ja sama hinda.',
-                    en: 'The cleaner and the client see the same time, the same requests and the same price.',
-                    ru: 'Специалист по уборке и клиент видят одно и то же время, пожелания и цену.',
+                    et: 'Koduhooldaja ja klient näevad sama aega, samu soove ja sama hinda.',
+                    en: 'The housekeeper and the client see the same time, the same requests and the same price.',
+                    ru: 'Специалист по дому и клиент видят одно и то же время, пожелания и цену.',
                 },
                 footSite: { et: 'Leht', en: 'Site', ru: 'Сайт' },
                 footContact: { et: 'Kontakt', en: 'Contact', ru: 'Контакты' },
@@ -293,31 +293,31 @@
                 cookieDecline: { et: 'Keeldu', en: 'Decline', ru: 'Отклонить' },
                 cookieAccept: { et: 'Nõustun', en: 'Accept', ru: 'Принять' },
 
-                navCleaner: { et: 'Koristajale', en: 'For cleaners', ru: 'Специалистам по уборке' },
-                navInvite: { et: 'Kutsu koristaja', en: 'Invite a cleaner', ru: 'Пригласить специалиста' },
+                navCleaner: { et: 'Koduhooldajale', en: 'For housekeepers', ru: 'Специалистам по дому' },
+                navInvite: { et: 'Kutsu koduhooldaja', en: 'Invite a housekeeper', ru: 'Пригласить специалиста' },
 
                 heroKicker: { et: 'Koduomanikule', en: 'For homeowners', ru: 'Владельцам жилья' },
                 heroTitle1: { et: 'Tead alati, millal', en: 'You always know when', ru: 'Вы всегда знаете, когда' },
-                heroTitle2: { et: 'koristaja tuleb.', en: 'the cleaner is coming.', ru: 'придёт специалист.' },
+                heroTitle2: { et: 'koduhooldaja tuleb.', en: 'the housekeeper is coming.', ru: 'придёт специалист.' },
                 heroLead: {
                     et: 'Järgmine aeg on sinu telefonis. Aja muutmine ja lisasoovid käivad ühe puutega, ilma helistamata. Sulle on see tasuta.',
                     en: 'The next visit is on your phone. Changing the time and adding requests takes one tap, with no phone calls. It is free for you.',
                     ru: 'Следующий визит всегда в вашем телефоне. Перенести время и добавить пожелания можно одним касанием, без звонков. Для вас это бесплатно.',
                 },
-                inviteCta: { et: 'Kutsu oma koristaja', en: 'Invite your cleaner', ru: 'Пригласить своего специалиста' },
+                inviteCta: { et: 'Kutsu oma koduhooldaja', en: 'Invite your housekeeper', ru: 'Пригласить своего специалиста' },
                 noteFrom: { et: 'Kristi kirjutas', en: 'Kristi wrote', ru: 'Кристи написала' },
                 noteText: { et: 'Tehtud. Lilled on vaasis ja aknad pestud.', en: 'Done. The flowers are in the vase and the windows are washed.', ru: 'Готово. Цветы в вазе, окна вымыты.' },
                 noteWhen: { et: 'Teisipäev, 13:05', en: 'Tuesday, 13:05', ru: 'Вторник, 13:05' },
 
                 stepsTitle: { et: 'Nii see käib', en: 'How it works', ru: 'Как это работает' },
                 step1Eyebrow: { et: 'Sina', en: 'You', ru: 'Вы' },
-                step1Title: { et: 'Kutsu oma koristaja', en: 'Invite your cleaner', ru: 'Пригласите специалиста' },
+                step1Title: { et: 'Kutsu oma koduhooldaja', en: 'Invite your housekeeper', ru: 'Пригласите специалиста' },
                 step1Text: {
                     et: 'Kirjuta tema e-post. Saadame talle tasuta töölaua kutse.',
                     en: 'Enter their e-mail. We send them an invitation to a free desk.',
                     ru: 'Укажите его эл. почту. Мы отправим приглашение открыть бесплатный рабочий стол.',
                 },
-                step2Eyebrow: { et: 'Tema', en: 'Your cleaner', ru: 'Специалист' },
+                step2Eyebrow: { et: 'Tema', en: 'Your housekeeper', ru: 'Специалист' },
                 step2Title: { et: 'Ta lisab sinu kodu', en: 'They add your home', ru: 'Добавляет ваш дом' },
                 step2Text: {
                     et: 'Aeg, rütm ja kokkulepitud hind on kirjas ühes kohas.',
@@ -341,9 +341,9 @@
                 },
                 what2Title: { et: 'Muudad aega', en: 'Change the time', ru: 'Переносите время' },
                 what2Text: {
-                    et: 'Valid uue päeva ja koristaja kinnitab. Kumbki ei pea helistama.',
-                    en: 'You pick a new day and the cleaner confirms. Neither of you has to call.',
-                    ru: 'Вы выбираете новый день, специалист подтверждает. Звонить никому не нужно.',
+                    et: 'Valid uue päeva ja koduhooldaja kinnitab. Kõik käib äpis.',
+                    en: 'You pick a new day and the housekeeper confirms. It all happens in the app.',
+                    ru: 'Вы выбираете новый день, специалист подтверждает. Всё происходит в приложении.',
                 },
                 what3Title: { et: 'Lisad soove', en: 'Add requests', ru: 'Добавляете пожелания' },
                 what3Text: {
@@ -363,15 +363,15 @@
                     en: 'For them the first three homes are free. For you it is always free.',
                     ru: 'Для специалиста первые три дома бесплатно, для вас бесплатно всегда.',
                 },
-                keeperEmail: { et: 'Koristaja e-post', en: 'Cleaner’s e-mail', ru: 'Эл. почта специалиста' },
+                keeperEmail: { et: 'Koduhooldaja e-post', en: 'Housekeeper’s e-mail', ru: 'Эл. почта специалиста' },
                 yourEmail: { et: 'Sinu e-post', en: 'Your e-mail', ru: 'Ваша эл. почта' },
                 sendInvite: { et: 'Saada kutse', en: 'Send invitation', ru: 'Отправить приглашение' },
                 sendingShort: { et: 'Saadan…', en: 'Sending…', ru: 'Отправка…' },
                 sendError: { et: 'Saatmine ebaõnnestus. Kontrolli aadresse või kirjuta tere@sukoda.ee.', en: 'Could not send. Check the addresses or write to tere@sukoda.ee.', ru: 'Не удалось отправить. Проверьте адреса или напишите на tere@sukoda.ee.' },
                 sentTitle: { et: 'Kutse saadetud.', en: 'Invitation sent.', ru: 'Приглашение отправлено.' },
                 sentText: {
-                    et: 'Kui koristaja sinu kodu lisab, saad sisenemislingi e-postile.',
-                    en: 'Once the cleaner adds your home, your sign-in link arrives by e-mail.',
+                    et: 'Kui koduhooldaja sinu kodu lisab, saad sisenemislingi e-postile.',
+                    en: 'Once the housekeeper adds your home, your sign-in link arrives by e-mail.',
                     ru: 'Когда специалист добавит ваш дом, ссылка для входа придёт на почту.',
                 },
             },
