@@ -35,7 +35,7 @@
     })();
     </script>
     <script src="/push.js"></script>
-    <script src="/assets/js/minu/kodu.js?v=18"></script>
+    <script src="/assets/js/minu/kodu.js?v=19"></script>
     <script type="module" src="/assets/js/minu/mount.js"></script>
     <script type="module" src="/assets/js/main.js"></script>
 </head>
@@ -1972,6 +1972,38 @@
         const who = this.showProvider ? (b.providerName || this.order?.provider?.name || '') : '';
         return [this.t('doneOn', { date: this.formatDateLong(b.scheduledAt) }), this.visitLabel(b), who].filter(Boolean).join(' · ');
     },
+    /** Address before the comma. A home with no address keeps the first name so the title is never empty. */
+    homeTitle() {
+        const address = String(this.order?.customerAddress || this.order?.address || '').trim();
+        if (address) return address.split(',')[0].trim();
+        const name = String(this.viewer?.name || this.order?.customerName || '').trim().split(/\s+/)[0];
+        return name ? this.t('hello') + name : this.t('tabKodu');
+    },
+    /** The confirmed next visit. A time still waiting for a yes stays on the plain card. */
+    homeVisit() {
+        const n = this.nextThing;
+        if (!n || n.kind !== 'visit' || n.pending) return null;
+        return (this.upcomingBookings || []).find((b) => b.id === n.refId) || null;
+    },
+    homeWeekdayDate(iso) {
+        if (!iso) return '';
+        const s = window.SUKODA_TIME.formatDate(iso, this.locale(), { weekday: 'long', day: 'numeric', month: 'long' });
+        return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+    },
+    homeDay(iso) {
+        if (!iso) return '';
+        return window.SUKODA_TIME.formatDate(iso, this.locale(), { day: 'numeric', month: 'long' });
+    },
+    cleanerFirst(b) {
+        const name = (b && b.providerName) || this.order?.provider?.name || '';
+        return String(name).trim().split(/\s+/)[0] || '';
+    },
+    /** Estonian „Kirjuta Kristile“. A vowel takes -le, anything else -ile. Other languages keep the name as it is. */
+    cleanerTo() {
+        const name = this.cleanerFirst(this.homeVisit()) || this.cleanerFirst(null);
+        if (!name || this.lang !== 'et') return name;
+        return /[aeiouõäöü]$/i.test(name) ? name + 'le' : name + 'ile';
+    },
     /** Requests that wait on the resident's own decision (a declined time, a reply to act on) — the only thing worth a badge */
     get needsYou() {
         return (this.extras.requests || []).filter(r => r.status === 'declined').length;
@@ -2107,7 +2139,7 @@
         <!-- ═══════════════════════════════════════════════ -->
         <!-- STATE 2: LOGGED IN                              -->
         <!-- ═══════════════════════════════════════════════ -->
-        <div x-show="!loading && authenticated" x-cloak class="min-w-0 overflow-x-clip p-has-tabbar">
+        <div x-show="!loading && authenticated" x-cloak class="min-w-0 overflow-x-clip p-has-dock">
 
             <!-- Navigation -->
             <nav class="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm grid-line-b" aria-label="Main navigation">
@@ -2127,7 +2159,7 @@
             </nav>
 
             <!-- Welcome header: shown on Kodu/Calendar so Teenused, Kaust and Minu open straight at the top -->
-            <div class="grid-line-b overflow-hidden" x-show="(activeTab === 'overview' || activeTab === 'visits') && nextThing.kind !== 'loading'" x-cloak>
+            <div class="grid-line-b overflow-hidden" x-show="activeTab === 'visits' && nextThing.kind !== 'loading'" x-cloak>
                 <div class="grid grid-cols-1 lg:grid-cols-12 items-stretch min-w-0">
                     <div class="px-6 md:px-12 py-8 md:py-12 flex flex-col justify-center min-w-0" :class="brand?.image ? 'lg:col-span-7' : 'lg:col-span-12'">
                         <div class="accent-line mb-4"></div>
@@ -2159,20 +2191,20 @@
             </div>
 
             <!-- Mobile bottom tab bar -->
-            <nav class="p-tabbar" aria-label="Mobile navigation">
-                <button type="button" @click="activeTab = 'overview'; window.scrollTo({ top: 0, behavior: 'smooth' })" :class="(activeTab === 'overview' || activeTab === 'visits') ? 'is-active' : ''" :aria-current="(activeTab === 'overview' || activeTab === 'visits') ? 'page' : 'false'" class="p-tabbar-btn">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"/></svg>
+            <nav class="p-dock" aria-label="Mobile navigation">
+                <button type="button" @click="activeTab = 'overview'; window.scrollTo({ top: 0, behavior: 'smooth' })" :class="(activeTab === 'overview' || activeTab === 'visits') ? 'is-active' : ''" :aria-current="(activeTab === 'overview' || activeTab === 'visits') ? 'page' : null" class="p-dock-btn">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"/></svg>
                     <span x-text="t('tabKodu')"></span>
                 </button>
-                <button type="button" @click="activeTab = 'extras'; window.scrollTo({ top: 0, behavior: 'smooth' })" :class="activeTab === 'extras' ? 'is-active' : ''" :aria-current="activeTab === 'extras' ? 'page' : 'false'" class="p-tabbar-btn">
+                <button type="button" @click="activeTab = 'extras'; window.scrollTo({ top: 0, behavior: 'smooth' })" :class="activeTab === 'extras' ? 'is-active' : ''" :aria-current="activeTab === 'extras' ? 'page' : null" class="p-dock-btn">
                     <span class="relative inline-flex">
-                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5.5A1.5 1.5 0 015.5 4h4A1.5 1.5 0 0111 5.5v4A1.5 1.5 0 019.5 11h-4A1.5 1.5 0 014 9.5v-4zm9 0A1.5 1.5 0 0114.5 4h4A1.5 1.5 0 0120 5.5v4a1.5 1.5 0 01-1.5 1.5h-4A1.5 1.5 0 0113 9.5v-4zM4 14.5A1.5 1.5 0 015.5 13h4a1.5 1.5 0 011.5 1.5v4A1.5 1.5 0 019.5 20h-4A1.5 1.5 0 014 18.5v-4zm12.5-1v6m-3-3h6"/></svg>
+                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 8v8M8 12h8"/></svg>
                         <span x-show="needsYou" x-cloak class="absolute -top-0.5 -right-1.5 w-2 h-2 rounded-full bg-accent" aria-hidden="true"></span>
                     </span>
                     <span x-text="t('tabServices')"></span>
                 </button>
-                <button type="button" @click="activeTab = 'mine'; window.scrollTo({ top: 0, behavior: 'smooth' })" :class="activeTab === 'mine' ? 'is-active' : ''" :aria-current="activeTab === 'mine' ? 'page' : 'false'" class="p-tabbar-btn">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.5 7.5a3.5 3.5 0 11-7 0 3.5 3.5 0 017 0zM4.5 19.5a7.5 7.5 0 0115 0"/></svg>
+                <button type="button" @click="activeTab = 'mine'; window.scrollTo({ top: 0, behavior: 'smooth' })" :class="activeTab === 'mine' ? 'is-active' : ''" :aria-current="activeTab === 'mine' ? 'page' : null" class="p-dock-btn">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path stroke-linecap="round" d="M4.5 20a7.5 7.5 0 0115 0"/></svg>
                     <span x-text="t('tabMine')"></span>
                 </button>
             </nav>
@@ -2189,28 +2221,51 @@
 
                 <div x-show="activeTab === 'overview'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
   <div class="max-w-xl">
-    <article class="p-next">
-      <div class="p-next-hd">
-        <p class="eyebrow" x-text="nextThing.eyebrow"></p>
+    <h1 class="p-home-title" x-show="nextThing.kind !== 'loading'" x-text="homeTitle()"></h1>
+
+    <article class="p-sheet p-6 mt-5" x-show="homeVisit()" x-cloak>
+      <p class="eyebrow" x-text="t('nextVisitEyebrow')"></p>
+      <p class="p-clock" x-text="homeVisit() ? formatTime(homeVisit().scheduledAt) : ''"></p>
+      <p class="mt-1.5 text-lg" x-text="homeVisit() ? homeWeekdayDate(homeVisit().scheduledAt) : ''"></p>
+      <div class="mt-5 pt-4 border-t border-line flex items-center gap-3" x-show="cleanerFirst(homeVisit())">
+        <span class="font-serif text-xl w-10 h-10 rounded-full bg-cream inline-flex items-center justify-center shrink-0" x-text="(cleanerFirst(homeVisit()) || ' ').charAt(0)"></span>
+        <div class="min-w-0">
+          <p class="text-base font-medium" x-text="cleanerFirst(homeVisit())"></p>
+          <p class="text-sm text-muted font-light" x-text="homeVisit() ? visitLabel(homeVisit()) : ''"></p>
+        </div>
       </div>
-      <div class="p-next-bd">
-        <h2 class="font-serif text-2xl md:text-3xl font-light" x-text="nextThing.title"></h2>
-        <p class="text-sm text-muted font-sans font-light mt-3 max-w-lg" x-text="nextThing.body"></p>
-        <p x-show="nextThing.thenLine" x-cloak class="text-sm text-muted font-sans font-light mt-4" x-text="nextThing.thenLine"></p>
-        <button type="button" class="p-btn mt-8 w-full sm:w-auto" x-show="nextThing.action" @click="runNext()" x-text="nextThing.action"></button>
-        <button type="button" class="text-sm font-sans mt-4 underline underline-offset-4" x-show="nextThing.action2" x-cloak @click="runNext(nextThing.kind2)" x-text="nextThing.action2"></button>
-      </div>
+      <p x-show="nextThing.thenLine" x-cloak class="text-sm text-muted font-light mt-4" x-text="nextThing.thenLine"></p>
+      <button type="button" class="p-sheet-btn" @click="runNext()" x-text="t('reschedule')"></button>
     </article>
-    <!-- The last visit that happened: one line, cleaner's note if any, and one-tap feedback -->
-    <div x-show="lastVisit && nextThing.kind !== 'loading'" x-cloak class="mt-8">
-        <p class="eyebrow" x-text="t('lastVisitLabel')"></p>
-        <p class="text-sm font-sans font-light mt-2" x-text="lastVisitLine(lastVisit)"></p>
-        <p x-show="lastVisit?.completedNote" class="text-sm text-muted font-sans font-light mt-1.5" x-text="lastVisit?.completedNote"></p>
-        <button type="button" x-show="hasCleaner || lastVisit?.providerName" class="text-sm font-sans mt-3 underline underline-offset-4 hover:text-accent transition-colors" @click="openVisitFeedback(lastVisit)" x-text="t('feedbackAction')"></button>
-    </div>
-    <div class="flex flex-wrap items-center gap-x-6 gap-y-2 mt-6" x-show="nextThing.kind !== 'loading'" x-cloak>
-        <button type="button" class="text-sm font-sans underline underline-offset-4" x-show="nextThing.kind !== 'away' && !(nextThing.kind === 'visit' && nextThing.pending) && (upcomingBookings.length || pastBookings.length)" @click="activeTab = 'visits'" x-text="t('seeCalendar')"></button>
-        <button type="button" class="text-sm font-sans underline underline-offset-4 hover:text-accent transition-colors" x-show="!lastVisit && hasCleaner" @click="openVisitFeedback(null)" x-text="t('writeCleaner')"></button>
+
+    <article class="p-sheet p-6 mt-5" x-show="!homeVisit() && nextThing.kind !== 'loading'" x-cloak>
+      <p class="eyebrow" x-text="nextThing.eyebrow"></p>
+      <h2 class="font-serif text-2xl font-light mt-3" x-text="nextThing.title"></h2>
+      <p class="text-sm text-muted font-light mt-3" x-text="nextThing.body"></p>
+      <p x-show="nextThing.thenLine" x-cloak class="text-sm text-muted font-light mt-4" x-text="nextThing.thenLine"></p>
+      <button type="button" class="p-btn mt-6 w-full" x-show="nextThing.action" @click="runNext()" x-text="nextThing.action"></button>
+      <button type="button" class="text-sm font-sans mt-4 underline underline-offset-4" x-show="nextThing.action2" x-cloak @click="runNext(nextThing.kind2)" x-text="nextThing.action2"></button>
+    </article>
+
+    <button type="button" class="p-sheet mt-3.5 w-full px-5 py-4 flex items-center justify-between gap-3 text-left" x-show="lastVisit && nextThing.kind !== 'loading'" x-cloak @click="openVisitFeedback(lastVisit)">
+      <span class="min-w-0">
+        <span class="eyebrow" x-text="t('lastVisitLabel')"></span>
+        <span class="block mt-1.5 text-sm" x-text="(lastVisit ? homeDay(lastVisit.scheduledAt) : '') + ' · ' + t('feedbackShort')"></span>
+        <span x-show="lastVisit && lastVisit.completedNote" class="block text-sm text-muted font-light mt-1" x-text="lastVisit && lastVisit.completedNote"></span>
+      </span>
+      <svg class="w-5 h-5 shrink-0 text-muted" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/></svg>
+    </button>
+
+    <button type="button" class="p-sheet mt-3.5 w-full px-5 h-16 flex items-center justify-between gap-3 text-left" x-show="cleanerFirst(homeVisit()) && nextThing.kind !== 'loading'" x-cloak @click="openVisitFeedback(lastVisit)">
+      <span class="inline-flex items-center gap-3 text-base font-medium min-w-0">
+        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 5h14a1 1 0 011 1v9a1 1 0 01-1 1h-7l-4 4v-4H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg>
+        <span x-text="t('writeTo', { name: cleanerTo() })"></span>
+      </span>
+      <svg class="w-5 h-5 shrink-0 text-muted" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/></svg>
+    </button>
+
+    <div class="mt-6" x-show="nextThing.kind !== 'loading'" x-cloak>
+      <button type="button" class="text-sm font-sans underline underline-offset-4" x-show="nextThing.kind !== 'away' && !(nextThing.kind === 'visit' && nextThing.pending) && (upcomingBookings.length || pastBookings.length)" @click="activeTab = 'visits'" x-text="t('seeCalendar')"></button>
     </div>
     <p x-show="brand?.emergencyPhone" x-cloak class="text-sm text-muted font-sans font-light mt-6">
       <span x-text="t('emergency') + ': '"></span><a :href="'tel:' + (brand?.emergencyPhone || '').replace(/\s+/g, '')" class="text-black hover:text-accent" x-text="brand?.emergencyPhone"></a>

@@ -1,7 +1,7 @@
 import { add } from './dict.js';
 
 add({
-  tabServices: { et: 'Teenused', en: 'Services', ru: 'Услуги' },
+  tabServices: { et: 'Telli', en: 'Book', ru: 'Услуги' },
   yoursTitle: { et: 'Sinu teenused', en: 'Your services', ru: 'Ваши услуги' },
   yoursEmpty: { et: 'Kinnitatud aega veel ei ole. Vali allpool teenus.', en: 'No time is confirmed yet. Choose a service below.', ru: 'Подтверждённого времени пока нет. Выберите услугу ниже.' },
   addTitle: { et: 'Lisa juurde', en: 'Add more', ru: 'Добавить ещё' },

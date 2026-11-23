@@ -1,0 +1,30 @@
+# Elanik näeb Kodu vaadet uue kujunduse järgi
+
+## TL;DR
+🎯 Elaniku telefonis on hõljuv jalus Kodu · Telli · Konto ja Kodu vaade algab aadressi ning järgmise visiidi kellaga.
+Selle pärast ei pea elanik enam vana nelja sakiga pilti ja „Tere, Anna“ päist kodu ekraaniks pidama: ekraan ütleb, mis kodu see on ja millal koristaja tuleb.
+Mis puudub või on katki: `docs/disain/ekraanid/Main.html` on kinnitatud, `minu.html` joonistab ikka vana päise ja alumise riba.
+Mida teen: jalus ja Kodu vaate rahulik olek (visiit on olemas) saavad kujunduse välimuse. Teised olekud (makse, uus aeg, tühi kodu) jäävad alles, samasse kaardikujusse.
+Visuaalne mõju: telefonis hõljuv kreemjas jalus, aktiivne nupp must; Kodu pealkiri on aadress, visiidikaardil suur kell.
+Mida testida: ava elaniku Kodu telefonilaiuses, kui visiit on olemas ja kui seda ei ole. Töölaud jääb vana jalusega.
+
+## Lõigud
+1. Elaniku jalus ja Kodu vaade. Ehitatud. Keelevalik ja väljalogimine jäävad ülemisse riba, kuni Konto ekraan need üle võtab.
+2. Telli ja selle alamekraanid (koristus, lilled). Vajab lõigu 1 jalust.
+3. Konto ja selle read (kokkulepe, soovita, keel, väljalogimine). Vajab lõigu 1 jalust. Keelevalik ja väljalogimine jäävad seniks ülemisse riba, sest Konto ekraan tuleb alles lõigus 3.
+4. Koristaja jalus ja Töölaud. Oma lõik, elaniku klassi ei jaga.
+5. Veebi avaleht (`index.html`), et telefonipilt ei näitaks enam Kausta.
+
+## Tehniline plaan
+- Ekraan: `minu.html` Kodu plokk ja alumine nav. Andmeid ei kirjutata, `fetch` jääb samaks. `runNext()` ja `openVisitFeedback()` jäävad nuppude taha.
+- Uued klassid ainult `assets/css/main.css`: `.p-dock`, `.p-dock-btn`, `.p-has-dock`, `.p-home-title`, `.p-clock`, `.p-sheet`, `.p-sheet-btn`. `.p-tabbar` jääb töölauale.
+- Sildid kujundusest: Kodu / Telli / Konto, Home / Book / Account, Главная / Услуги / Профиль. Võtmed `tabKodu`, `tabServices`, `tabMine` failides `kodu.js`, `telli.js`, `minu.js`.
+- Uued laused `kodu.js`: `nextVisitEyebrow`, `feedbackShort`, `writeTo`. Tühi kodu viitab Telli sildile.
+- Kodu pealkiri on aadress enne koma. Aadressita kodul jääb eesnimi, et pealkiri ei oleks tühi.
+- Suur kell ainult siis, kui `nextThing.kind === 'visit'` ja aeg ei ole kinnitamisel. Muud olekud jäävad senise kaardi teksti ja nupuga.
+- „Vaata kalendrit“ jääb tekstilingiks, sest visiitide nimekirjal ei ole oma sakki.
+- Test: olemasolevad `kodu.test.mjs` peavad jääma roheliseks. Välimust kontrollib brauser telefonilaiuses.
+- Plaan `PLATVORMIPLAAN_2026.md`: EI OLE VAJA.
+
+## Väljaspool skoopi
+Lilled 35 €, „Juhata kohale“, koristaja ekraanid, avaleht, sisselogimine, poe rakendus.

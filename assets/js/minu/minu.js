@@ -1,7 +1,7 @@
 import { add } from './dict.js';
 
 add({
-  tabMine: { et: 'Minu', en: 'Profile', ru: 'Профиль' },
+  tabMine: { et: 'Konto', en: 'Account', ru: 'Профиль' },
   langLabel: { et: 'Keel', en: 'Language', ru: 'Язык' },
   accessSaved: { et: 'Juhis on kirjas', en: 'The note is saved', ru: 'Указание записано' },
   profileTitle: { et: 'Juhised koristajale', en: 'Notes for the cleaner', ru: 'Указания для специалиста по уборке' },
