@@ -343,13 +343,6 @@
         }
       },
       {
-        "source": "/api/sales-inquiry",
-        "function": {
-          "functionId": "salesInquiry",
-          "region": "europe-west1"
-        }
-      },
-      {
         "source": "/api/waitlist",
         "function": {
           "functionId": "waitlist",
@@ -357,23 +350,9 @@
         }
       },
       {
-        "source": "/api/redeem",
-        "function": {
-          "functionId": "redeemGift",
-          "region": "europe-west1"
-        }
-      },
-      {
         "source": "/api/slots",
         "function": {
           "functionId": "getPublicSlots",
-          "region": "europe-west1"
-        }
-      },
-      {
-        "source": "/api/book-gift",
-        "function": {
-          "functionId": "bookGiftVisit",
           "region": "europe-west1"
         }
       },
@@ -416,13 +395,6 @@
         "source": "/api/admin/generate-gift-cards",
         "function": {
           "functionId": "generatePhysicalGiftCards",
-          "region": "europe-west1"
-        }
-      },
-      {
-        "source": "/api/gift-upgrade",
-        "function": {
-          "functionId": "createGiftUpgrade",
           "region": "europe-west1"
         }
       },

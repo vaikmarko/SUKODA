@@ -44,27 +44,11 @@ const waitlistSchema = z.object({
   lang: z.enum(['et', 'en']).optional().default('et'),
 });
 
-const bookGiftSchema = z.object({
-  code: z.string().min(4).max(30),
-  startTime: z.string().min(10).max(50),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  time: z.string().regex(/^\d{2}:\d{2}$/).optional(),
-  email: z.string().email().max(320).optional(),
-  phone: z.string().max(30).optional().default(''),
-  address: z.string().max(500).optional().default(''),
-  additionalInfo: z.string().max(2000).optional().default(''),
-});
-
 const bookSubscriptionSchema = z.object({
   orderId: z.string().min(1).max(100),
   startTime: z.string().min(10).max(50),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   time: z.string().regex(/^\d{2}:\d{2}$/).optional(),
-});
-
-const giftUpgradeSchema = z.object({
-  code: z.string().min(4).max(30),
-  newSize: z.enum(['small', 'medium', 'large']),
 });
 
 const estateInquirySchema = z.object({
@@ -74,15 +58,6 @@ const estateInquirySchema = z.object({
   additionalInfo: z.string().max(2000).optional().default(''),
   selectedRhythm: z.string().max(50).optional().default(''),
   lang: z.enum(['et', 'en']).optional().default('et'),
-});
-
-const salesInquirySchema = z.object({
-  name: z.string().min(1).max(200),
-  email: z.string().email().max(320),
-  phone: z.string().max(30).optional().default(''),
-  company: z.string().max(200).optional().default(''),
-  message: z.string().max(2000).optional().default(''),
-  giftCode: z.string().max(30).optional().default(''),
 });
 
 function validate(schema, data) {
@@ -97,10 +72,7 @@ function validate(schema, data) {
 module.exports = {
   checkoutSchema,
   waitlistSchema,
-  bookGiftSchema,
   bookSubscriptionSchema,
-  giftUpgradeSchema,
   estateInquirySchema,
-  salesInquirySchema,
   validate,
 };
