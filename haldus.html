@@ -1587,6 +1587,8 @@
             colleagueWaiting: { et: 'Ootab esimest klienti', en: 'Waiting for a first client' },
             colleagueRewarded: { et: 'Kuu tasuta saadud', en: 'Free month received' },
             freeUntil: { et: 'tasuta kuni {date}', en: 'free until {date}' },
+            colleagueRewardToast: { et: '{name} lisas esimese kliendi. Teil mõlemal on nüüd kuu Standardit tasuta.', en: '{name} added a first client. You both have a free month of Standard now.' },
+            freeMonthToast: { et: 'Sul on Standard tasuta kuni {date}.', en: 'You have Standard free until {date}.' },
             currentPlan: { et: 'Praegune', en: 'Current' },
             perMonth: { et: '€/kuus', en: '€/month' },
             switchPlan: { et: 'Vaheta', en: 'Switch' },
@@ -1810,6 +1812,7 @@
                     this.inviteCards = d.inviteCards || [];
                     this.colleagueUrl = d.colleagueUrl || '';
                     this.colleagues = d.colleagues || [];
+                    this.noticeFreeMonth();
                     this.profileForm = {
                         name: d.provider.name || '',
                         businessName: d.provider.businessName || '',
@@ -2556,6 +2559,24 @@
                 if (!date) return '';
                 const line = this.t('firstVisit', { when: this.fmtDateLong(date), time: f.time, hours: this.durationForSize(f.size) / 60 });
                 return (f.frequency !== 'once' && this.holidayName(date)) ? line + ' ' + this.t('holidaySkip') : line;
+            },
+            /** Once per new free month: the inviter when a colleague's first client lands, the colleague when the month starts. No e-mail (Marko 23.11). */
+            noticeFreeMonth() {
+                try {
+                    const won = this.colleagues.filter((c) => c.rewarded);
+                    const seenCount = Number(localStorage.getItem('sukoda_colleague_seen') || 0);
+                    if (won.length > seenCount) {
+                        localStorage.setItem('sukoda_colleague_seen', String(won.length));
+                        if (this.billing.grantUntil) localStorage.setItem('sukoda_grant_seen', this.billing.grantUntil);
+                        this.showToast(this.t('colleagueRewardToast', { name: won[won.length - 1].name }));
+                        return;
+                    }
+                    const until = this.billing.grantUntil || '';
+                    if (until && until !== localStorage.getItem('sukoda_grant_seen')) {
+                        localStorage.setItem('sukoda_grant_seen', until);
+                        this.showToast(this.t('freeMonthToast', { date: this.fmtDateShort(until) }));
+                    }
+                } catch (e) { /* storage off: the plan row still shows the date */ }
             },
             async shareInvite(url) {
                 if (!url) return;

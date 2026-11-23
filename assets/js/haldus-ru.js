@@ -451,6 +451,8 @@ export const haldusRu = {
   colleagueWaiting: 'Ждём первого клиента',
   colleagueRewarded: 'Бесплатный месяц получен',
   freeUntil: 'бесплатно до {date}',
+  colleagueRewardToast: 'У {name} появился первый клиент. Теперь у вас обоих бесплатный месяц Standard.',
+  freeMonthToast: 'У вас бесплатный Standard до {date}.',
 };
 
 if (typeof window !== 'undefined') {
