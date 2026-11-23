@@ -625,7 +625,9 @@ test('visit split never charges and keeps sponsor, resident and provider in bala
   assert.equal(wish.earliest, '2026-10-07');
   assert.equal(wish.lines.find((l) => l.id === 'extra-clean').cents, 14000);
   assert.equal(wish.lines.find((l) => l.id === 'flowers').cents, 3500);
-  assert.equal(wish.residentCents, 19500);
+  // Flowers stay with the cleaner: shown with their guide price, not in the card payment
+  assert.equal(wish.lines.find((l) => l.id === 'flowers').withCleaner, true);
+  assert.equal(wish.residentCents, 16000);
   const once = core.orderQuote({
     serviceId: 'extra-clean', addonIds: [], sponsorCentsAvailable: 0, ownerKind: 'developer',
     today: '2026-09-23', leadDays: 14, lang: 'et',
@@ -644,8 +646,9 @@ test('visit split never charges and keeps sponsor, resident and provider in bala
     lang: 'et',
   });
   assert.equal(gifted.unpriced, false);
-  assert.equal(gifted.cardRequired, true);
-  assert.equal(gifted.residentCents, 3500);
+  // A gifted clean with flowers asks for no card: the flowers are settled with the cleaner
+  assert.equal(gifted.cardRequired, false);
+  assert.equal(gifted.residentCents, 0);
   assert.equal(gifted.lines.find((l) => l.id === 'extra-clean').covered, true);
   assert.equal(core.giftSpent('extra-clean', []), false);
   assert.equal(core.giftSpent('extra-clean', ['extra-clean']), true);
@@ -720,7 +723,7 @@ test('a priced visit tells the cleaner only after Stripe has taken the money', (
   const path = require('node:path');
   const src = fs.readFileSync(path.join(__dirname, '../haldus.js'), 'utf8');
   const chargeAt = src.indexOf('if (charge) {');
-  const freeFinish = src.indexOf('await finishRequest({ order, orderId, provider, svc, kind, ref, request, lang, price: flowerPrice })');
+  const freeFinish = src.indexOf("await finishRequest({ order, orderId, provider, svc, kind, ref, request, lang, price: svc.id === 'flowers' ? flowerPrice : null })");
   assert.ok(chargeAt > 0 && freeFinish > chargeAt);
   const chargeBlock = src.slice(chargeAt, freeFinish);
   assert.match(chargeBlock, /capture_method: 'automatic'/);
@@ -896,4 +899,14 @@ test('flowers are settled with the cleaner: the turned amount is her price line,
   assert.equal(core.flowerPrice(35.5), null);
   assert.equal(core.flowerPrice(undefined), null);
   assert.equal(core.parseEuroCents(core.flowerPrice(35)), 3500);
+});
+
+test('the cleaner is reminded to buy the bouquet two days ahead, not three', () => {
+  assert.equal(core.FLOWER_REMINDER_DAYS, 2);
+  assert.equal(core.flowerReminderDue('2026-11-26', '2026-11-23'), false);
+  assert.equal(core.flowerReminderDue('2026-11-25', '2026-11-23'), true);
+  assert.equal(core.flowerReminderDue('2026-11-24', '2026-11-23'), true);
+  assert.equal(core.flowerReminderDue('2026-11-23', '2026-11-23'), true);
+  assert.equal(core.flowerReminderDue('2026-11-22', '2026-11-23'), false);
+  assert.equal(core.flowerReminderDue('', '2026-11-23'), false);
 });

@@ -421,7 +421,7 @@
                                         </div>
                                         <p class="text-sm font-sans font-light mt-3 leading-relaxed" x-text="lastThreadText(r)"></p>
                                         <p class="text-xs text-muted font-sans font-light mt-2" x-show="r.kind !== 'question'">
-                                            <span x-text="r.preferredDate ? t('wishDate', { date: fmtDateLong(r.preferredDate) }) : t('earliest')"></span><span x-show="r.preferredTime" x-text="' · ' + r.preferredTime"></span><span x-show="!r.preferredTime && r.timeWindow === 'with-visit'" x-text="' · ' + t('withVisitTag')"></span><span x-show="r.urgent" x-text="' · ' + t('urgent')"></span>
+                                            <span x-text="r.preferredDate ? t('wishDate', { date: fmtDateLong(r.preferredDate) }) : t('earliest')"></span><span x-show="r.preferredTime" x-text="' · ' + r.preferredTime"></span><span x-show="!r.preferredTime && r.timeWindow === 'with-visit'" x-text="' · ' + t('withVisitTag')"></span><span x-show="r.urgent" x-text="' · ' + t('urgent')"></span><span x-show="r.serviceId === 'flowers' && r.price" x-text="' · ' + t('flowersWord') + ' ' + r.price"></span><span x-show="r.flowerPrice" x-text="' · ' + t('flowersWord') + ' ' + r.flowerPrice"></span>
                                         </p>
                                         <p x-show="r.access" class="text-xs text-muted font-sans font-light mt-1"><span x-text="t('access') + ': '"></span><span x-text="r.access"></span></p>
                                         <template x-if="threadMessages(r).length > 1">
@@ -1105,7 +1105,7 @@
                                         </select>
                                     </div>
                                     <div><label class="h-label" for="fl-lead" x-text="t('flowersOrderWhen')"></label>
-                                        <select id="fl-lead" x-model.number="detail.flowersForm.leadDays" class="h-select"><option :value="1" x-text="t('daysBefore1')"></option><option :value="2" x-text="t('daysBefore', { n: 2 })"></option><option :value="3" x-text="t('daysBefore', { n: 3 })"></option></select>
+                                        <select id="fl-lead" x-model.number="detail.flowersForm.leadDays" class="h-select"><option :value="1" x-text="t('daysBefore1')"></option><option :value="2" x-text="t('daysBefore', { n: 2 })"></option></select>
                                     </div>
                                 </div>
                                 <div x-show="detail.flowersForm.auto" class="grid sm:grid-cols-2 gap-4">

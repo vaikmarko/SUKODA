@@ -343,6 +343,12 @@ export const telliHtml = `<div x-show="activeTab === 'extras'" x-transition:ente
                     <div x-show="telliAddons.flowers" x-cloak class="mt-4">
                         <p class="eyebrow" x-text="t('bouquet')"></p>
                         ${choiceButtons}
+                        <p class="eyebrow mt-5" x-text="t('amountWord')"></p>
+                        <div class="p-stepper mt-2.5">
+                            <button type="button" class="p-stepper-btn" @click="flowerStep(-5)" :disabled="flowerSum <= 5" :aria-label="t('amountLess')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" d="M6 12h12"/></svg></button>
+                            <p class="p-stepper-value" aria-live="polite" x-text="flowerSumText"></p>
+                            <button type="button" class="p-stepper-btn" @click="flowerStep(5)" :disabled="flowerSum >= 500" :aria-label="t('amountMore')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" d="M6 12h12M12 6v12"/></svg></button>
+                        </div>
                     </div>
                     <p x-show="!telliGathering && telliQuote && !telliQuote.unpriced && !telliQuote.cardRequired" x-cloak class="text-sm text-muted mt-3" x-text="t('giftCovers')"></p>
                     <div class="p-order-bar">

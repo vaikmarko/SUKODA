@@ -1144,7 +1144,7 @@
                     addonIds: ids,
                     ...(panel === 'clean' && !this.telliPay && this.telliRhythm && this.telliRhythm !== 'once' ? { rhythm: this.telliRhythm } : {}),
                     ...(panel === 'clean' && this.telliPay ? { pay: true } : {}),
-                    ...(panel === 'flowers' ? { flowerAmount: this.flowerSum } : {}),
+                    ...(panel === 'flowers' || (panel === 'clean' && this.telliAddons.flowers) ? { flowerAmount: this.flowerSum } : {}),
                 }),
             });
             const data = await res.json();

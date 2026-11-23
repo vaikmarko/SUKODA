@@ -1609,6 +1609,18 @@ function flowerPrice(amount) {
   return `${n} €`;
 }
 
+/** The cleaner hears about a bouquet she buys herself this many days before the visit (Marko, Nov 2026: 3 is too early). */
+const FLOWER_REMINDER_DAYS = 2;
+
+/** True from FLOWER_REMINDER_DAYS before the visit day up to the day itself; dates are YYYY-MM-DD in Tallinn. */
+function flowerReminderDue(visitDate, today) {
+  const v = parseDateStr(visitDate);
+  const t = parseDateStr(today);
+  if (!v || !t) return false;
+  const days = Math.round((v - t) / 86400000);
+  return days >= 0 && days <= FLOWER_REMINDER_DAYS;
+}
+
 /** Money is in hand: Stripe says paid, in euros, for the full amount. A hold or a later capture does not count. */
 function homePaymentReady(session, payment) {
   if (!session || session.payment_status !== 'paid') return false;
@@ -1721,6 +1733,11 @@ function orderQuote({ serviceId, addonIds, sponsorCentsAvailable, ownerKind, tod
       continue;
     }
     const cents = guidePriceCents(hint);
+    // Flowers are bought by the cleaner and settled with her, never in the card payment (decided Nov 2026)
+    if (id === 'flowers') {
+      lines.push({ id, cents, hint, covered: false, withCleaner: true });
+      continue;
+    }
     if (cents == null) unpriced = true;
     else total += cents;
     lines.push({ id, cents, hint, covered: false });
@@ -1913,6 +1930,8 @@ module.exports = {
   giftSpent,
   chargeBeforeDispatch,
   flowerPrice,
+  FLOWER_REMINDER_DAYS,
+  flowerReminderDue,
   homePaymentReady,
   guidePriceCents,
   TELLI_ADDONS,

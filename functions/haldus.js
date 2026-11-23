@@ -947,7 +947,8 @@ module.exports = function createHaldus(deps) {
   // Flowers: the order goes to the florist automatically before each cleaning visit.
   // Billing stays between the customer and the shop (monthly invoice or whatever they agreed).
   // ============================================================
-  const FLOWER_LEAD_DAYS = [1, 2, 3];
+  // Three days ahead was too early for a bouquet (Marko, Nov 2026); an old 3 falls back to the default 2
+  const FLOWER_LEAD_DAYS = [1, 2];
   const FLOWER_PICKUP = {
     partner: { et: 'Koduhooldaja toob kimbu kaasa', en: 'The housekeeper brings the bouquet along', ru: 'Специалист по дому принесёт букет с собой' },
     customer: { et: 'Tellija võtab kimbu ise poest', en: 'The customer collects the bouquet from the shop', ru: 'Заказчик забирает букет в магазине сам' },
@@ -1038,6 +1039,42 @@ module.exports = function createHaldus(deps) {
     return {
       subject: items.length > 1 ? `SUKODA | Lilled kaasa — ${items.length} kimpu, ${when}` : `SUKODA | Lilled kaasa — ${primaryName(items[0].order)}, ${when}`,
       html: providerWrap('Lilled on tellitud', items.length > 1 ? `Poest on tellitud ${items.length} kimpu. Igal kimbul on silt kliendi nimega. Võta kimbud teel kaasa.` : 'Kimp on poest tellitud. Sildil on kliendi nimi. Võta kimp teel kaasa.', body),
+    };
+  }
+
+  /**
+   * To the cleaner who buys the bouquet herself: what to buy, for whom, by when and for how much.
+   * items: [{ order, booking, wish }]
+   */
+  function cleanerFlowersReminderEmail({ items }) {
+    const today = todayTallinnStr(0);
+    const dayWord = (start) => {
+      const days = Math.round((core.parseDateStr(tallinnDateStr(start)) - core.parseDateStr(today)) / 86400000);
+      return days === 0 ? 'täna' : days === 1 ? 'homme' : days === 2 ? 'ülehomme' : formatWhen(start, 'et');
+    };
+    const body = items.map(({ order, booking, wish }) => {
+      const start = toDate(booking.scheduledAt);
+      return `<div style="background:#FFFFFF;padding:20px 24px;margin-bottom:14px;border-left:2px solid #B8976A;">
+        ${LABEL(escapeHtml(primaryName(order) || primaryEmail(order)))}
+        ${ROW('Visiit', `<span style="text-transform:capitalize;">${escapeHtml(formatWhen(start, 'et'))}</span>, ${escapeHtml(formatTime(start))}`)}
+        ${ROW('Lilled', escapeHtml(wish || 'Hooajaline kimp'))}
+        ${booking.price ? ROW('Summa', escapeHtml(booking.price)) : ''}
+        ${ROW('Aadress', escapeHtml(primaryAddress(order) || '-'))}
+      </div>`;
+    }).join('');
+    const first = items[0];
+    const when = dayWord(toDate(first.booking.scheduledAt));
+    const title = items.length > 1 ? `Osta ${items.length} kimpu` : 'Osta kimp';
+    const intro = items.length > 1
+      ? `Kliendid soovisid lilli. Osta kimbud ja võta kaasa. Summa läheb kuu kokkuvõttesse, kui märgid visiidi tehtuks.`
+      : `${escapeHtml(primaryName(first.order) || 'Klient')} soovis lilli visiidiks ${escapeHtml(when)}. Osta kimp ja võta kaasa. Summa läheb kuu kokkuvõttesse, kui märgid visiidi tehtuks.`;
+    const pushBody = items.length > 1
+      ? `${items.length} kimpu, esimene ${when}.`
+      : `${primaryName(first.order) || 'Klient'}, ${when}${first.booking.price ? ', ' + first.booking.price : ''}.`;
+    return {
+      subject: items.length > 1 ? `SUKODA | Lilled kaasa: ${items.length} kimpu` : `SUKODA | Lilled kaasa: ${primaryName(first.order) || primaryEmail(first.order)}, ${when}`,
+      html: providerWrap(title, intro, body),
+      push: push.message({ type: 'new_request', lang: 'et', title, body: pushBody, url: `${HALDUS_URL}?tab=today`, audience: 'provider' }),
     };
   }
 
@@ -1152,7 +1189,35 @@ module.exports = function createHaldus(deps) {
       try { await sendEmail({ to: primaryEmail(it.order), ...flowersOrderedEmail({ order: it.order, booking: it.booking, florist: it.florist, settings: it.settings }), replyTo: providerReplyTo(it.florist) }); } catch (e) { console.error('sendFlowerOrders: customer copy failed', e); }
     }
 
-    // 4. Cancellations for already-ordered visits
+    // 4. The cleaner buys the bouquet herself: remind her two days ahead, once per bouquet
+    const reminders = {};
+    for (const d of liveSnap.docs) {
+      const b = d.data();
+      if (b.serviceId !== 'flowers' || b.flowerReminderSentAt || !b.orderId) continue;
+      if (!core.flowerReminderDue(tallinnDateStr(toDate(b.scheduledAt)), today)) continue;
+      const order = await orderFor(b.orderId);
+      if (!order || order.status !== 'paid' || order.pausedAt) continue;
+      const provider = await providerFor(b.providerId || order.providerId);
+      if (!provider || !providerReplyTo(provider)) continue;
+      let wish = '';
+      if (b.requestId) {
+        try { const r = await db.collection('serviceRequests').doc(b.requestId).get(); wish = r.exists ? String(r.data().note || '') : ''; } catch (e) { /* the shop line stays general */ }
+      }
+      wish = wish.replace(/^(Lilled|Flowers|Цветы):\s*/i, '').replace(/\.$/, '') || order.homeProfile?.flowerPreference || '';
+      (reminders[provider.id] = reminders[provider.id] || { provider, items: [] }).items.push({ ref: d.ref, order, booking: { id: d.id, ...b }, wish });
+    }
+    let reminded = 0;
+    for (const { provider, items } of Object.values(reminders)) {
+      items.sort((x, y) => toDate(x.booking.scheduledAt) - toDate(y.booking.scheduledAt));
+      const mail = cleanerFlowersReminderEmail({ items });
+      try {
+        await sendEmail({ to: providerReplyTo(provider), subject: mail.subject, html: mail.html });
+        await deliverMailPush(provider, mail);
+        for (const it of items) { await it.ref.update({ flowerReminderSentAt: FieldValue.serverTimestamp() }); reminded += 1; }
+      } catch (e) { console.error('sendFlowerOrders: cleaner reminder failed', provider.id, e); }
+    }
+
+    // 5. Cancellations for already-ordered visits
     let cancelled = 0;
     for (const d of cancelledSnap.docs) {
       const b = d.data();
@@ -1165,8 +1230,8 @@ module.exports = function createHaldus(deps) {
         cancelled += 1;
       } catch (e) { console.error('sendFlowerOrders cancel failed for booking', d.id, e); }
     }
-    console.log(`sendFlowerOrders: ${sent} ordered, ${cancelled} cancellations`);
-    return { sent, cancelled };
+    console.log(`sendFlowerOrders: ${sent} ordered, ${reminded} cleaner reminders, ${cancelled} cancellations`);
+    return { sent, reminded, cancelled };
   }
 
   // Provider-facing (ET)
@@ -1218,6 +1283,8 @@ module.exports = function createHaldus(deps) {
           ${kind !== 'question' ? ROW('Soovitud päev', escapeHtml(when)) : ''}
           ${kind !== 'question' && core.requestedTimeLabel(request.preferredTime, request.timeWindow, 'et') ? ROW('Soovitud aeg', escapeHtml(core.requestedTimeLabel(request.preferredTime, request.timeWindow, 'et'))) : ''}
           ${request.urgent ? ROW('Kiirus', 'Kiire — segab igapäevaelu') : ''}
+          ${request.serviceId === 'flowers' && request.price ? ROW('Lillede summa', escapeHtml(request.price)) : ''}
+          ${request.flowerPrice ? ROW('Lillede summa', escapeHtml(request.flowerPrice)) : ''}
           ${request.access ? ROW('Sissepääs sellel korral', escapeHtml(request.access)) : ''}
           ${request.note ? ROW(kind === 'question' ? 'Küsimus' : kind === 'issue' ? 'Kirjeldus' : 'Märkus', escapeHtml(request.note)) : ''}
           ${request.payment?.status === 'paid' ? ROW('Makse', escapeHtml(`${euroLabel(request.payment.residentCents) || ''} on juba makstud`.trim())) : ''}
@@ -2074,6 +2141,7 @@ module.exports = function createHaldus(deps) {
       // For declined requests: 'not_covered' (issue reviewed, not under warranty) or 'new_time' (slot did not fit)
       outcome: r.outcome || null,
       price: r.price || null,
+      flowerPrice: r.flowerPrice || null,
       providerMessage: r.providerMessage || '',
       bookingId: r.bookingId || null,
       scheduledAt: tsToIso(r.scheduledAt),
@@ -4502,6 +4570,16 @@ module.exports = function createHaldus(deps) {
         note: str(b.note, 500), customerNote: str(b.message, 300),
         source: 'request', serviceId: request.serviceId, price, requestId: reqRef.id,
       });
+      // Flowers added to this clean: their own line at the same start, so the amount the client chose
+      // reaches the month summary and the two-day reminder; Tehtud on the clean closes it too.
+      if (request.serviceId !== 'flowers' && Array.isArray(request.addons) && request.addons.includes('flowers') && request.flowerPrice) {
+        try {
+          await createVisit({
+            order, orderId: request.orderId, provider, start, durationMin: 15,
+            note: '', customerNote: '', source: 'request', serviceId: 'flowers', price: request.flowerPrice, requestId: reqRef.id,
+          });
+        } catch (e) { console.error('flowers line for the clean failed', reqRef.id, e); }
+      }
       await reqRef.update({
         status: 'confirmed', bookingId: booking.id, scheduledAt: Timestamp.fromDate(start), price,
         providerMessage: str(b.message, 300), confirmedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp(),
@@ -5766,7 +5844,7 @@ module.exports = function createHaldus(deps) {
         ownClient, kind, unpriced: quote.unpriced, cardRequired: quote.cardRequired, residentCents: quote.residentCents, serviceId: svc.id,
       });
       // The amount the resident turned on the Lilled screen: the cleaner spends it and bills it in her month.
-      const flowerPrice = svc.id === 'flowers' ? core.flowerPrice(b.flowerAmount) : null;
+      const flowerPrice = svc.id === 'flowers' || addonIds.includes('flowers') ? core.flowerPrice(b.flowerAmount) : null;
       const data = {
         orderId,
         providerId: providerId || null,
@@ -5785,7 +5863,8 @@ module.exports = function createHaldus(deps) {
         urgent,
         ...(addonIds.length ? { addons: addonIds } : {}),
         ...(rhythm ? { rhythm } : {}),
-        ...(flowerPrice ? { price: flowerPrice } : {}),
+        ...(flowerPrice && svc.id === 'flowers' ? { price: flowerPrice } : {}),
+        ...(flowerPrice && svc.id !== 'flowers' ? { flowerPrice } : {}),
         messages: firstMsg,
         status: charge ? 'awaiting_payment' : 'requested',
         ...(charge ? { payment: { priceCents: quote.priceCents, residentCents: quote.residentCents, sponsorCents: quote.sponsorCents, currency: 'eur', status: 'pending' } } : {}),
@@ -5841,7 +5920,7 @@ module.exports = function createHaldus(deps) {
         }
       }
 
-      await finishRequest({ order, orderId, provider, svc, kind, ref, request, lang, price: flowerPrice });
+      await finishRequest({ order, orderId, provider, svc, kind, ref, request, lang, price: svc.id === 'flowers' ? flowerPrice : null });
 
       res.status(200).json({
         success: true,
