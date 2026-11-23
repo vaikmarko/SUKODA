@@ -2114,8 +2114,11 @@
             get liveBookings() { return this.bookings.filter((b) => ['scheduled', 'confirmed'].includes(b.status)); },
             get todayVisits() {
                 const day = this.liveBookings.filter((b) => this.dateOf(b.scheduledAt) === this.todayStr);
-                // A flower visit next to the same home's clean is part of that clean (Võta kaasa); Tehtud closes both
-                return day.filter((b) => b.serviceId !== 'flowers' || !day.some((o) => o.orderId === b.orderId && o.serviceId !== 'flowers')).sort(this.byTime);
+                // Extras booked onto the same home's clean (same start, or flowers that day) are part of that card:
+                // "Koristus · aknapesu", "Võta kaasa: lilled". One Tehtud closes them all, so they get no row of their own.
+                const ridesAlong = (b) => b.kind === 'extra' && day.some((o) => o.id !== b.id && o.orderId === b.orderId && o.kind !== 'extra'
+                    && (b.serviceId === 'flowers' || new Date(o.scheduledAt).getTime() === new Date(b.scheduledAt).getTime()));
+                return day.filter((b) => !ridesAlong(b)).sort(this.byTime);
             },
             get tomorrowVisits() {
                 if (!this.todayStr || !T()) return [];

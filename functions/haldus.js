@@ -2938,20 +2938,24 @@ module.exports = function createHaldus(deps) {
     if (outcome.blocked) return { status: 400, body: { error: { et: 'Seda visiiti ei saa tehtuks märkida.', en: 'This visit cannot be marked done.', ru: 'Этот визит нельзя отметить выполненным.' } } };
 
     const { booking, freshOrder, rhythm } = outcome;
-    // Flowers come with the clean (the cleaner buys them, the client settles with her): one Tehtud closes
-    // that day's flower visit too, so its amount reaches her month summary. No second notice to the client.
-    if (booking.serviceId !== 'flowers' && booking.orderId) {
+    // Extras booked onto this clean ride along (the desk shows them on the same card): that day's flowers
+    // (the cleaner buys them, the client settles with her) and any extra at the same start, e.g. windows.
+    // One Tehtud closes them too, so their amounts reach her month summary. No second notice to the client.
+    if (booking.kind !== 'extra' && booking.orderId) {
       try {
-        const day = tallinnDateStr(toDate(booking.scheduledAt));
-        const flowerSnap = await db.collection('bookings').where('orderId', '==', booking.orderId).where('serviceId', '==', 'flowers').get();
-        for (const doc of flowerSnap.docs) {
+        const start = toDate(booking.scheduledAt);
+        const day = tallinnDateStr(start);
+        const sameHome = await db.collection('bookings').where('orderId', '==', booking.orderId).get();
+        for (const doc of sameHome.docs) {
           const f = doc.data();
-          if (f.providerId !== booking.providerId || !['scheduled', 'confirmed'].includes(f.status)) continue;
-          if (tallinnDateStr(toDate(f.scheduledAt)) !== day) continue;
+          if (doc.id === ref.id || f.kind !== 'extra' || f.providerId !== booking.providerId || !['scheduled', 'confirmed'].includes(f.status)) continue;
+          const fStart = toDate(f.scheduledAt);
+          if (!fStart || tallinnDateStr(fStart) !== day) continue;
+          if (f.serviceId !== 'flowers' && fStart.getTime() !== start.getTime()) continue;
           await doc.ref.update({ status: 'completed', completedAt: FieldValue.serverTimestamp(), completedBy: 'provider', updatedAt: FieldValue.serverTimestamp() });
         }
       } catch (e) {
-        console.error('flowers done with the visit failed', ref.id, e);
+        console.error('extras done with the visit failed', ref.id, e);
       }
     }
     const lang = langOf(freshOrder);
