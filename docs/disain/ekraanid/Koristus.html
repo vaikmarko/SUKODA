@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="et">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=390">
+<title>Elanik · Koristuse tellimine</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Inter:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#141312}a:hover{color:#5F5A54}
+.s{width:390px;height:844px;box-sizing:border-box;position:relative;overflow:hidden;background:#FAF8F5;color:#141312;font-family:Inter,system-ui,sans-serif;padding:60px 24px 0}
+.eb{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#5F5A54;font-weight:500;margin:0}
+.serif{font-family:'Cormorant Garamond',Georgia,serif;font-weight:500;font-feature-settings:'lnum';margin:0}
+.m{color:#5F5A54;font-size:14px;line-height:1.4;margin:0}
+.seg{height:48px;border-radius:14px;border:1px solid #D1C9BF;background:#fff;color:#141312;font:500 15px Inter,sans-serif;cursor:pointer}
+.seg.on{background:#141312;border-color:#141312;color:#FAF8F5}
+.day{height:68px;border-radius:16px;border:1px solid #D1C9BF;background:#fff;color:#141312;font-family:Inter,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer}
+.day.on{background:#141312;border-color:#141312;color:#FAF8F5}
+.day small{font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.day b{font-size:20px;font-weight:500}
+.row{display:flex;align-items:center;justify-content:space-between;height:56px;border-bottom:1px solid #E6E0D8;font-size:16px}
+.sw{width:48px;height:28px;border-radius:999px;border:1px solid #D1C9BF;background:#fff;position:relative;padding:0;cursor:pointer}
+.sw i{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#AEAAA3}
+.b1{display:flex;align-items:center;justify-content:center;height:56px;border-radius:16px;background:#141312;color:#FAF8F5;font:600 16px Inter,sans-serif;border:0;padding:0 28px;cursor:pointer}
+svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+</style>
+</head>
+<body>
+<div class="s">
+  <a href="Telli.dc.html" style="display:inline-flex;align-items:center;gap:6px;height:44px;font-size:15px;text-decoration:none;margin-left:-4px"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Telli</a>
+  <h1 class="serif" style="font-size:36px;line-height:1.05;margin-top:4px">Koristus</h1>
+
+  <p class="eb" style="margin-top:22px">Kui tihti</p>
+  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px">
+    <button type="button" class="seg on" aria-pressed="true">Üks kord</button>
+    <button type="button" class="seg" aria-pressed="false">Igal nädalal</button>
+    <button type="button" class="seg" aria-pressed="false">Üle nädala</button>
+    <button type="button" class="seg" aria-pressed="false">Kord kuus</button>
+  </div>
+
+  <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:22px">
+    <p class="eb">Päev</p>
+    <a href="Koristus.dc.html" style="font-size:14px">Muu päev</a>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:10px">
+    <button type="button" class="day on" aria-pressed="true"><small>T</small><b>8</b></button>
+    <button type="button" class="day" aria-pressed="false"><small>K</small><b>9</b></button>
+    <button type="button" class="day" aria-pressed="false"><small>N</small><b>10</b></button>
+    <button type="button" class="day" aria-pressed="false"><small>R</small><b>11</b></button>
+    <button type="button" class="day" aria-pressed="false"><small>E</small><b>14</b></button>
+  </div>
+
+  <p class="eb" style="margin-top:22px">Kellaaeg</p>
+  <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px">
+    <button type="button" class="seg on" aria-pressed="true">Hommik</button>
+    <button type="button" class="seg" aria-pressed="false">Pärastlõuna</button>
+    <button type="button" class="seg" aria-pressed="false">Kogu päev</button>
+  </div>
+
+  <p class="eb" style="margin-top:22px">Lisad</p>
+  <div style="margin-top:2px">
+    <div class="row"><span>Lilled</span><button type="button" class="sw" role="switch" aria-checked="false" aria-label="Lilled"><i></i></button></div>
+    <div class="row"><span>Aknapesu</span><button type="button" class="sw" role="switch" aria-checked="false" aria-label="Aknapesu"><i></i></button></div>
+  </div>
+
+  <div style="position:absolute;left:0;right:0;bottom:0;padding:16px 24px 30px;background:#fff;border-top:1px solid #E6E0D8;display:flex;align-items:center;justify-content:space-between;gap:16px">
+    <div>
+      <p class="serif" style="font-size:34px;line-height:1">140 €</p>
+      <p class="m" style="font-size:13px;margin-top:4px">Kristi kinnitab aja</p>
+    </div>
+    <button type="button" class="b1">Kinnita aeg</button>
+  </div>
+</div>
+</body>
+</html>

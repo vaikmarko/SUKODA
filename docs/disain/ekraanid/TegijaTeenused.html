@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="et">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=390">
+<title>Tegija · Teenused ja hinnad</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Inter:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#141312}a:hover{color:#5F5A54}
+.s{width:390px;height:844px;box-sizing:border-box;position:relative;overflow:hidden;background:#FAF8F5;color:#141312;font-family:Inter,system-ui,sans-serif;padding:64px 24px 0}
+.eb{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#5F5A54;font-weight:500;margin:0}
+.serif{font-family:'Cormorant Garamond',Georgia,serif;font-weight:500;font-feature-settings:'lnum';margin:0}
+.card{background:#fff;border:1px solid #E6E0D8;border-radius:20px}
+.m{color:#5F5A54;font-size:14px;line-height:1.4;margin:0}
+.n{margin:0;font-size:16px;font-weight:500}
+.b1{display:flex;align-items:center;justify-content:center;height:56px;border-radius:16px;background:#141312;color:#FAF8F5;font:600 16px Inter,sans-serif;border:0;width:100%;cursor:pointer;text-decoration:none;box-sizing:border-box}
+.b1:hover{color:#FAF8F5}
+.b2{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:14px;background:#fff;border:1px solid #D1C9BF;color:#141312;font:500 15px Inter,sans-serif;box-sizing:border-box;text-decoration:none;cursor:pointer;width:100%}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:60px;padding:0 20px;border-bottom:1px solid #E6E0D8;text-decoration:none;box-sizing:border-box;font-size:16px}
+.row:last-child{border-bottom:0}
+.r{display:flex;align-items:center;gap:8px;font-size:15px;color:#5F5A54;white-space:nowrap}
+.back{display:inline-flex;align-items:center;gap:6px;height:44px;font-size:15px;text-decoration:none;margin-left:-4px}
+.tabs{position:absolute;left:12px;right:12px;bottom:14px;display:flex;gap:6px;padding:6px;background:#fff;border:1px solid #E6E0D8;border-radius:26px;box-shadow:0 10px 28px rgba(20,19,18,.08)}
+.tab{flex:1;height:56px;border-radius:20px;background:#F3EFE9;color:#141312;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:500 11px Inter,sans-serif;text-decoration:none}
+.tab.on{background:#141312;color:#FAF8F5}
+svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.ch{width:18px;height:18px;color:#5F5A54}
+.sw{width:48px;height:28px;border-radius:999px;border:0;background:#141312;position:relative;padding:0;cursor:pointer;flex-shrink:0}
+.sw i{position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:#FAF8F5}
+input::placeholder,textarea::placeholder{color:#5F5A54}
+</style>
+</head>
+<body>
+<div class="s">
+  <a class="back" href="TegijaKonto.dc.html" style="margin-top:-8px"><svg viewBox="0 0 24 24" aria-hidden="true" style="width:20px;height:20px"><path d="M15 6l-6 6 6 6"/></svg>Konto</a>
+  <h1 class="serif" style="font-size:36px;line-height:1.05;margin-top:4px">Teenused ja hinnad</h1>
+  <p class="m" style="font-size:15px;margin-top:8px">Klient näeb neid oma äpis. Lillede summat saab klient tellides muuta.</p>
+
+  <div class="card" style="margin-top:18px">
+    <div class="row" style="min-height:72px;gap:10px">
+      <label for="n1" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Teenuse nimi</label>
+      <input id="n1" type="text" value="Koristus" style="flex:1;min-width:0;border:0;outline:0;background:transparent;font:500 16px Inter,sans-serif;color:#141312">
+      <label for="p1" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Hind</label>
+      <input id="p1" type="text" inputmode="decimal" value="140 €" placeholder="Hind" style="width:92px;height:44px;box-sizing:border-box;padding:0 12px;border:1px solid #D1C9BF;border-radius:12px;background:#FAF8F5;font:400 16px Inter,sans-serif;color:#141312;text-align:right;outline:0">
+    </div>
+    <div class="row" style="min-height:72px;gap:10px">
+      <label for="n2" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Teenuse nimi</label>
+      <input id="n2" type="text" value="Aknapesu" style="flex:1;min-width:0;border:0;outline:0;background:transparent;font:500 16px Inter,sans-serif;color:#141312">
+      <label for="p2" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Hind</label>
+      <input id="p2" type="text" inputmode="decimal" value="40 €" placeholder="Hind" style="width:92px;height:44px;box-sizing:border-box;padding:0 12px;border:1px solid #D1C9BF;border-radius:12px;background:#FAF8F5;font:400 16px Inter,sans-serif;color:#141312;text-align:right;outline:0">
+    </div>
+    <div class="row" style="min-height:72px;gap:10px">
+      <label for="n3" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Teenuse nimi</label>
+      <input id="n3" type="text" value="Lilled" style="flex:1;min-width:0;border:0;outline:0;background:transparent;font:500 16px Inter,sans-serif;color:#141312">
+      <label for="p3" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Hind</label>
+      <input id="p3" type="text" inputmode="decimal" value="35 €" placeholder="Hind" style="width:92px;height:44px;box-sizing:border-box;padding:0 12px;border:1px solid #D1C9BF;border-radius:12px;background:#FAF8F5;font:400 16px Inter,sans-serif;color:#141312;text-align:right;outline:0">
+    </div>
+    <div class="row" style="min-height:72px;gap:10px">
+      <label for="n4" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Teenuse nimi</label>
+      <input id="n4" type="text" value="Triikimine" style="flex:1;min-width:0;border:0;outline:0;background:transparent;font:500 16px Inter,sans-serif;color:#141312">
+      <label for="p4" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Hind</label>
+      <input id="p4" type="text" inputmode="decimal" value="15 €" placeholder="Hind" style="width:92px;height:44px;box-sizing:border-box;padding:0 12px;border:1px solid #D1C9BF;border-radius:12px;background:#FAF8F5;font:400 16px Inter,sans-serif;color:#141312;text-align:right;outline:0">
+    </div>
+  </div>
+
+  <button type="button" class="b2" style="margin-top:14px;height:52px;border-radius:16px"><svg viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px"><path d="M12 5v14M5 12h14"/></svg>Lisa teenus</button>
+
+  <div style="position:absolute;left:0;right:0;bottom:0;padding:16px 24px 30px;background:#fff;border-top:1px solid #E6E0D8">
+    <a class="b1" href="LisaKlient.dc.html">Salvesta</a>
+  </div>
+</div>
+</body>
+</html>

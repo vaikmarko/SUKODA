@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="et">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=390">
+<title>Sisenemine · Kood</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Inter:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:#141312}a:hover{color:#5F5A54}
+.s{width:390px;height:844px;box-sizing:border-box;position:relative;overflow:hidden;background:#FAF8F5;color:#141312;font-family:Inter,system-ui,sans-serif;padding:64px 24px 0}
+.eb{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#5F5A54;font-weight:500;margin:0}
+.serif{font-family:'Cormorant Garamond',Georgia,serif;font-weight:500;font-feature-settings:'lnum';margin:0}
+.card{background:#fff;border:1px solid #E6E0D8;border-radius:20px}
+.m{color:#5F5A54;font-size:14px;line-height:1.4;margin:0}
+.n{margin:0;font-size:16px;font-weight:500}
+.b1{display:flex;align-items:center;justify-content:center;height:56px;border-radius:16px;background:#141312;color:#FAF8F5;font:600 16px Inter,sans-serif;border:0;width:100%;cursor:pointer;text-decoration:none;box-sizing:border-box}
+.b1:hover{color:#FAF8F5}
+.b2{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:14px;background:#fff;border:1px solid #D1C9BF;color:#141312;font:500 15px Inter,sans-serif;box-sizing:border-box;text-decoration:none;cursor:pointer;width:100%}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:60px;padding:0 20px;border-bottom:1px solid #E6E0D8;text-decoration:none;box-sizing:border-box;font-size:16px}
+.row:last-child{border-bottom:0}
+.r{display:flex;align-items:center;gap:8px;font-size:15px;color:#5F5A54;white-space:nowrap}
+.back{display:inline-flex;align-items:center;gap:6px;height:44px;font-size:15px;text-decoration:none;margin-left:-4px}
+.tabs{position:absolute;left:12px;right:12px;bottom:14px;display:flex;gap:6px;padding:6px;background:#fff;border:1px solid #E6E0D8;border-radius:26px;box-shadow:0 10px 28px rgba(20,19,18,.08)}
+.tab{flex:1;height:56px;border-radius:20px;background:#F3EFE9;color:#141312;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:500 11px Inter,sans-serif;text-decoration:none}
+.tab.on{background:#141312;color:#FAF8F5}
+svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.ch{width:18px;height:18px;color:#5F5A54}
+.sw{width:48px;height:28px;border-radius:999px;border:0;background:#141312;position:relative;padding:0;cursor:pointer;flex-shrink:0}
+.sw i{position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:#FAF8F5}
+input::placeholder,textarea::placeholder{color:#5F5A54}
+</style>
+</head>
+<body>
+<div class="s">
+  <a class="back" href="Sisene.dc.html" style="margin-top:-8px"><svg viewBox="0 0 24 24" aria-hidden="true" style="width:20px;height:20px"><path d="M15 6l-6 6 6 6"/></svg>E-post</a>
+  <h1 class="serif" style="font-size:44px;line-height:1.05;margin-top:12px">Sisesta kood</h1>
+  <p class="m" style="font-size:16px;line-height:1.5;margin-top:10px">Saatsime koodi aadressile anna@näide.ee.</p>
+
+  <div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-top:24px">
+    <label for="k1" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Koodi 1. number</label><input id="k1" type="text" inputmode="numeric" maxlength="1" value="4" style="width:100%;height:64px;box-sizing:border-box;border:1px solid #141312;border-radius:14px;background:#fff;font:500 28px 'Cormorant Garamond',Georgia,serif;font-feature-settings:'lnum';color:#141312;text-align:center;outline:0"><label for="k2" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Koodi 2. number</label><input id="k2" type="text" inputmode="numeric" maxlength="1" value="8" style="width:100%;height:64px;box-sizing:border-box;border:1px solid #141312;border-radius:14px;background:#fff;font:500 28px 'Cormorant Garamond',Georgia,serif;font-feature-settings:'lnum';color:#141312;text-align:center;outline:0"><label for="k3" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Koodi 3. number</label><input id="k3" type="text" inputmode="numeric" maxlength="1" value="2" style="width:100%;height:64px;box-sizing:border-box;border:1px solid #141312;border-radius:14px;background:#fff;font:500 28px 'Cormorant Garamond',Georgia,serif;font-feature-settings:'lnum';color:#141312;text-align:center;outline:0"><label for="k4" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Koodi 4. number</label><input id="k4" type="text" inputmode="numeric" maxlength="1" value="" style="width:100%;height:64px;box-sizing:border-box;border:1px solid #D1C9BF;border-radius:14px;background:#fff;font:500 28px 'Cormorant Garamond',Georgia,serif;font-feature-settings:'lnum';color:#141312;text-align:center;outline:0"><label for="k5" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Koodi 5. number</label><input id="k5" type="text" inputmode="numeric" maxlength="1" value="" style="width:100%;height:64px;box-sizing:border-box;border:1px solid #D1C9BF;border-radius:14px;background:#fff;font:500 28px 'Cormorant Garamond',Georgia,serif;font-feature-settings:'lnum';color:#141312;text-align:center;outline:0"><label for="k6" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Koodi 6. number</label><input id="k6" type="text" inputmode="numeric" maxlength="1" value="" style="width:100%;height:64px;box-sizing:border-box;border:1px solid #D1C9BF;border-radius:14px;background:#fff;font:500 28px 'Cormorant Garamond',Georgia,serif;font-feature-settings:'lnum';color:#141312;text-align:center;outline:0">
+  </div>
+
+  <a href="Kood.dc.html" style="display:inline-flex;align-items:center;height:44px;margin-top:12px;font-size:15px">Saada uus kood</a>
+
+  <div style="position:absolute;left:0;right:0;bottom:0;padding:16px 24px 30px;background:#fff;border-top:1px solid #E6E0D8">
+    <a class="b1" href="Main.dc.html">Sisene</a>
+    <p class="m" style="text-align:center;margin-top:10px">Jääd selles telefonis sisse logituks.</p>
+  </div>
+</div>
+</body>
+</html>
