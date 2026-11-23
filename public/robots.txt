@@ -4,9 +4,6 @@ Disallow: /admin
 Disallow: /minu
 Disallow: /haldus
 Disallow: /success
-Disallow: /test-payment
-Disallow: /muuk
-Disallow: /sales
 Disallow: /api/
 
 Sitemap: https://sukoda.ee/sitemap.xml

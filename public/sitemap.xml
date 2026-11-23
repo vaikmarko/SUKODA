@@ -13,12 +13,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://sukoda.ee/lugu</loc>
-    <lastmod>2026-02-26</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://sukoda.ee/tingimused</loc>
     <lastmod>2026-02-26</lastmod>
     <changefreq>yearly</changefreq>

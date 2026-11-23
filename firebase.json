@@ -525,6 +525,36 @@
         "type": 301
       },
       {
+        "source": "/lugu",
+        "destination": "/",
+        "type": 301
+      },
+      {
+        "source": "/lugu.html",
+        "destination": "/",
+        "type": 301
+      },
+      {
+        "source": "/muuk",
+        "destination": "/",
+        "type": 301
+      },
+      {
+        "source": "/muuk.html",
+        "destination": "/",
+        "type": 301
+      },
+      {
+        "source": "/sales",
+        "destination": "/",
+        "type": 301
+      },
+      {
+        "source": "/sales.html",
+        "destination": "/",
+        "type": 301
+      },
+      {
         "source": "/kingitus.html",
         "destination": "/",
         "type": 301

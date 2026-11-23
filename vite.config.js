@@ -61,7 +61,6 @@ export default defineConfig({
       input: {
         index: resolve(__dirname, 'index.html'),
         koduomanikule: resolve(__dirname, 'koduomanikule.html'),
-        lugu: resolve(__dirname, 'lugu.html'),
         lunasta: resolve(__dirname, 'lunasta.html'),
         kaart: resolve(__dirname, 'kaart.html'),
         success: resolve(__dirname, 'success.html'),
@@ -71,8 +70,6 @@ export default defineConfig({
         '404': resolve(__dirname, '404.html'),
         minu: resolve(__dirname, 'minu.html'),
         haldus: resolve(__dirname, 'haldus.html'),
-        muuk: resolve(__dirname, 'muuk.html'),
-        sales: resolve(__dirname, 'sales.html'),
       },
     },
   },

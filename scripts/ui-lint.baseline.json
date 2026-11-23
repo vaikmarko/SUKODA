@@ -3,34 +3,23 @@
     "index.html": 23,
     "minu.html": 4,
     "admin.html": 74,
-    "success.html": 10,
-    "muuk.html": 36,
-    "sales.html": 36,
-    "lugu.html": 11,
-    "deck.html": 6
+    "success.html": 10
   },
   "px": {
     "index.html": 47,
     "admin.html": 113,
-    "success.html": 23,
-    "muuk.html": 39,
-    "sales.html": 39,
-    "lugu.html": 25
+    "success.html": 23
   },
   "eyebrow": {
     "index.html": 40,
     "admin.html": 86,
-    "success.html": 21,
-    "muuk.html": 32,
-    "sales.html": 32,
-    "lugu.html": 24
+    "success.html": 21
   },
   "emptyEn": {},
   "ternary": {
     "index.html": 106,
     "minu.html": 12,
-    "success.html": 54,
-    "lugu.html": 23
+    "success.html": 53
   },
   "etOnlyCore": {},
   "noRuCore": {}
