@@ -544,6 +544,43 @@ function visitCanMove(booking) {
   return booking.status === 'cancelled' && booking.heldForReschedule === true;
 }
 
+/**
+ * "Paku teist aega": the specialist offers one day and clock time on a wish and the client accepts
+ * it in the app. The wish stays `requested`, so every reader of open wishes behaves as before; the
+ * offer lives in `request.proposal` and lapses on its own when its start passes.
+ * `todayStr` is the Tallinn date (YYYY-MM-DD). The handler adds `startAt`, the instant in Tallinn time.
+ * `price` is the label the desk would send on confirm, so a visit made by the client's accept is priced
+ * exactly like one the specialist confirms.
+ */
+function sanitizeProposal(input, todayStr) {
+  const b = input || {};
+  const day = parseDateStr(b.date);
+  const time = parseClock(b.time);
+  if (!day || !time) return { error: { et: 'Vali päev ja kellaaeg', en: 'Choose a day and a time', ru: 'Выберите день и время' } };
+  const date = toDateStr(day);
+  if (date < String(todayStr || '')) return { error: { et: 'See päev on juba möödas. Vali päev tulevikus.', en: 'That day has passed. Choose a day ahead.', ru: 'Этот день уже прошёл. Выберите день в будущем.' } };
+  const n = Number(b.durationMin);
+  const durationMin = Number.isInteger(n) && n >= 15 ? Math.min(600, n) : null;
+  const price = String(b.price || '').trim().slice(0, 60);
+  return { proposal: { date, time, durationMin, price, force: b.force === true, by: 'provider' } };
+}
+
+/** 'waiting-client' while an offer can still be accepted, 'expired' once its start has passed, else 'none'. */
+function proposalState(request, nowMs) {
+  const p = request && request.proposal;
+  if (!p || request.status !== 'requested') return 'none';
+  const start = Date.parse(p.startAt || '');
+  if (!parseDateStr(p.date) || !parseClock(p.time) || Number.isNaN(start)) return 'none';
+  return start > nowMs ? 'waiting-client' : 'expired';
+}
+
+/** The price label of the visit an accepted offer makes: what was paid, else what the offer said, else the wish's own. */
+function acceptedPrice(request, paidLabel) {
+  const r = request || {};
+  if (r.payment && r.payment.status === 'paid' && paidLabel) return paidLabel;
+  return (r.proposal && r.proposal.price) || r.price || null;
+}
+
 /** One sentence for the desk: which service, which day, what they wrote. */
 function interestSummary({ serviceName, note, when }) {
   const name = String(serviceName || '').trim();
@@ -1981,6 +2018,9 @@ module.exports = {
   windowForClock,
   requestedTimeLabel,
   visitCanMove,
+  sanitizeProposal,
+  acceptedPrice,
+  proposalState,
   interestSummary,
   providerBroughtHome,
   MAX_CONTACTS,

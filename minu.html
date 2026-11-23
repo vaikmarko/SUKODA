@@ -36,7 +36,7 @@
     </script>
     <script src="/push.js"></script>
     <script src="/assets/js/et-name.js?v=1"></script>
-    <script src="/assets/js/minu/kodu.js?v=19"></script>
+    <script src="/assets/js/minu/kodu.js?v=20"></script>
     <script type="module" src="/assets/js/minu/mount.js"></script>
     <script type="module" src="/assets/js/main.js"></script>
 </head>
@@ -76,7 +76,15 @@
         const n = this.nextThing;
         const use = kind || (n && n.kind);
         if (!n || use === 'loading') return;
+        if (n.kind !== 'proposal') this.proposalError = '';
         if (use === 'unpaid') { this.loadProfile(); return; }
+        if (n.kind === 'proposal') {
+            const offer = (this.extras.requests || []).find((x) => x.id === n.refId);
+            if (!offer) return;
+            if (use === 'proposalOther') this.answerProposal(offer);
+            else this.acceptProposal(offer);
+            return;
+        }
         if (n.kind === 'request') {
             const r = (this.extras.requests || []).find((x) => x.id === n.refId);
             if (r) this.openThread(r);
@@ -226,6 +234,9 @@
 
     // Open request thread (past or current) — the conversation lives here, e-mail only notifies
     viewRequest: null,
+    proposalBusy: false,
+    proposalError: '',
+    threadDeclinesOffer: false,
     threadText: '',
     threadSending: false,
     threadError: '',
@@ -1185,18 +1196,44 @@
         this.feedbackVisit = null;
         this.addonChooser = false;
     },
-    async openThread(r) {
+    /** Sobib on the offer card: the visit is made on the server; a second tap changes nothing. */
+    async acceptProposal(r) {
+        if (this.proposalBusy) return;
+        this.proposalBusy = true;
+        this.proposalError = '';
+        try {
+            const res = await fetch('/api/me/requests/accept-proposal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
+                body: JSON.stringify({ requestId: r.id }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) this.proposalError = (typeof data.error === 'string' && data.error) || this.t('proposalFailed');
+            // Either way the card must show what is true now: the new visit, or the wish back in line
+            await this.loadProfile();
+        } catch (e) {
+            this.proposalError = this.t('proposalFailed');
+        } finally {
+            this.proposalBusy = false;
+        }
+    },
+    /** Paku teist aega on the offer card: the next message in the thread turns the offer down. */
+    answerProposal(r) { return this.openThread(r, { declines: true }); },
+    async openThread(r, opts) {
         if (!r) return;
         this.requestService = null;
         this.viewRequest = r;
         this.threadText = '';
         this.threadError = '';
+        // Set before the reload below, so a message typed at once still turns the offer down
+        this.threadDeclinesOffer = !!(opts && opts.declines);
+        this.proposalError = '';
         this.activeTab = 'extras';
         // The partner may have written since the page loaded — show the thread as it is now
         await this.loadExtras();
         if (this.viewRequest && this.viewRequest.id === r.id) this.viewRequest = (this.extras.requests || []).find((x) => x.id === r.id) || this.viewRequest;
     },
-    closeThread() { this.viewRequest = null; this.threadText = ''; this.threadError = ''; },
+    closeThread() { this.viewRequest = null; this.threadText = ''; this.threadError = ''; this.threadDeclinesOffer = false; },
     get threadMessages() {
         const r = this.viewRequest;
         if (!r) return [];
@@ -1267,11 +1304,12 @@
             const res = await fetch('/api/me/requests/message', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
-                body: JSON.stringify({ requestId: r.id, text }),
+                body: JSON.stringify({ requestId: r.id, text, ...(this.threadDeclinesOffer ? { declineProposal: true } : {}) }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'failed');
             this.threadText = '';
+            this.threadDeclinesOffer = false;
             if (data.request) {
                 this.extras = { ...this.extras, requests: this.extras.requests.map((x) => x.id === data.request.id ? { ...x, ...data.request } : x) };
                 this.viewRequest = { ...r, ...data.request };
@@ -2409,13 +2447,14 @@
       <button type="button" class="p-sheet-btn" @click="runNext()" x-text="t('reschedule')"></button>
     </article>
 
+    <p x-show="proposalError" x-cloak class="text-sm text-err mt-4" x-text="proposalError" role="alert"></p>
     <article class="p-sheet p-6 mt-5" x-show="!homeVisit() && nextThing.kind !== 'loading'" x-cloak>
       <p class="eyebrow" x-text="nextThing.eyebrow"></p>
       <h2 class="font-serif text-2xl font-light mt-3" x-text="nextThing.title"></h2>
       <p class="text-sm text-muted font-light mt-3" x-text="nextThing.body"></p>
       <p x-show="nextThing.thenLine" x-cloak class="text-sm text-muted font-light mt-4" x-text="nextThing.thenLine"></p>
-      <button type="button" class="p-btn mt-6 w-full" x-show="nextThing.action" @click="runNext()" x-text="nextThing.action"></button>
-      <button type="button" class="text-sm font-sans mt-4 underline underline-offset-4" x-show="nextThing.action2" x-cloak @click="runNext(nextThing.kind2)" x-text="nextThing.action2"></button>
+      <button type="button" class="p-btn mt-6 w-full" x-show="nextThing.action" :disabled="proposalBusy" @click="runNext()" x-text="nextThing.action"></button>
+      <button type="button" class="text-sm font-sans mt-4 underline underline-offset-4" x-show="nextThing.action2" x-cloak :disabled="proposalBusy" @click="runNext(nextThing.kind2)" x-text="nextThing.action2"></button>
     </article>
 
     <button type="button" class="p-sheet mt-3.5 w-full px-5 py-4 flex items-center justify-between gap-3 text-left" x-show="lastVisit && nextThing.kind !== 'loading'" x-cloak @click="openVisitFeedback(lastVisit)">
@@ -2798,7 +2837,7 @@
                     </div>
                     <form x-show="canReplyTo(viewRequest)" class="mt-6 pt-5 border-t border-line" @submit.prevent="sendThread()">
                         <label class="eyebrow mb-2" for="thread-text" x-text="t('addMessage')"></label>
-                        <textarea id="thread-text" x-model="threadText" rows="3" maxlength="1500" :placeholder="t('threadPh')" class="w-full bg-white border border-line focus:border-accent outline-none p-4 font-sans font-light text-base transition-colors placeholder:text-muted-light resize-none"></textarea>
+                        <textarea id="thread-text" x-model="threadText" rows="3" maxlength="1500" :placeholder="threadDeclinesOffer ? t('proposalOtherPh') : t('threadPh')" class="w-full bg-white border border-line focus:border-accent outline-none p-4 font-sans font-light text-base transition-colors placeholder:text-muted-light resize-none"></textarea>
                         <p x-show="threadError" class="text-sm text-red-500 font-sans font-light mt-2" x-text="threadError"></p>
                         <div class="flex items-center justify-between gap-4 mt-3">
                             <button type="button" x-show="viewRequest?.status === 'requested'" @click="cancelRequest(viewRequest).then((ok) => { if (ok) closeThread(); })" class="text-sm font-sans text-muted hover:text-black transition-colors" x-text="t('withdraw')"></button>

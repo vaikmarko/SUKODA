@@ -174,3 +174,34 @@ test('an unpaid order is the first card', () => {
   assert.equal(card.kind, 'unpaid');
 });
 
+
+const offer = { id: 'p1', status: 'requested', kind: 'visit', serviceName: 'Aknapesu', providerName: 'Kristi Mets', price: '45 €', proposal: { date: '2026-03-27', time: '14:00', startAt: '2026-03-27T12:00:00.000Z' } };
+const beforeOffer = Date.parse('2026-03-20T08:00:00Z');
+
+test('the specialist\'s offered time is the card before the visit', () => {
+  const card = pickNextThing(portal({ nowMs: beforeOffer, upcomingBookings: [visit], extras: { requests: [offer], away: [] } }));
+  assert.equal(card.kind, 'proposal');
+  assert.equal(card.refId, 'p1');
+  assert.equal(card.eyebrow, 'Kristi pakub aega');
+  assert.equal(card.action, 'Sobib');
+  assert.equal(card.action2, 'Paku teist aega');
+  assert.equal(card.kind2, 'proposalOther');
+  assert.match(card.body, /Aknapesu · 45 €/);
+});
+
+test('an offer on a new-time request wins over the pending card', () => {
+  const move = { ...offer, id: 'p2', type: 'reschedule', targetBookingId: 'b1' };
+  const card = pickNextThing(portal({ nowMs: beforeOffer, pendingRescheduleIds: ['b1'], extras: { requests: [move], away: [] } }));
+  assert.equal(card.kind, 'proposal');
+  assert.equal(card.refId, 'p2');
+});
+
+test('an offer whose start has passed is not a card', () => {
+  const card = pickNextThing(portal({ nowMs: Date.parse('2026-03-27T12:00:00Z'), upcomingBookings: [visit], extras: { requests: [offer], away: [] } }));
+  assert.equal(card.kind, 'visit');
+});
+
+test('a wish without an offer stays as it was', () => {
+  const card = pickNextThing(portal({ nowMs: beforeOffer, upcomingBookings: [visit], extras: { requests: [{ ...offer, proposal: null }], away: [] } }));
+  assert.equal(card.kind, 'visit');
+});

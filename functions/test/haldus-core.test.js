@@ -925,3 +925,39 @@ test('a cleaner can name her own services with a price; anything malformed is dr
   ]);
   assert.deepEqual(core.sanitizeAvailability({}).ownServices, []);
 });
+
+test('an offered time must be a real day ahead with a clock time; duration is optional', () => {
+  const ok = core.sanitizeProposal({ date: '2026-12-11', time: '14:00', durationMin: 120, force: true }, '2026-11-23');
+  assert.deepEqual(ok.proposal, { date: '2026-12-11', time: '14:00', durationMin: 120, price: '', force: true, by: 'provider' });
+  assert.equal(core.sanitizeProposal({ date: '2026-12-11', time: '14:00', price: ' 45 € ' }, '2026-11-23').proposal.price, '45 €');
+  assert.equal(core.sanitizeProposal({ date: '2026-12-11', time: '14:00' }, '2026-11-23').proposal.durationMin, null);
+  assert.equal(core.sanitizeProposal({ date: '2026-12-11', time: '14:00', force: 'yes' }, '2026-11-23').proposal.force, false);
+  assert.ok(core.sanitizeProposal({ date: '2026-11-23', time: '14:00' }, '2026-11-23').proposal, 'today is allowed, the handler checks the clock');
+  assert.ok(core.sanitizeProposal({ date: '2026-11-22', time: '14:00' }, '2026-11-23').error, 'a day that has passed is refused');
+  assert.ok(core.sanitizeProposal({ date: '2026-02-30', time: '14:00' }, '2026-11-23').error, 'not a calendar day');
+  assert.ok(core.sanitizeProposal({ date: '2026-12-11', time: '14' }, '2026-11-23').error, 'not a clock time');
+  assert.ok(core.sanitizeProposal(null, '2026-11-23').error);
+  assert.ok(core.sanitizeProposal({ date: '2026-11-22', time: '14:00' }, '2026-11-23').error.ru, 'the refusal is in three languages');
+});
+
+test('an offer waits for the client until its start, then lapses; a closed or legacy wish has none', () => {
+  const now = Date.parse('2026-12-01T10:00:00Z');
+  const proposal = { date: '2026-12-11', time: '14:00', startAt: '2026-12-11T12:00:00.000Z', by: 'provider' };
+  assert.equal(core.proposalState({ status: 'requested', proposal }, now), 'waiting-client');
+  assert.equal(core.proposalState({ status: 'requested', proposal }, Date.parse('2026-12-11T12:00:00Z')), 'expired');
+  assert.equal(core.proposalState({ status: 'requested', proposal }, Date.parse('2026-12-12T00:00:00Z')), 'expired');
+  for (const status of ['confirmed', 'completed', 'declined', 'cancelled', 'answered', 'awaiting_payment']) {
+    assert.equal(core.proposalState({ status, proposal }, now), 'none', status);
+  }
+  assert.equal(core.proposalState({ status: 'requested' }, now), 'none', 'a wish from before the field existed');
+  assert.equal(core.proposalState({ status: 'requested', proposal: { date: '2026-12-11', time: '14:00' } }, now), 'none', 'no start instant');
+  assert.equal(core.proposalState(null, now), 'none');
+});
+
+test('a visit made by accepting an offer keeps a price: paid amount first, then the offer, then the wish', () => {
+  assert.equal(core.acceptedPrice({ payment: { status: 'paid' }, price: '35 €', proposal: { price: '40 €' } }, '29 €'), '29 €');
+  assert.equal(core.acceptedPrice({ payment: { status: 'pending' }, proposal: { price: '40 €' } }, '29 €'), '40 €');
+  assert.equal(core.acceptedPrice({ price: '35 €', proposal: { price: '' } }, ''), '35 €');
+  assert.equal(core.acceptedPrice({ proposal: { price: '' } }, ''), null, 'included in the home terms: no invented price');
+  assert.equal(core.acceptedPrice(null, ''), null);
+});

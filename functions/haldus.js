@@ -2116,6 +2116,111 @@ module.exports = function createHaldus(deps) {
     return core.serviceName(r.serviceId, lang);
   }
 
+  /**
+   * One wish, one visit. The specialist's "Kinnita" and the client's "Sobib" can arrive in the same
+   * second; whoever claims the wish first places it. The claim lapses after a minute, so a call that
+   * died half-way cannot lock the wish.
+   */
+  async function claimRequest(reqRef, { needProposal = false } = {}) {
+    return db.runTransaction(async (tx) => {
+      const snap = await tx.get(reqRef);
+      if (!snap.exists) return { state: 'gone' };
+      const r = snap.data();
+      if (r.status !== 'requested') return { state: 'answered', request: r };
+      const held = toDate(r.placingAt);
+      if (held && Date.now() - held.getTime() < 60000) return { state: 'busy', request: r };
+      if (needProposal && core.proposalState(r, Date.now()) !== 'waiting-client') return { state: 'no-proposal', request: r };
+      tx.update(reqRef, { placingAt: Timestamp.now() });
+      return { state: 'ok', request: r };
+    });
+  }
+
+  function releaseRequest(reqRef, patch = {}) {
+    return reqRef.update({ placingAt: FieldValue.delete(), ...patch });
+  }
+
+  /** The slot a wish would take at `start` and what it collides with. `ownOk` leaves out the specialist's own calendar. */
+  async function requestSlot({ provider, request, start, durationMin, ownOk = false }) {
+    let dur;
+    let excludeId;
+    if (request.type === 'reschedule') {
+      const target = await accessBooking(provider, request.targetBookingId);
+      if (!target) return { error: 'Algset visiiti ei leitud. Visiit võib olla tühistatud.', status: 404 };
+      const oldStart = toDate(target.booking.scheduledAt);
+      const oldEnd = toDate(target.booking.endTime);
+      dur = Number.isInteger(Number(durationMin)) && Number(durationMin) >= 15 ? Math.min(600, Number(durationMin)) : (oldStart && oldEnd ? Math.round((oldEnd - oldStart) / 60000) : 180);
+      excludeId = target.ref.id;
+    } else {
+      const svc = core.getService(request.serviceId);
+      dur = Math.max(15, Number.isInteger(Number(durationMin)) && Number(durationMin) >= 15 ? Math.min(600, Number(durationMin)) : (svc?.durationMin || 60));
+    }
+    const end = new Date(start.getTime() + dur * 60000);
+    let conflicts = await slotConflicts(provider.id, request.orderId, start, end, excludeId);
+    // An extra done together with the clean sits inside that clean on purpose
+    if (request.timeWindow === 'with-visit') conflicts = conflicts.filter((c) => !(c.orderId === request.orderId && c.providerId === provider.id));
+    if (ownOk) conflicts = conflicts.filter((c) => c.providerId !== provider.id);
+    return { durationMin: dur, conflicts };
+  }
+
+  /**
+   * Turn a claimed wish into a visit, or move the visit a reschedule wish points at. The specialist's
+   * confirm and the client's accept both end here, so flowers added to a clean, a named own service
+   * and the "together with the clean" exception cannot differ between the two.
+   * `force` lets the specialist's own calendar overlap; another specialist's visit in the home never may
+   * be overridden by the client.
+   */
+  async function placeRequest({ provider, order, reqRef, request, start, durationMin, price, message, note, force, by = 'provider', byName }) {
+    const lang = langOf(order);
+    const threadName = by === 'client' ? byName : provider.name;
+    const threadText = message || (by === 'client'
+      ? `${core.pick({ et: 'Aeg sobib', en: 'The time suits me', ru: 'Время подходит' }, lang)}: ${formatDate(start, lang)}, ${formatTime(start)}`
+      : `Aeg kinnitatud: ${formatDate(start, 'et')}, ${formatTime(start)}`);
+    const said = by === 'provider' ? { providerMessage: message || '' } : {};
+    const done = { proposal: FieldValue.delete(), placingAt: FieldValue.delete(), confirmedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() };
+
+    if (by === 'client') {
+      const home = await requestSlot({ provider, request, start, durationMin, ownOk: force });
+      if (home.error) return home;
+      if (home.conflicts.length) return { error: conflictError(home.conflicts), code: 'CONFLICT', conflicts: home.conflicts, status: 409 };
+    }
+
+    // Reschedule request → move the existing visit instead of creating a new one
+    if (request.type === 'reschedule') {
+      const target = await accessBooking(provider, request.targetBookingId);
+      if (!target) return { error: 'Algset visiiti ei leitud. Visiit võib olla tühistatud.', status: 404 };
+      const result = await rescheduleVisit({ provider, ref: target.ref, booking: target.booking, order, start, durationMin, force: force || by === 'client', notify: true, by });
+      if (result.error) return result;
+      // The ask was "move my visit" — once moved it is done. The visit itself carries the new time; nothing stays open.
+      await reqRef.update({ status: 'completed', bookingId: target.ref.id, scheduledAt: Timestamp.fromDate(start), ...said, completedAt: FieldValue.serverTimestamp(), ...done });
+      try { await appendRequestMessage(reqRef, { by, name: threadName, text: threadText }); } catch (e) { console.error('confirm thread note failed', e); }
+      return { booking: serializeBooking(target.ref.id, result.updated) };
+    }
+
+    const slot = await requestSlot({ provider, request, start, durationMin });
+    if (by !== 'client' && slot.conflicts.length && !force) return { error: conflictError(slot.conflicts), code: 'CONFLICT', conflicts: slot.conflicts, status: 409 };
+
+    const booking = await createVisit({
+      order, orderId: request.orderId, provider, start, durationMin: slot.durationMin,
+      note: note || '', customerNote: by === 'provider' ? (message || '') : '',
+      source: 'request', serviceId: request.serviceId, price, requestId: reqRef.id,
+      title: request.ownService?.name || '',
+    });
+    // Flowers added to this clean: their own line at the same start, so the amount the client chose
+    // reaches the month summary and the two-day reminder; Tehtud on the clean closes it too.
+    if (request.serviceId !== 'flowers' && Array.isArray(request.addons) && request.addons.includes('flowers') && request.flowerPrice) {
+      try {
+        await createVisit({
+          order, orderId: request.orderId, provider, start, durationMin: 15,
+          note: '', customerNote: '', source: 'request', serviceId: 'flowers', price: request.flowerPrice, requestId: reqRef.id,
+        });
+      } catch (e) { console.error('flowers line for the clean failed', reqRef.id, e); }
+    }
+    await reqRef.update({ status: 'confirmed', bookingId: booking.id, scheduledAt: Timestamp.fromDate(start), price, ...said, ...done });
+    try { await appendRequestMessage(reqRef, { by, name: threadName, text: threadText }); } catch (e) { console.error('confirm thread note failed', e); }
+    await sendVisitNotification('confirmed', { order, booking, provider });
+    return { booking: serializeBooking(booking.id, booking) };
+  }
+
   function serializeRequest(id, r) {
     return {
       id,
@@ -2142,6 +2247,8 @@ module.exports = function createHaldus(deps) {
       status: r.status,
       // For declined requests: 'not_covered' (issue reviewed, not under warranty) or 'new_time' (slot did not fit)
       outcome: r.outcome || null,
+      // An offered time the client has not answered yet; null once it lapsed (core.proposalState)
+      proposal: core.proposalState(r, Date.now()) === 'waiting-client' ? { date: r.proposal.date, time: r.proposal.time, startAt: r.proposal.startAt, price: r.proposal.price || '' } : null,
       price: r.price || null,
       flowerPrice: r.flowerPrice || null,
       ownService: r.ownService && r.ownService.name ? { id: String(r.ownService.id || ''), name: String(r.ownService.name) } : null,
@@ -4532,9 +4639,8 @@ module.exports = function createHaldus(deps) {
       const reqRef = db.collection('serviceRequests').doc(docId(b.requestId));
       const reqDoc = await reqRef.get();
       if (!reqDoc.exists || reqDoc.data().providerId !== provider.id) return res.status(404).json({ error: 'Soovi ei leitud' });
-      const request = reqDoc.data();
-      if (!['requested'].includes(request.status)) return res.status(400).json({ error: 'Sellele soovile on juba vastatud' });
-      const acc = await accessOrder(provider, request.orderId);
+      if (!['requested'].includes(reqDoc.data().status)) return res.status(400).json({ error: 'Sellele soovile on juba vastatud' });
+      const acc = await accessOrder(provider, reqDoc.data().orderId);
       if (!acc) return res.status(404).json({ error: 'Klienti ei leitud' });
       const { order } = acc;
 
@@ -4542,55 +4648,70 @@ module.exports = function createHaldus(deps) {
       try { start = new Date(tallinnLocalDateTimeToISOString(b.date, b.time)); } catch { return res.status(400).json({ error: 'Kuupäev või kellaaeg ei ole õige' }); }
       if (start < new Date()) return res.status(400).json({ error: 'See aeg on juba möödas. Vali aeg tulevikus.' });
 
-      // Reschedule request → move the existing visit instead of creating a new one
-      if (request.type === 'reschedule') {
-        const target = await accessBooking(provider, request.targetBookingId);
-        if (!target) return res.status(404).json({ error: 'Algset visiiti ei leitud. Visiit võib olla tühistatud.' });
-        const result = await rescheduleVisit({ provider, ref: target.ref, booking: target.booking, order, start, durationMin: b.durationMin, force: b.force, notify: true });
-        if (result.error) return res.status(result.status).json(result);
-        // The ask was "move my visit" — once moved it is done. The visit itself carries the new time; nothing stays open.
-        await reqRef.update({
-          status: 'completed', bookingId: target.ref.id, scheduledAt: Timestamp.fromDate(start),
-          providerMessage: str(b.message, 300), confirmedAt: FieldValue.serverTimestamp(), completedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp(),
+      const claim = await claimRequest(reqRef);
+      if (claim.state !== 'ok') return res.status(claim.state === 'busy' ? 409 : 400).json({ error: claim.state === 'busy' ? 'Klient kinnitab seda aega just praegu. Proovi hetke pärast uuesti.' : 'Sellele soovile on juba vastatud' });
+      let result;
+      try {
+        result = await placeRequest({
+          provider, order, reqRef, request: claim.request, start, durationMin: b.durationMin,
+          price: str(b.price, 60) || null, message: str(b.message, 300), note: str(b.note, 500), force: b.force === true,
         });
-        try { await appendRequestMessage(reqRef, { by: 'provider', name: provider.name, text: str(b.message, 300) || `Aeg kinnitatud: ${formatDate(start, 'et')}, ${formatTime(start)}` }); } catch (e) { console.error('confirm thread note failed', e); }
-        return res.status(200).json({ success: true, booking: serializeBooking(target.ref.id, result.updated) });
+      } catch (e) {
+        await releaseRequest(reqRef).catch(() => {});
+        throw e;
       }
-
-      const svc = core.getService(request.serviceId);
-      const durationMin = Number.isInteger(Number(b.durationMin)) && Number(b.durationMin) >= 15 ? Math.min(600, Number(b.durationMin)) : (svc?.durationMin || 60);
-      const end = new Date(start.getTime() + Math.max(15, durationMin) * 60000);
-
-      const allConflicts = await slotConflicts(provider.id, request.orderId, start, end);
-      const conflicts = request.timeWindow === 'with-visit'
-        ? allConflicts.filter((c) => !(c.orderId === request.orderId && c.providerId === provider.id))
-        : allConflicts;
-      if (conflicts.length && !b.force) return res.status(409).json({ error: conflictError(conflicts), code: 'CONFLICT', conflicts });
-
-      const price = str(b.price, 60) || null;
-      const booking = await createVisit({
-        order, orderId: request.orderId, provider, start, durationMin: Math.max(15, durationMin),
-        note: str(b.note, 500), customerNote: str(b.message, 300),
-        source: 'request', serviceId: request.serviceId, price, requestId: reqRef.id,
-        title: request.ownService?.name || '',
-      });
-      // Flowers added to this clean: their own line at the same start, so the amount the client chose
-      // reaches the month summary and the two-day reminder; Tehtud on the clean closes it too.
-      if (request.serviceId !== 'flowers' && Array.isArray(request.addons) && request.addons.includes('flowers') && request.flowerPrice) {
-        try {
-          await createVisit({
-            order, orderId: request.orderId, provider, start, durationMin: 15,
-            note: '', customerNote: '', source: 'request', serviceId: 'flowers', price: request.flowerPrice, requestId: reqRef.id,
-          });
-        } catch (e) { console.error('flowers line for the clean failed', reqRef.id, e); }
+      if (result.error) {
+        await releaseRequest(reqRef).catch(() => {});
+        const { status, ...body } = result;
+        return res.status(status).json(body);
       }
-      await reqRef.update({
-        status: 'confirmed', bookingId: booking.id, scheduledAt: Timestamp.fromDate(start), price,
-        providerMessage: str(b.message, 300), confirmedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp(),
+      res.status(200).json({ success: true, booking: result.booking });
+    },
+
+    /**
+     * "Paku teist aega": the wish stays open and carries one offered day and time. The client accepts
+     * it in the app (POST /api/me/requests/accept-proposal); only then is the visit made.
+     */
+    'POST /api/haldus/requests/propose': async (req, res) => {
+      const provider = await authenticateProvider(req);
+      if (!provider) return res.status(401).json({ error: 'Unauthorized' });
+      const b = req.body || {};
+      const lang = core.langOf(provider);
+      const reqRef = db.collection('serviceRequests').doc(docId(b.requestId));
+      const reqDoc = await reqRef.get();
+      if (!reqDoc.exists || reqDoc.data().providerId !== provider.id) return res.status(404).json({ error: 'Soovi ei leitud' });
+      const request = reqDoc.data();
+      if (request.status !== 'requested') return res.status(400).json({ error: 'Sellele soovile on juba vastatud' });
+      if (requestKind(request) !== 'visit') return res.status(400).json({ error: core.pick({ et: 'Sellele soovile saab vastata kirjalikult.', en: 'This request is answered in writing.', ru: 'На этот запрос отвечают письменно.' }, lang) });
+      const acc = await accessOrder(provider, request.orderId);
+      if (!acc) return res.status(404).json({ error: 'Klienti ei leitud' });
+      const { order } = acc;
+
+      const clean = core.sanitizeProposal(b, todayTallinnStr());
+      if (clean.error) return res.status(400).json({ error: core.pick(clean.error, lang) });
+      const start = new Date(tallinnLocalDateTimeToISOString(clean.proposal.date, clean.proposal.time));
+      if (!(start > new Date())) return res.status(400).json({ error: 'See aeg on juba möödas. Vali aeg tulevikus.' });
+
+      // Same conflict check as confirm, so the offer is a time the visit can really take
+      const window = await requestSlot({ provider, request, start, durationMin: clean.proposal.durationMin });
+      if (window.error) return res.status(window.status).json({ error: window.error });
+      if (window.conflicts.length && !clean.proposal.force) return res.status(409).json({ error: conflictError(window.conflicts), code: 'CONFLICT', conflicts: window.conflicts });
+
+      const claim = await claimRequest(reqRef);
+      if (claim.state !== 'ok') return res.status(claim.state === 'busy' ? 409 : 400).json({ error: claim.state === 'busy' ? 'Klient kinnitab seda aega just praegu. Proovi hetke pärast uuesti.' : 'Sellele soovile on juba vastatud' });
+      const message = str(b.message, 300);
+      const homeLang = langOf(order);
+      const when = `${formatDate(start, homeLang)}, ${formatTime(start)}`;
+      await releaseRequest(reqRef, {
+        proposal: { ...clean.proposal, startAt: start.toISOString(), at: new Date().toISOString() },
+        ...(message ? { providerMessage: message } : {}), updatedAt: FieldValue.serverTimestamp(),
       });
-      try { await appendRequestMessage(reqRef, { by: 'provider', name: provider.name, text: str(b.message, 300) || `Aeg kinnitatud: ${formatDate(start, 'et')}, ${formatTime(start)}` }); } catch (e) { console.error('confirm thread note failed', e); }
-      await sendVisitNotification('confirmed', { order, booking, provider });
-      res.status(200).json({ success: true, booking: serializeBooking(booking.id, booking) });
+      const text = `${core.pick({ et: 'Pakun uut aega', en: 'I can offer', ru: 'Предлагаю время' }, homeLang)}: ${when}${message ? `\n${message}` : ''}`;
+      try { await appendRequestMessage(reqRef, { by: 'provider', name: provider.name, text }); } catch (e) { console.error('propose thread note failed', e); }
+      // Marko 23.11.2026: the same recipients as for a written reply, no new ones
+      await notifyRequest(order, request, requestMessageEmail({ toSide: 'client', order, request, requestId: reqRef.id, fromName: provider.name, text, lang: homeLang }), { replyTo: PORTAL_REPLY_TO });
+      const fresh = await reqRef.get();
+      res.status(200).json({ success: true, request: serializeRequest(reqRef.id, fresh.data()) });
     },
 
     /** The provider writes on a request without closing it — a clarifying question, an update. Client is notified. */
@@ -4656,7 +4777,9 @@ module.exports = function createHaldus(deps) {
       const kind = requestKind(request);
       // An issue that is not covered is "reviewed", a visit slot that does not fit needs a new time
       const fallback = kind === 'issue' ? 'Kui soovid, tellime töö tasulisena.' : 'Soovitud aeg ei sobi — paku palun uut aega.';
-      await reqRef.update({ status: 'declined', outcome: kind === 'issue' ? 'not_covered' : 'new_time', providerMessage: message.slice(0, 300), declinedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
+      const claim = await claimRequest(reqRef);
+      if (claim.state !== 'ok') return res.status(claim.state === 'busy' ? 409 : 400).json({ error: claim.state === 'busy' ? 'Klient kinnitab seda aega just praegu. Proovi hetke pärast uuesti.' : 'Sellele soovile on juba vastatud' });
+      await releaseRequest(reqRef, { status: 'declined', outcome: kind === 'issue' ? 'not_covered' : 'new_time', providerMessage: message.slice(0, 300), proposal: FieldValue.delete(), declinedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
       try { await appendRequestMessage(reqRef, { by: 'provider', name: provider.name, text: message || fallback }); } catch (e) { console.error('decline thread note failed', e); }
       // If a household connected this specialist from the directory and their very first request is declined,
       // free the category slot so the family can pick someone else right away.
@@ -6035,6 +6158,11 @@ module.exports = function createHaldus(deps) {
       if (r.status === 'answered' || r.status === 'declined') {
         await ref.update({ status: 'requested', updatedAt: FieldValue.serverTimestamp() });
       }
+      // "Paku teist aega" on the offer card turns the offer down. An ordinary message in the thread
+      // ("the key is under the mat") leaves it standing.
+      if (req.body?.declineProposal === true && r.proposal) {
+        await ref.update({ proposal: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() });
+      }
       const provider = await loadProvider(r.providerId);
       const to = providerReplyTo(provider) || NOTIFICATION_EMAIL;
       await sendEmail({ to, ...requestMessageEmail({ toSide: 'provider', order, request: r, fromName: name, text, lang: 'et' }) });
@@ -6051,11 +6179,72 @@ module.exports = function createHaldus(deps) {
       if (!doc.exists || doc.data().orderId !== orderId) return res.status(404).json({ error: 'Not found' });
       const r = doc.data();
       if (r.status !== 'requested') return res.status(400).json({ error: langOf(order) === 'et' ? 'See aeg on juba kinnitatud. Kirjuta soovi juurde ja koduhooldaja tühistab aja.' : 'This time is already confirmed. Write on the request and the housekeeper cancels the time.' });
-      await ref.update({ status: 'cancelled', cancelledAt: FieldValue.serverTimestamp(), cancelledBy: 'client', updatedAt: FieldValue.serverTimestamp() });
+      await ref.update({ status: 'cancelled', proposal: FieldValue.delete(), cancelledAt: FieldValue.serverTimestamp(), cancelledBy: 'client', updatedAt: FieldValue.serverTimestamp() });
       const provider = await loadProvider(r.providerId);
       const to = providerReplyTo(provider) || NOTIFICATION_EMAIL;
       await sendEmail({ to, subject: `SUKODA | Soov tühistatud: ${requestName(r, 'et')} — ${r.customerName || r.customerEmail}`, html: providerWrap('Soov tühistatud', `${escapeHtml(r.customerName || 'Klient')} tühistas oma soovi „${escapeHtml(requestName(r, 'et'))}“. Midagi teha ei ole vaja.`, '') });
       res.status(200).json({ success: true });
+    },
+    /**
+     * "Sobib": the client takes the time the specialist offered and the visit is made. A second tap,
+     * a lapsed offer or a slot taken meanwhile changes nothing and says so.
+     */
+    'POST /api/me/requests/accept-proposal': async (req, res) => {
+      if (!checkRateLimit(req, res, 'portal-req-accept', 20, 60000)) return;
+      const auth = await authenticateClient(req);
+      if (!auth) return res.status(401).json({ error: 'Unauthorized' });
+      const { orderId, order } = auth;
+      const lang = langOf(order);
+      const ref = db.collection('serviceRequests').doc(docId(req.body?.requestId));
+      const doc = await ref.get();
+      if (!doc.exists || doc.data().orderId !== orderId) return res.status(404).json({ error: 'Not found' });
+      const gone = { error: core.pick({ et: 'See pakkumine ei kehti enam. Kirjuta soovi juurde, mis aeg sulle sobib.', en: 'This offer is no longer open. Write on the request which time suits you.', ru: 'Это предложение больше не действует. Напишите в запросе, какое время вам подходит.' }, lang), code: 'PROPOSAL_GONE' };
+      const provider = await loadProvider(doc.data().providerId);
+      if (!provider) return res.status(409).json(gone);
+
+      const claim = await claimRequest(ref, { needProposal: true });
+      if (claim.state === 'busy') return res.status(409).json({ error: core.pick({ et: 'Aega kinnitatakse just praegu. Proovi hetke pärast uuesti.', en: 'The time is being confirmed right now. Try again in a moment.', ru: 'Время подтверждается прямо сейчас. Повторите через минуту.' }, lang) });
+      // Another family member already took the same offer: the visit exists, nothing to do
+      if (claim.state === 'answered' && ['confirmed', 'completed'].includes(claim.request?.status) && claim.request.bookingId) return res.status(200).json({ success: true });
+      if (claim.state !== 'ok') {
+        if (claim.state === 'no-proposal' && claim.request?.proposal) await ref.update({ proposal: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() }).catch(() => {});
+        return res.status(409).json(gone);
+      }
+      const request = claim.request;
+      const offer = request.proposal;
+      const start = new Date(offer.startAt);
+      const name = auth.viewer?.name || primaryName(order) || '';
+      let result;
+      try {
+        result = await placeRequest({
+          provider, order, reqRef: ref, request, start, durationMin: offer.durationMin,
+          price: core.acceptedPrice(request, request.payment?.residentCents ? euroLabel(request.payment.residentCents) : ''),
+          force: offer.force === true, by: 'client', byName: name,
+        });
+      } catch (e) {
+        await releaseRequest(ref).catch(() => {});
+        throw e;
+      }
+      if (result.error) {
+        // The offer is void and the wish is back on the specialist's desk. Only a taken slot is
+        // written into the thread as such; any other failure (the old visit is gone) says the offer is closed.
+        await releaseRequest(ref, { proposal: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() }).catch(() => {});
+        if (result.code !== 'CONFLICT') return res.status(409).json(gone);
+        const taken = { et: 'See aeg läks vahepeal täis.', en: 'That time was taken meanwhile.', ru: 'Это время уже занято.' };
+        const next = { et: 'Kirjuta soovi juurde, mis aeg sulle sobib.', en: 'Write on the request which time suits you.', ru: 'Напишите в запросе, какое время вам подходит.' };
+        try { await appendRequestMessage(ref, { by: 'client', name, text: core.pick(taken, lang) }); } catch (e) { console.error('accept thread note failed', e); }
+        return res.status(409).json({ error: `${core.pick(taken, lang)} ${core.pick(next, lang)}`, code: 'PROPOSAL_GONE' });
+      }
+      const to = providerReplyTo(provider);
+      if (to) {
+        const said = `Aeg sobib: ${formatDate(start, 'et')}, ${formatTime(start)}. Visiit on sinu kalendris.`;
+        const mail = requestMessageEmail({ toSide: 'provider', order, request, fromName: name, text: said, lang: 'et' });
+        // The template has no push of its own; the specialist hears it the way she hears a new wish
+        mail.push = push.message({ type: 'request_status', lang: core.langOf(provider), title: `${requestName(request, 'et')} · ${name || primaryName(order) || ''}`.trim(), body: said, url: `${HALDUS_URL}?tab=requests` });
+        try { await sendEmail({ to, subject: mail.subject, html: mail.html }); await deliverMailPush(provider, mail); } catch (e) { console.error('accept notice to provider failed', e); }
+      }
+      const fresh = await ref.get();
+      res.status(200).json({ success: true, booking: result.booking, request: { ...serializeRequest(ref.id, fresh.data()), serviceName: requestName(fresh.data(), lang) } });
     },
   };
 

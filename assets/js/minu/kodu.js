@@ -22,6 +22,12 @@ Object.assign(dict, {
   openReply: { et: 'Ava vastus', en: 'Open the reply', ru: 'Открыть ответ' },
   openIt: { et: 'Ava', en: 'Open', ru: 'Открыть' },
   suggestDay: { et: 'Paku uus päev', en: 'Suggest a new day', ru: 'Предложить другой день' },
+  proposalEyebrow: { et: '{name} pakub aega', en: '{name} offers a time', ru: '{name} предлагает время' },
+  proposalEyebrowAny: { et: 'Sulle pakutakse aega', en: 'A time is offered to you', ru: 'Вам предлагают время' },
+  proposalFits: { et: 'Sobib', en: 'That works', ru: 'Подходит' },
+  proposalOther: { et: 'Paku teist aega', en: 'Suggest another time', ru: 'Предложить другое время' },
+  proposalFailed: { et: 'Aega ei saanud kinnitada. Proovi uuesti.', en: 'The time could not be confirmed. Try again.', ru: 'Не удалось подтвердить время. Повторите попытку.' },
+  proposalOtherPh: { et: 'Kirjuta, mis päev ja kell sulle sobib', en: 'Write which day and time suits you', ru: 'Напишите, какой день и время вам подходят' },
   waitingReply: { et: 'Vastus on veel tulemata. Kui tahad midagi lisada, ava ja kirjuta juurde.', en: 'The reply has not come yet. To add something, open it and write below.', ru: 'Ответ ещё не пришёл. Чтобы что-то добавить, откройте и напишите ниже.' },
   replyReadyBody: { et: 'Vastus on kirjas. Ava ja loe.', en: 'The reply is here. Open it and read.', ru: 'Ответ пришёл. Откройте, чтобы прочитать.' },
   alsoWaiting: { et: 'Vastus on veel tulemata: {name}.', en: 'Still waiting for a reply: {name}.', ru: 'Ответ ещё не пришёл: {name}.' },
@@ -158,6 +164,25 @@ function pickNextThing(vm) {
       action: t('checkAgain'),
       action2: '',
       thenLine: thenVisit(vm),
+    };
+  }
+
+  // The specialist offered a time. It comes before a pending new time, because the offer may be the
+  // answer to exactly that; an offer whose start has passed is no longer a card.
+  const offered = vm.extrasLoaded && requests.find((r) => r.status === 'requested' && r.proposal && Date.parse(r.proposal.startAt) > (vm.nowMs || Date.now()));
+  if (offered) {
+    const who = String(offered.providerName || '').trim().split(' ')[0];
+    return {
+      kind: 'proposal',
+      refId: offered.id,
+      pending: false,
+      eyebrow: who ? t('proposalEyebrow', { name: who }) : t('proposalEyebrowAny'),
+      title: vm.formatDate(offered.proposal.startAt) + ', ' + vm.formatTime(offered.proposal.startAt),
+      body: [reqTitle(vm, offered), offered.proposal.price || offered.price].filter(Boolean).join(' · '),
+      action: t('proposalFits'),
+      action2: t('proposalOther'),
+      kind2: 'proposalOther',
+      thenLine: '',
     };
   }
 

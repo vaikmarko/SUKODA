@@ -167,7 +167,7 @@
                 </div>
             </div>
 
-            <nav class="h-dock" :class="['account', 'calendar', 'visit', 'done', 'month', 'services', 'addClient'].includes(activeTab) ? 'is-away' : ''" :aria-label="t('deskWord')">
+            <nav class="h-dock" :class="['account', 'calendar', 'visit', 'done', 'month', 'services', 'addClient', 'propose'].includes(activeTab) ? 'is-away' : ''" :aria-label="t('deskWord')">
                 <button type="button" class="h-dock-btn" :class="activeTab === 'today' ? 'is-active' : ''" :aria-current="activeTab === 'today' ? 'page' : null" @click="activeTab = 'today'; window.scrollTo({ top: 0, behavior: 'smooth' })">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path stroke-linecap="round" d="M4 10h16M8 3v4M16 3v4"/></svg>
                     <span x-text="t('tabToday')"></span>
@@ -443,10 +443,27 @@
                                         </template>
                                         <div class="grid gap-2.5 mt-4" :class="r.kind === 'question' ? '' : 'grid-cols-2'">
                                             <button type="button" x-show="r.kind !== 'question'" @click="openConfirmRequest(r)" class="p-go h-wish-btn" x-text="t('confirmShort')"></button>
-                                            <button type="button" x-show="r.kind !== 'question'" @click="replyRequest(r)" class="p-sheet-btn h-wish-btn" x-text="t('reply')"></button>
+                                            <button type="button" x-show="r.kind !== 'question'" @click="openPropose(r)" class="p-sheet-btn h-wish-btn" x-text="t('proposeTime')"></button>
                                             <button type="button" x-show="r.kind === 'question'" @click="replyRequest(r)" class="p-go h-wish-btn" x-text="t('reply')"></button>
                                         </div>
-                                        <button type="button" x-show="r.kind !== 'question'" @click="declineRequest(r)" class="inline-flex items-center min-h-11 mt-1 text-sm text-muted underline underline-offset-4" x-text="r.kind === 'issue' ? t('notWarranty') : t('decline')"></button>
+                                        <div class="flex items-center gap-5 mt-1" x-show="r.kind !== 'question'">
+                                            <button type="button" @click="replyRequest(r)" class="inline-flex items-center min-h-11 text-sm text-muted underline underline-offset-4" x-text="t('reply')"></button>
+                                            <button type="button" @click="declineRequest(r)" class="inline-flex items-center min-h-11 text-sm text-muted underline underline-offset-4" x-text="r.kind === 'issue' ? t('notWarranty') : t('decline')"></button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                        <!-- Offered a time, the client has not answered: nothing for the specialist to do but wait or change it -->
+                        <div x-show="proposedRequests.length" x-cloak>
+                            <p class="eyebrow mb-4" x-text="t('proposedWaiting')"></p>
+                            <div class="space-y-3">
+                                <template x-for="r in proposedRequests" :key="r.id">
+                                    <div class="p-sheet p-5">
+                                        <p class="p-row-name" x-text="r.serviceName"></p>
+                                        <p class="text-sm font-sans font-light text-muted truncate"><span x-text="r.customerName"></span><span x-show="r.address" x-text="' · ' + r.address"></span></p>
+                                        <p class="text-sm font-sans mt-3" x-text="t('proposedLine', { when: fmtOffer(r.proposal.date, r.proposal.time) })"></p>
+                                        <button type="button" @click="openPropose(r)" class="inline-flex items-center min-h-11 mt-1 text-sm text-muted underline underline-offset-4" x-text="t('proposeEdit')"></button>
                                     </div>
                                 </template>
                             </div>
@@ -517,6 +534,36 @@
                 </div>
 
                 <!-- ─────────── TEENUSED JA HINNAD (docs/disain/ekraanid/TegijaTeenused.html) ─────────── -->
+                <!-- docs/disain/ekraanid/PakuAega.html: one day, one clock time, the client confirms in the app -->
+                <div x-show="activeTab === 'propose'" x-cloak>
+                    <form class="max-w-xl pb-28" @submit.prevent="sendProposal()">
+                        <button type="button" class="p-back" @click="activeTab = 'requests'"><svg class="p-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6"/></svg><span x-text="t('tabWishes')"></span></button>
+                        <h1 class="p-sub-title" x-text="t('proposeTitle')"></h1>
+                        <p class="text-muted mt-2" x-text="proposeWished()"></p>
+                        <p class="eyebrow mt-6" id="propose-day-label" x-text="t('proposeDay')"></p>
+                        <div class="grid grid-cols-5 gap-2 mt-2.5" role="group" aria-labelledby="propose-day-label">
+                            <template x-for="d in proposeDays" :key="d.date">
+                                <button type="button" class="p-day" :class="{ 'is-on': propose.date === d.date }" :aria-pressed="propose.date === d.date" :aria-label="fmtDateLong(d.date)" @click="propose.date = d.date; propose.conflicts = []; propose.force = false"><small x-text="d.wd"></small><b x-text="d.day"></b></button>
+                            </template>
+                        </div>
+                        <p class="eyebrow mt-6" id="propose-clock-label" x-text="t('proposeClock')"></p>
+                        <div class="grid grid-cols-4 gap-2 mt-2.5" role="group" aria-labelledby="propose-clock-label">
+                            <template x-for="c in proposeClocks" :key="c">
+                                <button type="button" class="p-seg" :class="{ 'is-on': propose.time === c }" :aria-pressed="propose.time === c" @click="propose.time = c; propose.conflicts = []; propose.force = false" x-text="c"></button>
+                            </template>
+                        </div>
+                        <label class="eyebrow mt-6" for="propose-msg" x-text="t('proposeMsg')"></label>
+                        <textarea id="propose-msg" x-model="propose.message" rows="3" maxlength="300" class="p-area"></textarea>
+                        <div x-show="propose.conflicts.length" x-cloak class="p-sheet p-4 mt-4 text-sm" role="alert">
+                            <p class="mb-2" x-text="t('overlap')"></p>
+                            <template x-for="c in propose.conflicts" :key="c.id"><p class="text-muted" x-text="c.label || (fmtTime(c.scheduledAt) + '–' + fmtTime(c.endTime) + ' · ' + c.customerName)"></p></template>
+                            <label class="flex items-center gap-2 mt-3 min-h-11"><input type="checkbox" x-model="propose.force"> <span x-text="t('proposeAnyway')"></span></label>
+                        </div>
+                        <p x-show="propose.error" x-cloak class="text-sm text-err mt-3" x-text="propose.error" role="alert"></p>
+                        <button type="submit" class="p-go is-wide mt-6" :disabled="propose.saving || !propose.date || !propose.time || (propose.conflicts.length > 0 && !propose.force)" x-text="propose.saving ? t('sending') : t('proposeSend', { when: fmtOffer(propose.date, propose.time) })"></button>
+                        <p class="text-sm text-muted text-center mt-2.5" x-text="t('proposeNote', { name: (propose.request?.customerName || '').split(' ')[0] })"></p>
+                    </form>
+                </div>
                 <div x-show="activeTab === 'services'" x-cloak>
                     <form class="max-w-xl pb-28" @submit.prevent="saveAvailability()">
                         <button type="button" class="p-back" @click="activeTab = 'account'"><svg class="p-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6"/></svg><span x-text="t('tabAccount')"></span></button>
@@ -1716,6 +1763,20 @@
             confirmNotify: { et: 'Kinnita', en: 'Confirm' },
             confirming: { et: 'Kinnitan…', en: 'Confirming…' },
             confirmedToast: { et: 'Aeg on kinnitatud. Klient sai teate.', en: 'The time is confirmed. The client was notified.' },
+            proposeTime: { et: 'Paku teist aega', en: 'Offer another time' },
+            proposeTitle: { et: 'Paku teist aega', en: 'Offer another time' },
+            proposeWished: { et: '{name} soovis: {when}.', en: '{name} asked for: {when}.' },
+            proposeWishedAny: { et: '{name} soovis esimest vaba aega.', en: '{name} asked for the first free time.' },
+            proposeDay: { et: 'Päev', en: 'Day' },
+            proposeClock: { et: 'Kellaaeg', en: 'Time' },
+            proposeMsg: { et: 'Sõnum kliendile', en: 'Message to the client' },
+            proposeSend: { et: 'Paku: {when}', en: 'Offer: {when}' },
+            proposeNote: { et: '{name} kinnitab aja oma äpis.', en: '{name} confirms the time in the app.' },
+            proposeAnyway: { et: 'Paku siiski', en: 'Offer anyway' },
+            proposedToast: { et: 'Pakkumine on saadetud. Klient sai teate.', en: 'The offer is sent. The client was notified.' },
+            proposedWaiting: { et: 'Ootab klienti', en: 'Waiting for the client' },
+            proposedLine: { et: 'Pakutud: {when}', en: 'Offered: {when}' },
+            proposeEdit: { et: 'Muuda pakkumist', en: 'Change the offer' },
             overlap: { et: 'See aeg kattub teise visiidiga:', en: 'This time overlaps another visit:' },
             msgPhClean: { et: 'Toon lilled koristusega kaasa', en: 'I will bring the flowers with the clean' },
             msgPhVisit: { et: 'Tuleme kahekesi, võtab umbes tunni', en: 'Two of us will come, about an hour' },
@@ -1928,6 +1989,8 @@
             customerModal: { open: false, moreOpen: false, saving: false, error: '', existingWarning: '', upgrade: false, done: null, form: { name: '', email: '', phone: '', address: '', size: 'medium', frequency: 'biweekly', weekday: 2, time: '10:00', price: '', services: [], showContact2: false, contact2: { name: '', email: '' }, force: false } },
             msgModal: { open: false, title: '', subtitle: '', hint: '', placeholder: '', button: '', danger: false, required: true, text: '', error: '', saving: false, submit() {} },
             detail: { open: false, customer: null, inviteUrl: '', sendingLink: false, editSchedule: false, scheduleForm: {}, contactsForm: [], editContacts: false, notes: '', notesDirty: false, saving: false, error: '', editAway: false, awayForm: { from: '', to: '', note: '' }, editFlowers: false, flowersForm: { auto: false, floristId: '', leadDays: 2, note: '', budget: '' }, maintAdding: false, maintForm: { name: '', intervalMonths: 6 } },
+            propose: { request: null, date: '', time: '', message: '', force: false, conflicts: [], error: '', saving: false },
+            proposeClocks: ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'],
             confirmModal: { open: false, request: null, date: '', time: '10:00', durationMin: 60, price: '', message: '', force: false, conflicts: [], error: '', saving: false },
             handledOpen: null,
 
@@ -2159,7 +2222,9 @@
             get unmarkedPast() {
                 return this.liveBookings.filter((b) => this.dateOf(b.scheduledAt) < this.todayStr).sort(this.byTime);
             },
-            get pendingRequests() { return this.requests.filter((r) => r.status === 'requested'); },
+            // A wish with an open offer waits for the client, not for the specialist: it leaves the badge and the first list
+            get pendingRequests() { return this.requests.filter((r) => r.status === 'requested' && !r.proposal); },
+            get proposedRequests() { return this.requests.filter((r) => r.status === 'requested' && r.proposal); },
             get handledRequests() { return this.requests.filter((r) => r.status !== 'requested').slice(0, 30); },
             deskLocale() {
                 return this.lang === 'en' ? 'en-GB' : this.lang === 'ru' ? 'ru-RU' : 'et-EE';
@@ -3295,6 +3360,18 @@
             },
 
             // ---------- requests ----------
+            /** What the price field shows for a wish: the amount the client chose, "included", or the specialist's own price. */
+            requestPriceShown(r) {
+                // Flowers carry the amount the client chose; that is what she spends and bills
+                const chosenFlowers = r.price && (r.serviceId === 'flowers' || r.ownService) ? r.price : '';
+                const includedPrice = !chosenFlowers && this.termsIncluded(r) && r.kind !== 'issue' && r.category !== 'warranty' ? this.t('termsIncluded') : '';
+                const customPrice = !includedPrice && r.serviceId && this.availForm?.extraPrices?.[r.serviceId] ? this.availForm.extraPrices[r.serviceId] : '';
+                return chosenFlowers || includedPrice || customPrice;
+            },
+            /** What is sent: included by the home's terms → the client already sees "hinnas sees"; never send an invented price */
+            requestPriceSent(r, shown) {
+                return this.termsIncluded(r) && !(r.price && (r.serviceId === 'flowers' || r.ownService)) ? '' : shown;
+            },
             openConfirmRequest(r) {
                 const svc = this.catalogue.find((s) => s.id === r.serviceId);
                 const asked = /^([01]\d|2[0-3]):[0-5]\d$/.test(r.preferredTime || '') ? r.preferredTime : '';
@@ -3309,22 +3386,56 @@
                 const tw = asked || cleanClock || ({ morning: '10:00', afternoon: '13:00' }[r.timeWindow] || '10:00');
                 let dur = r.type === 'reschedule' && r.targetBookingId ? (() => { const b = this.bookings.find((x) => x.id === r.targetBookingId); return b ? Math.round((new Date(b.endTime) - new Date(b.scheduledAt)) / 60000) : 180; })() : (svc?.durationMin || 60);
                 if (!this.durationOptions.includes(dur)) dur = 60;
-                // Flowers carry the amount the client chose; that is what she spends and bills
-                const chosenFlowers = r.price && (r.serviceId === 'flowers' || r.ownService) ? r.price : '';
-                const includedPrice = !chosenFlowers && this.termsIncluded(r) && r.kind !== 'issue' && r.category !== 'warranty' ? this.t('termsIncluded') : '';
-                const customPrice = !includedPrice && r.serviceId && this.availForm?.extraPrices?.[r.serviceId] ? this.availForm.extraPrices[r.serviceId] : '';
-                this.confirmModal = { open: true, request: r, date, time: tw, durationMin: dur, price: chosenFlowers || includedPrice || customPrice, message: '', force: false, conflicts: [], error: '', saving: false };
+                this.confirmModal = { open: true, request: r, date, time: tw, durationMin: dur, price: this.requestPriceShown(r), message: '', force: false, conflicts: [], error: '', saving: false };
             },
             async confirmRequest() {
                 const m = this.confirmModal; if (m.saving) return; m.saving = true; m.error = '';
                 try {
                     // Included by the home's terms → the client already sees "hinnas sees"; never send an invented price
-                    const res = await this.api('/api/haldus/requests/confirm', { method: 'POST', body: JSON.stringify({ requestId: m.request.id, date: m.date, time: m.time, durationMin: m.durationMin, price: this.termsIncluded(m.request) && !(m.request.price && (m.request.serviceId === 'flowers' || m.request.ownService)) ? '' : m.price, message: m.message, force: m.force }) });
+                    const res = await this.api('/api/haldus/requests/confirm', { method: 'POST', body: JSON.stringify({ requestId: m.request.id, date: m.date, time: m.time, durationMin: m.durationMin, price: this.requestPriceSent(m.request, m.price), message: m.message, force: m.force }) });
                     const d = await res.json().catch(() => ({}));
                     if (res.status === 409 && d.code === 'CONFLICT') { m.conflicts = d.conflicts || []; return; }
                     if (res.status === 401) { this.logout(); return; }
                     if (!res.ok) throw new Error(this.errText(d, this.t('actionFailed')));
                     m.open = false; this.showToast(this.t('confirmedToast'));
+                    await this.loadData(this.range.from, this.range.to);
+                } catch (e) { m.error = e.message; } finally { m.saving = false; }
+            },
+            /** The next ten days from tomorrow; an offer for today would give the client no time to answer */
+            get proposeDays() {
+                if (!this.todayStr) return [];
+                return Array.from({ length: 10 }, (_, i) => {
+                    const date = T().shiftDateString(this.todayStr, i + 1);
+                    return { date, wd: T().formatDate(date + 'T12:00:00', this.deskLocale(), { weekday: 'short' }), day: Number(date.slice(8, 10)) };
+                });
+            },
+            fmtOffer(date, time) {
+                if (!date) return '';
+                return `${T().formatDate(date + 'T12:00:00', this.deskLocale(), { weekday: 'short', day: 'numeric', month: 'long' })}${time ? ' ' + time : ''}`;
+            },
+            proposeWished() {
+                const r = this.propose.request; if (!r) return '';
+                const name = (r.customerName || '').split(' ')[0];
+                if (!r.preferredDate) return this.t('proposeWishedAny', { name });
+                return this.t('proposeWished', { name, when: this.fmtDateLong(r.preferredDate) + (r.preferredTime ? ', ' + r.preferredTime : '') });
+            },
+            openPropose(r) {
+                const days = this.proposeDays.map((d) => d.date);
+                const kept = r.proposal && days.includes(r.proposal.date) ? r.proposal : null;
+                this.propose = { request: r, date: kept ? kept.date : '', time: kept ? kept.time : '', message: '', force: false, conflicts: [], error: '', saving: false };
+                this.activeTab = 'propose';
+                window.scrollTo({ top: 0 });
+            },
+            async sendProposal() {
+                const m = this.propose; if (m.saving || !m.request) return; m.saving = true; m.error = '';
+                try {
+                    const res = await this.api('/api/haldus/requests/propose', { method: 'POST', body: JSON.stringify({ requestId: m.request.id, date: m.date, time: m.time, price: this.requestPriceSent(m.request, this.requestPriceShown(m.request)), message: m.message, force: m.force }) });
+                    const d = await res.json().catch(() => ({}));
+                    if (res.status === 409 && d.code === 'CONFLICT') { m.conflicts = d.conflicts || []; return; }
+                    if (res.status === 401) { this.logout(); return; }
+                    if (!res.ok) throw new Error(this.errText(d, this.t('actionFailed')));
+                    this.showToast(this.t('proposedToast'));
+                    this.activeTab = 'requests';
                     await this.loadData(this.range.from, this.range.to);
                 } catch (e) { m.error = e.message; } finally { m.saving = false; }
             },
