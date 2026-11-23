@@ -82,7 +82,7 @@ registered at user scope with `claude mcp add estonian --scope user`.)
 | „Vaikimisi, …“ at the start | fold it in: „… vaikimisi.“ | English-style fronted adverb |
 | **ju** for "you know" | delete unless meant | overused particle |
 | Midagi läks valesti. | what happened and what to do next | forbidden alone (`portal-html.mdc`) |
-| **koristaja** (cleaner · специалист по уборке) | **koduhooldaja** (housekeeper · специалист по дому) | Marko 23.11.2026: one respectful word on every screen and in every letter; „koristus“ stays as the name of the service |
+| **koristaja**, **koduhooldaja** (cleaner · специалист по уборке) | **koduhoidja** (housekeeper · специалист по дому) | Marko 23.11.2026: one warm word on every screen and in every letter; „koduhooldus“ reads as the social service; „koristus“ stays as the name of the service |
 | Sa **ei pea** enam helistama · Asjaajamine **mitte** | Ajad tekivad ise · Õhtud on vabad | Marko 23.11.2026: landing and marketing copy uses no negation; say what the person gets, in the positive |
 
 ## Grammar and form

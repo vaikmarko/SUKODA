@@ -143,8 +143,8 @@ test('calm empty state points to Services', () => {
 });
 
 test('no card uses jargon the resident should not see', () => {
-  // „koristaja“ left the screens on 23.11.2026 (Marko): the person is „koduhooldaja“ everywhere.
-  const banned = /pöördumi|tellimus|tegija|kanal|sponsor|järelteenindus|koristaja/i;
+  // Marko 23.11.2026: the person is „koduhoidja“ everywhere; „koristaja“ and „koduhooldaja“ left the screens.
+  const banned = /pöördumi|tellimus|tegija|kanal|sponsor|järelteenindus|koristaja|koduhooldaja/i;
   for (const [key, row] of Object.entries(dict)) {
     assert.doesNotMatch(row.et || '', banned, key + '.et');
     assert.ok(row.et && row.en && row.ru, key + ' has et, en and ru');

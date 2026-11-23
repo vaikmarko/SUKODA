@@ -207,7 +207,7 @@ const SERVICE_CATALOGUE = [
     category: 'flowers',
     name: { et: 'Värsked lilled', en: 'Fresh flowers', ru: 'Свежие цветы' },
     description: {
-      et: 'Kimp sinu soovi järgi. Koduhooldaja toob koristusega kaasa.',
+      et: 'Kimp sinu soovi järgi. Koduhoidja toob koristusega kaasa.',
       en: 'A bouquet to your taste. The housekeeper brings it along with the clean.', ru: 'Букет по вашему вкусу. Специалист по дому принесёт его с уборкой.',
     },
     priceHint: { et: 'alates 35 €', en: 'from 35 €', ru: 'от 35 €' },
@@ -458,9 +458,9 @@ const SERVICE_CATALOGUE = [
     id: 'cleaning-note',
     kind: 'question', // a written message to the housekeeper — no visit, no time; the reply comes in writing
     category: 'cleaning',
-    name: { et: 'Sõnum koduhooldajale', en: 'Message to the housekeeper', ru: 'Сообщение специалисту по дому' },
+    name: { et: 'Sõnum koduhoidjale', en: 'Message to the housekeeper', ru: 'Сообщение специалисту по дому' },
     description: {
-      et: 'Kirjuta, kui midagi on vaja muuta või tähele panna. Koduhooldaja vastab siin.',
+      et: 'Kirjuta, kui midagi on vaja muuta või tähele panna. Koduhoidja vastab siin.',
       en: 'Write if something needs changing or attention. The housekeeper replies here.', ru: 'Напишите, если нужно что-то изменить или учесть. Специалист по дому ответит здесь.',
     },
     priceHint: { et: '', en: '', ru: '' },
@@ -471,7 +471,7 @@ const SERVICE_CATALOGUE = [
     category: 'cleaning',
     name: { et: 'Muu soov', en: 'Something else', ru: 'Другое пожелание' },
     description: {
-      et: 'Kirjelda, mida vajad. Koduhooldaja või partner vaatab soovi üle ja vastab.',
+      et: 'Kirjelda, mida vajad. Koduhoidja või partner vaatab soovi üle ja vastab.',
       en: 'Describe what you need. Your housekeeper or partner reviews the request and replies.', ru: 'Опишите, что нужно. Ваш специалист рассмотрит пожелание и ответит.',
     },
     priceHint: { et: 'hind kokkuleppel', en: 'price on request', ru: 'цена по договорённости' },

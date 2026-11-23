@@ -168,7 +168,7 @@ module.exports = function createHaldus(deps) {
   const T = {
     et: {
       hello: (n) => (n ? `Tere, ${n}.` : 'Tere.'),
-      yourCleaner: (p) => (p ? `Sinu koduhooldaja: ${p}` : ''),
+      yourCleaner: (p) => (p ? `Sinu koduhoidja: ${p}` : ''),
       yourContact: (p) => (p ? `Sinu kontakt: ${p}` : ''),
       time: 'Aeg',
       at: 'kell',
@@ -214,7 +214,7 @@ module.exports = function createHaldus(deps) {
       subjSchedule: 'SUKODA | Sinu järgmised koristusajad',
       scheduleTitle: 'Sinu järgmised koristusajad',
       scheduleIntro: (p) => (p ? `${p} pani paika järgmised koristusajad. Iga aja saad ühe puutega kalendrisse lisada.` : 'Järgmised koristusajad on paigas. Iga aja saad ühe puutega kalendrisse lisada.'),
-      scheduleNote: 'Kui mõni aeg ei sobi, muuda aega rakenduses või kirjuta koduhooldajale.',
+      scheduleNote: 'Kui mõni aeg ei sobi, muuda aega rakenduses või kirjuta koduhoidjale.',
 
       subjWelcome: 'SUKODA | Sinu kodu on valmis',
       welcomeTitle: 'Sinu kodu on valmis',
@@ -907,7 +907,7 @@ module.exports = function createHaldus(deps) {
   // Three days ahead was too early for a bouquet (Marko, Nov 2026); an old 3 falls back to the default 2
   const FLOWER_LEAD_DAYS = [1, 2];
   const FLOWER_PICKUP = {
-    partner: { et: 'Koduhooldaja toob kimbu kaasa', en: 'The housekeeper brings the bouquet along', ru: 'Специалист по дому принесёт букет с собой' },
+    partner: { et: 'Koduhoidja toob kimbu kaasa', en: 'The housekeeper brings the bouquet along', ru: 'Специалист по дому принесёт букет с собой' },
     customer: { et: 'Tellija võtab kimbu ise poest', en: 'The customer collects the bouquet from the shop', ru: 'Заказчик забирает букет в магазине сам' },
     delivery: { et: 'Pood toob kimbu koju enne visiiti', en: 'The shop delivers the bouquet before the visit', ru: 'Магазин привезёт букет домой до визита' },
   };
@@ -2969,7 +2969,7 @@ module.exports = function createHaldus(deps) {
         // Release the card again — nothing was created
         await cardRef.update({ usedAt: FieldValue.delete(), usedByEmail: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() }).catch(() => {});
         if (e instanceof HomeError) {
-          if (e.status === 409) return res.status(409).json({ state: 'already', error: 'Selle e-posti aadressiga on kodu selle koduhooldaja juures juba olemas. Sisene rakendusse sama aadressiga.', code: e.body.code });
+          if (e.status === 409) return res.status(409).json({ state: 'already', error: 'Selle e-posti aadressiga on kodu selle koduhoidja juures juba olemas. Sisene rakendusse sama aadressiga.', code: e.body.code });
           return res.status(e.status).json(e.body);
         }
         throw e;
@@ -4134,7 +4134,7 @@ module.exports = function createHaldus(deps) {
       const b = req.body || {};
       const access = await accessOrder(provider, b.orderId);
       if (!access) return res.status(404).json({ error: 'Klienti ei leitud' });
-      if (access.role !== 'cleaning') return res.status(403).json({ error: 'Lilli saab seadistada ainult kodu koduhooldaja' });
+      if (access.role !== 'cleaning') return res.status(403).json({ error: 'Lilli saab seadistada ainult kodu koduhoidja' });
       const { ref, order } = access;
 
       const floristId = str(b.floristId, 64) || floristIdFor(order, provider);
@@ -4194,7 +4194,7 @@ module.exports = function createHaldus(deps) {
       // Only the home's managing provider edits the home itself; other partners keep their own notes
       const canEditHome = canManageHome(order, acc.role, provider.id);
       if (!canEditHome) {
-        if (b.providerNotes == null) return res.status(403).json({ error: 'Kodu andmeid muudab koduhooldaja. Sina saad muuta ainult oma märkmeid.' });
+        if (b.providerNotes == null) return res.status(403).json({ error: 'Kodu andmeid muudab koduhoidja. Sina saad muuta ainult oma märkmeid.' });
         await ref.update({ [`providerNotesBy.${provider.id}`]: str(b.providerNotes, 1000), updatedAt: FieldValue.serverTimestamp() });
         const fresh = await ref.get();
         return res.status(200).json({ success: true, customer: serializeCustomer(ref.id, fresh.data(), acc.role, provider.id) });
@@ -4485,7 +4485,7 @@ module.exports = function createHaldus(deps) {
         try { await calService.cancelBooking(booking.calBookingUid, 'Cancelled by provider'); } catch (e) { console.error('Cal.com cancel failed:', e); }
       }
       const reason = str(b.reason, 300);
-      await ref.update({ status: 'cancelled', cancelReason: reason || (acc.role === 'cleaning' ? 'Tühistas koduhooldaja' : 'Tühistas partner'), cancelledAt: FieldValue.serverTimestamp(), cancelledBy: 'provider', updatedAt: FieldValue.serverTimestamp() });
+      await ref.update({ status: 'cancelled', cancelReason: reason || (acc.role === 'cleaning' ? 'Tühistas koduhoidja' : 'Tühistas partner'), cancelledAt: FieldValue.serverTimestamp(), cancelledBy: 'provider', updatedAt: FieldValue.serverTimestamp() });
       if (booking.requestId) {
         // The request reopens; the thread says why, so the household is not left guessing
         const reqRef = db.collection('serviceRequests').doc(booking.requestId);
@@ -6041,7 +6041,7 @@ module.exports = function createHaldus(deps) {
       const booking = bookingDoc.data();
       if (!core.visitCanMove(booking)) return res.status(400).json({ error: lang === 'et' ? 'Seda visiiti ei saa enam muuta. Visiit on tehtud või tühistatud.' : 'This visit can no longer be changed. It is done or cancelled.' });
       const providerId = booking.providerId || order.providerId || null;
-      if (!providerId) return res.status(400).json({ error: lang === 'et' ? 'Sellel visiidil ei ole veel koduhooldajat. Kirjuta tere@sukoda.ee.' : 'This visit has no housekeeper yet. Write to tere@sukoda.ee.' });
+      if (!providerId) return res.status(400).json({ error: lang === 'et' ? 'Sellel visiidil ei ole veel koduhoidjat. Kirjuta tere@sukoda.ee.' : 'This visit has no housekeeper yet. Write to tere@sukoda.ee.' });
 
       const d = core.parseDateStr(b.preferredDate);
       if (!d) return res.status(400).json({ error: 'Invalid preferredDate' });
@@ -6138,7 +6138,7 @@ module.exports = function createHaldus(deps) {
       const doc = await ref.get();
       if (!doc.exists || doc.data().orderId !== orderId) return res.status(404).json({ error: 'Not found' });
       const r = doc.data();
-      if (r.status !== 'requested') return res.status(400).json({ error: langOf(order) === 'et' ? 'See aeg on juba kinnitatud. Kirjuta soovi juurde ja koduhooldaja tühistab aja.' : 'This time is already confirmed. Write on the request and the housekeeper cancels the time.' });
+      if (r.status !== 'requested') return res.status(400).json({ error: langOf(order) === 'et' ? 'See aeg on juba kinnitatud. Kirjuta soovi juurde ja koduhoidja tühistab aja.' : 'This time is already confirmed. Write on the request and the housekeeper cancels the time.' });
       await ref.update({ status: 'cancelled', proposal: FieldValue.delete(), cancelledAt: FieldValue.serverTimestamp(), cancelledBy: 'client', updatedAt: FieldValue.serverTimestamp() });
       const provider = await loadProvider(r.providerId);
       const to = providerReplyTo(provider) || NOTIFICATION_EMAIL;

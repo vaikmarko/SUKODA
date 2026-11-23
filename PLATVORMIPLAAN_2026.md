@@ -72,14 +72,14 @@ Võrdlusalus on Apple’i Wallet ja Airbnb võõrustaja äpp, mitte Dobu ega hal
 
 | Sakk | Sisu | Peamine tegevus |
 |---|---|---|
-| **Kodu** | Järgmine asi (visiit / vastus / maksmata rida) · Viimane visiit („Tehtud, Kristi, teisipäev: koristus, ahi, voodipesu“) · Kodu rütm lugemisvaates: mida koduhooldaja teeb ja millal järgmine | Üks nupp: *Teata probleemist* (rike/garantii — üks lause + foto) |
+| **Kodu** | Järgmine asi (visiit / vastus / maksmata rida) · Viimane visiit („Tehtud, Kristi, teisipäev: koristus, ahi, voodipesu“) · Kodu rütm lugemisvaates: mida koduhoidja teeb ja millal järgmine | Üks nupp: *Teata probleemist* (rike/garantii — üks lause + foto) |
 | **Telli** | Koristus (üks kord / rütm), lisad lülititena (lilled, voodipesu, aknad, kodumasinad), Remondimees, Garantii ja maja (küsimus / pöördumine) | Hind ekraanil enne makset; kuupäevad alates tegija etteteatamisest (Cristelle 14 p) |
 | **Kaust** | Kodupass (küte, filter, vesi, elekter, garantii lõpp — iga fakt viitega faili leheküljele) · Dokumendid kategooriates (arendaja omad + enda lisatud) · *Küsi* — otsing dokumentidest, vastus koos allikaga, kui ei leia → pöördumine | Otsi, ava, lisa |
 | **Minu** | Pere kontaktid, sissepääs (kood/võti, krüpteeritud), eemalolek, maksevahend, keel, teavitused, ekspordi kodu | Sea kord, unusta |
 
-**Kodu rütm kuulub sellele, kes kodu hooldab.** Kui kodul on koduhooldaja, on rütm (ahi, nõudepesumasin, pesumasina filter, süvapuhastus, aknad…) tema oma: tema valib, mida ta selle kodu juures teeb ja kui tihti, meeldetuletus läheb talle tänasesse nimekirja ja tehtud märkimisega liigub tähtaeg edasi. Elanik näeb rütmi lugemisvaates („Kristi teeb: ahi iga 3 kuud, viimati 12.08“) ja ei sea midagi. Kui ta tahab midagi juurde, on see üks puude — *Soovin ka aknaid* — mis läheb Cristelle’ile soovina, mitte seadena. Tehniku read (ventilatsiooni filtrid, küte) kuuluvad määratud tehnikule, garantiiülevaatused arendaja järelteenindusele.
+**Kodu rütm kuulub sellele, kes kodu hooldab.** Kui kodul on koduhoidja, on rütm (ahi, nõudepesumasin, pesumasina filter, süvapuhastus, aknad…) tema oma: tema valib, mida ta selle kodu juures teeb ja kui tihti, meeldetuletus läheb talle tänasesse nimekirja ja tehtud märkimisega liigub tähtaeg edasi. Elanik näeb rütmi lugemisvaates („Kristi teeb: ahi iga 3 kuud, viimati 12.08“) ja ei sea midagi. Kui ta tahab midagi juurde, on see üks puude — *Soovin ka aknaid* — mis läheb Cristelle’ile soovina, mitte seadena. Tehniku read (ventilatsiooni filtrid, küte) kuuluvad määratud tehnikule, garantiiülevaatused arendaja järelteenindusele.
 
-Ainult kodu, millel koduhooldajat ei ole (Arco elanik, kes koristust ei ole tellinud), saab vaikerütmi maja passist (filtrid 6 kuud, garantiiülevaatus 12 kuud…) ja meeldetuletuse endale; sealt saab ühe puutega tegija tellida. Hetkel, kui koduhooldaja tuleb, võtab tema rütmi read üle.
+Ainult kodu, millel koduhoidjat ei ole (Arco elanik, kes koristust ei ole tellinud), saab vaikerütmi maja passist (filtrid 6 kuud, garantiiülevaatus 12 kuud…) ja meeldetuletuse endale; sealt saab ühe puutega tegija tellida. Hetkel, kui koduhoidja tuleb, võtab tema rütmi read üle.
 
 **Kood on kodu võti, mitte tühi kinkekaart.** Arco loob üleandmisel kodu (korter, ostja nimi, e-post, võtmete kuupäev) ja lisab kingituse; kood trükitakse kaardile. Ostja sisestab koodi → tema andmed on juba sees, ta kinnitab ainult, et on tema (kood + 6-kohaline kinnitus e-postile, et kaardi leidja ei avaks võõrast kodu). Kingitused on juba küljes — Kodu-ekraani esimene kaart on „Arco kinkis sulle 2 koristust ja remondimehe visiidi — vali esimene aeg“. Kõik muu tellib ja maksab ta ise samas Telli-vaates; kui kingitus katab rea, on rida null ja kaarti ei küsita. Tänane `/lunasta` küsib nime, e-posti ja aadressi; Arco koodil tulevad need kodult ette. Kolm kooditüüpi jäävad: üleandmiskood (Arco kodu), kutsekood (Cristelle’i klient või uus tegija), kinkekaart (ostetud visiidid ilma kodu ette loomata).
 
@@ -372,7 +372,7 @@ Eestis on klassikalised teenuste vahendusturud (kus platvorm otsib võõraid teg
 3. **Usaldus ilma võltsitavate tärnideta:**
    - Pere kas **kutsub oma usaldatud inimese** (ühe puutega e-kutse, mis ühendab spetsialisti sisselogimisel automaatselt koduga) või **valib vaba spetsialisti**, kes on oma töölaual lülitanud sisse `openForNewClients`.
    - Kvaliteedimärgiks ei ole anonüümsed arvustused, vaid objektiivne platvormisisene fakt: **mitmes SUKODA kodus spetsialist püsivalt käib ja mitu visiiti on tehtud** (`Püsivalt X kodus · Y tehtud visiiti`).
-   - Ligipääsu privaatsus: püsiv uksekood (`homeProfile.access`) on nähtav ainult püsivale koduhooldajale; teised spetsialistid näevad ainult konkreetse tellimuse juurde lisatud ligipääsuinfot.
+   - Ligipääsu privaatsus: püsiv uksekood (`homeProfile.access`) on nähtav ainult püsivale koduhoidjale; teised spetsialistid näevad ainult konkreetse tellimuse juurde lisatud ligipääsuinfot.
 4. **Digitaalne kutselink ja telefoni QR-kood:**
    - Igal spetsialistil on töölaual püsiv digitaalne kutselink (`sukoda.ee/lunasta?code=SK-XXXXXXXX`), mobiilne jagamisnupp (`navigator.share`) ja ekraanilt skaneeritav QR-kood. (Vanad koodid jäävad tagasiühilduvaks.)
    - Uus spetsialist avab tasuta töölaua 30 sekundiga (`/haldus?alusta` → kohene 6-kohaline sisenemiskood samal ekraanil).

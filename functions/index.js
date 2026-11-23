@@ -1390,7 +1390,7 @@ function generateAdminBookingEmail({ customerName, customerEmail, customerPhone,
       ` : ''}
 
       <p style="color: #5F5A54; font-size: 12px; margin-top: 30px;">
-        ⚡ Korraldage koduhooldaja: ${dateStr} kell ${timeStr} · ${escapeHtml(address || 'aadress puudub')} · ${sizeName}
+        ⚡ Korraldage koduhoidja: ${dateStr} kell ${timeStr} · ${escapeHtml(address || 'aadress puudub')} · ${sizeName}
       </p>
     </div>
   `;
