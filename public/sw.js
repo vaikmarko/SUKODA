@@ -4,7 +4,7 @@
    Push näitab teate ja avab selle aadressi. */
 'use strict';
 
-var CACHE = 'sukoda-shell-v11';
+var CACHE = 'sukoda-shell-v12';
 
 var PRECACHE = [
   '/app.html',

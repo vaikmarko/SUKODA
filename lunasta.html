@@ -13,135 +13,97 @@
     <script type="module" src="/assets/js/main.js"></script>
     <link rel="preload" href="/assets/fonts/cormorant-garamond-400.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/assets/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
-    <style>
-        /* Form fields: one line under the text, tokens only */
-        .l-input { width: 100%; background: transparent; border: 0; border-bottom: 1px solid var(--color-line); padding: 10px 0; font-size: 0.875rem; font-weight: 300; outline: none; transition: border-color .2s; border-radius: 0; }
-        .l-input:focus { border-color: var(--color-accent); }
-        .l-code { font-family: var(--font-serif); font-size: 1.5rem; letter-spacing: .18em; text-transform: uppercase; text-align: center; font-weight: 300; }
-    </style>
 </head>
 <body class="antialiased" x-data="lunastaApp()">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[10000] focus:bg-accent focus:text-paper focus:px-4 focus:py-2 focus:text-sm focus:font-sans" x-text="t('skip')">Sisu juurde</a>
 
-    <div class="max-w-[1440px] mx-auto bg-paper min-h-screen border-x border-line flex flex-col">
+    <!-- Same shape as the sign-in screens (docs/disain/ekraanid/Kutse.html, Sisene.html): wordmark, one title, fields, one button. -->
+    <main id="main-content" class="max-w-md mx-auto px-6 pt-8 pb-16 font-sans min-h-screen">
+        <a href="/" class="w-logo block">SUKODA</a>
 
-        <!-- Nav: only the name and the language. Nothing to learn here. -->
-        <nav class="grid-line-b" :aria-label="t('navLabel')">
-            <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12">
-                <a href="/" class="font-serif text-2xl md:text-3xl tracking-[0.08em] font-light">SUKODA</a>
-                <div class="flex items-center gap-2 text-xs uppercase tracking-[0.16em] font-sans font-medium" role="group" :aria-label="t('langLabel')">
-                    <button type="button" @click="lang = 'et'" :class="{ 'text-black': lang === 'et', 'text-muted hover:text-black': lang !== 'et' }" :aria-pressed="lang === 'et'" class="transition-colors py-2 px-1">ET</button>
-                    <span class="text-muted-light" aria-hidden="true">·</span>
-                    <button type="button" @click="lang = 'en'" :class="{ 'text-black': lang === 'en', 'text-muted hover:text-black': lang !== 'en' }" :aria-pressed="lang === 'en'" class="transition-colors py-2 px-1">EN</button>
-                    <span class="text-muted-light" aria-hidden="true">·</span>
-                    <button type="button" @click="lang = 'ru'" :class="{ 'text-black': lang === 'ru', 'text-muted hover:text-black': lang !== 'ru' }" :aria-pressed="lang === 'ru'" class="transition-colors py-2 px-1">RU</button>
-                </div>
-            </div>
-        </nav>
+        <!-- 1. Code: one title, one field, one button. -->
+        <div x-show="state === 'input' || state === 'checking'" class="mt-8">
+            <h1 class="p-sub-title" x-text="t('title')">Sisesta kutsekood</h1>
+            <form @submit.prevent="check()" novalidate>
+                <label for="code" class="sr-only" x-text="t('codeLabel')">Kood</label>
+                <input id="code" type="text" x-model="code" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" enterkeyhint="go" placeholder="SK-XXXXXXXX" class="p-field p-code is-long uppercase" :aria-invalid="!!error" aria-describedby="code-error" required>
+                <p id="code-error" x-show="error" x-cloak class="text-sm text-err mt-3" x-text="error" role="alert"></p>
+                <button type="submit" :disabled="state === 'checking' || !code.trim()" class="p-go is-wide mt-6" x-text="state === 'checking' ? t('checking') : t('open')">Ava kodu</button>
+            </form>
+        </div>
 
-        <!-- The code opens a home: a housekeeper's invitation (invite) or an old gift card (legacy) -->
-        <main id="main-content" class="flex-1 flex items-start md:items-center justify-center px-6 py-12 md:py-24">
-            <div class="w-full max-w-lg">
+        <!-- 2. Housekeeper's invitation: three required fields, the rest optional and folded away -->
+        <div x-show="state === 'invite' || state === 'sending'" x-cloak class="mt-8">
+            <h1 class="p-sub-title" x-text="t('inviteTitle', { name: provider.firstName })"></h1>
+            <p class="text-muted mt-3 leading-relaxed" x-text="t('inviteLead')"></p>
 
-                <!-- 1. Code: one title, one field, one button. -->
-                <div x-show="state === 'input' || state === 'checking'" class="text-center">
-                    <div class="animate-in">
-                        <h1 class="font-serif text-3xl md:text-4xl font-light mb-10 leading-tight" x-text="t('title')">Sisesta kutsekood.</h1>
-                    </div>
-                    <div class="animate-in-delay">
-                        <form @submit.prevent="check()" class="max-w-sm mx-auto" novalidate>
-                            <label for="code" class="sr-only" x-text="t('codeLabel')">Kood</label>
-                            <input id="code" type="text" x-model="code" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" enterkeyhint="go" placeholder="SK-XXXXXXXX" class="l-input l-code mb-3" :aria-invalid="!!error" aria-describedby="code-error" required>
-                            <p id="code-error" x-show="error" x-cloak class="text-sm text-accent font-sans font-light text-center mb-6" x-text="error" role="alert"></p>
-                            <button type="submit" :disabled="state === 'checking' || !code.trim()" class="p-btn w-full mt-4 disabled:opacity-50" x-text="state === 'checking' ? t('checking') : t('open')">Ava kodu</button>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- 2. Housekeeper's invitation: three required fields, the rest optional and folded away -->
-                <div x-show="state === 'invite' || state === 'sending'" x-cloak>
-                    <div class="text-center mb-10">
-                        <p class="eyebrow text-accent mb-6" x-text="t('inviteKicker') + ' · ' + code"></p>
-                        <h1 class="font-serif text-3xl md:text-4xl font-light mb-5 leading-tight" x-text="t('inviteTitle', { name: provider.firstName })"></h1>
-                        <p class="text-sm text-muted font-sans font-light leading-relaxed max-w-md mx-auto" x-text="t('inviteLead', { name: providerFullName() })"></p>
-                    </div>
-
-                    <form @submit.prevent="redeem()" class="bg-white border border-line p-6 md:p-8 font-sans" novalidate>
-                        <p class="eyebrow text-accent mb-6" x-text="t('yourHome')"></p>
-                        <div class="grid sm:grid-cols-2 gap-5">
-                            <div><label for="f-name" class="eyebrow mb-1" x-text="t('name')"></label><input id="f-name" type="text" x-model="form.name" required autocomplete="name" class="l-input"></div>
-                            <div><label for="f-email" class="eyebrow mb-1" x-text="t('email')"></label><input id="f-email" type="email" x-model="form.email" required autocomplete="email" inputmode="email" class="l-input"></div>
-                            <div class="sm:col-span-2"><label for="f-address" class="eyebrow mb-1" x-text="t('address')"></label><input id="f-address" type="text" x-model="form.address" required autocomplete="street-address" class="l-input"></div>
-                            <div><label for="f-phone" class="eyebrow mb-1" x-text="t('phoneOpt')"></label><input id="f-phone" type="tel" x-model="form.phone" autocomplete="tel" inputmode="tel" class="l-input"></div>
-                            <div><label for="f-size" class="eyebrow mb-1" x-text="t('size')"></label>
-                                <select id="f-size" x-model="form.size" class="l-input bg-transparent">
-                                    <option value="small" x-text="t('sizeSmall')"></option>
-                                    <option value="medium" x-text="t('sizeMedium')"></option>
-                                    <option value="large" x-text="t('sizeLarge')"></option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Second household member: one link opens two fields -->
-                        <div class="mt-8">
-                            <button type="button" x-show="!showContact2" @click="showContact2 = true" class="text-sm font-sans font-light text-black border-b border-accent hover:text-accent transition-colors" x-text="t('addContact')"></button>
-                            <div x-show="showContact2" x-cloak>
-                                <p class="eyebrow text-accent mb-1" x-text="t('contact2Title')"></p>
-                                <p class="text-sm text-muted font-light mb-5 leading-relaxed" x-text="t('contact2Hint')"></p>
-                                <div class="grid sm:grid-cols-2 gap-5">
-                                    <div><label for="f-c2name" class="eyebrow mb-1" x-text="t('name')"></label><input id="f-c2name" type="text" x-model="form.contact2.name" autocomplete="off" class="l-input"></div>
-                                    <div><label for="f-c2email" class="eyebrow mb-1" x-text="t('email')"></label><input id="f-c2email" type="email" x-model="form.contact2.email" autocomplete="off" inputmode="email" class="l-input"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <label class="flex items-start gap-3 mt-10 text-sm text-muted font-light leading-relaxed cursor-pointer">
-                            <input type="checkbox" x-model="form.consent" required class="mt-1 accent-black">
-                            <span>
-                                <span x-show="lang === 'et'">Nõustun <a href="/tingimused" target="_blank" class="text-black border-b border-accent hover:text-accent">tingimuste</a> ja <a href="/privaatsus" target="_blank" class="text-black border-b border-accent hover:text-accent">privaatsuspoliitikaga</a>. Minu andmeid näeb ainult kutsuja.</span>
-                                <span x-show="lang === 'en'" x-cloak>I agree to the <a href="/tingimused" target="_blank" class="text-black border-b border-accent hover:text-accent">terms</a> and the <a href="/privaatsus" target="_blank" class="text-black border-b border-accent hover:text-accent">privacy policy</a>. Only the inviting specialist sees my details.</span>
-                                <span x-show="lang === 'ru'" x-cloak>Я принимаю <a href="/tingimused" target="_blank" class="text-black border-b border-accent hover:text-accent">условия</a> и <a href="/privaatsus" target="_blank" class="text-black border-b border-accent hover:text-accent">политику конфиденциальности</a>. Мои данные видит только пригласивший специалист.</span>
-                            </span>
-                        </label>
-
-                        <p x-show="error" x-cloak class="text-sm text-accent font-light mt-6" x-text="error" role="alert"></p>
-                        <button type="submit" :disabled="state === 'sending'" class="p-btn w-full mt-8 disabled:opacity-50" x-text="state === 'sending' ? t('sending') : t('openMine')"></button>
-                        <p class="text-center mt-6">
-                            <button type="button" @click="reset()" class="text-sm font-sans font-light text-muted hover:text-black transition-colors" x-text="t('otherCode')"></button>
-                        </p>
-                    </form>
+            <form @submit.prevent="redeem()" novalidate>
+                <label for="f-name" class="eyebrow mt-5" x-text="t('name')"></label>
+                <input id="f-name" type="text" x-model="form.name" required autocomplete="name" class="p-field">
+                <label for="f-email" class="eyebrow mt-5" x-text="t('email')"></label>
+                <input id="f-email" type="email" x-model="form.email" required autocomplete="email" inputmode="email" class="p-field">
+                <label for="f-address" class="eyebrow mt-5" x-text="t('address')"></label>
+                <input id="f-address" type="text" x-model="form.address" required autocomplete="street-address" class="p-field">
+                <label for="f-phone" class="eyebrow mt-5" x-text="t('phoneOpt')"></label>
+                <input id="f-phone" type="tel" x-model="form.phone" autocomplete="tel" inputmode="tel" class="p-field">
+                <p class="eyebrow mt-5" x-text="t('size')"></p>
+                <div class="grid grid-cols-3 gap-2 mt-2.5">
+                    <button type="button" class="p-seg" :class="{ 'is-on': form.size === 'small' }" :aria-pressed="form.size === 'small'" @click="form.size = 'small'" x-text="t('sizeSmall')"></button>
+                    <button type="button" class="p-seg" :class="{ 'is-on': form.size === 'medium' }" :aria-pressed="form.size === 'medium'" @click="form.size = 'medium'" x-text="t('sizeMedium')"></button>
+                    <button type="button" class="p-seg" :class="{ 'is-on': form.size === 'large' }" :aria-pressed="form.size === 'large'" @click="form.size = 'large'" x-text="t('sizeLarge')"></button>
                 </div>
 
-                <!-- 3. Outcomes: one sentence on what happened, one sentence on what to do, one button -->
-                <div x-show="['done', 'used', 'unassigned', 'legacy', 'already', 'provider_full'].includes(state)" x-cloak class="text-center">
-                    <div class="animate-in">
-                        <p class="eyebrow text-accent mb-6" x-text="outcome().kicker"></p>
-                        <h1 class="font-serif text-3xl md:text-4xl font-light mb-6 leading-tight" x-text="outcome().title"></h1>
-                    </div>
-                    <div class="animate-in-delay">
-                        <p class="text-sm text-muted font-sans font-light leading-relaxed mb-10 max-w-md mx-auto" x-text="outcome().text"></p>
-                        <a :href="outcome().href" class="p-btn w-full sm:w-auto sm:min-w-[16rem]" x-text="outcome().cta"></a>
-                        <p class="mt-6" x-show="outcome().second">
-                            <a x-show="outcome().secondHref" :href="outcome().secondHref" class="text-sm font-sans font-light text-muted hover:text-black transition-colors border-b border-line hover:border-black" x-text="outcome().second"></a>
-                            <button x-show="!outcome().secondHref" type="button" @click="reset()" class="text-sm font-sans font-light text-muted hover:text-black transition-colors" x-text="outcome().second"></button>
-                        </p>
-                    </div>
+                <!-- Second household member: one link opens two fields -->
+                <button type="button" x-show="!showContact2" @click="showContact2 = true" class="inline-flex items-center min-h-11 mt-4 underline underline-offset-4" x-text="t('addContact')"></button>
+                <div x-show="showContact2" x-cloak>
+                    <p class="text-sm text-muted mt-5 leading-relaxed" x-text="t('contact2Hint')"></p>
+                    <label for="f-c2name" class="eyebrow mt-4" x-text="t('name')"></label>
+                    <input id="f-c2name" type="text" x-model="form.contact2.name" autocomplete="off" class="p-field">
+                    <label for="f-c2email" class="eyebrow mt-5" x-text="t('email')"></label>
+                    <input id="f-c2email" type="email" x-model="form.contact2.email" autocomplete="off" inputmode="email" class="p-field">
                 </div>
-            </div>
-        </main>
 
-        <!-- Footer: contact and the two legal pages, nothing else -->
-        <footer class="border-t border-line py-6 px-6 md:px-12">
-            <p class="text-xs text-muted font-sans font-light text-center leading-relaxed">
-                <a href="mailto:tere@sukoda.ee" class="hover:text-black transition-colors">tere@sukoda.ee</a>
-                <span class="text-muted-light mx-2" aria-hidden="true">·</span>
-                <a href="/tingimused" class="hover:text-black transition-colors" x-text="t('terms')"></a>
-                <span class="text-muted-light mx-2" aria-hidden="true">·</span>
-                <a href="/privaatsus" class="hover:text-black transition-colors" x-text="t('privacy')"></a>
+                <label class="flex items-start gap-3 mt-6 text-sm text-muted leading-relaxed cursor-pointer">
+                    <input type="checkbox" x-model="form.consent" required class="mt-1 accent-black">
+                    <span>
+                        <span x-show="lang === 'et'">Nõustun <a href="/tingimused" target="_blank" class="text-black underline underline-offset-4">tingimuste</a> ja <a href="/privaatsus" target="_blank" class="text-black underline underline-offset-4">privaatsuspoliitikaga</a>. Minu andmeid näeb ainult kutsuja.</span>
+                        <span x-show="lang === 'en'" x-cloak>I agree to the <a href="/tingimused" target="_blank" class="text-black underline underline-offset-4">terms</a> and the <a href="/privaatsus" target="_blank" class="text-black underline underline-offset-4">privacy policy</a>. Only the inviting specialist sees my details.</span>
+                        <span x-show="lang === 'ru'" x-cloak>Я принимаю <a href="/tingimused" target="_blank" class="text-black underline underline-offset-4">условия</a> и <a href="/privaatsus" target="_blank" class="text-black underline underline-offset-4">политику конфиденциальности</a>. Мои данные видит только пригласивший специалист.</span>
+                    </span>
+                </label>
+
+                <p x-show="error" x-cloak class="text-sm text-err mt-4" x-text="error" role="alert"></p>
+                <button type="submit" :disabled="state === 'sending'" class="p-go is-wide mt-6" x-text="state === 'sending' ? t('sending') : t('openMine')"></button>
+                <p class="text-center mt-2">
+                    <button type="button" @click="reset()" class="inline-flex items-center min-h-11 text-sm text-muted" x-text="t('otherCode')"></button>
+                </p>
+            </form>
+        </div>
+
+        <!-- 3. Outcomes: one sentence on what happened, one sentence on what to do, one button -->
+        <div x-show="['done', 'used', 'unassigned', 'legacy', 'already', 'provider_full'].includes(state)" x-cloak class="mt-8">
+            <h1 class="p-sub-title" x-text="outcome().title"></h1>
+            <p class="text-muted mt-3 leading-relaxed" x-text="outcome().text"></p>
+            <a :href="outcome().href" class="p-go is-wide mt-6" x-text="outcome().cta"></a>
+            <p class="text-center mt-2" x-show="outcome().second">
+                <a x-show="outcome().secondHref" :href="outcome().secondHref" class="inline-flex items-center min-h-11 text-sm text-muted underline underline-offset-4" x-text="outcome().second"></a>
+                <button x-show="!outcome().secondHref" type="button" @click="reset()" class="inline-flex items-center min-h-11 text-sm text-muted" x-text="outcome().second"></button>
             </p>
-        </footer>
+        </div>
 
-    </div>
+        <div class="flex items-center gap-1 mt-6 -ml-2" role="group" :aria-label="t('langLabel')">
+            <button type="button" @click="lang = 'et'" class="min-h-11 px-2" :class="{ 'text-black': lang === 'et', 'text-muted': lang !== 'et' }" :aria-pressed="lang === 'et'">Eesti</button>
+            <button type="button" @click="lang = 'en'" class="min-h-11 px-2" :class="{ 'text-black': lang === 'en', 'text-muted': lang !== 'en' }" :aria-pressed="lang === 'en'">English</button>
+            <button type="button" @click="lang = 'ru'" class="min-h-11 px-2" :class="{ 'text-black': lang === 'ru', 'text-muted': lang !== 'ru' }" :aria-pressed="lang === 'ru'">Русский</button>
+        </div>
+        <p class="text-sm text-muted mt-4">
+            <a href="mailto:tere@sukoda.ee" class="hover:text-black">tere@sukoda.ee</a>
+            <span class="text-muted-light mx-1.5" aria-hidden="true">·</span>
+            <a href="/tingimused" class="hover:text-black" x-text="t('terms')"></a>
+            <span class="text-muted-light mx-1.5" aria-hidden="true">·</span>
+            <a href="/privaatsus" class="hover:text-black" x-text="t('privacy')"></a>
+        </p>
+    </main>
 
     <script>
     function lunastaApp() {
@@ -159,9 +121,8 @@
 
             T: {
                 skip: { et: 'Sisu juurde', en: 'Skip to content', ru: 'К содержимому' },
-                navLabel: { et: 'Peamenüü', en: 'Main navigation', ru: 'Главное меню' },
                 langLabel: { et: 'Keel', en: 'Language', ru: 'Язык' },
-                title: { et: 'Sisesta kutsekood.', en: 'Enter your invite code.', ru: 'Введите код приглашения.' },
+                title: { et: 'Sisesta kutsekood', en: 'Enter your invite code', ru: 'Введите код приглашения' },
                 codeLabel: { et: 'Kood', en: 'Code', ru: 'Код' },
                 open: { et: 'Ava kodu', en: 'Open my home', ru: 'Открыть дом' },
                 checking: { et: 'Kontrollin…', en: 'Checking…', ru: 'Проверка…' },
@@ -174,10 +135,8 @@
                 errRequired: { et: 'Täida nimi, e-post ja aadress.', en: 'Fill in your name, e-mail and address.', ru: 'Заполните имя, электронную почту и адрес.' },
 
 
-                inviteKicker: { et: 'Kutse', en: 'Invitation', ru: 'Приглашение' },
-                inviteTitle: { et: '{name} kutsub sind SUKODA-sse.', en: '{name} invites you to SUKODA.', ru: '{name} приглашает вас в SUKODA.' },
-                inviteLead: { et: '{name} ootab sinu kodu SUKODA-sse. Täida oma andmed ja sinu kodu avaneb rakenduses.', en: '{name} invites your home to SUKODA. Fill in your details and your home opens in the app.', ru: '{name} приглашает ваш дом в SUKODA. Заполните данные, и ваш дом откроется в приложении.' },
-                yourHome: { et: 'Sinu kodu', en: 'Your home', ru: 'Ваш дом' },
+                inviteTitle: { et: '{name} kutsus sind', en: '{name} invited you', ru: '{name} приглашает вас' },
+                inviteLead: { et: 'Siin näed oma aegu, saad aega muuta ja soove saata. Sulle on see tasuta. Kirjuta oma andmed ja kodu avaneb.', en: 'Here you see your visits, change the time and send requests. It is free for you. Fill in your details and your home opens.', ru: 'Здесь вы видите свои визиты, можете перенести время и отправить пожелания. Для вас это бесплатно. Заполните данные, и ваш дом откроется.' },
                 name: { et: 'Nimi', en: 'Name', ru: 'Имя' },
                 email: { et: 'E-post', en: 'E-mail', ru: 'Электронная почта' },
                 address: { et: 'Aadress', en: 'Address', ru: 'Адрес' },
@@ -185,29 +144,24 @@
                 size: { et: 'Kodu suurus', en: 'Home size', ru: 'Размер дома' },
                 sizeSmall: { et: '1–2 tuba', en: '1–2 rooms', ru: '1–2 комнаты' },
                 sizeMedium: { et: '3 tuba', en: '3 rooms', ru: '3 комнаты' },
-                sizeLarge: { et: '4 või rohkem tuba või maja', en: '4 or more rooms, or a house', ru: '4 и более комнат или дом' },
+                sizeLarge: { et: '4+ tuba või maja', en: '4+ rooms or house', ru: '4+ комнат или дом' },
                 addContact: { et: 'Lisa teine pereliige', en: 'Add a second household member', ru: 'Добавить второго члена семьи' },
-                contact2Title: { et: 'Teine pereliige', en: 'Second household member', ru: 'Второй член семьи' },
                 contact2Hint: { et: 'Teine pereliige saab samad kalendrikutsed ja teated.', en: 'A second household member gets the same calendar invites and notices.', ru: 'Второй член семьи получает те же приглашения в календарь и уведомления.' },
-                openMine: { et: 'Ava minu kodu', en: 'Open my home', ru: 'Открыть мой дом' },
+                openMine: { et: 'Ava oma kodu', en: 'Open my home', ru: 'Открыть мой дом' },
                 otherCode: { et: 'Sisesta teine kood', en: 'Enter another code', ru: 'Ввести другой код' },
 
-                welcomeBack: { et: 'Tere tulemast', en: 'Welcome', ru: 'Добро пожаловать' },
                 doneInviteTitle: { et: 'Sinu kodu on portaalis.', en: 'Your home is in the portal.', ru: 'Ваш дом в портале.' },
                 doneInviteText: { et: 'Saatsime aadressile {email} sisenemislingi. {name} lisab ajad ja iga visiit jõuab sulle kalendrikutsena.', en: 'We sent a login link to {email}. {name} adds the times and every visit arrives as a calendar invite.', ru: 'Мы отправили ссылку для входа на {email}. {name} добавит время визитов, и каждый визит придёт приглашением в календарь.' },
                 login: { et: 'Sisene portaali', en: 'Log in to the portal', ru: 'Войти в портал' },
                 write: { et: 'Kirjuta tere@sukoda.ee', en: 'Write to tere@sukoda.ee', ru: 'Написать на tere@sukoda.ee' },
-                card: { et: 'Kutse', en: 'Invitation', ru: 'Приглашение' },
                 usedTitle: { et: 'See kood on juba kasutatud.', en: 'This code has already been used.', ru: 'Этот код уже использован.' },
                 usedText: { et: 'Kui sinu kodu on juba SUKODA-s, sisene oma e-postiga. Kui ei ole, küsi uus kutselink või kirjuta tere@sukoda.ee.', en: 'If your home is already in SUKODA, sign in with your e-mail. Otherwise ask for a fresh invite link or write to tere@sukoda.ee.', ru: 'Если ваш дом уже в SUKODA, войдите по эл. почте. Если нет, попросите новую ссылку-приглашение или напишите на tere@sukoda.ee.' },
                 fullTitle: { et: '{name} töölaud on praegu täis.', en: '{name}’s desk is currently full.', ru: '{name}: рабочий стол сейчас заполнен.' },
                 fullText: { et: 'Anna sellest {name}-le teada, et ta saaks oma paketti uuendada ja sinu kodu vastu võtta.', en: 'Let {name} know so they can upgrade their plan and add your home.', ru: 'Сообщите об этом специалисту ({name}), чтобы он сменил тариф и добавил ваш дом.' },
-                alreadyKicker: { et: 'Juba SUKODA-s', en: 'Already in SUKODA', ru: 'Уже в SUKODA' },
                 alreadyTitle: { et: 'Sinu kodu on juba olemas.', en: 'Your home is already set up.', ru: 'Ваш дом уже подключён.' },
                 alreadyText: { et: 'Sinu e-postiga on kodu juba SUKODA-s. Sisene rakendusse oma e-postiga.', en: 'A home with your e-mail is already in SUKODA. Sign in with your e-mail.', ru: 'Дом с вашей эл. почтой уже в SUKODA. Войдите по своей эл. почте.' },
                 unassignedTitle: { et: 'See kaart ei ole veel aktiivne.', en: 'This card is not active yet.', ru: 'Эта карточка ещё не активна.' },
                 unassignedText: { et: 'Kaart hakkab tööle, kui koduhooldaja on kaardi enda nimele võtnud. Küsi oma koduhooldajalt või kirjuta tere@sukoda.ee.', en: 'The card starts working once the housekeeper has taken the card under their name. Ask your housekeeper, or write to tere@sukoda.ee.', ru: 'Карточка заработает, когда специалист по уборке оформит её на себя. Спросите у специалиста или напишите на tere@sukoda.ee.' },
-                giftKicker: { et: 'Kinkekaart', en: 'Gift card', ru: 'Подарочная карта' },
                 legacyTitle: { et: 'Sinu kinkekaart kehtib.', en: 'Your gift card is valid.', ru: 'Ваша подарочная карта действует.' },
                 legacyText: { et: 'SUKODA ise koristust enam ei tee. Kirjuta meile koos koodiga ja lepime kokku, kas kingitus läheb partneri kaudu või tagastame raha.', en: 'SUKODA no longer does the cleaning itself. Write to us with the code and we agree together whether the gift goes through a partner or we refund it.', ru: 'SUKODA больше не проводит уборку сама. Напишите нам, указав код, и мы вместе решим: подарок через партнёра или возврат денег.' },
 
@@ -228,10 +182,6 @@
                 const fromPath = location.pathname.replace(/^\/lunasta\/?/, '').split('/')[0];
                 const raw = p.get('code') || p.get('kood') || (location.hash || '').replace(/^#/, '') || fromPath || '';
                 if (raw) { this.code = decodeURIComponent(raw).trim().toUpperCase(); this.check(); }
-            },
-
-            providerFullName() {
-                return this.provider.businessName ? `${this.provider.name} · ${this.provider.businessName}` : this.provider.name;
             },
 
             // Backend errors arrive as { et, en, ru } or, from older handlers, as one Estonian sentence.
@@ -294,13 +244,13 @@
                 const mailHref = 'mailto:tere@sukoda.ee?subject=SUKODA%20kaart%20' + encodeURIComponent(this.code);
                 const first = this.provider.firstName || '';
                 switch (this.state) {
-                    case 'done': return { kicker: this.t('welcomeBack'), title: this.t('doneInviteTitle'), text: this.t('doneInviteText', { email: this.doneEmail, name: first }), href: '/app?email=' + encodeURIComponent(this.doneEmail), cta: this.t('login'), second: '' };
-                    case 'provider_full': return { kicker: this.t('card'), title: this.t('fullTitle', { name: first || 'Partner' }), text: this.t('fullText', { name: first || 'partner' }).trim(), href: '/lunasta', cta: this.t('otherCode'), second: '' };
-                    case 'used': return { kicker: this.t('card'), title: this.t('usedTitle'), text: this.t('usedText'), href: '/app', cta: this.t('login'), second: this.t('write'), secondHref: mailHref };
-                    case 'already': return { kicker: this.t('alreadyKicker'), title: this.t('alreadyTitle'), text: this.t('alreadyText'), href: '/app?email=' + encodeURIComponent(this.form.email || ''), cta: this.t('login'), second: this.t('otherCode'), secondHref: '' };
-                    case 'unassigned': return { kicker: this.t('card'), title: this.t('unassignedTitle'), text: this.t('unassignedText'), href: mailHref, cta: this.t('write'), second: this.t('otherCode'), secondHref: '' };
-                    case 'legacy': return { kicker: this.t('giftKicker'), title: this.t('legacyTitle'), text: this.t('legacyText'), href: mailHref, cta: this.t('write'), second: this.t('otherCode'), secondHref: '' };
-                    default: return { kicker: '', title: '', text: '', href: '/lunasta', cta: '', second: '' };
+                    case 'done': return { title: this.t('doneInviteTitle'), text: this.t('doneInviteText', { email: this.doneEmail, name: first }), href: '/app?email=' + encodeURIComponent(this.doneEmail), cta: this.t('login'), second: '' };
+                    case 'provider_full': return { title: this.t('fullTitle', { name: first || 'Partner' }), text: this.t('fullText', { name: first || 'partner' }).trim(), href: '/lunasta', cta: this.t('otherCode'), second: '' };
+                    case 'used': return { title: this.t('usedTitle'), text: this.t('usedText'), href: '/app', cta: this.t('login'), second: this.t('write'), secondHref: mailHref };
+                    case 'already': return { title: this.t('alreadyTitle'), text: this.t('alreadyText'), href: '/app?email=' + encodeURIComponent(this.form.email || ''), cta: this.t('login'), second: this.t('otherCode'), secondHref: '' };
+                    case 'unassigned': return { title: this.t('unassignedTitle'), text: this.t('unassignedText'), href: mailHref, cta: this.t('write'), second: this.t('otherCode'), secondHref: '' };
+                    case 'legacy': return { title: this.t('legacyTitle'), text: this.t('legacyText'), href: mailHref, cta: this.t('write'), second: this.t('otherCode'), secondHref: '' };
+                    default: return { title: '', text: '', href: '/lunasta', cta: '', second: '' };
                 }
             },
         };

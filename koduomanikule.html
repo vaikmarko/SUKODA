@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="et" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <style>[x-cloak] { display: none !important; }</style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUKODA | Tead alati, millal koristaja tuleb.</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="assets/logo/icon-s-black.svg">
+    <link rel="apple-touch-icon" href="assets/logo/icon-square.svg">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' });
+      }
+    </script>
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="SUKODA | Tead alati, millal koristaja tuleb.">
+    <meta property="og:description" content="Järgmine aeg on sinu telefonis. Aja muutmine ja lisasoovid käivad ühe puutega. Sulle on see tasuta.">
+    <meta property="og:image" content="https://sukoda.ee/assets/images/product/minu-ulevaade.png">
+    <meta property="og:url" content="https://sukoda.ee/koduomanikule">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="description" content="Järgmine aeg on sinu telefonis. Aja muutmine ja lisasoovid käivad ühe puutega, ilma helistamata. Sulle on see tasuta.">
+    <meta property="og:locale" content="et_EE">
+    <meta property="og:site_name" content="SUKODA">
+    
+    <link rel="canonical" href="https://sukoda.ee/koduomanikule">
+
+    <script src="/assets/js/tracking.js"></script>
+    <script type="module" src="/assets/js/main.js"></script>
+
+    <link rel="preload" href="/assets/fonts/cormorant-garamond-400.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/assets/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
+
+</head>
+<body class="antialiased" x-data="landing()">
+
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[10000] focus:bg-accent focus:text-paper focus:px-4 focus:py-2 focus:text-sm focus:font-sans" x-text="t('skip')">Sisu juurde</a>
+
+    <!-- Preloader -->
+    <div class="preloader" id="preloader" aria-hidden="true">
+        <div class="preloader-logo">SUKODA</div>
+    </div>
+
+    <!-- Page shape: docs/disain/ekraanid. Bands run edge to edge, content sits in .w-wrap. -->
+    <div class="bg-paper">
+        <div class="w-wrap">
+            <header class="w-top">
+                <a href="/" class="w-logo">SUKODA</a>
+                <nav class="w-nav" :aria-label="t('menu')">
+                    <span class="w-nav-links">
+                    <a class="w-nv" href="#sammud" x-text="t('navHow')">Kuidas see käib</a>
+                    <a class="w-nv" href="/" x-text="t('navCleaner')">Koristajale</a>
+                    <a class="w-nv" href="#kutsu" x-text="t('navInvite')">Kutsu koristaja</a>
+                    </span>
+                    <span class="w-nav-langs" role="group" :aria-label="t('langLabel')">
+                    <button type="button" class="w-nv" @click="lang = 'et'" :class="{ 'is-off': lang !== 'et' }" :aria-pressed="lang === 'et'">ET</button>
+                    <button type="button" class="w-nv" @click="lang = 'en'" :class="{ 'is-off': lang !== 'en' }" :aria-pressed="lang === 'en'">EN</button>
+                    <button type="button" class="w-nv" @click="lang = 'ru'" :class="{ 'is-off': lang !== 'ru' }" :aria-pressed="lang === 'ru'">RU</button>
+                </span>
+                    <a class="w-nv w-login" href="minu.html" x-text="t('login')">Sisene</a>
+                </nav>
+            </header>
+
+            <main id="main-content">
+            <section class="w-hero">
+                <div class="w-hero-text">
+                    <span class="w-acc"></span>
+                    <p class="eyebrow" x-text="t('heroKicker')">Koduomanikule</p>
+                    <h1 class="w-h1"><span x-text="t('heroTitle1')">Tead alati, millal</span> <span class="w-it" x-text="t('heroTitle2')">koristaja tuleb.</span></h1>
+                    <p class="w-lead" x-text="t('heroLead')">Järgmine aeg on sinu telefonis. Aja muutmine ja lisasoovid käivad ühe puutega, ilma helistamata. Sulle on see tasuta.</p>
+                    <div class="w-actions">
+                        <a class="w-btn" href="#kutsu" x-text="t('inviteCta')">Kutsu oma koristaja</a>
+                        <a class="w-btn-2" href="/lunasta" x-text="t('haveInvite')">Mul on kutse</a>
+                    </div>
+                </div>
+                <div class="w-hero-art">
+                    <div class="w-note" aria-hidden="true">
+                        <p class="eyebrow" x-text="t('noteFrom')">Kristi kirjutas</p>
+                        <p class="w-note-text" x-text="t('noteText')">Tehtud. Lilled on vaasis ja aknad pestud.</p>
+                        <p class="w-note-meta" x-text="t('noteWhen')">Teisipäev, 13:05</p>
+                    </div>
+                    <div class="w-phone" aria-hidden="true">
+                        <div class="w-ph-island"></div>
+                        <p class="w-ph-title">Pirita tee 12</p>
+                        <div class="w-ph-card">
+                            <p class="eyebrow" x-text="t('pvNext')">Järgmine visiit</p>
+                            <p class="w-ph-clock">10:00</p>
+                            <p class="w-ph-day" x-text="t('pvDay')">Teisipäev, 8. detsember</p>
+                            <p class="w-ph-meta is-ruled" x-text="t('pvWho')">Kristi · koristus</p>
+                            <div class="w-ph-go-2" x-text="t('pvReschedule')">Muuda aega</div>
+                        </div>
+                        <div class="w-ph-card is-slim">
+                            <p class="eyebrow" x-text="t('pvLast')">Viimane visiit</p>
+                            <p class="w-ph-line" x-text="t('pvLastLine')">24. november · Jäta tagasiside</p>
+                        </div>
+                        <div class="w-ph-card is-link" x-text="t('pvWrite')">Kirjuta Kristile</div>
+                        <div class="w-ph-dock">
+                            <span class="is-active"><svg viewBox="0 0 24 24"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"/></svg><span x-text="t('pvTabHome')">Kodu</span></span>
+                            <span><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span x-text="t('pvTabBook')">Telli</span></span>
+                            <span><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></svg><span x-text="t('pvTabAccount')">Konto</span></span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            </main>
+        </div>
+    </div>
+
+    <section id="sammud" class="w-dark">
+        <div class="w-wrap">
+            <h2 class="w-h2" x-text="t('stepsTitle')">Nii see käib</h2>
+            <div class="w-g3 w-steps">
+                <div class="w-step">
+                    <p class="w-step-num">01</p>
+                    <p class="eyebrow" x-text="t('step1Eyebrow')">Sina</p>
+                    <h3 x-text="t('step1Title')">Kutsu oma koristaja</h3>
+                    <p class="w-step-text" x-text="t('step1Text')">Kirjuta tema e-post. Saadame talle tasuta töölaua kutse.</p>
+                </div>
+                <div class="w-step">
+                    <p class="w-step-num">02</p>
+                    <p class="eyebrow" x-text="t('step2Eyebrow')">Tema</p>
+                    <h3 x-text="t('step2Title')">Ta lisab sinu kodu</h3>
+                    <p class="w-step-text" x-text="t('step2Text')">Aeg, rütm ja kokkulepitud hind on kirjas ühes kohas.</p>
+                </div>
+                <div class="w-step">
+                    <p class="w-step-num">03</p>
+                    <p class="eyebrow" x-text="t('step3Eyebrow')">Edaspidi</p>
+                    <h3 x-text="t('step3Title')">Kõik on sinu telefonis</h3>
+                    <p class="w-step-text" x-text="t('step3Text')">Järgmine aeg, soovid ja kokkulepe on alati ees.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="bg-paper">
+        <div class="w-wrap w-light">
+            <section id="mida" class="w-block is-narrow">
+                <h2 class="w-h2" x-text="t('whatTitle')">Mida sa sellega teed</h2>
+                    <div class="w-feats">
+                        <div class="w-feat">
+                            <h3 x-text="t('what1Title')">Näed järgmist aega</h3>
+                            <p x-text="t('what1Text')">Kellaaeg ja päev on avaekraanil. Sama aeg jõuab kutsega kogu pere kalendrisse.</p>
+                        </div>
+                        <div class="w-feat">
+                            <h3 x-text="t('what2Title')">Muudad aega</h3>
+                            <p x-text="t('what2Text')">Valid uue päeva ja koristaja kinnitab. Kumbki ei pea helistama.</p>
+                        </div>
+                        <div class="w-feat">
+                            <h3 x-text="t('what3Title')">Lisad soove</h3>
+                            <p x-text="t('what3Text')">Lilled, aknapesu või muu töö järgmise koristuse juurde.</p>
+                        </div>
+                        <div class="w-feat">
+                            <h3 x-text="t('what4Title')">Näed kokkulepet</h3>
+                            <p x-text="t('what4Text')">Rütm, hind ja see, mis hinna sees on, on kirjas ühes kohas.</p>
+                        </div>
+                    </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- The handler needs the resident's own address too (reply-to of the invitation), so the form asks for both. -->
+    <section id="kutsu" class="w-band" x-data="{
+        partnerEmail: '', email: '', sent: false, sending: false, error: '',
+        async submit() {
+            if (this.sending || !this.partnerEmail || !this.email) return;
+            this.sending = true; this.error = '';
+            try {
+                const res = await fetch('/api/haldus/invite-partner', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ partnerEmail: this.partnerEmail, email: this.email, lang: this.lang }),
+                });
+                if (!res.ok) throw new Error('fail');
+                this.sent = true;
+            } catch (e) { this.error = this.t('sendError'); }
+            this.sending = false;
+        }
+    }">
+        <div class="w-wrap">
+            <h2 class="w-h2-xl" x-text="sent ? t('sentTitle') : t('inviteCta')">Kutsu oma koristaja</h2>
+            <p class="w-lead" x-text="sent ? t('sentText') : t('inviteLead')">Talle on esimesed kolm kodu tasuta, sulle alati.</p>
+            <form class="w-form" x-show="!sent" @submit.prevent="submit()">
+                <input class="w-input" type="email" x-model="partnerEmail" required autocomplete="off" inputmode="email" :placeholder="t('keeperEmail')" :aria-label="t('keeperEmail')">
+                <input class="w-input" type="email" x-model="email" required autocomplete="email" inputmode="email" :placeholder="t('yourEmail')" :aria-label="t('yourEmail')">
+                <button type="submit" class="w-btn" :disabled="sending" x-text="sending ? t('sendingShort') : t('sendInvite')">Saada kutse</button>
+            </form>
+            <p class="w-form-msg text-err" x-show="error" x-cloak x-text="error" role="alert"></p>
+        </div>
+    </section>
+
+    <footer class="w-foot">
+        <div class="w-wrap w-foot-main">
+            <div>
+                <span class="w-logo">SUKODA</span>
+                <p class="w-foot-text" x-text="t('footTagline')">Koristaja ja klient näevad sama aega, samu soove ja sama hinda.</p>
+            </div>
+            <nav :aria-label="t('footSite')">
+                <p class="eyebrow" x-text="t('footSite')">Leht</p>
+                <a class="w-fl" href="#sammud" x-text="t('navHow')">Kuidas see käib</a>
+                <a class="w-fl" href="/" x-text="t('navCleaner')">Koristajale</a>
+                <a class="w-fl" href="#kutsu" x-text="t('navInvite')">Kutsu koristaja</a>
+                <a class="w-fl" href="minu.html" x-text="t('login')">Sisene</a>
+            </nav>
+            <div>
+                <p class="eyebrow" x-text="t('footContact')">Kontakt</p>
+                <a class="w-fl" href="mailto:tere@sukoda.ee">tere@sukoda.ee</a>
+                <p class="w-foot-text">Epic Ship OÜ<br><span x-text="t('footReg')">Registrikood 14713548</span><br>Kiikri tn 6/2, Tallinn 10159</p>
+            </div>
+        </div>
+        <div class="w-wrap w-foot-base">
+            <span>© 2026 SUKODA</span>
+            <span>
+                <a class="w-fl" href="tingimused.html" x-text="t('terms')">Tingimused</a>
+                <a class="w-fl" href="privaatsus.html" x-text="t('privacy')">Privaatsus</a>
+                <span class="w-foot-langs" role="group" :aria-label="t('langLabel')">
+                    <button type="button" class="w-fl" @click="lang = 'et'" :aria-pressed="lang === 'et'">Eesti</button><span aria-hidden="true">·</span>
+                    <button type="button" class="w-fl" @click="lang = 'en'" :aria-pressed="lang === 'en'">English</button><span aria-hidden="true">·</span>
+                    <button type="button" class="w-fl" @click="lang = 'ru'" :aria-pressed="lang === 'ru'">Русский</button>
+                </span>
+            </span>
+        </div>
+    </footer>
+
+    <!-- Cookie Consent -->
+    <div x-data="{ show: !(document.cookie.includes('sukoda_consent=')) }" x-show="show" x-cloak
+         class="fixed bottom-0 left-0 right-0 z-[9999] bg-black/95 backdrop-blur-sm text-paper p-4 md:p-6"
+         x-transition:enter="transition ease-out duration-500"
+         x-transition:enter-start="translate-y-full opacity-0"
+         x-transition:enter-end="translate-y-0 opacity-100">
+        <div class="max-w-[1440px] mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="flex-1">
+                <p class="text-sm font-sans font-light">
+                    <span x-text="t('cookieText')"></span>
+                    <a href="privaatsus.html" class="text-accent hover:underline" x-text="t('cookieMore')"></a>
+                </p>
+            </div>
+            <div class="flex gap-3 shrink-0">
+                <button @click="if(window.SUKODA_TRACKING) SUKODA_TRACKING.declineCookies(); show = false"
+                        class="px-4 py-2 text-xs uppercase tracking-[0.16em] font-sans text-muted hover:text-paper transition-colors border border-muted/30 hover:border-paper/50"
+                        x-text="t('cookieDecline')">Keeldu</button>
+                <button @click="if(window.SUKODA_TRACKING) SUKODA_TRACKING.acceptCookies(); show = false"
+                        class="px-6 py-2 text-xs uppercase tracking-[0.16em] font-sans bg-accent hover:bg-accent/80 text-paper transition-colors"
+                        x-text="t('cookieAccept')">Nõustun</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Homeowner page copy in three languages (docs/disain/ekraanid/VeebKlient.html).
+    function landing() {
+        const LANGS = ['et', 'en', 'ru'];
+        const saved = localStorage.getItem('sukoda_lang');
+        return {
+            lang: LANGS.includes(saved) ? saved : 'et',
+            T: {
+                skip: { et: 'Sisu juurde', en: 'Skip to content', ru: 'К содержимому' },
+                langLabel: { et: 'Keel', en: 'Language', ru: 'Язык' },
+                menu: { et: 'Peamenüü', en: 'Main menu', ru: 'Главное меню' },
+                navHow: { et: 'Kuidas see käib', en: 'How it works', ru: 'Как это работает' },
+                login: { et: 'Sisene', en: 'Log in', ru: 'Войти' },
+                haveInvite: { et: 'Mul on kutse', en: 'I have an invitation', ru: 'У меня есть приглашение' },
+
+                pvNext: { et: 'Järgmine visiit', en: 'Next visit', ru: 'Следующий визит' },
+                pvDay: { et: 'Teisipäev, 8. detsember', en: 'Tuesday, 8 December', ru: 'Вторник, 8 декабря' },
+                pvWho: { et: 'Kristi · koristus', en: 'Kristi · cleaning', ru: 'Кристи · уборка' },
+                pvReschedule: { et: 'Muuda aega', en: 'Reschedule', ru: 'Перенести' },
+                pvLast: { et: 'Viimane visiit', en: 'Last visit', ru: 'Прошлый визит' },
+                pvLastLine: { et: '24. november · Jäta tagasiside', en: '24 November · Leave feedback', ru: '24 ноября · Оставить отзыв' },
+                pvWrite: { et: 'Kirjuta Kristile', en: 'Message Kristi', ru: 'Написать Кристи' },
+                pvTabHome: { et: 'Kodu', en: 'Home', ru: 'Главная' },
+                pvTabBook: { et: 'Telli', en: 'Book', ru: 'Услуги' },
+                pvTabAccount: { et: 'Konto', en: 'Account', ru: 'Профиль' },
+
+                footTagline: {
+                    et: 'Koristaja ja klient näevad sama aega, samu soove ja sama hinda.',
+                    en: 'The cleaner and the client see the same time, the same requests and the same price.',
+                    ru: 'Специалист по уборке и клиент видят одно и то же время, пожелания и цену.',
+                },
+                footSite: { et: 'Leht', en: 'Site', ru: 'Сайт' },
+                footContact: { et: 'Kontakt', en: 'Contact', ru: 'Контакты' },
+                footReg: { et: 'Registrikood 14713548', en: 'Registry code 14713548', ru: 'Регистрационный код 14713548' },
+                terms: { et: 'Tingimused', en: 'Terms', ru: 'Условия' },
+                privacy: { et: 'Privaatsus', en: 'Privacy', ru: 'Конфиденциальность' },
+
+                cookieText: { et: 'Kasutame küpsiseid paremaks toimimiseks.', en: 'We use cookies to improve the site.', ru: 'Мы используем файлы cookie, чтобы улучшить сайт.' },
+                cookieMore: { et: 'Loe lähemalt', en: 'Read more', ru: 'Подробнее' },
+                cookieDecline: { et: 'Keeldu', en: 'Decline', ru: 'Отклонить' },
+                cookieAccept: { et: 'Nõustun', en: 'Accept', ru: 'Принять' },
+
+                navCleaner: { et: 'Koristajale', en: 'For cleaners', ru: 'Специалистам по уборке' },
+                navInvite: { et: 'Kutsu koristaja', en: 'Invite a cleaner', ru: 'Пригласить специалиста' },
+
+                heroKicker: { et: 'Koduomanikule', en: 'For homeowners', ru: 'Владельцам жилья' },
+                heroTitle1: { et: 'Tead alati, millal', en: 'You always know when', ru: 'Вы всегда знаете, когда' },
+                heroTitle2: { et: 'koristaja tuleb.', en: 'the cleaner is coming.', ru: 'придёт специалист.' },
+                heroLead: {
+                    et: 'Järgmine aeg on sinu telefonis. Aja muutmine ja lisasoovid käivad ühe puutega, ilma helistamata. Sulle on see tasuta.',
+                    en: 'The next visit is on your phone. Changing the time and adding requests takes one tap, with no phone calls. It is free for you.',
+                    ru: 'Следующий визит всегда в вашем телефоне. Перенести время и добавить пожелания можно одним касанием, без звонков. Для вас это бесплатно.',
+                },
+                inviteCta: { et: 'Kutsu oma koristaja', en: 'Invite your cleaner', ru: 'Пригласить своего специалиста' },
+                noteFrom: { et: 'Kristi kirjutas', en: 'Kristi wrote', ru: 'Кристи написала' },
+                noteText: { et: 'Tehtud. Lilled on vaasis ja aknad pestud.', en: 'Done. The flowers are in the vase and the windows are washed.', ru: 'Готово. Цветы в вазе, окна вымыты.' },
+                noteWhen: { et: 'Teisipäev, 13:05', en: 'Tuesday, 13:05', ru: 'Вторник, 13:05' },
+
+                stepsTitle: { et: 'Nii see käib', en: 'How it works', ru: 'Как это работает' },
+                step1Eyebrow: { et: 'Sina', en: 'You', ru: 'Вы' },
+                step1Title: { et: 'Kutsu oma koristaja', en: 'Invite your cleaner', ru: 'Пригласите специалиста' },
+                step1Text: {
+                    et: 'Kirjuta tema e-post. Saadame talle tasuta töölaua kutse.',
+                    en: 'Enter their e-mail. We send them an invitation to a free desk.',
+                    ru: 'Укажите его эл. почту. Мы отправим приглашение открыть бесплатный рабочий стол.',
+                },
+                step2Eyebrow: { et: 'Tema', en: 'Your cleaner', ru: 'Специалист' },
+                step2Title: { et: 'Ta lisab sinu kodu', en: 'They add your home', ru: 'Добавляет ваш дом' },
+                step2Text: {
+                    et: 'Aeg, rütm ja kokkulepitud hind on kirjas ühes kohas.',
+                    en: 'The time, the rhythm and the agreed price are recorded in one place.',
+                    ru: 'Время, ритм и согласованная цена записаны в одном месте.',
+                },
+                step3Eyebrow: { et: 'Edaspidi', en: 'From then on', ru: 'Дальше' },
+                step3Title: { et: 'Kõik on sinu telefonis', en: 'Everything is on your phone', ru: 'Всё в вашем телефоне' },
+                step3Text: {
+                    et: 'Järgmine aeg, soovid ja kokkulepe on alati ees.',
+                    en: 'The next visit, your requests and the agreement are always in front of you.',
+                    ru: 'Следующий визит, пожелания и договорённость всегда перед глазами.',
+                },
+
+                whatTitle: { et: 'Mida sa sellega teed', en: 'What you do with it', ru: 'Что вы с этим делаете' },
+                what1Title: { et: 'Näed järgmist aega', en: 'See the next visit', ru: 'Видите следующий визит' },
+                what1Text: {
+                    et: 'Kellaaeg ja päev on avaekraanil. Sama aeg jõuab kutsega kogu pere kalendrisse.',
+                    en: 'The time and the day are on the home screen. The same time reaches the whole family’s calendar as an invitation.',
+                    ru: 'Время и день показаны на главном экране. То же время приходит приглашением в календарь всей семьи.',
+                },
+                what2Title: { et: 'Muudad aega', en: 'Change the time', ru: 'Переносите время' },
+                what2Text: {
+                    et: 'Valid uue päeva ja koristaja kinnitab. Kumbki ei pea helistama.',
+                    en: 'You pick a new day and the cleaner confirms. Neither of you has to call.',
+                    ru: 'Вы выбираете новый день, специалист подтверждает. Звонить никому не нужно.',
+                },
+                what3Title: { et: 'Lisad soove', en: 'Add requests', ru: 'Добавляете пожелания' },
+                what3Text: {
+                    et: 'Lilled, aknapesu või muu töö järgmise koristuse juurde.',
+                    en: 'Flowers, window washing or other work added to the next cleaning.',
+                    ru: 'Цветы, мытьё окон или другая работа к следующей уборке.',
+                },
+                what4Title: { et: 'Näed kokkulepet', en: 'See the agreement', ru: 'Видите договорённость' },
+                what4Text: {
+                    et: 'Rütm, hind ja see, mis hinna sees on, on kirjas ühes kohas.',
+                    en: 'The rhythm, the price and what the price includes are recorded in one place.',
+                    ru: 'Ритм, цена и то, что входит в цену, записаны в одном месте.',
+                },
+
+                inviteLead: {
+                    et: 'Talle on esimesed kolm kodu tasuta, sulle alati.',
+                    en: 'For them the first three homes are free. For you it is always free.',
+                    ru: 'Для специалиста первые три дома бесплатно, для вас бесплатно всегда.',
+                },
+                keeperEmail: { et: 'Koristaja e-post', en: 'Cleaner’s e-mail', ru: 'Эл. почта специалиста' },
+                yourEmail: { et: 'Sinu e-post', en: 'Your e-mail', ru: 'Ваша эл. почта' },
+                sendInvite: { et: 'Saada kutse', en: 'Send invitation', ru: 'Отправить приглашение' },
+                sendingShort: { et: 'Saadan…', en: 'Sending…', ru: 'Отправка…' },
+                sendError: { et: 'Saatmine ebaõnnestus. Kontrolli aadresse või kirjuta tere@sukoda.ee.', en: 'Could not send. Check the addresses or write to tere@sukoda.ee.', ru: 'Не удалось отправить. Проверьте адреса или напишите на tere@sukoda.ee.' },
+                sentTitle: { et: 'Kutse saadetud.', en: 'Invitation sent.', ru: 'Приглашение отправлено.' },
+                sentText: {
+                    et: 'Kui koristaja sinu kodu lisab, saad sisenemislingi e-postile.',
+                    en: 'Once the cleaner adds your home, your sign-in link arrives by e-mail.',
+                    ru: 'Когда специалист добавит ваш дом, ссылка для входа придёт на почту.',
+                },
+            },
+            t(key, vars) {
+                const row = this.T[key] || {};
+                const s = row[this.lang] || row.et || key;
+                return vars ? s.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '') : s;
+            },
+            init() {
+                this.$watch('lang', (v) => { localStorage.setItem('sukoda_lang', v); document.documentElement.lang = v; });
+                document.documentElement.lang = this.lang;
+            },
+        };
+    }
+    </script>
+
+</body>
+</html>

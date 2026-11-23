@@ -48,9 +48,9 @@
     langLabel: { et: 'Keel', en: 'Language', ru: 'Язык' },
     signTitle: { et: 'Sisene', en: 'Sign in', ru: 'Войти' },
     signLead: {
-      et: 'Kirjuta e-post. Saadame kuuekohalise koodi.',
-      en: 'Enter your e-mail. We send a six-digit code.',
-      ru: 'Укажите эл. почту. Мы отправим шестизначный код.',
+      et: 'Kirjuta oma e-post. Saadame sulle kuuekohalise koodi.',
+      en: 'Enter your e-mail. We send you a six-digit code.',
+      ru: 'Укажите свою эл. почту. Мы отправим вам шестизначный код.',
     },
     signReady: {
       et: 'Saadame kuuekohalise koodi aadressile {email}.',
@@ -59,11 +59,11 @@
     },
     emailLabel: { et: 'E-post', en: 'E-mail', ru: 'Эл. почта' },
     sendCode: { et: 'Saada kood', en: 'Send the code', ru: 'Отправить код' },
-    codeTitle: { et: 'Kirjuta kood', en: 'Enter the code', ru: 'Введите код' },
+    codeTitle: { et: 'Sisesta kood', en: 'Enter the code', ru: 'Введите код' },
     codeWhere: {
-      et: 'Saatsime kuuekohalise koodi aadressile {email}. Kirjuta kood siia.',
-      en: 'We sent a six-digit code to {email}. Enter the code here.',
-      ru: 'Мы отправили шестизначный код на {email}. Введите код здесь.',
+      et: 'Saatsime koodi aadressile {email}.',
+      en: 'We sent the code to {email}.',
+      ru: 'Мы отправили код на {email}.',
     },
     newCode: {
       et: 'Saada uus kood',
@@ -71,6 +71,11 @@
       ru: 'Отправить новый код',
     },
     codeLabel: { et: 'Kood', en: 'Code', ru: 'Код' },
+    stay: {
+      et: 'Jääd selles telefonis sisse logituks.',
+      en: 'You stay signed in on this phone.',
+      ru: 'На этом телефоне вы останетесь в системе.',
+    },
     enter: { et: 'Sisene', en: 'Sign in', ru: 'Войти' },
     cardLine: {
       et: 'Sul on kutsekood?',
@@ -236,6 +241,12 @@ function render() {
     var field = document.getElementById('field');
     var signing = mode === 'email' || mode === 'code';
     login.hidden = !signing;
+    var stay = document.getElementById('stay');
+    // An old cached shell has no #stay; the sign-in must still render.
+    if (stay) {
+      stay.textContent = t('stay');
+      stay.hidden = mode !== 'code';
+    }
     primary.disabled = busy;
     if (!signing) {
       title.textContent = t('hintTitle');

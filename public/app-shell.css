@@ -81,9 +81,20 @@ html.js:not(.stay) .shell {
 }
 
 .lead {
-  margin: 0.75rem 0 0;
+  margin: 0.625rem 0 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--color-muted);
+}
+
+form .eyebrow {
+  margin-top: 1.125rem;
+}
+
+.note {
+  margin: -0.125rem 0 0;
   font-size: 0.875rem;
-  line-height: 1.45;
+  text-align: center;
   color: var(--color-muted);
 }
 

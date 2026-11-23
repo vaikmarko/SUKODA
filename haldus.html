@@ -51,71 +51,65 @@
 
         <!-- ═══════════════ LOGIN ═══════════════ -->
         <div x-show="!loading && !authenticated" x-cloak>
-            <nav class="grid-line-b" aria-label="Main navigation">
-                <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12">
-                    <a href="/" class="font-serif text-2xl md:text-3xl tracking-[0.08em] font-light">SUKODA</a>
-                    <div class="flex items-center gap-1" role="group" :aria-label="t('langLabel')">
-                        <button type="button" @click="setLang('et')" class="text-xs font-sans py-3 px-2" :class="{ 'text-black': lang === 'et', 'text-muted': lang !== 'et' }" :aria-pressed="lang === 'et'">ET</button>
-                        <button type="button" @click="setLang('en')" class="text-xs font-sans py-3 px-2" :class="{ 'text-black': lang === 'en', 'text-muted': lang !== 'en' }" :aria-pressed="lang === 'en'">EN</button>
-                        <button type="button" @click="setLang('ru')" class="text-xs font-sans py-3 px-2" :class="{ 'text-black': lang === 'ru', 'text-muted': lang !== 'ru' }" :aria-pressed="lang === 'ru'">RU</button>
-                    </div>
-                </div>
-            </nav>
-            <main class="min-h-[80vh] flex items-center justify-center px-4 py-12 md:py-24">
-                <div class="max-w-md w-full text-center">
-                    <p class="eyebrow mb-3" x-text="t('deskWord')"></p>
-                    <h1 class="font-serif text-3xl md:text-4xl font-light mb-3" x-text="signupCodeMode ? t('codeTitle') : (signupMode && !loginSent ? t('signupTitle') : t('loginTitle'))"></h1>
-                    <p x-show="globalError" x-cloak class="mb-6 p-4 p-badge-err border border-line text-sm font-sans text-left" x-text="globalError"></p>
+            <!-- docs/disain/ekraanid/Sisene.html, Kood.html, Alusta.html. The steps and what is sent stay as they were. -->
+            <main class="max-w-md mx-auto px-6 pt-8 pb-16 font-sans">
+                <a href="/" class="w-logo block" x-show="!signupCodeMode">SUKODA</a>
+                <div x-show="signupCodeMode" x-cloak><button type="button" class="p-back" @click="signupCodeMode = false; loginError = ''"><svg class="p-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6"/></svg><span x-text="t('emailLabel')"></span></button></div>
+                <div :class="signupCodeMode ? 'mt-1' : 'mt-8'"><h1 class="p-sub-title" x-text="signupCodeMode ? t('codeTitle') : (signupMode && !loginSent ? t('signupTitle') : t('loginTitle'))"></h1></div>
+                <p x-show="globalError" x-cloak class="mt-5 p-4 p-badge-err rounded-2xl text-sm" x-text="globalError"></p>
 
-                    <div x-show="!loginSent && !signupMode && !signupCodeMode">
-                        <p class="text-muted font-sans font-light text-sm mb-10 max-w-sm mx-auto leading-relaxed" x-text="t('loginLead')"></p>
-                        <form @submit.prevent="sendMagicLink()" class="text-left mb-8">
-                            <label class="h-label" for="login-email" x-text="t('emailLabel')"></label>
-                            <input id="login-email" type="email" x-model="loginEmail" required autocomplete="email" class="h-input font-sans">
-                            <p x-show="loginError" x-cloak class="text-sm text-accent font-sans font-light mt-3" x-text="loginError"></p>
-                            <button type="submit" :disabled="loginSending || !loginEmail" class="p-btn w-full mt-8" x-text="loginSending ? t('sending') : t('sendLink')"></button>
-                        </form>
-                    </div>
-                    <!-- Self-serve onboarding: 2 fields + trade, 6-digit code right here -->
-                    <div x-show="!loginSent && signupMode && !signupCodeMode" x-cloak>
-                        <p class="text-muted font-sans font-light text-sm mb-8 max-w-sm mx-auto" x-text="t('signupLead')"></p>
-                        <form @submit.prevent="signup()" class="text-left mb-8 space-y-5">
-                            <div><label class="h-label" x-text="t('nameLabel')"></label><input type="text" x-model="signupForm.name" required autocomplete="name" class="h-input font-sans"></div>
-                            <div><label class="h-label" x-text="t('emailLabel')"></label><input type="email" x-model="signupForm.email" required autocomplete="email" class="h-input font-sans"></div>
-                            <div>
-                                <p class="h-label" x-text="t('offerLabel')"></p>
-                                <div class="flex flex-wrap gap-2 mt-1">
-                                    <template x-for="o in signupServices" :key="o.id">
-                                        <button type="button" @click="toggleSignupService(o.id)" :class="signupForm.services.includes(o.id) ? 'bg-black text-paper border-black' : 'border-line-strong text-muted hover:text-black'" class="min-h-11 px-3 border text-sm font-light transition-colors" :aria-pressed="signupForm.services.includes(o.id)" x-text="t(o.key)"></button>
-                                    </template>
-                                </div>
-                            </div>
-                            <p x-show="loginError" x-cloak class="text-sm text-accent font-sans font-light" x-text="loginError"></p>
-                            <button type="submit" :disabled="loginSending || !signupForm.name || !signupForm.email" class="p-btn w-full" x-text="loginSending ? t('opening') : t('openDesk')"></button>
-                            <p class="text-xs text-muted font-sans font-light text-center" x-text="t('signupPricing')"></p>
-                        </form>
-                    </div>
-                    <!-- Instant 6-digit code step after signup -->
-                    <div x-show="signupCodeMode" x-cloak x-transition class="text-left mb-8">
-                        <p class="text-muted font-sans font-light text-sm mb-8 text-center leading-relaxed" x-text="t('codeSentLead', { email: loginEmail })"></p>
-                        <form @submit.prevent="verifySignupCode()" class="space-y-5">
-                            <div>
-                                <label class="h-label" for="signup-code" x-text="t('codeLabel')"></label>
-                                <input id="signup-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" x-model="signupCode" x-ref="signupCodeInput" class="h-input font-serif text-2xl tracking-[0.25em] text-center">
-                            </div>
-                            <p x-show="loginError" x-cloak class="text-sm text-accent font-sans font-light text-center" x-text="loginError"></p>
-                            <button type="submit" :disabled="loginSending || signupCode.trim().length !== 6" class="p-btn w-full" x-text="loginSending ? t('checkingCode') : t('enterDesk')"></button>
-                            <button type="button" @click="signupCodeMode = false; loginError = ''" class="h-link w-full justify-center" x-text="t('changeEmail')"></button>
-                        </form>
-                    </div>
-                    <div x-show="loginSent && !signupCodeMode" x-cloak x-transition>
-                        <p class="font-serif text-xl font-light mb-2" x-text="t('linkSent')"></p>
-                        <p x-show="loginPortal" x-cloak class="text-muted font-sans font-light text-sm mb-2" x-text="t('linkIsHome')"></p>
-                        <p class="text-muted font-sans font-light text-sm"><span x-text="t('linkMissing')"></span> <a href="mailto:tere@sukoda.ee" class="text-black">tere@sukoda.ee</a></p>
-                    </div>
-                    <div class="border-t border-line pt-8 mt-8" x-show="!loginSent && !signupCodeMode">
-                        <button type="button" @click="signupMode = !signupMode; loginError = ''" class="h-link h-link-accent mx-auto" x-text="signupMode ? t('haveAccess') : t('newHere')"></button>
-                    </div>
+                <div x-show="!loginSent && !signupMode && !signupCodeMode">
+                    <p class="text-muted mt-3 leading-relaxed" x-text="t('loginLead')"></p>
+                    <form @submit.prevent="sendMagicLink()">
+                        <label class="eyebrow mt-5" for="login-email" x-text="t('emailLabel')"></label>
+                        <input id="login-email" type="email" x-model="loginEmail" required autocomplete="email" inputmode="email" class="p-field">
+                        <p x-show="loginError" x-cloak class="text-sm text-err mt-3" x-text="loginError" role="alert"></p>
+                        <button type="submit" :disabled="loginSending || !loginEmail" class="p-go is-wide mt-6" x-text="loginSending ? t('sending') : t('sendLink')"></button>
+                    </form>
+                </div>
+                <!-- Self-serve onboarding: name, e-mail, trade and area, then the 6-digit code right here -->
+                <div x-show="!loginSent && signupMode && !signupCodeMode" x-cloak>
+                    <form @submit.prevent="signup()">
+                        <label class="eyebrow mt-5" for="signup-name" x-text="t('nameLabel')"></label>
+                        <input id="signup-name" type="text" x-model="signupForm.name" required autocomplete="name" class="p-field" :placeholder="t('fullNamePh')">
+                        <label class="eyebrow mt-5" for="signup-email" x-text="t('emailLabel')"></label>
+                        <input id="signup-email" type="email" x-model="signupForm.email" required autocomplete="email" inputmode="email" class="p-field">
+                        <p class="eyebrow mt-5" x-text="t('offerLabel')"></p>
+                        <div class="flex flex-wrap gap-2 mt-2.5">
+                            <template x-for="o in signupServices" :key="o.id">
+                                <button type="button" @click="toggleSignupService(o.id)" class="p-chip" :class="{ 'is-on': signupForm.services.includes(o.id) }" :aria-pressed="signupForm.services.includes(o.id)" x-text="t(o.key)"></button>
+                            </template>
+                        </div>
+                        <label class="eyebrow mt-5" for="signup-city" x-text="t('areaLabel')"></label>
+                        <input id="signup-city" type="text" x-model="signupForm.city" autocomplete="address-level2" class="p-field" :placeholder="t('areaPh')">
+                        <p x-show="loginError" x-cloak class="text-sm text-err mt-3" x-text="loginError" role="alert"></p>
+                        <button type="submit" :disabled="loginSending || !signupForm.name || !signupForm.email" class="p-go is-wide mt-6" x-text="loginSending ? t('opening') : t('openDesk')"></button>
+                        <p class="text-sm text-muted text-center mt-2.5" x-text="t('signupPricing')"></p>
+                    </form>
+                </div>
+                <!-- Instant 6-digit code step after signup -->
+                <div x-show="signupCodeMode" x-cloak>
+                    <p class="text-muted mt-3 leading-relaxed" x-text="t('codeSentLead', { email: loginEmail })"></p>
+                    <form @submit.prevent="verifySignupCode()">
+                        <label class="sr-only" for="signup-code" x-text="t('codeLabel')"></label>
+                        <input id="signup-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" x-model="signupCode" x-ref="signupCodeInput" class="p-field p-code">
+                        <p x-show="loginError" x-cloak class="text-sm text-err mt-3" x-text="loginError" role="alert"></p>
+                        <button type="submit" :disabled="loginSending || signupCode.trim().length !== 6" class="p-go is-wide mt-6" x-text="loginSending ? t('checkingCode') : t('enterDesk')"></button>
+                        <p class="text-sm text-muted text-center mt-2.5" x-text="t('staySignedIn')"></p>
+                    </form>
+                </div>
+                <div x-show="loginSent && !signupCodeMode" x-cloak>
+                    <p class="font-serif text-2xl mt-5" x-text="t('linkSent')"></p>
+                    <p x-show="loginPortal" x-cloak class="text-muted mt-2" x-text="t('linkIsHome')"></p>
+                    <p class="text-muted mt-2"><span x-text="t('linkMissing')"></span> <a href="mailto:tere@sukoda.ee" class="text-black underline underline-offset-4">tere@sukoda.ee</a></p>
+                </div>
+                <div class="mt-6" x-show="!loginSent && !signupCodeMode">
+                    <button type="button" @click="signupMode = !signupMode; loginError = ''" class="inline-flex items-center min-h-11 underline underline-offset-4" x-text="signupMode ? t('haveAccess') : t('newHere')"></button>
+                </div>
+                <div class="flex items-center gap-1 mt-2 -ml-2" role="group" :aria-label="t('langLabel')">
+                    <button type="button" @click="setLang('et')" class="min-h-11 px-2" :class="{ 'text-black': lang === 'et', 'text-muted': lang !== 'et' }" :aria-pressed="lang === 'et'">Eesti</button>
+                    <button type="button" @click="setLang('en')" class="min-h-11 px-2" :class="{ 'text-black': lang === 'en', 'text-muted': lang !== 'en' }" :aria-pressed="lang === 'en'">English</button>
+                    <button type="button" @click="setLang('ru')" class="min-h-11 px-2" :class="{ 'text-black': lang === 'ru', 'text-muted': lang !== 'ru' }" :aria-pressed="lang === 'ru'">Русский</button>
                 </div>
             </main>
         </div>
@@ -199,7 +193,14 @@
                 <div x-show="activeTab === 'today'">
                     <div class="max-w-3xl">
                         <p class="font-serif text-xl font-light capitalize mb-4" x-text="todayHeading()"></p>
-                        <div x-show="todayVisits.length === 0" class="border border-line bg-cream/40 p-8 text-center">
+                        <!-- docs/disain/ekraanid/TegijaTyhi.html: the first day, before any client -->
+                        <div x-show="customers.length === 0" class="p-sheet px-6 py-7">
+                            <p class="font-serif text-3xl leading-tight" x-text="t('firstClientTitle')"></p>
+                            <p class="text-muted mt-3 leading-relaxed" x-text="t('firstClientLead')"></p>
+                            <button type="button" @click="openCustomerModal()" class="p-go is-wide mt-6" x-text="t('addClient')"></button>
+                            <button type="button" x-show="provider?.inviteUrl" @click="shareInvite(provider.inviteUrl)" class="p-sheet-btn mt-2.5" x-text="t('shareInviteBtn')"></button>
+                        </div>
+                        <div x-show="customers.length > 0 && todayVisits.length === 0" class="border border-line bg-cream/40 p-8 text-center">
                             <p class="text-sm text-muted font-sans" x-text="t('todayEmpty')"></p>
                             <button type="button" @click="activeTab = 'calendar'" class="p-btn-2 mt-4" x-text="t('openCalendar')"></button>
                         </div>
@@ -408,13 +409,13 @@
                     <div class="max-w-3xl space-y-10">
                         <div>
                             <p class="eyebrow mb-4" x-text="t('wishesWaiting')"></p>
-                            <div x-show="pendingRequests.length === 0" class="bg-cream/40 border border-line p-8 text-center text-sm text-muted font-sans font-light" x-text="t('wishesNone')"></div>
+                            <div x-show="pendingRequests.length === 0" class="p-sheet p-6 text-muted" x-text="t('wishesNone')"></div>
                             <div class="space-y-3">
                                 <template x-for="r in pendingRequests" :key="r.id">
                                     <div class="p-sheet p-5">
                                         <div class="flex items-start justify-between gap-3">
                                             <div class="min-w-0">
-                                                <p class="font-serif text-lg font-light" x-text="r.serviceName"></p>
+                                                <p class="p-row-name" x-text="r.serviceName"></p>
                                                 <p class="text-sm font-sans font-light text-muted truncate"><span x-text="r.customerName"></span><span x-show="r.address" x-text="' · ' + r.address"></span></p>
                                             </div>
                                             <p class="text-xs text-muted font-sans shrink-0" x-text="fmtDateShort(r.createdAt)"></p>
@@ -431,14 +432,12 @@
                                                 </template>
                                             </div>
                                         </template>
-                                        <div class="flex flex-col sm:flex-row sm:flex-wrap gap-2 mt-4">
-                                            <button type="button" x-show="r.kind !== 'question'" @click="openConfirmRequest(r)" class="p-btn" x-text="t('confirmTime')"></button>
-                                            <button type="button" x-show="r.kind === 'question'" @click="replyRequest(r)" class="p-btn" x-text="t('reply')"></button>
-                                            <div class="flex gap-2 justify-center sm:justify-start">
-                                                <button type="button" x-show="r.kind !== 'question'" @click="replyRequest(r)" class="h-link" x-text="t('reply')"></button>
-                                                <button type="button" x-show="r.kind !== 'question'" @click="declineRequest(r)" class="h-link" x-text="r.kind === 'issue' ? t('notWarranty') : t('decline')"></button>
-                                            </div>
+                                        <div class="grid gap-2.5 mt-4" :class="r.kind === 'question' ? '' : 'grid-cols-2'">
+                                            <button type="button" x-show="r.kind !== 'question'" @click="openConfirmRequest(r)" class="p-go h-wish-btn" x-text="t('confirmShort')"></button>
+                                            <button type="button" x-show="r.kind !== 'question'" @click="replyRequest(r)" class="p-sheet-btn h-wish-btn" x-text="t('reply')"></button>
+                                            <button type="button" x-show="r.kind === 'question'" @click="replyRequest(r)" class="p-go h-wish-btn" x-text="t('reply')"></button>
                                         </div>
+                                        <button type="button" x-show="r.kind !== 'question'" @click="declineRequest(r)" class="inline-flex items-center min-h-11 mt-1 text-sm text-muted underline underline-offset-4" x-text="r.kind === 'issue' ? t('notWarranty') : t('decline')"></button>
                                     </div>
                                 </template>
                             </div>
@@ -1356,7 +1355,7 @@
             signupTitle: { et: 'Ava oma töölaud', en: 'Open your desk' },
             signupLead: { et: '6-kohaline sisenemiskood tuleb kohe e-postile.', en: 'Your 6-digit sign-in code arrives immediately.' },
             codeTitle: { et: 'Sisesta kood', en: 'Enter the code' },
-            codeSentLead: { et: 'Saatsime 6-kohalise koodi aadressile {email}. Kirjuta kood siia või vajuta kirjas olevale nupule.', en: 'We sent a 6-digit code to {email}. Enter the code here or tap the button in the e-mail.' },
+            codeSentLead: { et: 'Saatsime koodi aadressile {email}. Kirjuta kood siia või vajuta kirjas olevat nuppu.', en: 'We sent a code to {email}. Enter it here or tap the button in the e-mail.' },
             codeLabel: { et: '6-kohaline kood', en: '6-digit code' },
             checkingCode: { et: 'Kontrollin…', en: 'Checking…' },
             enterDesk: { et: 'Ava töölaud', en: 'Open the desk' },
@@ -1374,7 +1373,9 @@
             areaPh: { et: 'Tallinn, Viimsi', en: 'Tallinn, Viimsi' },
             openDesk: { et: 'Ava töölaud', en: 'Open the desk' },
             opening: { et: 'Avan…', en: 'Opening…' },
-            signupPricing: { et: 'Kuni 3 kodu tasuta · edasi alates 19 € kuus.', en: 'Up to 3 homes free · then from 19 € a month.' },
+            signupPricing: { et: 'Kolm esimest kodu on tasuta.', en: 'The first three homes are free.' },
+            fullNamePh: { et: 'Ees- ja perekonnanimi', en: 'First and last name' },
+            staySignedIn: { et: 'Jääd selles telefonis sisse logituks.', en: 'You stay signed in on this phone.' },
             linkSent: { et: 'Link on saadetud. Ava oma e-post.', en: 'The link is sent. Open your e-mail.' },
             linkIsHome: { et: 'See e-post kuulub kodule, mitte töölauale. Link avab sinu koduportaali.', en: 'This e-mail belongs to a home, not a desk. The link opens your home portal.' },
             linkMissing: { et: 'Kui kirja ei tule, vaata rämpsposti või kirjuta', en: 'If no e-mail arrives, check spam or write to' },
@@ -1484,6 +1485,8 @@
             tabHomes: { et: 'Kodud', en: 'Homes' },
             searchHomes: { et: 'Otsi nime või aadressi järgi', en: 'Search by name or address' },
             addClient: { et: 'Lisa klient', en: 'Add a client' },
+            firstClientTitle: { et: 'Lisa oma esimene klient', en: 'Add your first client' },
+            firstClientLead: { et: 'Paned kirja nime, aadressi ja rütmi. Tema ajad tekivad siia ise.', en: 'You enter the name, address and rhythm. Their visits appear here by themselves.' },
             addClientTitle: { et: 'Lisa klient', en: 'Add a client' },
             addClientLead: { et: 'Klient saab sisenemislingi ja kalendrikutsed automaatselt.', en: 'The client receives their portal link and calendar invites automatically.' },
             nameReq: { et: 'Nimi', en: 'Name' },
@@ -1657,13 +1660,14 @@
 
             // ---- Soovid ----
             tabWishes: { et: 'Soovid', en: 'Wishes' },
-            wishesWaiting: { et: 'Ootab sinu vastust', en: 'Waiting for your reply' },
+            wishesWaiting: { et: 'Ootab sind', en: 'Waiting for you' },
             wishesNone: { et: 'Uusi soove pole. Kliendi uus soov ilmub siia.', en: 'No new wishes. A client’s new wish appears here.' },
             wishDate: { et: 'Klient soovib {date}', en: 'The client asks for {date}' },
             withVisitTag: { et: 'koos koristusega', en: 'with the clean' },
             earliest: { et: 'Klient soovib esimesel võimalusel', en: 'The client asks for the earliest time' },
             urgent: { et: 'Kiire', en: 'Urgent' },
             confirmTime: { et: 'Kinnita aeg', en: 'Confirm a time' },
+            confirmShort: { et: 'Kinnita', en: 'Confirm' },
             confirmLead: { et: 'Sina määrad aja. Kui töö ei ole kokkuleppes, kirjuta hind.', en: 'You set the time. If the work is not in the agreement, write the price.' },
             priceToInvoice: { et: 'Hind läheb kuu kokkuvõttesse, kui märgid töö tehtuks. Arve saadad ise.', en: 'The price goes into the month’s summary once you mark the work done. You send the invoice.' },
             invoiceTitle: { et: 'Klientidele arvele', en: 'To invoice to clients' },
@@ -1674,7 +1678,7 @@
             reply: { et: 'Vasta', en: 'Reply' },
             decline: { et: 'Ütle ära', en: 'Decline' },
             notWarranty: { et: 'Ei kuulu garantiisse', en: 'Not under warranty' },
-            handled: { et: 'Varasemad', en: 'Earlier' },
+            handled: { et: 'Vastatud', en: 'Answered' },
             newMessage: { et: 'uus sõnum', en: 'new message' },
             you: { et: 'Sina', en: 'You' },
             writeClient: { et: 'Kirjuta kliendile', en: 'Write to the client' },
@@ -1791,7 +1795,7 @@
             workTitle: { et: 'Tööaeg', en: 'Working time' },
             workLead: { et: 'Kliendid saavad aegu valida ainult siin märgitud päevadel ja kellaaegadel.', en: 'Clients can pick times only on the days and hours marked here.' },
             workDaysLabel: { et: 'Tööpäevad', en: 'Working days' },
-            hoursLabel: { et: 'Kellaajad', en: 'Hours' },
+            hoursLabel: { et: 'Tööajad', en: 'Working hours' },
             hoursFrom: { et: 'Algus', en: 'Start' },
             hoursTo: { et: 'Lõpp', en: 'End' },
             maxPerDayLabel: { et: 'Kodusid päevas kuni', en: 'Homes per day, at most' },

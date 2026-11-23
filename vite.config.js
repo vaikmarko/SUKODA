@@ -60,6 +60,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         index: resolve(__dirname, 'index.html'),
+        koduomanikule: resolve(__dirname, 'koduomanikule.html'),
         lugu: resolve(__dirname, 'lugu.html'),
         lunasta: resolve(__dirname, 'lunasta.html'),
         kaart: resolve(__dirname, 'kaart.html'),

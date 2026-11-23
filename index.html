@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <style>[x-cloak] { display: none !important; }</style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SUKODA | Kodu rütmis. Perega ühes kalendris.</title>
+    <title>SUKODA | Sinu kliendid ja ajad. Ühes äpis.</title>
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="assets/logo/icon-s-black.svg">
@@ -17,13 +17,13 @@
     </script>
     
     <!-- Open Graph -->
-    <meta property="og:title" content="SUKODA — Kodu rütmis. Perega ühes kalendris.">
-    <meta property="og:description" content="Koduhooldaja ajad ja lisasoovid ühes rahulikus rakenduses.">
+    <meta property="og:title" content="SUKODA | Sinu kliendid ja ajad. Ühes äpis.">
+    <meta property="og:description" content="Lisa klient, lepi aeg kokku ja märgi töö tehtuks. Klient näeb sama aega oma telefonis.">
     <meta property="og:image" content="https://sukoda.ee/assets/images/product/minu-ulevaade.png">
     <meta property="og:url" content="https://sukoda.ee">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="description" content="Koduhooldaja ajad ja lisasoovid ühes rahulikus rakenduses. Tasuta töölaud tegijale.">
+    <meta name="description" content="Lisa klient, lepi aeg kokku ja märgi töö tehtuks. Klient näeb sama aega oma telefonis. Kolm esimest kodu on tasuta.">
     <meta property="og:locale" content="et_EE">
     <meta property="og:site_name" content="SUKODA">
     
@@ -48,7 +48,7 @@
       "applicationCategory": "LifestyleApplication",
       "operatingSystem": "Web",
       "name": "SUKODA",
-      "description": "Koduportaal: koduhooldaja ajad pere kalendris, kodu hooldusrütm ja dokumendid ühes kohas. Töölaud koduhooldajale, floristile ja remondimehele.",
+      "description": "Töölaud koduhooldajale ja äpp tema kliendile: sama aeg, samad soovid ja sama hind.",
       "url": "https://sukoda.ee",
       "image": "https://sukoda.ee/assets/images/product/minu-ulevaade.png",
       "address": {
@@ -75,356 +75,180 @@
         <div class="preloader-logo">SUKODA</div>
     </div>
 
-    <!-- Scroll Progress -->
-    <div class="scroll-progress" id="scrollProgress" role="progressbar" aria-label="Page scroll progress"></div>
+    <!-- Page shape: docs/disain/ekraanid. Bands run edge to edge, content sits in .w-wrap. -->
+    <div class="bg-paper">
+        <div class="w-wrap">
+            <header class="w-top">
+                <a href="/" class="w-logo">SUKODA</a>
+                <nav class="w-nav" :aria-label="t('menu')">
+                    <span class="w-nav-links">
+                    <a class="w-nv" href="#sammud" x-text="t('navHow')">Kuidas see käib</a>
+                    <a class="w-nv" href="koduomanikule.html" x-text="t('navOwner')">Koduomanikule</a>
+                    <a class="w-nv" href="#hind" x-text="t('navPrice')">Hind</a>
+                    </span>
+                    <span class="w-nav-langs" role="group" :aria-label="t('langLabel')">
+                    <button type="button" class="w-nv" @click="lang = 'et'" :class="{ 'is-off': lang !== 'et' }" :aria-pressed="lang === 'et'">ET</button>
+                    <button type="button" class="w-nv" @click="lang = 'en'" :class="{ 'is-off': lang !== 'en' }" :aria-pressed="lang === 'en'">EN</button>
+                    <button type="button" class="w-nv" @click="lang = 'ru'" :class="{ 'is-off': lang !== 'ru' }" :aria-pressed="lang === 'ru'">RU</button>
+                </span>
+                    <a class="w-nv w-login" href="minu.html" x-text="t('login')">Sisene</a>
+                </nav>
+            </header>
 
-    <!-- Grid Container -->
-    <div class="max-w-[1440px] mx-auto bg-paper min-h-screen border-x border-[#E8E3DD]">
-        
-        <!-- Navigation -->
-        <nav class="sticky top-0 z-50 bg-paper/95 backdrop-blur-sm grid-line-b" x-data="{ mobileMenu: false }" aria-label="Main navigation">
-            <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12">
-                <a href="index.html" class="font-serif text-2xl md:text-3xl tracking-[0.08em] font-light">
-                    SUKODA
-                </a>
-                
-                <div class="hidden md:flex gap-10 text-xs uppercase tracking-[0.16em] font-sans font-medium text-muted">
-                    <a href="#kodule" class="luxury-link hover:text-black transition-colors" x-text="t('navHome')">Koduomanikule</a>
-                    <a href="kingitus.html" x-show="window.SUKODA_SALES" x-cloak class="luxury-link hover:text-black transition-colors" x-text="t('navGift')">Kingitus</a>
-                    <a href="#teenusepakkujale" class="luxury-link hover:text-black transition-colors" x-text="t('navProvider')">Teenusepakkujale</a>
-                    <a href="lugu.html" class="luxury-link hover:text-black transition-colors" x-text="t('navStory')">Lugu</a>
-                </div>
-
-                <div class="flex items-center gap-4 md:gap-6">
-                    <div class="flex items-center gap-2 text-xs uppercase tracking-[0.16em] font-sans font-medium" role="group" :aria-label="t('langLabel')">
-                        <button type="button" @click="lang = 'et'" :class="{ 'text-black': lang === 'et', 'text-muted hover:text-black': lang !== 'et' }" :aria-pressed="lang === 'et'" class="transition-colors py-2 px-1">ET</button>
-                        <span class="text-muted-light" aria-hidden="true">·</span>
-                        <button type="button" @click="lang = 'en'" :class="{ 'text-black': lang === 'en', 'text-muted hover:text-black': lang !== 'en' }" :aria-pressed="lang === 'en'" class="transition-colors py-2 px-1">EN</button>
-                        <span class="text-muted-light" aria-hidden="true">·</span>
-                        <button type="button" @click="lang = 'ru'" :class="{ 'text-black': lang === 'ru', 'text-muted hover:text-black': lang !== 'ru' }" :aria-pressed="lang === 'ru'" class="transition-colors py-2 px-1">RU</button>
+            <main id="main-content">
+            <section class="w-hero">
+                <div class="w-hero-text">
+                    <span class="w-acc"></span>
+                    <p class="eyebrow" x-text="t('heroKicker')">Koduhooldajale</p>
+                    <h1 class="w-h1"><span x-text="t('heroTitle1')">Sinu kliendid ja ajad.</span><br><span class="w-it" x-text="t('heroTitle2')">Ühes äpis.</span></h1>
+                    <p class="w-lead" x-text="t('heroLead')">Lisa klient, lepi aeg kokku ja märgi töö tehtuks. Klient näeb sama aega oma telefonis ja saadab soovid ilma helistamata.</p>
+                    <div class="w-actions">
+                        <a class="w-btn" href="/haldus?alusta" x-text="t('openDesk')">Ava tasuta töölaud</a>
+                        <a class="w-btn-2" href="/lunasta" x-text="t('haveInvite')">Mul on kutse</a>
                     </div>
-
-                    <a href="minu.html" class="p-btn p-btn-sm hidden md:inline-flex" x-text="t('login')">Sisene</a>
-
-                    <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2" :aria-expanded="mobileMenu" :aria-label="t('menu')">
-                        <svg x-show="!mobileMenu" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path>
-                        </svg>
-                        <svg x-show="mobileMenu" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
+                    <p class="w-small" x-text="t('threeFree')">Kolm esimest kodu on tasuta.</p>
                 </div>
-            </div>
-
-            <!-- Mobile Menu -->
-            <div x-show="mobileMenu" x-cloak class="md:hidden bg-paper border-t border-line">
-                <div class="flex flex-col px-4 py-8 space-y-5 text-xs uppercase tracking-[0.16em] font-sans font-medium text-muted">
-                    <a href="#kodule" @click="mobileMenu = false" class="py-2 hover:text-black" x-text="t('navHome')">Koduomanikule</a>
-                    <a href="kingitus.html" x-show="window.SUKODA_SALES" x-cloak class="py-2 hover:text-black" x-text="t('navGift')">Kingitus</a>
-                    <a href="#teenusepakkujale" @click="mobileMenu = false" class="py-2 hover:text-black" x-text="t('navProvider')">Teenusepakkujale</a>
-                    <a href="lugu.html" class="py-2 hover:text-black" x-text="t('navStory')">Lugu</a>
-                    <a href="minu.html" @click="mobileMenu = false" class="py-2 hover:text-black" x-text="t('login')">Sisene</a>
-                </div>
-            </div>
-        </nav>
-
-
-        <main id="main-content">
-
-        <!-- ═══════════════════════════════════════════════════════════════
-             HERO — the product, not a mood: what SUKODA is, in one screen
-             ═══════════════════════════════════════════════════════════════ -->
-        <header class="grid md:grid-cols-12 grid-line-b overflow-hidden">
-            <div class="md:col-span-6 px-6 md:px-16 pt-16 pb-12 md:py-28 flex flex-col justify-center grid-line border-b md:border-b-0 border-line">
-                <div class="accent-line mb-6 animate-fade-in"></div>
-                <p class="eyebrow mb-5 animate-fade-in" x-text="t('heroKicker')">Koduportaal</p>
-                <h1 class="font-serif text-5xl md:text-6xl lg:text-[4.5rem] leading-[1.05] mb-6 font-light animate-hero-title">
-                    <span x-text="t('heroTitle1')">Kodu rütmis.</span><br><span class="text-muted" x-text="t('heroTitle2')">Perega ühes kalendris.</span>
-                </h1>
-                <p class="text-base md:text-lg text-muted max-w-md font-sans font-light leading-relaxed animate-hero-subtitle" x-text="t('heroLead')"></p>
-                <div class="mt-10 flex flex-wrap items-center gap-5 animate-hero-cta">
-                    <a href="#alusta" class="p-btn" x-text="t('heroCta')">Alusta</a>
-                    <a href="/haldus?alusta" class="text-xs uppercase tracking-[0.16em] font-sans text-muted hover:text-black transition-colors luxury-link" x-text="t('heroCta2')">Ava töölaud →</a>
-                </div>
-            </div>
-            <!-- Calm, tall Resident Smartphone preview -->
-            <div class="md:col-span-6 relative bg-cream/60 flex items-center justify-center overflow-hidden py-12 px-5 md:p-16">
-                <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(143,110,67,0.12),transparent_65%)]"></div>
-                <figure class="relative animate-hero-image">
-                    <div class="phone-frame">
-                        <div class="phone-screen">
-                            <!-- Status bar + Dynamic Island -->
-                            <div class="bg-white px-5 pt-3 pb-2 flex items-center justify-between text-xs font-sans text-black">
-                                <span class="font-medium">9:41</span>
-                                <span class="w-20 h-5 rounded-full bg-black"></span>
-                                <span class="flex items-center gap-1 text-black">
-                                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M2 18h2v2H2v-2zm4-3h2v5H6v-5zm4-3h2v8h-2v-8zm4-3h2v11h-2V9zm4-3h2v14h-2V6z"/></svg>
-                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="7" width="17" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="4" y="9" width="13" height="6" rx="1"/></svg>
-                                </span>
-                            </div>
-
-                            <div class="flex-1 flex flex-col p-4">
-                                <p class="font-serif text-3xl font-medium leading-none" x-text="t('pvHomeTitle')"></p>
-                                <div class="bg-white border border-line rounded-[20px] p-4 mt-4">
-                                    <p class="eyebrow" x-text="t('pvNextEyebrow')"></p>
-                                    <p class="font-serif text-5xl font-medium leading-none mt-2" x-text="t('pvClock')"></p>
-                                    <p class="text-sm mt-2" x-text="t('pvClockDay')"></p>
-                                    <p class="text-xs text-muted mt-3 pt-3 border-t border-line" x-text="t('pvWho')"></p>
-                                    <p class="mt-3 h-10 border border-line-strong rounded-2xl flex items-center justify-center text-sm font-medium" x-text="t('pvReschedule')"></p>
-                                </div>
-                                <p class="bg-white border border-line rounded-[20px] px-4 py-3 mt-2 text-xs" x-text="t('pvLastShort')"></p>
-                                <p class="bg-white border border-line rounded-[20px] px-4 py-3 mt-2 text-xs font-medium" x-text="t('pvWrite')"></p>
-                            </div>
-
-                            <!-- Mobile Bottom Tab Bar -->
-                            <div class="bg-white pb-2">
-                                <div class="phone-tabbar">
-                                    <div class="phone-tab is-active">
-                                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.65" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"/></svg>
-                                        <span x-text="t('pvTabHome')"></span>
-                                    </div>
-                                    <div class="phone-tab">
-                                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 8v8M8 12h8"/></svg>
-                                        <span x-text="t('pvTabServices')"></span>
-                                    </div>
-                                    <div class="phone-tab">
-                                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.55" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.5 7.5a3.5 3.5 0 11-7 0 3.5 3.5 0 017 0zM4.5 19.5a7.5 7.5 0 0115 0"/></svg>
-                                        <span x-text="t('pvTabMine')"></span>
-                                    </div>
-                                </div>
-                                <div class="w-24 h-1 rounded-full bg-black/15 mx-auto mt-1.5"></div>
-                            </div>
+                <div class="w-hero-art">
+                    <div class="w-note" aria-hidden="true">
+                        <p class="eyebrow" x-text="t('noteFrom')">Anna kirjutas</p>
+                        <p class="w-note-text" x-text="t('noteText')">Aitäh, Kristi. Kodu on nagu uus.</p>
+                        <p class="w-note-meta">Pirita tee 12</p>
+                    </div>
+                    <div class="w-phone" aria-hidden="true">
+                        <div class="w-ph-island"></div>
+                        <p class="w-ph-title" x-text="t('pvJobs')">Tööd</p>
+                        <div class="w-ph-card">
+                            <p class="eyebrow" x-text="t('pvNow')">Praegu · 10:00–13:00</p>
+                            <p class="w-ph-addr">Pirita tee 12</p>
+                            <p class="w-ph-name">Anna Tamm</p>
+                            <p class="w-ph-meta" x-text="t('pvJob')">Koristus · aknapesu</p>
+                            <div class="w-ph-go" x-text="t('pvDone')">Tehtud</div>
+                        </div>
+                        <p class="eyebrow w-ph-label" x-text="t('pvLater')">Hiljem täna</p>
+                        <div class="w-ph-card is-list">
+                            <div class="w-ph-row"><b>14:00</b><span>Koidula 9</span></div>
+                            <div class="w-ph-row"><b>16:30</b><span>Weizenbergi 20</span></div>
+                        </div>
+                        <div class="w-ph-dock">
+                            <span class="is-active"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/></svg><span x-text="t('pvJobs')">Tööd</span></span>
+                            <span><svg viewBox="0 0 24 24"><path d="M5 5h14a1 1 0 011 1v9a1 1 0 01-1 1h-7l-4 4v-4H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg><span x-text="t('pvWishes')">Soovid</span></span>
+                            <span><svg viewBox="0 0 24 24"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"/></svg><span x-text="t('pvHomes')">Kodud</span></span>
                         </div>
                     </div>
-                    <figcaption class="sr-only" x-text="t('heroImgCaption')">Koduportaali ülevaade</figcaption>
-                </figure>
-            </div>
-        </header>
-
-        <!-- ═══════════════════════════════════════════════════════════════
-             ( 01 ) KODUOMANIKULE — 3 airy pillars
-             ═══════════════════════════════════════════════════════════════ -->
-        <section id="kodule" class="grid-line-b">
-            <div class="grid md:grid-cols-12">
-                <div class="md:col-span-4 p-6 md:p-16 grid-line border-b md:border-b-0 border-line reveal flex flex-col justify-center">
-                    <div class="accent-line mb-4"></div>
-                    <span class="eyebrow mb-3">( 01 )</span>
-                    <h2 class="font-serif text-3xl md:text-4xl font-light mb-3">
-                        <span x-text="t('s1Title1')">Üks kodu.</span><br><span class="text-muted" x-text="t('s1Title2')">Üks vaade.</span>
-                    </h2>
-                    <p class="text-sm text-muted font-sans font-light" x-text="t('s1Lead')"></p>
                 </div>
-                <div class="md:col-span-8 grid sm:grid-cols-3 gap-px bg-line">
-                    <template x-for="(f, i) in features" :key="i">
-                        <div class="p-6 md:p-12 bg-paper reveal flex flex-col justify-between" :style="'transition-delay: ' + (i * 60) + 'ms'">
-                            <svg class="w-6 h-6 text-accent mb-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.3" :d="f.icon"></path></svg>
-                            <div>
-                                <h3 class="font-serif text-2xl font-light mb-2" x-text="pick(f.title)"></h3>
-                                <p class="text-sm text-muted font-sans font-light leading-relaxed" x-text="pick(f.text)"></p>
-                            </div>
-                        </div>
-                    </template>
+            </section>
+            </main>
+        </div>
+    </div>
+
+    <section id="sammud" class="w-dark">
+        <div class="w-wrap">
+            <h2 class="w-h2" x-text="t('stepsTitle')">Kolm hetke, kus äpp teeb töö sinu eest</h2>
+            <div class="w-g3 w-steps">
+                <div class="w-step">
+                    <p class="w-step-num">01</p>
+                    <p class="eyebrow" x-text="t('step1Eyebrow')">Esimene päev</p>
+                    <h3 x-text="t('step1Title')">Lisad kliendi</h3>
+                    <p class="w-step-text" x-text="t('step1Text')">Nimi, aadress ja rütm. Terve kuu ajad tekivad ise ja klient saab oma äpi tasuta.</p>
                 </div>
-            </div>
-        </section>
-
-        <!-- ═══════════════════════════════════════════════════════════════
-             ( 02 ) TEENUSEPAKKUJALE — calm desk & transparent plans
-             ═══════════════════════════════════════════════════════════════ -->
-        <section id="teenusepakkujale" class="grid md:grid-cols-12 grid-line-b bg-cream/40">
-            <div class="md:col-span-6 relative overflow-hidden grid-line border-b md:border-b-0 border-line py-12 px-5 md:p-16 flex items-center justify-center">
-                <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(143,110,67,0.12),transparent_65%)]"></div>
-                <figure class="relative reveal">
-                    <div class="phone-frame">
-                        <div class="phone-screen">
-                            <!-- Status bar + Dynamic Island -->
-                            <div class="bg-white px-5 pt-3 pb-2 flex items-center justify-between text-xs font-sans text-black">
-                                <span class="font-medium">08:30</span>
-                                <span class="w-20 h-5 rounded-full bg-black"></span>
-                                <span class="flex items-center gap-1 text-black">
-                                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M2 18h2v2H2v-2zm4-3h2v5H6v-5zm4-3h2v8h-2v-8zm4-3h2v11h-2V9zm4-3h2v14h-2V6z"/></svg>
-                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="7" width="17" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="4" y="9" width="13" height="6" rx="1"/></svg>
-                                </span>
-                            </div>
-
-                            <div class="px-4 py-3 border-b border-line bg-white flex items-center justify-between">
-                                <span class="font-serif text-base tracking-[0.08em] font-light">SUKODA</span>
-                                <span class="p-badge-ok px-2 py-0.5 text-xs font-sans" x-text="t('pvDeskBadge')"></span>
-                            </div>
-
-                            <div class="flex-1 flex flex-col justify-between p-4">
-                                <div class="space-y-4">
-                                    <!-- Today's active home card -->
-                                    <div class="bg-white border border-line rounded-[20px] p-4">
-                                        <p class="eyebrow" x-text="t('pvDeskNow')"></p>
-                                        <p class="font-serif text-2xl font-medium mt-2 leading-none" x-text="t('pvHomeTitle')"></p>
-                                        <p class="text-sm font-medium mt-2">Anna Tamm</p>
-                                        <p class="text-xs text-muted font-sans font-light mt-2.5" x-text="t('pvDeskChecklist')"></p>
-                                        <div class="mt-4">
-                                            <span class="bg-black text-paper block text-center py-2.5 text-xs uppercase tracking-[0.14em] font-sans" x-text="t('pvDeskDoneBtn')"></span>
-                                        </div>
-                                    </div>
-
-                                    <!-- Crisp QR invite row -->
-                                    <div class="bg-white border border-line p-3.5 flex items-center justify-between gap-3">
-                                        <div>
-                                            <p class="eyebrow mb-1" x-text="t('pvInviteLabel')"></p>
-                                            <p class="text-xs text-accent font-sans" x-text="t('pvShareBtn')"></p>
-                                        </div>
-                                        <svg class="w-10 h-10 shrink-0 text-black border border-line p-1 bg-paper" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                                            <path d="M3 3h7v7H3V3zm2 2v3h3V5H5zm9-2h7v7h-7V3zm2 2v3h3V5h-3zM3 14h7v7H3v-7zm2 2v3h3v-3H5zm9-2h3v3h-3v-3zm4 0h3v2h-3v-2zm-4 4h2v3h-2v-3zm3 1h4v2h-4v-2z"/>
-                                        </svg>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Provider Mobile Tab Bar -->
-                            <div class="bg-white pb-2">
-                                <div class="phone-tabbar">
-                                    <div class="phone-tab is-active">
-                                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.65" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l2.5 2.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                        <span x-text="t('pvDeskTab1')"></span>
-                                    </div>
-                                    <div class="phone-tab">
-                                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 5h14a1 1 0 011 1v9a1 1 0 01-1 1h-7l-4 4v-4H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg>
-                                        <span x-text="t('pvDeskTab2')"></span>
-                                    </div>
-                                    <div class="phone-tab">
-                                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"/></svg>
-                                        <span x-text="t('pvDeskTab3')"></span>
-                                    </div>
-                                </div>
-                                <div class="w-24 h-1 rounded-full bg-black/15 mx-auto mt-1.5"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <figcaption class="sr-only" x-text="t('deskImgCaption')">Teenusepakkuja töölaud</figcaption>
-                </figure>
-            </div>
-            <div class="md:col-span-6 p-6 md:p-16 flex flex-col justify-center reveal">
-                <div class="accent-line mb-4"></div>
-                <span class="eyebrow mb-3">( 02 )</span>
-                <h2 class="font-serif text-3xl md:text-4xl font-light mb-4" x-text="t('s2Title')"></h2>
-                <p class="text-base text-muted font-sans font-light leading-relaxed mb-8 max-w-md" x-text="t('s2Lead')"></p>
-                <ul class="space-y-3 text-sm md:text-base font-sans font-light mb-8">
-                    <li class="flex gap-4"><span class="text-accent shrink-0">01</span><span x-text="t('s2Item1')"></span></li>
-                    <li class="flex gap-4"><span class="text-accent shrink-0">02</span><span x-text="t('s2Item2')"></span></li>
-                    <li class="flex gap-4"><span class="text-accent shrink-0">03</span><span x-text="t('s2Item3')"></span></li>
-                </ul>
-                <div>
-                    <a href="/haldus?alusta" class="p-btn" x-text="t('openDesk')"></a>
+                <div class="w-step">
+                    <p class="w-step-num">02</p>
+                    <p class="eyebrow" x-text="t('step2Eyebrow')">Iga visiit</p>
+                    <h3 x-text="t('step2Title')">Vajutad Tehtud</h3>
+                    <p class="w-step-text" x-text="t('step2Text')">Klient saab teate, järgmine kord on kirjas ja summa läheb kuu kokkuvõttesse.</p>
                 </div>
-                <div class="mt-8 grid grid-cols-3 gap-px bg-line border border-line max-w-md">
-                    <div class="bg-paper p-4">
-                        <p class="eyebrow mb-1.5" x-text="t('planFree')"></p>
-                        <p class="font-serif text-2xl font-light">0 <span class="text-xs text-muted">€</span></p>
-                        <p class="text-xs text-muted font-sans font-light mt-0.5" x-text="t('planFreeHomes')"></p>
-                    </div>
-                    <div class="bg-paper p-4">
-                        <p class="eyebrow mb-1.5" x-text="t('planStandard')"></p>
-                        <p class="font-serif text-2xl font-light">19 <span class="text-xs text-muted" x-text="t('perMonth')"></span></p>
-                        <p class="text-xs text-muted font-sans font-light mt-0.5" x-text="t('planStandardHomes')"></p>
-                    </div>
-                    <div class="bg-paper p-4">
-                        <p class="eyebrow mb-1.5" x-text="t('planStudio')"></p>
-                        <p class="font-serif text-2xl font-light">39 <span class="text-xs text-muted" x-text="t('perMonth')"></span></p>
-                        <p class="text-xs text-muted font-sans font-light mt-0.5" x-text="t('planStudioHomes')"></p>
-                    </div>
+                <div class="w-step">
+                    <p class="w-step-num">03</p>
+                    <p class="eyebrow" x-text="t('step3Eyebrow')">Kuu lõpp</p>
+                    <h3 x-text="t('step3Title')">Väljavõte on valmis</h3>
+                    <p class="w-step-text" x-text="t('step3Text')">Iga klient eraldi real. Laadid alla ja saadad arved.</p>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- ═══════════════════════════════════════════════════════════════
-             ( 03 ) ALUSTA — 2 fields, zero friction
-             ═══════════════════════════════════════════════════════════════ -->
-        <section id="alusta" x-show="!window.SUKODA_SALES" class="grid md:grid-cols-12 grid-line-b" x-data="{
-            role: 'home', homeMode: 'invite', inviteCode: '',
-            email: '', partnerEmail: '',
-            sent: '', sending: false, error: '',
-            get canSend() {
-                if (this.role === 'home' && this.homeMode === 'invite') return this.partnerEmail && this.email;
-                if (this.role === 'home' && this.homeMode === 'code') return this.inviteCode.trim().length >= 5;
-                return false;
-            },
-            async submit() {
-                if (!this.canSend || this.sending) return;
-                if (this.role === 'home' && this.homeMode === 'code') {
-                    window.location.href = '/lunasta?code=' + encodeURIComponent(this.inviteCode.trim().toUpperCase());
-                    return;
-                }
-                this.sending = true; this.error = '';
-                try {
-                    const res = await fetch('/api/haldus/invite-partner', {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ partnerEmail: this.partnerEmail, email: this.email, lang: lang }),
-                    });
-                    if (!res.ok) throw new Error('fail');
-                    this.sent = 'invite';
-                } catch (e) { this.error = this.t('startError'); }
-                this.sending = false;
-            }
-        }">
-            <div class="md:col-span-5 p-6 md:p-16 grid-line border-b md:border-b-0 border-line flex flex-col justify-center reveal">
-                <div class="accent-line mb-4"></div>
-                <span class="eyebrow mb-3">( 03 )</span>
-                <h2 class="font-serif text-3xl md:text-4xl font-light mb-3" x-text="t('startTitle')">Alusta</h2>
-                <p class="text-sm text-muted font-sans font-light" x-text="t('startLead')"></p>
-            </div>
-            <div class="md:col-span-7 p-6 md:p-16 flex items-center reveal">
-                <div class="w-full max-w-md">
-                    <div x-show="!sent" class="space-y-6">
-                        <div class="flex flex-wrap gap-2 text-xs uppercase tracking-[0.16em] font-sans" role="tablist">
-                            <button type="button" @click="role = 'home'" :class="role === 'home' ? 'bg-black text-paper border-black' : 'border-line-strong text-muted hover:text-black'" :aria-selected="role === 'home'" role="tab" class="px-4 py-2 border transition-colors" x-text="t('roleHome')"></button>
-                            <button type="button" @click="role = 'partner'" :class="role === 'partner' ? 'bg-black text-paper border-black' : 'border-line-strong text-muted hover:text-black'" :aria-selected="role === 'partner'" role="tab" class="px-4 py-2 border transition-colors" x-text="t('rolePartner')"></button>
+    <div class="bg-paper">
+        <div class="w-wrap w-light">
+            <section id="klient" class="w-split">
+                <div class="w-split-art">
+                    <div class="w-phone" aria-hidden="true">
+                        <div class="w-ph-island"></div>
+                        <p class="w-ph-title">Pirita tee 12</p>
+                        <div class="w-ph-card">
+                            <p class="eyebrow" x-text="t('pvNext')">Järgmine visiit</p>
+                            <p class="w-ph-clock">10:00</p>
+                            <p class="w-ph-day" x-text="t('pvDay')">Teisipäev, 8. detsember</p>
+                            <p class="w-ph-meta is-ruled" x-text="t('pvWho')">Kristi · koristus</p>
+                            <div class="w-ph-go-2" x-text="t('pvReschedule')">Muuda aega</div>
                         </div>
-
-                        <!-- Homeowner -->
-                        <div x-show="role === 'home'" class="space-y-5">
-                            <div class="flex gap-6 text-xs uppercase tracking-[0.16em] font-sans border-b border-line">
-                                <button type="button" @click="homeMode = 'invite'" :class="homeMode === 'invite' ? 'text-black border-b border-black -mb-px' : 'text-muted hover:text-black'" class="pb-3 transition-colors" x-text="t('haveKeeper')"></button>
-                                <button type="button" @click="homeMode = 'code'" :class="homeMode === 'code' ? 'text-black border-b border-black -mb-px' : 'text-muted hover:text-black'" class="pb-3 transition-colors" x-text="t('haveCode')"></button>
-                            </div>
-                            <div x-show="homeMode === 'invite'" class="space-y-4">
-                                <p class="text-sm text-muted font-sans font-light" x-text="t('inviteLead')"></p>
-                                <div class="border-b border-line-strong focus-within:border-accent transition-colors">
-                                    <input type="email" x-model="partnerEmail" autocomplete="off" inputmode="email" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="t('keeperEmail')" :aria-label="t('keeperEmail')">
-                                </div>
-                                <div class="border-b border-line-strong focus-within:border-accent transition-colors">
-                                    <input type="email" x-model="email" autocomplete="email" inputmode="email" class="w-full text-base font-sans font-light py-3 outline-none bg-transparent" :placeholder="t('yourEmail')" :aria-label="t('yourEmail')">
-                                </div>
-                            </div>
-                            <div x-show="homeMode === 'code'" x-cloak class="space-y-4">
-                                <p class="text-sm text-muted font-sans font-light" x-text="t('codeLead')"></p>
-                                <div class="border-b border-line-strong focus-within:border-accent transition-colors">
-                                    <input type="text" x-model="inviteCode" autocomplete="off" autocapitalize="characters" class="w-full text-base font-mono tracking-wider uppercase py-3 outline-none bg-transparent" placeholder="SK-XXXXXXXX" :aria-label="t('haveCode')">
-                                </div>
-                            </div>
+                        <div class="w-ph-card is-slim">
+                            <p class="eyebrow" x-text="t('pvLast')">Viimane visiit</p>
+                            <p class="w-ph-line" x-text="t('pvLastLine')">24. november · Jäta tagasiside</p>
                         </div>
-
-                        <!-- Partner: straight to the desk -->
-                        <div x-show="role === 'partner'" x-cloak class="space-y-5">
-                            <p class="text-sm text-muted font-sans font-light" x-text="t('partnerLead')"></p>
-                            <a href="/haldus?alusta" class="p-btn w-full" x-text="t('openDesk')"></a>
+                        <div class="w-ph-card is-link" x-text="t('pvWrite')">Kirjuta Kristile</div>
+                        <div class="w-ph-dock">
+                            <span class="is-active"><svg viewBox="0 0 24 24"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"/></svg><span x-text="t('pvTabHome')">Kodu</span></span>
+                            <span><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span x-text="t('pvTabBook')">Telli</span></span>
+                            <span><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></svg><span x-text="t('pvTabAccount')">Konto</span></span>
                         </div>
-
-                        <p x-show="error" x-cloak class="text-sm text-accent font-sans font-light" x-text="error" role="alert"></p>
-                        <button type="button" x-show="role !== 'partner'" @click="submit()" :disabled="sending || !canSend" class="p-btn w-full disabled:opacity-50">
-                            <span x-show="!sending" x-text="homeMode === 'invite' ? t('sendInvite') : t('openWithCode')"></span>
-                            <span x-show="sending" x-cloak x-text="t('sendingShort')"></span>
-                        </button>
-                    </div>
-                    <div x-show="sent" x-cloak x-transition class="py-6">
-                        <div class="w-12 h-12 bg-accent rounded-full flex items-center justify-center mb-5">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"></path></svg>
-                        </div>
-                        <p class="font-serif text-2xl font-light mb-2" x-text="t('sentInviteTitle')"></p>
-                        <p class="text-sm text-muted font-sans font-light" x-text="t('sentInviteText', { name: t('keeperFallback') })"></p>
                     </div>
                 </div>
-            </div>
-        </section>
+                <div class="w-split-text">
+                    <p class="eyebrow" x-text="t('clientKicker')">Kliendile</p>
+                    <h2 class="w-h2"><span x-text="t('clientTitle1')">Klient näeb sama,</span> <span class="w-it" x-text="t('clientTitle2')">mida sina</span></h2>
+                    <div class="w-feats">
+                        <div class="w-feat">
+                            <h3 x-text="t('feat1Title')">Aeg on kalendris</h3>
+                            <p x-text="t('feat1Text')">Iga visiit ja muudatus jõuab kutsega kogu pere kalendrisse.</p>
+                        </div>
+                        <div class="w-feat">
+                            <h3 x-text="t('feat2Title')">Soovid kahe puutega</h3>
+                            <p x-text="t('feat2Text')">Aknad, lilled või lisatöö järgmise visiidi juurde.</p>
+                        </div>
+                        <div class="w-feat">
+                            <h3 x-text="t('feat3Title')">Kliendile tasuta</h3>
+                            <p x-text="t('feat3Text')">Klient ei maksa äpi eest midagi.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
+            <section id="hind" class="w-block">
+                <h2 class="w-h2" x-text="t('priceTitle')">Hind</h2>
+                <p class="w-lead" x-text="t('priceLead')">Kogu töötasu jääb sulle. Maksad ainult töölaua eest.</p>
+                <div class="w-g3 w-plans">
+                    <div class="w-plan is-main">
+                        <p class="eyebrow" x-text="t('planFree')">Tasuta</p>
+                        <p class="w-price">0 €</p>
+                        <p class="w-plan-homes" x-text="t('planFreeHomes')">Kuni 3 kodu</p>
+                        <a class="w-btn is-wide" href="/haldus?alusta" x-text="t('openDesk')">Ava tasuta töölaud</a>
+                    </div>
+                    <div class="w-plan">
+                        <p class="eyebrow" x-text="t('planStandard')">Standard</p>
+                        <p class="w-price">19 € <small x-text="t('perMonth')">kuus</small></p>
+                        <p class="w-plan-homes" x-text="t('planStandardHomes')">Kuni 20 kodu</p>
+                        <a class="w-btn-2 is-wide" href="/haldus?alusta" x-text="t('pickStandard')">Vali Standard</a>
+                    </div>
+                    <div class="w-plan">
+                        <p class="eyebrow" x-text="t('planStudio')">Stuudio</p>
+                        <p class="w-price">39 € <small x-text="t('perMonth')">kuus</small></p>
+                        <p class="w-plan-homes" x-text="t('planStudioHomes')">Piiramatult kodusid</p>
+                        <a class="w-btn-2 is-wide" href="/haldus?alusta" x-text="t('pickStudio')">Vali Stuudio</a>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <section id="alusta" class="w-band">
+        <div class="w-wrap">
+            <h2 class="w-h2-xl" x-text="t('threeFree')">Kolm esimest kodu on tasuta.</h2>
+            <a class="w-btn" href="/haldus?alusta" x-text="t('openDesk')">Ava tasuta töölaud</a>
+        </div>
+    </section>
+
+    <!-- Old package checkout, shown only when SUKODA_SALES is true. Kept as it was, outside the new page shape. -->
+    <div class="max-w-[1440px] mx-auto bg-paper">
         <section id="hoolitsus" x-show="window.SUKODA_SALES" x-cloak class="grid-line-b" x-data="{ 
             size: 'medium',
             rhythm: 'twice',
@@ -1108,37 +932,40 @@
             </div>
         </section>
 
-        </main>
-
-        <!-- Footer -->
-        <footer class="bg-black text-paper">
-            <div class="grid md:grid-cols-12 gap-8 py-12 md:py-14 px-6 md:px-12">
-                <div class="md:col-span-4">
-                    <a href="/" class="font-serif text-2xl tracking-[0.08em] font-light block mb-4">SUKODA</a>
-                    <p class="text-gray-300 text-sm font-sans font-light leading-relaxed max-w-xs" x-text="t('footerTagline')"></p>
-                </div>
-                <div class="md:col-span-4">
-                    <p class="eyebrow text-gray-300 mb-4" x-text="t('footerLinks')"></p>
-                    <div class="flex flex-col gap-3 text-sm text-gray-300 font-sans font-light">
-                        <a href="/lugu" class="hover:text-paper transition-colors" x-text="t('navStory')">Lugu</a>
-                        <a href="/haldus" class="hover:text-paper transition-colors" x-text="t('footerDesk')">Töölaud teenusepakkujale</a>
-                        <a href="/minu" class="hover:text-paper transition-colors" x-text="t('myHome')">Minu kodu</a>
-                        <a href="/tingimused" class="hover:text-paper transition-colors" x-text="t('terms')">Tingimused</a>
-                        <a href="/privaatsus" class="hover:text-paper transition-colors" x-text="t('privacy')">Privaatsuspoliitika</a>
-                    </div>
-                </div>
-                <div class="md:col-span-4">
-                    <p class="eyebrow text-gray-300 mb-4" x-text="t('footerContact')"></p>
-                    <a href="mailto:tere@sukoda.ee" class="text-sm font-sans font-light text-gray-300 hover:text-paper transition-colors block mb-2">tere@sukoda.ee</a>
-                    <a href="mailto:partner@sukoda.ee" class="text-sm font-sans font-light text-gray-300 hover:text-paper transition-colors block">partner@sukoda.ee</a>
-                </div>
-            </div>
-            <div class="border-t border-gray-800 py-6 px-6 md:px-12">
-                <p class="text-xs text-gray-400 font-sans text-center tracking-wide" x-text="t('footerLegal')"></p>
-            </div>
-        </footer>
-
     </div>
+
+    <footer class="w-foot">
+        <div class="w-wrap w-foot-main">
+            <div>
+                <span class="w-logo">SUKODA</span>
+                <p class="w-foot-text" x-text="t('footTagline')">Koristaja ja klient näevad sama aega, samu soove ja sama hinda.</p>
+            </div>
+            <nav :aria-label="t('footSite')">
+                <p class="eyebrow" x-text="t('footSite')">Leht</p>
+                <a class="w-fl" href="#sammud" x-text="t('navHow')">Kuidas see käib</a>
+                <a class="w-fl" href="koduomanikule.html" x-text="t('navOwner')">Koduomanikule</a>
+                <a class="w-fl" href="#hind" x-text="t('navPrice')">Hind</a>
+                <a class="w-fl" href="minu.html" x-text="t('login')">Sisene</a>
+            </nav>
+            <div>
+                <p class="eyebrow" x-text="t('footContact')">Kontakt</p>
+                <a class="w-fl" href="mailto:tere@sukoda.ee">tere@sukoda.ee</a>
+                <p class="w-foot-text">Epic Ship OÜ<br><span x-text="t('footReg')">Registrikood 14713548</span><br>Kiikri tn 6/2, Tallinn 10159</p>
+            </div>
+        </div>
+        <div class="w-wrap w-foot-base">
+            <span>© 2026 SUKODA</span>
+            <span>
+                <a class="w-fl" href="tingimused.html" x-text="t('terms')">Tingimused</a>
+                <a class="w-fl" href="privaatsus.html" x-text="t('privacy')">Privaatsus</a>
+                <span class="w-foot-langs" role="group" :aria-label="t('langLabel')">
+                    <button type="button" class="w-fl" @click="lang = 'et'" :aria-pressed="lang === 'et'">Eesti</button><span aria-hidden="true">·</span>
+                    <button type="button" class="w-fl" @click="lang = 'en'" :aria-pressed="lang === 'en'">English</button><span aria-hidden="true">·</span>
+                    <button type="button" class="w-fl" @click="lang = 'ru'" :aria-pressed="lang === 'ru'">Русский</button>
+                </span>
+            </span>
+        </div>
+    </footer>
 
     <!-- Sticky Mobile CTA (visible only on mobile, between pricing and checkout sections) -->
     <div x-data="{
@@ -1238,150 +1065,123 @@
             T: {
                 skip: { et: 'Sisu juurde', en: 'Skip to content', ru: 'К содержимому' },
                 langLabel: { et: 'Keel', en: 'Language', ru: 'Язык' },
-                menu: { et: 'Menüü', en: 'Menu', ru: 'Меню' },
-                navHome: { et: 'Koduomanikule', en: 'For homeowners', ru: 'Владельцам жилья' },
-                navGift: { et: 'Kingitus', en: 'Gift', ru: 'Подарок' },
-                navProvider: { et: 'Teenusepakkujale', en: 'For providers', ru: 'Специалистам' },
-                navStory: { et: 'Lugu', en: 'Story', ru: 'История' },
+                menu: { et: 'Peamenüü', en: 'Main menu', ru: 'Главное меню' },
+                navHow: { et: 'Kuidas see käib', en: 'How it works', ru: 'Как это работает' },
                 login: { et: 'Sisene', en: 'Log in', ru: 'Войти' },
-                myHome: { et: 'Minu kodu', en: 'My home', ru: 'Мой дом' },
+                haveInvite: { et: 'Mul on kutse', en: 'I have an invitation', ru: 'У меня есть приглашение' },
 
-                heroKicker: { et: 'Koduportaal', en: 'Home portal', ru: 'Портал дома' },
-                heroTitle1: { et: 'Kodu rütmis.', en: 'Your home, in rhythm.', ru: 'Дом в своём ритме.' },
-                heroTitle2: { et: 'Perega ühes kalendris.', en: 'In one family calendar.', ru: 'В общем календаре семьи.' },
-                heroLead: {
-                    et: 'Koduhooldaja ajad ja lisasoovid ühes rahulikus rakenduses.',
-                    en: 'Visits and extra wishes in one calm app.',
-                    ru: 'Визиты и пожелания в одном спокойном приложении.',
-                },
-                heroCta: { et: 'Alusta', en: 'Get started', ru: 'Начать' },
-                heroCta2: { et: 'Ava töölaud →', en: 'Open provider desk →', ru: 'Рабочий стол →' },
-                heroImgCaption: { et: 'Koduportaali ülevaade', en: 'Home portal overview', ru: 'Обзор портала дома' },
-
-                pvInCalendar: { et: 'Kalendris', en: 'In calendar', ru: 'В календаре' },
-                pvNextEyebrow: { et: 'Järgmine visiit', en: 'Next visit', ru: 'Следующий визит' },
-                pvNextDate: { et: 'Teisipäev, 18. november', en: 'Tuesday, 18 November', ru: 'Вторник, 18 ноября' },
-                pvNextMeta: { et: '10:00 · Koristus · Kristi', en: '10:00 · Cleaning · Kristi', ru: '10:00 · Уборка · Кристи' },
-                pvReschedule: { et: 'Muuda aega', en: 'Reschedule', ru: 'Перенести' },
-                pvLastLine: { et: 'Viimane visiit · 4. nov', en: 'Last visit · 4 Nov', ru: 'Прошлый визит · 4 нояб.' },
-                pvFeedback: { et: 'Jäta tagasiside →', en: 'Leave feedback →', ru: 'Оставить отзыв →' },
-                pvTabHome: { et: 'Kodu', en: 'Home', ru: 'Главная' },
-                pvHomeTitle: { et: 'Pirita tee 12', en: 'Pirita tee 12', ru: 'Pirita tee 12' },
-                pvClock: { et: '10:00', en: '10:00', ru: '10:00' },
-                pvClockDay: { et: 'Teisipäev, 8. detsember', en: 'Tuesday, 8 December', ru: 'Вторник, 8 декабря' },
+                pvNext: { et: 'Järgmine visiit', en: 'Next visit', ru: 'Следующий визит' },
+                pvDay: { et: 'Teisipäev, 8. detsember', en: 'Tuesday, 8 December', ru: 'Вторник, 8 декабря' },
                 pvWho: { et: 'Kristi · koristus', en: 'Kristi · cleaning', ru: 'Кристи · уборка' },
-                pvLastShort: { et: '24. november · Jäta tagasiside', en: '24 November · Leave feedback', ru: '24 ноября · Оставить отзыв' },
+                pvReschedule: { et: 'Muuda aega', en: 'Reschedule', ru: 'Перенести' },
+                pvLast: { et: 'Viimane visiit', en: 'Last visit', ru: 'Прошлый визит' },
+                pvLastLine: { et: '24. november · Jäta tagasiside', en: '24 November · Leave feedback', ru: '24 ноября · Оставить отзыв' },
                 pvWrite: { et: 'Kirjuta Kristile', en: 'Message Kristi', ru: 'Написать Кристи' },
-                pvDeskNow: { et: 'Praegu · 10:00–13:00', en: 'Now · 10:00–13:00', ru: 'Сейчас · 10:00–13:00' },
-                pvTabServices: { et: 'Telli', en: 'Book', ru: 'Услуги' },
-                pvTabMine: { et: 'Konto', en: 'Account', ru: 'Профиль' },
+                pvTabHome: { et: 'Kodu', en: 'Home', ru: 'Главная' },
+                pvTabBook: { et: 'Telli', en: 'Book', ru: 'Услуги' },
+                pvTabAccount: { et: 'Konto', en: 'Account', ru: 'Профиль' },
 
-                pvDeskSub: { et: 'Töölaud', en: 'Desk', ru: 'Рабочий стол' },
-                pvDeskBadge: { et: 'Täna 3 kodu', en: '3 homes today', ru: 'Сегодня 3 дома' },
-                pvDeskChecklist: { et: 'Koristus · Akende pesu', en: 'Regular clean · Windows', ru: 'Уборка · Мытьё окон' },
-                pvDeskDoneBtn: { et: 'Tehtud', en: 'Done', ru: 'Сделано' },
-                pvInviteLabel: { et: 'Kutselink ja QR', en: 'Invite link & QR', ru: 'Ссылка и QR' },
-                pvShareBtn: { et: 'Jaga kliendile →', en: 'Share with client →', ru: 'Поделиться →' },
-                pvDeskTab1: { et: 'Tööd', en: 'Jobs', ru: 'Работы' },
-                pvDeskTab2: { et: 'Soovid', en: 'Wishes', ru: 'Заявки' },
-                pvDeskTab3: { et: 'Kodud', en: 'Homes', ru: 'Дома' },
-                pvDeskTab4: { et: 'Soovid', en: 'Requests', ru: 'Заявки' },
-                pvDeskTab5: { et: 'Konto', en: 'Account', ru: 'Аккаунт' },
-                deskImgCaption: { et: 'Teenusepakkuja töölaud', en: 'Provider desk', ru: 'Рабочий стол специалиста' },
-
-                s1Title1: { et: 'Üks kodu.', en: 'One home.', ru: 'Один дом.' },
-                s1Title2: { et: 'Üks vaade.', en: 'One calm view.', ru: 'Одно окно.' },
-                s1Lead: {
-                    et: 'Koduomanikule tasuta.',
-                    en: 'Free for the household.',
-                    ru: 'Для семьи бесплатно.',
+                footTagline: {
+                    et: 'Koristaja ja klient näevad sama aega, samu soove ja sama hinda.',
+                    en: 'The cleaner and the client see the same time, the same requests and the same price.',
+                    ru: 'Специалист по уборке и клиент видят одно и то же время, пожелания и цену.',
                 },
-
-                s2Title: { et: 'Töölaud tegijale.', en: 'A calm desk for providers.', ru: 'Рабочий стол специалиста.' },
-                s2Lead: {
-                    et: 'Lisa klient 20 sekundiga — kalendrikutsed ja meeldetuletused liiguvad ise.',
-                    en: 'Add a client in 20 seconds — calendar invites and reminders go out automatically.',
-                    ru: 'Добавьте клиента за 20 секунд — приглашения в календарь и напоминания уйдут сами.',
-                },
-                s2Item1: { et: 'Tänane marsruut ja graafik telefonis.', en: 'Today’s route and schedule on your phone.', ru: 'Маршрут на сегодня и график в телефоне.' },
-                s2Item2: { et: 'Kutselink ja QR kordustellimusteks.', en: 'Personal invite link and QR for repeat bookings.', ru: 'Личная ссылка и QR для повторных заказов.' },
-                s2Item3: { et: 'Valmis kuukokkuvõte, 100% tasust sinule.', en: 'Monthly billing summary ready, 100% of fees stay yours.', ru: 'Готовая сводка за месяц, 100% оплаты у вас.' },
-                openDesk: { et: 'Ava tasuta töölaud', en: 'Open free desk', ru: 'Открыть бесплатный рабочий стол' },
-                planFree: { et: 'Tasuta', en: 'Free', ru: 'Бесплатно' },
-                planFreeHomes: { et: 'kuni 3 kodu', en: 'up to 3 homes', ru: 'до 3 домов' },
-                planStandard: { et: 'Standard', en: 'Standard', ru: 'Стандарт' },
-                planStandardHomes: { et: 'kuni 20 kodu', en: 'up to 20 homes', ru: 'до 20 домов' },
-                planStudio: { et: 'Stuudio', en: 'Studio', ru: 'Студия' },
-                planStudioHomes: { et: 'piiramatult', en: 'unlimited', ru: 'без лимита' },
-                perMonth: { et: '€ / kuu', en: '€ / mo', ru: '€ / мес' },
-
-                startTitle: { et: 'Alusta', en: 'Get started', ru: 'Начать' },
-                startLead: {
-                    et: 'Ühenda oma kodu või ava tasuta töölaud.',
-                    en: 'Connect your home or open a free desk.',
-                    ru: 'Подключите свой дом или откройте бесплатный рабочий стол.',
-                },
-                startError: { et: 'Saatmine ebaõnnestus. Kirjuta tere@sukoda.ee.', en: 'Could not send. Write to tere@sukoda.ee.', ru: 'Не удалось отправить. Напишите на tere@sukoda.ee.' },
-                roleHome: { et: 'Koduomanik', en: 'Homeowner', ru: 'Владелец жилья' },
-                rolePartner: { et: 'Teenusepakkuja', en: 'Provider', ru: 'Специалист' },
-                haveKeeper: { et: 'Kutsu oma inimene', en: 'Invite your person', ru: 'Пригласить специалиста' },
-                haveCode: { et: 'Mul on kood', en: 'I have a code', ru: 'Есть код' },
-                inviteLead: {
-                    et: 'Saadame talle tasuta töölaua kutse.',
-                    en: 'We send them a free desk invitation.',
-                    ru: 'Мы отправим приглашение открыть бесплатный рабочий стол.',
-                },
-                keeperEmail: { et: 'Tema e-post', en: 'Their e-mail', ru: 'Эл. почта специалиста' },
-                keeperFallback: { et: 'spetsialist', en: 'your specialist', ru: 'ваш специалист' },
-                yourEmail: { et: 'Sinu e-post', en: 'Your e-mail', ru: 'Ваша эл. почта' },
-                codeLead: {
-                    et: 'Sisesta oma kutsekood.',
-                    en: 'Enter your invite code.',
-                    ru: 'Введите код приглашения.',
-                },
-                openWithCode: { et: 'Ava kodu', en: 'Open home', ru: 'Открыть дом' },
-                partnerLead: {
-                    et: 'Kuni 3 kodu tasuta · sisenemine 6-kohalise koodiga.',
-                    en: 'Up to 3 homes free · sign in with a 6-digit code.',
-                    ru: 'До 3 домов бесплатно · вход по 6-значному коду.',
-                },
-                sendInvite: { et: 'Saada kutse', en: 'Send invite', ru: 'Отправить' },
-                sendingShort: { et: 'Saadan…', en: 'Sending…', ru: 'Отправка…' },
-                sentInviteTitle: { et: 'Kutse saadetud.', en: 'Invitation sent.', ru: 'Приглашение отправлено.' },
-                sentInviteText: { et: 'Kui {name} sinu kodu lisab, saad sisenemislingi e-postile.', en: 'Once {name} adds your home, your link arrives by e-mail.', ru: 'Когда {name} добавит дом, ссылка придёт на почту.' },
-
-                footerTagline: { et: 'Koduportaal ja töölaud. Tallinn, Eesti.', en: 'Home portal and provider desk. Tallinn, Estonia.', ru: 'Портал дома и рабочий стол. Таллинн, Эстония.' },
-                footerLinks: { et: 'Lingid', en: 'Links', ru: 'Ссылки' },
-                footerDesk: { et: 'Töölaud teenusepakkujale', en: 'Provider desk', ru: 'Рабочий стол специалиста' },
-                footerContact: { et: 'Kontakt', en: 'Contact', ru: 'Контакты' },
-                footerLegal: { et: '© 2026 SUKODA · Epic Ship OÜ · Reg. 14713548', en: '© 2026 SUKODA · Epic Ship OÜ · Reg. 14713548', ru: '© 2026 SUKODA · Epic Ship OÜ · Рег. 14713548' },
+                footSite: { et: 'Leht', en: 'Site', ru: 'Сайт' },
+                footContact: { et: 'Kontakt', en: 'Contact', ru: 'Контакты' },
+                footReg: { et: 'Registrikood 14713548', en: 'Registry code 14713548', ru: 'Регистрационный код 14713548' },
                 terms: { et: 'Tingimused', en: 'Terms', ru: 'Условия' },
-                privacy: { et: 'Privaatsuspoliitika', en: 'Privacy', ru: 'Конфиденциальность' },
+                privacy: { et: 'Privaatsus', en: 'Privacy', ru: 'Конфиденциальность' },
 
                 cookieText: { et: 'Kasutame küpsiseid paremaks toimimiseks.', en: 'We use cookies to improve the site.', ru: 'Мы используем файлы cookie, чтобы улучшить сайт.' },
                 cookieMore: { et: 'Loe lähemalt', en: 'Read more', ru: 'Подробнее' },
                 cookieDecline: { et: 'Keeldu', en: 'Decline', ru: 'Отклонить' },
                 cookieAccept: { et: 'Nõustun', en: 'Accept', ru: 'Принять' },
+
+                navOwner: { et: 'Koduomanikule', en: 'For homeowners', ru: 'Владельцам жилья' },
+                navPrice: { et: 'Hind', en: 'Pricing', ru: 'Цена' },
+
+                heroKicker: { et: 'Koduhooldajale', en: 'For home cleaners', ru: 'Специалистам по уборке' },
+                heroTitle1: { et: 'Sinu kliendid ja ajad.', en: 'Your clients and times.', ru: 'Ваши клиенты и время.' },
+                heroTitle2: { et: 'Ühes äpis.', en: 'In one app.', ru: 'В одном приложении.' },
+                heroLead: {
+                    et: 'Lisa klient, lepi aeg kokku ja märgi töö tehtuks. Klient näeb sama aega oma telefonis ja saadab soovid ilma helistamata.',
+                    en: 'Add a client, agree on a time and mark the job done. The client sees the same time on their phone and sends requests without calling.',
+                    ru: 'Добавьте клиента, договоритесь о времени и отметьте работу выполненной. Клиент видит то же время в своём телефоне и отправляет пожелания без звонков.',
+                },
+                openDesk: { et: 'Ava tasuta töölaud', en: 'Open a free desk', ru: 'Открыть бесплатный рабочий стол' },
+                threeFree: { et: 'Kolm esimest kodu on tasuta.', en: 'The first three homes are free.', ru: 'Первые три дома бесплатно.' },
+                noteFrom: { et: 'Anna kirjutas', en: 'Anna wrote', ru: 'Анна написала' },
+                noteText: { et: 'Aitäh, Kristi. Kodu on nagu uus.', en: 'Thank you, Kristi. The home feels like new.', ru: 'Спасибо, Кристи. Дом как новый.' },
+
+                pvJobs: { et: 'Tööd', en: 'Jobs', ru: 'Работы' },
+                pvWishes: { et: 'Soovid', en: 'Wishes', ru: 'Заявки' },
+                pvHomes: { et: 'Kodud', en: 'Homes', ru: 'Дома' },
+                pvNow: { et: 'Praegu · 10:00–13:00', en: 'Now · 10:00–13:00', ru: 'Сейчас · 10:00–13:00' },
+                pvJob: { et: 'Koristus · aknapesu', en: 'Cleaning · windows', ru: 'Уборка · мытьё окон' },
+                pvDone: { et: 'Tehtud', en: 'Done', ru: 'Сделано' },
+                pvLater: { et: 'Hiljem täna', en: 'Later today', ru: 'Позже сегодня' },
+
+                stepsTitle: { et: 'Kolm hetke, kus äpp teeb töö sinu eest', en: 'Three moments when the app does the work for you', ru: 'Три момента, когда приложение работает за вас' },
+                step1Eyebrow: { et: 'Esimene päev', en: 'Day one', ru: 'Первый день' },
+                step1Title: { et: 'Lisad kliendi', en: 'You add a client', ru: 'Вы добавляете клиента' },
+                step1Text: {
+                    et: 'Nimi, aadress ja rütm. Terve kuu ajad tekivad ise ja klient saab oma äpi tasuta.',
+                    en: 'Name, address and rhythm. The whole month is scheduled by itself and the client gets their app for free.',
+                    ru: 'Имя, адрес и ритм. Визиты на весь месяц появляются сами, а клиент получает приложение бесплатно.',
+                },
+                step2Eyebrow: { et: 'Iga visiit', en: 'Every visit', ru: 'Каждый визит' },
+                step2Title: { et: 'Vajutad Tehtud', en: 'You tap Done', ru: 'Вы нажимаете «Сделано»' },
+                step2Text: {
+                    et: 'Klient saab teate, järgmine kord on kirjas ja summa läheb kuu kokkuvõttesse.',
+                    en: 'The client is notified, the next visit is on the schedule and the amount goes into the monthly summary.',
+                    ru: 'Клиент получает уведомление, следующий визит уже записан, а сумма попадает в итог месяца.',
+                },
+                step3Eyebrow: { et: 'Kuu lõpp', en: 'End of the month', ru: 'Конец месяца' },
+                step3Title: { et: 'Väljavõte on valmis', en: 'The statement is ready', ru: 'Выписка готова' },
+                step3Text: {
+                    et: 'Iga klient eraldi real. Laadid alla ja saadad arved.',
+                    en: 'Each client on a separate line. Download it and send your invoices.',
+                    ru: 'Каждый клиент отдельной строкой. Скачайте и отправьте счета.',
+                },
+
+                clientKicker: { et: 'Kliendile', en: 'For the client', ru: 'Клиенту' },
+                clientTitle1: { et: 'Klient näeb sama,', en: 'The client sees', ru: 'Клиент видит то же,' },
+                clientTitle2: { et: 'mida sina', en: 'what you see', ru: 'что и вы' },
+                feat1Title: { et: 'Aeg on kalendris', en: 'The time is in the calendar', ru: 'Время в календаре' },
+                feat1Text: {
+                    et: 'Iga visiit ja muudatus jõuab kutsega kogu pere kalendrisse.',
+                    en: 'Every visit and change reaches the whole family’s calendar as an invitation.',
+                    ru: 'Каждый визит и перенос приходит приглашением в календарь всей семьи.',
+                },
+                feat2Title: { et: 'Soovid kahe puutega', en: 'Requests in two taps', ru: 'Пожелания в два касания' },
+                feat2Text: {
+                    et: 'Aknad, lilled või lisatöö järgmise visiidi juurde.',
+                    en: 'Windows, flowers or extra work added to the next visit.',
+                    ru: 'Окна, цветы или дополнительная работа к следующему визиту.',
+                },
+                feat3Title: { et: 'Kliendile tasuta', en: 'Free for the client', ru: 'Для клиента бесплатно' },
+                feat3Text: { et: 'Klient ei maksa äpi eest midagi.', en: 'The client pays nothing for the app.', ru: 'Клиент ничего не платит за приложение.' },
+
+                priceTitle: { et: 'Hind', en: 'Pricing', ru: 'Цена' },
+                priceLead: {
+                    et: 'Kogu töötasu jääb sulle. Maksad ainult töölaua eest.',
+                    en: 'All your earnings stay yours. You pay only for the desk.',
+                    ru: 'Весь заработок остаётся вам. Вы платите только за рабочий стол.',
+                },
+                planFree: { et: 'Tasuta', en: 'Free', ru: 'Бесплатно' },
+                planFreeHomes: { et: 'Kuni 3 kodu', en: 'Up to 3 homes', ru: 'До 3 домов' },
+                planStandard: { et: 'Standard', en: 'Standard', ru: 'Стандарт' },
+                planStandardHomes: { et: 'Kuni 20 kodu', en: 'Up to 20 homes', ru: 'До 20 домов' },
+                planStudio: { et: 'Stuudio', en: 'Studio', ru: 'Студия' },
+                planStudioHomes: { et: 'Piiramatult kodusid', en: 'Unlimited homes', ru: 'Без ограничения числа домов' },
+                perMonth: { et: 'kuus', en: 'a month', ru: 'в месяц' },
+                pickStandard: { et: 'Vali Standard', en: 'Choose Standard', ru: 'Выбрать Стандарт' },
+                pickStudio: { et: 'Vali Stuudio', en: 'Choose Studio', ru: 'Выбрать Студию' },
             },
-            features: [
-                { icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
-                  title: { et: 'Ajad kalendris', en: 'In your calendar', ru: 'Время в календаре' },
-                  text: { et: 'Iga visiit ja muudatus jõuab kutsega kogu pere kalendrisse.', en: 'Every visit and time change syncs to the whole family’s calendar.', ru: 'Каждый визит и перенос синхронизируются с календарём семьи.' } },
-                { icon: 'M12 4v16m8-8H4',
-                  title: { et: 'Soovid kahe puutega', en: 'Extras in two taps', ru: 'Допуслуги в два касания' },
-                  text: { et: 'Aknad, lilled või lisatöö järgmise visiidi juurde sekunditega.', en: 'Attach windows, flowers or extra care to your next visit in seconds.', ru: 'Добавьте окна, цветы или другую допуслугу к следующему визиту за секунды.' } },
-                { icon: 'M12 8c-2 0-3 1.2-3 2.5S10 13 12 13s3 1.2 3 2.5S14 18 12 18m0-14v2m0 12v2',
-                  title: { et: 'Kliendile tasuta', en: 'Free for the client', ru: 'Для клиента бесплатно' },
-                  text: { et: 'Klient ei maksa äpi eest midagi.', en: 'The client pays nothing for the app.', ru: 'Клиент ничего не платит за приложение.' } },
-            ],
             t(key, vars) {
                 const row = this.T[key] || {};
                 const s = row[this.lang] || row.et || key;
                 return vars ? s.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '') : s;
-            },
-            pick(obj) {
-                if (!obj) return '';
-                return obj[this.lang] || obj.et || '';
             },
             init() {
                 this.$watch('lang', (v) => { localStorage.setItem('sukoda_lang', v); document.documentElement.lang = v; });
