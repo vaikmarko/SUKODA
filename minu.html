@@ -209,6 +209,7 @@
     telliPay: false,
     flowerMode: 'season',
     flowerTone: '',
+    flowerAmount: null,
     telliAddonRows: [
         { id: 'flowers', label: 'addonFlowers', serviceId: 'flowers' },
         { id: 'windows', label: 'addonWindows', serviceId: 'windows' },
@@ -881,9 +882,21 @@
     get flowerButtonText() {
         if (this.telliBusy) return this.t('telliSending');
         if (this.telliGathering) return this.t('wantIt');
-        if (this.telliQuote && this.telliQuote.cardRequired && this.telliSumAmount) return this.t('confirmPay', { amount: this.telliSumAmount });
-        const shown = this.flowerShownPrice;
-        return shown ? this.t('orderFlowersPriced', { amount: shown }) : this.t('confirmOrder');
+        return this.t('orderFlowersPriced', { amount: this.flowerSumText });
+    },
+    // The cleaner's own flower price starts the amount, 35 € when she has none (decided Nov 2026).
+    // The resident turns it; the cleaner buys the bouquet and bills it, there is no card payment.
+    get flowerSum() {
+        if (this.flowerAmount != null) return this.flowerAmount;
+        const m = String(this.flowerShownPrice || '').match(/\d+/);
+        const n = m ? Number(m[0]) : 35;
+        return n >= 5 && n <= 500 ? n : 35;
+    },
+    get flowerSumText() {
+        return this.flowerSum + ' €';
+    },
+    flowerStep(delta) {
+        this.flowerAmount = Math.min(500, Math.max(5, this.flowerSum + delta));
     },
     setTelliPanel(id) {
         this.setTelliOpen(id);
@@ -1131,6 +1144,7 @@
                     addonIds: ids,
                     ...(panel === 'clean' && !this.telliPay && this.telliRhythm && this.telliRhythm !== 'once' ? { rhythm: this.telliRhythm } : {}),
                     ...(panel === 'clean' && this.telliPay ? { pay: true } : {}),
+                    ...(panel === 'flowers' ? { flowerAmount: this.flowerSum } : {}),
                 }),
             });
             const data = await res.json();

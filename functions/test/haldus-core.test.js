@@ -720,7 +720,7 @@ test('a priced visit tells the cleaner only after Stripe has taken the money', (
   const path = require('node:path');
   const src = fs.readFileSync(path.join(__dirname, '../haldus.js'), 'utf8');
   const chargeAt = src.indexOf('if (charge) {');
-  const freeFinish = src.indexOf('await finishRequest({ order, orderId, provider, svc, kind, ref, request, lang, price: null })');
+  const freeFinish = src.indexOf('await finishRequest({ order, orderId, provider, svc, kind, ref, request, lang, price: flowerPrice })');
   assert.ok(chargeAt > 0 && freeFinish > chargeAt);
   const chargeBlock = src.slice(chargeAt, freeFinish);
   assert.match(chargeBlock, /capture_method: 'automatic'/);
@@ -883,4 +883,17 @@ test('colleague invite: nobody invites themselves or from a closed desk', () => 
   assert.equal(core.referralInviter({ id: 'a', email: 'kristi@x.ee', status: 'disabled' }, 'mari@x.ee'), null);
   assert.equal(core.referralInviter({ id: 'a', email: 'kristi@x.ee' }, 'mari@x.ee'), 'a');
   assert.equal(core.referralInviter(null, 'mari@x.ee'), null);
+});
+
+test('flowers are settled with the cleaner: the turned amount is her price line, never a card charge', () => {
+  assert.equal(core.chargeBeforeDispatch({ ownClient: false, kind: 'visit', unpriced: false, cardRequired: true, residentCents: 3500, serviceId: 'flowers' }), false);
+  assert.equal(core.flowerPrice(35), '35 €');
+  assert.equal(core.flowerPrice(40), '40 €');
+  assert.equal(core.flowerPrice('35'), '35 €');
+  assert.equal(core.flowerPrice(0), null);
+  assert.equal(core.flowerPrice(4), null);
+  assert.equal(core.flowerPrice(501), null);
+  assert.equal(core.flowerPrice(35.5), null);
+  assert.equal(core.flowerPrice(undefined), null);
+  assert.equal(core.parseEuroCents(core.flowerPrice(35)), 3500);
 });

@@ -1371,6 +1371,7 @@ function invoiceSummary(rows, options) {
       id: row.id || null,
       at: row.scheduledAt,
       name: row.serviceName || '',
+      serviceId: row.serviceId || null,
       kind: row.kind || 'regular',
       cents: cents || null,
       price: cents ? String(row.price).trim() : null,
@@ -1589,11 +1590,23 @@ function giftSpent(serviceId, usedIds) {
 }
 
 /** A priced visit is written, and the cleaner is told, only after the card charge has succeeded. */
-function chargeBeforeDispatch({ ownClient, kind, unpriced, cardRequired, residentCents }) {
+function chargeBeforeDispatch({ ownClient, kind, unpriced, cardRequired, residentCents, serviceId }) {
   if (ownClient) return false;
+  // The cleaner buys the flowers herself and the resident settles with her (decided Nov 2026), never by card here.
+  if (serviceId === 'flowers') return false;
   if (kind !== 'visit') return false;
   if (unpriced) return false;
   return cardRequired === true && Math.round(Number(residentCents) || 0) >= 50;
+}
+
+/**
+ * The flower amount the resident turned on the Lilled screen, as the price line the cleaner bills.
+ * Whole euros, 5 to 500; anything else is no amount, so the cleaner sets it herself.
+ */
+function flowerPrice(amount) {
+  const n = Number(amount);
+  if (!Number.isInteger(n) || n < 5 || n > 500) return null;
+  return `${n} €`;
 }
 
 /** Money is in hand: Stripe says paid, in euros, for the full amount. A hold or a later capture does not count. */
@@ -1899,6 +1912,7 @@ module.exports = {
   warrantyUntilDate,
   giftSpent,
   chargeBeforeDispatch,
+  flowerPrice,
   homePaymentReady,
   guidePriceCents,
   TELLI_ADDONS,

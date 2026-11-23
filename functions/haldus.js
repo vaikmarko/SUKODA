@@ -2938,6 +2938,22 @@ module.exports = function createHaldus(deps) {
     if (outcome.blocked) return { status: 400, body: { error: { et: 'Seda visiiti ei saa tehtuks märkida.', en: 'This visit cannot be marked done.', ru: 'Этот визит нельзя отметить выполненным.' } } };
 
     const { booking, freshOrder, rhythm } = outcome;
+    // Flowers come with the clean (the cleaner buys them, the client settles with her): one Tehtud closes
+    // that day's flower visit too, so its amount reaches her month summary. No second notice to the client.
+    if (booking.serviceId !== 'flowers' && booking.orderId) {
+      try {
+        const day = tallinnDateStr(toDate(booking.scheduledAt));
+        const flowerSnap = await db.collection('bookings').where('orderId', '==', booking.orderId).where('serviceId', '==', 'flowers').get();
+        for (const doc of flowerSnap.docs) {
+          const f = doc.data();
+          if (f.providerId !== booking.providerId || !['scheduled', 'confirmed'].includes(f.status)) continue;
+          if (tallinnDateStr(toDate(f.scheduledAt)) !== day) continue;
+          await doc.ref.update({ status: 'completed', completedAt: FieldValue.serverTimestamp(), completedBy: 'provider', updatedAt: FieldValue.serverTimestamp() });
+        }
+      } catch (e) {
+        console.error('flowers done with the visit failed', ref.id, e);
+      }
+    }
     const lang = langOf(freshOrder);
     const advanced = rhythm.advanced || [];
     let notified = false;
@@ -3872,6 +3888,7 @@ module.exports = function createHaldus(deps) {
           orderId: b.orderId || null,
           customerName: b.anonymized ? 'Kustutatud kodu' : (b.customerName || ''),
           serviceName: b.serviceId ? core.serviceName(b.serviceId, 'et') : '',
+          serviceId: b.serviceId || null,
           // A home deleted by its resident is gone from ownIds; its done work still counts for the specialist's invoice
           deletedOwnHome: b.deletedOwnHome === true,
           kind: b.kind || (b.serviceId ? 'extra' : 'regular'),
@@ -5742,8 +5759,10 @@ module.exports = function createHaldus(deps) {
         }, lang) });
       }
       const charge = core.chargeBeforeDispatch({
-        ownClient, kind, unpriced: quote.unpriced, cardRequired: quote.cardRequired, residentCents: quote.residentCents,
+        ownClient, kind, unpriced: quote.unpriced, cardRequired: quote.cardRequired, residentCents: quote.residentCents, serviceId: svc.id,
       });
+      // The amount the resident turned on the Lilled screen: the cleaner spends it and bills it in her month.
+      const flowerPrice = svc.id === 'flowers' ? core.flowerPrice(b.flowerAmount) : null;
       const data = {
         orderId,
         providerId: providerId || null,
@@ -5762,6 +5781,7 @@ module.exports = function createHaldus(deps) {
         urgent,
         ...(addonIds.length ? { addons: addonIds } : {}),
         ...(rhythm ? { rhythm } : {}),
+        ...(flowerPrice ? { price: flowerPrice } : {}),
         messages: firstMsg,
         status: charge ? 'awaiting_payment' : 'requested',
         ...(charge ? { payment: { priceCents: quote.priceCents, residentCents: quote.residentCents, sponsorCents: quote.sponsorCents, currency: 'eur', status: 'pending' } } : {}),
@@ -5817,7 +5837,7 @@ module.exports = function createHaldus(deps) {
         }
       }
 
-      await finishRequest({ order, orderId, provider, svc, kind, ref, request, lang, price: null });
+      await finishRequest({ order, orderId, provider, svc, kind, ref, request, lang, price: flowerPrice });
 
       res.status(200).json({
         success: true,

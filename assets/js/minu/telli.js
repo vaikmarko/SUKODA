@@ -100,6 +100,8 @@ add({
   whenWord: { et: 'Millal', en: 'When', ru: 'Когда' },
   addonsLabel: { et: 'Lisad', en: 'Extras', ru: 'Дополнительно' },
   orderFlowersPriced: { et: 'Telli lilled · {amount}', en: 'Order flowers · {amount}', ru: 'Заказать цветы · {amount}' },
+  amountLess: { et: 'Vähenda summat', en: 'Lower the amount', ru: 'Уменьшить сумму' },
+  amountMore: { et: 'Suurenda summat', en: 'Raise the amount', ru: 'Увеличить сумму' },
 });
 
 const chev = `<svg class="p-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/></svg>`;
@@ -382,7 +384,11 @@ export const telliHtml = `<div x-show="activeTab === 'extras'" x-transition:ente
                         <p class="eyebrow mt-5" x-text="t('bouquet')"></p>
                         ${choiceButtons}
                         <p class="eyebrow mt-5" x-text="t('amountWord')"></p>
-                        <p class="p-order-price mt-2.5" x-show="flowerShownPrice" x-text="flowerShownPrice"></p>
+                        <div class="p-stepper mt-2.5">
+                            <button type="button" class="p-stepper-btn" @click="flowerStep(-5)" :disabled="flowerSum <= 5" :aria-label="t('amountLess')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" d="M6 12h12"/></svg></button>
+                            <p class="p-stepper-value" aria-live="polite" x-text="flowerSumText"></p>
+                            <button type="button" class="p-stepper-btn" @click="flowerStep(5)" :disabled="flowerSum >= 500" :aria-label="t('amountMore')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" d="M6 12h12M12 6v12"/></svg></button>
+                        </div>
                         <p class="eyebrow mt-5" x-text="t('whenWord')"></p>
                         ${extraWhenFields}
                     </div>
