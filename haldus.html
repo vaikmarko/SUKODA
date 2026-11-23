@@ -78,9 +78,13 @@
                             <template x-for="o in signupServices" :key="o.id">
                                 <button type="button" @click="toggleSignupService(o.id)" class="p-chip" :class="{ 'is-on': signupForm.services.includes(o.id) }" :aria-pressed="signupForm.services.includes(o.id)" x-text="t(o.key)"></button>
                             </template>
+                            <button type="button" x-show="signupForm.services.includes('cleaning')" @click="signupOwnOpen = !signupOwnOpen; if (signupOwnOpen) $nextTick(() => $refs.signupOwn.focus())" class="p-chip" :class="{ 'is-on': signupOwnOpen }" :aria-expanded="signupOwnOpen" x-text="t('addOwnChip')"></button>
                         </div>
+                        <input x-ref="signupOwn" x-show="signupOwnOpen && signupForm.services.includes('cleaning')" x-cloak type="text" maxlength="60" x-model="signupOwn" class="p-field" :placeholder="t('ownServicePh')" :aria-label="t('ownServicePh')">
                         <label class="eyebrow mt-5" for="signup-city" x-text="t('areaLabel')"></label>
                         <input id="signup-city" type="text" x-model="signupForm.city" autocomplete="address-level2" class="p-field" :placeholder="t('areaPh')">
+                        <!-- Alusta.html: the currency is shown and locked, the platform bills in euros only. -->
+                        <div class="p-rows mt-5"><div class="p-line h-pad"><span x-text="t('currencyLabel')"></span><span class="text-muted">EUR</span></div></div>
                         <p x-show="loginError" x-cloak class="text-sm text-err mt-3" x-text="loginError" role="alert"></p>
                     </form>
                 </div>
@@ -107,7 +111,7 @@
                 <!-- The primary action sits on a bar at the bottom of the screen; each button submits its own form -->
                 <div class="p-actbar" x-show="!loginSent || signupCodeMode">
                     <button type="submit" form="login-form" x-show="!loginSent && !signupMode && !signupCodeMode" :disabled="loginSending || !loginEmail" class="p-go is-wide" x-text="loginSending ? t('sending') : t('sendLink')"></button>
-                    <button type="submit" form="signup-form" x-show="!loginSent && signupMode && !signupCodeMode" x-cloak :disabled="loginSending || !signupForm.name || !signupForm.email" class="p-go is-wide" x-text="loginSending ? t('opening') : t('openDesk')"></button>
+                    <button type="submit" form="signup-form" x-show="!loginSent && signupMode && !signupCodeMode" x-cloak :disabled="loginSending || !signupForm.name || !signupForm.email" class="p-go is-wide" x-text="loginSending ? t('opening') : t(signupForm.services.includes('cleaning') ? 'nextPrices' : 'openDesk')"></button>
                     <p class="text-sm text-muted text-center mt-2.5" x-show="!loginSent && signupMode && !signupCodeMode" x-cloak x-text="t('signupPricing')"></p>
                     <button type="submit" form="code-form" x-show="signupCodeMode" x-cloak :disabled="loginSending || signupCode.trim().length !== 6" class="p-go is-wide" x-text="loginSending ? t('checkingCode') : t('enterDesk')"></button>
                     <p class="text-sm text-muted text-center mt-2.5" x-show="signupCodeMode" x-cloak x-text="t('staySignedIn')"></p>
@@ -566,8 +570,8 @@
                 </div>
                 <div x-show="activeTab === 'services'" x-cloak>
                     <form class="max-w-xl pb-28" @submit.prevent="saveAvailability()">
-                        <button type="button" class="p-back" @click="activeTab = 'account'"><svg class="p-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6"/></svg><span x-text="t('tabAccount')"></span></button>
-                        <h1 class="p-sub-title" x-text="t('servicesTitle')"></h1>
+                        <button type="button" class="p-back" x-show="!pricingStep" @click="activeTab = 'account'"><svg class="p-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6"/></svg><span x-text="t('tabAccount')"></span></button>
+                        <h1 class="p-sub-title" x-text="t(pricingStep ? 'pricingTitle' : 'servicesTitle')"></h1>
                         <p class="text-muted mt-2" x-text="t('servicesLead')"></p>
                         <div class="p-rows mt-5" x-show="offeredRows.length">
                             <template x-for="ex in offeredRows" :key="ex.id">
@@ -603,7 +607,8 @@
                         </div>
                         <p x-show="availError" x-cloak class="text-sm text-accent mt-3" x-text="availError"></p>
                         <div class="p-order-bar is-stack">
-                            <button type="submit" class="p-go is-wide" :disabled="availSaving" x-text="availSaving ? t('savingProfile') : t('save')"></button>
+                            <button type="submit" class="p-go is-wide" :disabled="availSaving" x-text="availSaving ? t('savingProfile') : t(pricingStep ? 'doneClose' : 'save')"></button>
+                            <button type="button" x-show="pricingStep" x-cloak class="block mx-auto text-sm underline underline-offset-4 h-11" @click="pricingStep = false; activeTab = 'today'; window.scrollTo({ top: 0 })" x-text="t('skipStep')"></button>
                         </div>
                     </form>
                 </div>
@@ -1428,6 +1433,11 @@
             areaLabel: { et: 'Piirkond', en: 'Area' },
             areaPh: { et: 'Tallinn, Viimsi', en: 'Tallinn, Viimsi' },
             openDesk: { et: 'Ava töölaud', en: 'Open the desk' },
+            nextPrices: { et: 'Edasi: hinnad', en: 'Next: prices' },
+            addOwnChip: { et: '+ Lisa oma', en: '+ Add your own' },
+            currencyLabel: { et: 'Valuuta', en: 'Currency' },
+            pricingTitle: { et: 'Pane hinnad paika', en: 'Set your prices' },
+            skipStep: { et: 'Jäta vahele', en: 'Skip' },
             opening: { et: 'Avan…', en: 'Opening…' },
             signupPricing: { et: 'Kuni kolm kodu on tasuta. Neljandast kodust alates 19 € kuus.', en: 'Up to three homes are free. From the fourth home, 19 € a month.' },
             fullNamePh: { et: 'Ees- ja perekonnanimi', en: 'First and last name' },
@@ -1946,6 +1956,8 @@
             }, availSaving: false, availError: '',
             profileForm: { name: '', businessName: '', phone: '', city: '', notifyEmail: '', services: ['cleaning'] }, profileSaving: false, profileSaved: false, profileError: '', maintenanceIntervals: [1, 2, 3, 6, 12, 24],
             signupMode: new URLSearchParams(location.search).get('alusta') != null, signupForm: { name: '', businessName: '', email: '', phone: '', services: ['cleaning'], city: '', kolleeg: '' },
+            // Alusta.html: an own service typed at signup and the one-time price step after the code. Both live in memory only.
+            signupOwn: '', signupOwnOpen: false, pricingStep: false,
             signupServices: [
                 { id: 'cleaning', key: 'svcSignCleaning' }, { id: 'handyman', key: 'svcSignHandyman' }, { id: 'garden', key: 'svcSignGarden' },
                 { id: 'flowers', key: 'svcSignFlowers' }, { id: 'childcare', key: 'svcSignChildcare' }, { id: 'pets', key: 'svcSignPets' },
@@ -2152,6 +2164,15 @@
                     this.loading = true;
                     await this.loadData();
                     this.loading = false;
+                    if (this.provider && this.isCleaningProvider) {
+                        if (!Array.isArray(this.availForm.ownServices)) this.availForm.ownServices = [];
+                        const own = String(this.signupOwn || '').trim();
+                        this.signupOwn = '';
+                        if (own) this.availForm.ownServices.push({ id: 'own-' + Math.random().toString(36).slice(2, 10).replace(/[^a-z0-9]/g, 'x').padEnd(6, 'x'), name: own, price: '' });
+                        this.pricingStep = true; this.activeTab = 'services';
+                        // Saved now, so the service is kept even when the price step is skipped.
+                        if (own) await this.saveAvailability(true);
+                    }
                 } catch { this.loginError = this.t('netFail'); } finally { this.loginSending = false; }
             },
             async sendMagicLink() {
@@ -3251,7 +3272,7 @@
                 const i = list.indexOf(n);
                 if (i >= 0) { if (list.length > 1) list.splice(i, 1); } else { list.push(n); list.sort((a, b) => a - b); }
             },
-            async saveAvailability() {
+            async saveAvailability(quiet) {
                 if (this.availSaving) return; this.availSaving = true; this.availError = '';
                 try {
                     const districts = String(this.availForm.districtsText || '').split(',').map((s) => s.trim()).filter(Boolean);
@@ -3272,6 +3293,8 @@
                         }),
                     });
                     await this.okJson(res);
+                    if (quiet === true) return;
+                    if (this.pricingStep) { this.pricingStep = false; this.activeTab = 'today'; window.scrollTo({ top: 0 }); return; }
                     this.showToast(this.t('availSaved'));
                 } catch (e) { this.availError = e.message; } finally { this.availSaving = false; }
             },

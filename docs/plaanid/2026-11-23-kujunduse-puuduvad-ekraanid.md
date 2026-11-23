@@ -12,7 +12,7 @@ Mida testida: logi sisse kuue kastiga (ka kood e-kirjast kleepides); paku soovil
 ## Lõigud
 1. **Koodikastid, alumine nupuriba, kolleegi olek.** Ehitatud. Ainult välimus, serverit ei puuduta. Koodi kleepimine tühikuga töötab. Päris telefoni klaviatuuri ja koodi automaattäidet ei ole kontrollitud.
 2. **Paku teist aega.** Ehitatud. Pakkumine kannab hinda, mille koristaja oleks kinnitades saatnud, nii et „Sobib“ peale tehtud visiit on sama hinnaga; makstud soovil on hind makstud summa. Emulaatoriga läbi mängimata (arvutis on Java 8); kliendi kaarti ei ole päris kontoga nähtud.
-3. **Töölaua avamise sammud.** „+ Lisa oma“ teenus ja samm „Edasi: hinnad“ pärast koodi. Kasutab olemasolevat teenuste salvestust.
+3. **Töölaua avamise sammud.** Ehitatud. Hinnasamm avaneb ainult koristajale, sest teenuste vaade on ainult temal; teistel jääb nupp „Ava töölaud“. Oma teenus salvestatakse kohe pärast koodi, et see jääks alles ka siis, kui hinnasamm jäetakse vahele. „+ Lisa oma“ teenus ja samm „Edasi: hinnad“ pärast koodi. Kasutab olemasolevat teenuste salvestust.
 4. **Isiklik kutse ekraan.** Kliendi isiklik link näitab järgmist koristust enne kodu avamist. Vajab otsust 2.
 
 ## Tehniline plaan
