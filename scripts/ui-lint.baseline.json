@@ -3,7 +3,6 @@
     "index.html": 23,
     "minu.html": 4,
     "admin.html": 74,
-    "kingitus.html": 31,
     "success.html": 10,
     "muuk.html": 36,
     "sales.html": 36,
@@ -13,7 +12,6 @@
   "px": {
     "index.html": 47,
     "admin.html": 113,
-    "kingitus.html": 53,
     "success.html": 23,
     "muuk.html": 39,
     "sales.html": 39,
@@ -22,7 +20,6 @@
   "eyebrow": {
     "index.html": 40,
     "admin.html": 86,
-    "kingitus.html": 49,
     "success.html": 21,
     "muuk.html": 32,
     "sales.html": 32,
@@ -32,7 +29,6 @@
   "ternary": {
     "index.html": 106,
     "minu.html": 12,
-    "kingitus.html": 103,
     "success.html": 54,
     "lugu.html": 23
   },

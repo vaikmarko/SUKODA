@@ -35,7 +35,6 @@ const EMAIL_TEXTS = {
     // Subject lines
     subjectGiftOnWay: 'SUKODA | Sinu kingitus on teel',
     subjectOrderReceived: 'SUKODA | Tellimus vastu võetud',
-    subjectGiftFrom: (name) => `SUKODA | ${name} saatis sulle kingituse`,
     subjectNextVisit: 'SUKODA | Sinu järgmine külastus on kinnitatud',
     subjectReminder: 'SUKODA | Homme ootab sind puhas kodu',
 
@@ -62,11 +61,7 @@ const EMAIL_TEXTS = {
 
     // Gift card email
     giftCardLabel: 'Kinkekaart',
-    giftRecipientLabel: 'Kingisaaja',
     giftIncludesLabel: 'Kingitus sisaldab',
-    giftCodeLabel: 'Kingituse kood',
-    giftChooseTime: 'Vali endale sobiv aeg:',
-    giftBookBtn: 'Broneeri aeg',
 
     // Cancel email
     subjectCancelled: 'SUKODA | Sinu visiit on tühistatud',
@@ -125,11 +120,6 @@ const EMAIL_TEXTS = {
     // Email footer
     footerQuestions: 'Küsimuste korral',
 
-    // Follow-up emails (gift recipient → subscriber conversion)
-    subjectFollowup24h: 'SUKODA | See tunne.',
-    subjectFollowup7d: 'SUKODA | Kas mäletad?',
-    subjectFollowup30d: 'SUKODA | Mõtlesime sinu peale',
-
     // Subscriber post-visit email (after first visit)
     subjectSubscriberFirstVisit: 'SUKODA | Tere tulemast koju',
     subscriberFirstVisitTitle: 'Tere tulemast koju.',
@@ -143,65 +133,6 @@ const EMAIL_TEXTS = {
     subscriberFirstVisitNextLabel: 'Sinu järgmine külastus',
     subscriberFirstVisitNextNote: 'Me hoolitseme selle eest, et see tunne kordub. Saadame meeldetuletuse päev enne järgmist külastust.',
     subscriberFirstVisitFeedback: 'Tahaksid midagi öelda? Vasta sellele kirjale — sinu sõnum jõuab otse meie meeskonnale. Iga mõte loeb.',
-
-    // Gift recipient → subscriber follow-up: 24h after visit
-    followup24hTitle: 'See tunne.',
-    followup24hIntro: (name, visitDateStr) => {
-      const when = visitDateStr ? `seda päeva (${visitDateStr})` : 'eilset';
-      return name
-        ? `${name} — mäletad ${when}? Astusid uksest sisse ja kõik oli lihtsalt... paigas.`
-        : `Mäletad ${when}? Astusid uksest sisse ja kõik oli lihtsalt... paigas.`;
-    },
-    followup24hBody: 'Lilled vaasis. Puhas kodu. See vaikne rahu, mis tuleb teadmisest, et keegi on sinu eest hoolitsenud.',
-    followup24hBody2: 'Kujuta ette, et see tunne ootab sind iga kord, kui koju jõuad.',
-    followup24hOfferTitle: 'Ainult sulle',
-    followup24hOfferText: 'Esimesed 3 kuud SUKODA püsiteenust -20%. Sest see tunne ei pea olema ühekordne.',
-    followup24hOfferCode: 'KINGITUS20',
-    followup24hOfferNote: 'Pakkumine kehtib 30 päeva.',
-    followup24hCta: 'Alusta siit',
-
-    // Multi-visit gift: 24h/7d/30d — no conversion, just warmth + next visit info
-    giftMulti24hIntro: (name, visitDateStr) => {
-      const when = visitDateStr ? `seda päeva (${visitDateStr})` : 'eilset';
-      return name
-        ? `${name} — mäletad ${when}? Astusid uksest sisse ja kõik oli lihtsalt... paigas.`
-        : `Mäletad ${when}? Astusid uksest sisse ja kõik oli lihtsalt... paigas.`;
-    },
-    giftMulti24hBody: 'Lilled vaasis. Puhas kodu. See vaikne rahu, mis tuleb teadmisest, et keegi on sinu eest hoolitsenud.',
-    giftMulti24hNextTitle: 'Sinu kingitus jätkub',
-    giftMulti24hNextNote: (remaining) => `Sul on veel ${remaining} külastus${remaining > 1 ? 't' : ''} ees. Järgmine kord on sama eriline.`,
-    giftMulti24hProfileNote: 'Kui soovid järgmisel korral midagi teisiti, lisa oma soovid ja eelistused siia:',
-    giftMulti24hProfileBtn: 'Ava oma kodu',
-    giftMulti7dTitle: 'Kas mäletad seda tunnet?',
-    giftMulti7dIntro: (name) => name
-      ? `${name}, nädal tagasi oli sinu kodu teistsugune.`
-      : 'Nädal tagasi oli sinu kodu teistsugune.',
-    giftMulti7dBody: 'Puhas. Lilled vaasis. Väike üllatus laual. Ja see tunne kordub — sinu kingitus jätkub.',
-    giftMulti7dProfileNote: 'Soovid järgmisel korral midagi teisiti? Lisa oma eelistused:',
-    giftMulti30dTitle: 'Sinu järgmine külastus ootab.',
-    giftMulti30dIntro: (name) => name
-      ? `${name}, sinu kingitus pole veel läbi.`
-      : 'Sinu kingitus pole veel läbi.',
-    giftMulti30dBody: 'Sul on veel külastusi ees. Iga kord sama hoolega — lilled, puhtus, üllatus. Sest sa väärid seda.',
-
-    // Gift recipient → subscriber follow-up: 7 days after visit
-    followup7dTitle: 'Kas mäletad seda tunnet?',
-    followup7dIntro: (name) => name
-      ? `${name}, nädal tagasi oli sinu kodu teistsugune.`
-      : 'Nädal tagasi oli sinu kodu teistsugune.',
-    followup7dBody: 'Puhas. Lilled vaasis. Väike üllatus laual. See pole lihtsalt koristus — see on hoolitsus. Ja sa väärid seda rohkem kui korra.',
-    followup7dOfferReminder: 'Sinu isiklik -20% pakkumine ootab endiselt:',
-    followup7dCta: 'Jah, tahan seda',
-
-    // Gift recipient → subscriber follow-up: 30 days after visit
-    followup30dTitle: 'Mõtlesime sinu peale.',
-    followup30dIntro: (name) => name
-      ? `${name}, kuu on möödas sellest päevast, mil tulid koju ja kõik oli paigas.`
-      : 'Kuu on möödas sellest päevast, mil tulid koju ja kõik oli paigas.',
-    followup30dBody: 'Lilled on ammu närtsinud. Aga see tunne — seda mäletad sa veel. Puhas kodu, mis sind ootas. Keegi, kes hoolib.',
-    followup30dUrgency: 'Sinu isiklik -20% pakkumine lõppeb peagi. Seejärel kehtib tavahind.',
-    followup30dCta: 'Vali oma pakett',
-    followup30dFinalNote: 'Kirjuta meile — aitame leida paketi, mis sobib just sinu elurütmiga.',
 
     // Referral program — "Jaga seda tunnet"
     referralTitle: 'Jaga seda tunnet.',
@@ -242,7 +173,6 @@ const EMAIL_TEXTS = {
   en: {
     subjectGiftOnWay: 'SUKODA | Your gift is on its way',
     subjectOrderReceived: 'SUKODA | Order confirmed',
-    subjectGiftFrom: (name) => `SUKODA | ${name} sent you a gift`,
     subjectNextVisit: 'SUKODA | Your next visit is confirmed',
     subjectReminder: 'SUKODA | Tomorrow a clean home awaits you',
 
@@ -267,11 +197,7 @@ const EMAIL_TEXTS = {
     giftBuyerForwardNote: 'Want to hand over the gift yourself? Forward this email to the recipient or print it out.',
 
     giftCardLabel: 'Gift card',
-    giftRecipientLabel: 'Recipient',
     giftIncludesLabel: 'Your gift includes',
-    giftCodeLabel: 'Gift code',
-    giftChooseTime: 'Choose a time that suits you:',
-    giftBookBtn: 'Book a time',
 
     // Cancel email
     subjectCancelled: 'SUKODA | Your visit has been cancelled',
@@ -327,11 +253,6 @@ const EMAIL_TEXTS = {
 
     footerQuestions: 'Questions?',
 
-    // Follow-up emails (gift recipient → subscriber conversion)
-    subjectFollowup24h: 'SUKODA | That feeling.',
-    subjectFollowup7d: 'SUKODA | Do you remember?',
-    subjectFollowup30d: 'SUKODA | We were thinking of you',
-
     // Subscriber post-visit email (after first visit)
     subjectSubscriberFirstVisit: 'SUKODA | Welcome home',
     subscriberFirstVisitTitle: 'Welcome home.',
@@ -345,65 +266,6 @@ const EMAIL_TEXTS = {
     subscriberFirstVisitNextLabel: 'Your next visit',
     subscriberFirstVisitNextNote: 'We\'ll make sure that feeling returns. We\'ll send a reminder the day before your next visit.',
     subscriberFirstVisitFeedback: 'Want to share something? Reply to this email — your message goes straight to our team. Every thought matters.',
-
-    // Gift recipient → subscriber follow-up: 24h after visit
-    followup24hTitle: 'That feeling.',
-    followup24hIntro: (name, visitDateStr) => {
-      const when = visitDateStr ? `that day (${visitDateStr})` : 'yesterday';
-      return name
-        ? `${name} — remember ${when}? You walked through the door and everything was simply... right.`
-        : `Remember ${when}? You walked through the door and everything was simply... right.`;
-    },
-    followup24hBody: 'Flowers in a vase. A clean home. That quiet peace of knowing someone took care of you.',
-    followup24hBody2: 'Imagine that feeling waiting for you every time you come home.',
-    followup24hOfferTitle: 'Just for you',
-    followup24hOfferText: 'Your first 3 months of SUKODA at 20% off. Because that feeling doesn\'t have to be a one-time thing.',
-    followup24hOfferCode: 'KINGITUS20',
-    followup24hOfferNote: 'Offer valid for 30 days.',
-    followup24hCta: 'Start here',
-
-    // Multi-visit gift: 24h/7d/30d — no conversion, just warmth + next visit info
-    giftMulti24hIntro: (name, visitDateStr) => {
-      const when = visitDateStr ? `that day (${visitDateStr})` : 'yesterday';
-      return name
-        ? `${name} — remember ${when}? You walked through the door and everything was simply... right.`
-        : `Remember ${when}? You walked through the door and everything was simply... right.`;
-    },
-    giftMulti24hBody: 'Flowers in a vase. A clean home. That quiet peace of knowing someone took care of you.',
-    giftMulti24hNextTitle: 'Your gift continues',
-    giftMulti24hNextNote: (remaining) => `You still have ${remaining} visit${remaining > 1 ? 's' : ''} ahead. The next one will be just as special.`,
-    giftMulti24hProfileNote: 'If you\'d like something different next time, add your preferences here:',
-    giftMulti24hProfileBtn: 'Open your home',
-    giftMulti7dTitle: 'Do you remember that feeling?',
-    giftMulti7dIntro: (name) => name
-      ? `${name}, a week ago your home was different.`
-      : 'A week ago, your home was different.',
-    giftMulti7dBody: 'Clean. Flowers in a vase. A little surprise on the table. And that feeling will return — your gift continues.',
-    giftMulti7dProfileNote: 'Want something different next time? Add your preferences:',
-    giftMulti30dTitle: 'Your next visit awaits.',
-    giftMulti30dIntro: (name) => name
-      ? `${name}, your gift isn't over yet.`
-      : 'Your gift isn\'t over yet.',
-    giftMulti30dBody: 'You still have visits ahead. Each one with the same care — flowers, cleanliness, a surprise. Because you deserve it.',
-
-    // Gift recipient → subscriber follow-up: 7 days after visit
-    followup7dTitle: 'Do you remember that feeling?',
-    followup7dIntro: (name) => name
-      ? `${name}, a week ago your home was different.`
-      : 'A week ago, your home was different.',
-    followup7dBody: 'Clean. Flowers in a vase. A little surprise on the table. It\'s not just cleaning — it\'s care. And you deserve it more than once.',
-    followup7dOfferReminder: 'Your personal 20% offer is still waiting:',
-    followup7dCta: 'Yes, I want this',
-
-    // Gift recipient → subscriber follow-up: 30 days after visit
-    followup30dTitle: 'We were thinking of you.',
-    followup30dIntro: (name) => name
-      ? `${name}, a month has passed since the day you came home and everything was in place.`
-      : 'A month has passed since the day you came home and everything was in place.',
-    followup30dBody: 'The flowers have long faded. But you still remember that feeling. A clean home waiting for you. Someone who cares.',
-    followup30dUrgency: 'Your personal 20% offer ends soon. After that, regular pricing applies.',
-    followup30dCta: 'Choose your plan',
-    followup30dFinalNote: 'Write to us — we\'ll help you find a plan that fits your rhythm.',
 
     // Referral program — "Share this feeling"
     referralTitle: 'Share this feeling.',
@@ -816,6 +678,11 @@ exports.createCheckoutSession = functions
 
         if (!type || !packageType || !size || !customer) {
           return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        // Gift cards are no longer sold; cards already printed are redeemed through /lunasta.
+        if (type === 'gift') {
+          return res.status(400).json({ error: 'Gift cards are no longer sold' });
         }
 
         // Handle test package specially
@@ -1321,21 +1188,6 @@ async function sendAllEmails(order, orderId, portalToken) {
   } catch (err) {
     console.error('sendAllEmails: customer confirmation failed:', err);
   }
-
-  // 3. Gift card to recipient (if gift + email delivery, in customer's language)
-  if (isGift && order.deliveryMethod === 'email' && order.recipient?.email) {
-    await wait(600);
-    try {
-      const pkg = getPackageInfo(order.package, lang);
-      await sendEmail({
-        to: order.recipient.email,
-        subject: t.subjectGiftFrom(order.customer?.name || (lang === 'en' ? 'Someone special' : 'Keegi eriline')),
-        html: generateGiftCardEmail(order, pkg, lang),
-      });
-    } catch (err) {
-      console.error('sendAllEmails: gift card email failed:', err);
-    }
-  }
 }
 
 /**
@@ -1743,88 +1595,6 @@ function generateCustomerEmail(order, orderId, packageName, sizeName, isGift, la
         </div>
 
         ${emailFooter(lang)}
-      </div>
-    </body>
-    </html>
-  `;
-}
-
-/**
- * Generate beautiful gift card email (i18n)
- */
-function generateGiftCardEmail(order, pkg, lang) {
-  const t = tx(lang);
-  const includesList = (pkg.includes || []).map(item => 
-    `<li style="padding: 10px 0; color: #5F5A54; border-bottom: 1px solid #E6E0D8; font-size: 15px;">${item}</li>`
-  ).join('');
-
-  return `
-    <!DOCTYPE html>
-    <html>
-    ${emailUi.HEAD}
-    <body style="margin: 0; padding: 0; background: #FAF8F5; font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">
-      <div style="max-width: 520px; margin: 0 auto; background: #FAF8F5; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.08);">
-        
-        <!-- Header -->
-        <div style="padding: 48px 40px 40px; border-bottom: 1px solid #E6E0D8;">
-          <h1 style="color: #141312; font-size: 32px; margin: 0 0 10px 0; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; letter-spacing: 0.08em;">SUKODA</h1>
-        </div>
-
-        <!-- Content -->
-        <div style="background: #FFFFFF; margin: 28px; padding: 44px 36px; border: 1px solid #E6E0D8; border-radius: 20px;">
-          <p style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #5F5A54; margin: 0 0 20px 0; font-weight: 500;">${t.giftCardLabel}</p>
-          
-          <h2 style="font-size: 34px; color: #141312; margin: 0 0 12px 0; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400;">${pkg.name}</h2>
-          <p style="color: #5F5A54; font-size: 15px; margin: 0 0 32px 0; line-height: 1.6;">${pkg.description}</p>
-          
-          
-          <p style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #5F5A54; margin: 0 0 12px 0; font-weight: 500;">${t.giftRecipientLabel}</p>
-          <h3 style="font-size: 26px; color: #141312; margin: 0 0 32px 0; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400;">${escapeHtml(order.recipient?.name || '')}</h3>
-          
-          ${order.recipient?.message ? `
-          <div style="background: #FFFFFF; padding: 28px; margin: 0 0 32px 0; border: 1px solid #E6E0D8; border-radius: 20px;">
-            <p style="font-style: italic; color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-size: 16px; margin: 0 0 12px 0; line-height: 1.7;">
-              "${escapeHtml(order.recipient.message)}"
-            </p>
-            <p style="color: #5F5A54; font-size: 12px; margin: 0; letter-spacing: 1px;">– ${escapeHtml(order.customer?.name || '')}</p>
-          </div>
-          ` : ''}
-          
-          ${includesList ? `
-          <div style="background: #FFFFFF; padding: 28px; margin: 0 0 32px 0; text-align: left; border: 1px solid #E6E0D8; border-radius: 20px;">
-            <p style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #5F5A54; margin: 0 0 16px 0; font-weight: 500;">${t.giftIncludesLabel}</p>
-            <ul style="list-style: none; padding: 0; margin: 0;">
-              ${includesList}
-            </ul>
-          </div>
-          ` : ''}
-          
-          <div style="margin-top: 32px; padding-top: 32px; border-top: 1px solid #E6E0D8;">
-            <p style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #5F5A54; margin: 0 0 14px 0; font-weight: 500;">${t.giftCodeLabel}</p>
-            <p style="font-size: 20px; font-weight: 400; letter-spacing: 5px; color: #141312; background: #FAF8F5; padding: 18px 28px; display: inline-block; margin: 0; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;">
-              ${order.giftCode || 'SUKO-XXXX-XXXX'}
-            </p>
-          </div>
-        </div>
-
-        <!-- Book Now Button -->
-        <div style="background: #FFFFFF; margin: 0 28px; padding: 32px; border-top: 1px solid #E6E0D8; border: 1px solid #E6E0D8; border-radius: 20px;">
-          <p style="color: #5F5A54; font-size: 15px; margin: 0 0 20px 0;">${t.giftChooseTime}</p>
-          <a href="https://sukoda.ee/lunasta?code=${encodeURIComponent(order.giftCode || '')}" 
-             style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">
-            ${t.giftBookBtn}
-          </a>
-        </div>
-
-        <!-- Footer -->
-        <div style="padding: 36px 28px 28px; border-top: 1px solid #E6E0D8;">
-          <p style="color: #141312; font-size: 18px; margin: 0 0 6px 0; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; letter-spacing: 0.08em;">SUKODA</p>
-          <p style="color: #5F5A54; font-size: 12px; margin: 0 0 6px 0;">${t.questionsAt}:</p>
-          <a href="mailto:tere@sukoda.ee" style="color: #141312; font-size: 13px; text-decoration: none; font-weight: 400; border-bottom: 1px solid #D1C9BF;">tere@sukoda.ee</a>
-          <p style="color: #5F5A54; font-size: 13px; margin: 14px 0 0 0;">
-            <a href="https://sukoda.ee" style="color: #5F5A54; text-decoration: none;">sukoda.ee</a>
-          </p>
-        </div>
       </div>
     </body>
     </html>
@@ -2823,333 +2593,6 @@ function generateRescheduleEmail(booking, oldScheduledAt, newScheduledAt, lang) 
   `;
 }
 
-// ============================================================
-// FOLLOW-UP EMAIL SYSTEM (Gift Recipient → Subscriber Conversion)
-// ============================================================
-
-/**
- * Follow-up promo URL builder
- * Adds coupon code as URL parameter so landing page can auto-apply it
- */
-function getFollowupOrderUrl(lang, promoCode) {
-  const base = 'https://sukoda.ee';
-  return `${base}?promo=${encodeURIComponent(promoCode)}&utm_source=followup&utm_medium=email&utm_campaign=gift_conversion`;
-}
-
-/**
- * Generate follow-up email: 24h after visit — "Kuidas meeldis?" + -20% offer
- * For multi-visit gifts: warm follow-up with remaining visits info instead of conversion offer
- */
-function generateFollowup24hEmail(followup, lang) {
-  const t = tx(lang);
-  const recipientName = followup.recipientName || '';
-  const orderUrl = getFollowupOrderUrl(lang, t.followup24hOfferCode);
-  const visitDateLabel = getVisitDateLabel(followup.visitDate, lang);
-  const multiVisit = isMultiVisitGift(followup.giftPackage);
-  const totalVisits = GIFT_VISIT_COUNTS[followup.giftPackage] || 1;
-  const remaining = totalVisits - 1;
-
-  if (multiVisit) {
-    return `
-    <!DOCTYPE html>
-    <html>
-    ${emailUi.HEAD}
-    <body style="margin: 0; padding: 0; background: #FAF8F5; font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">
-      <div style="max-width: 560px; margin: 0 auto; background: #FAF8F5;">
-        ${emailHeader()}
-        <div style="padding: 28px 24px 32px;">
-          <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 32px; margin: 0 0 24px 0;">
-            ${t.followup24hTitle}
-          </h2>
-          <p style="color: #5F5A54; line-height: 1.8; margin: 0 0 20px 0; font-size: 15px;">
-            ${t.giftMulti24hIntro(recipientName, visitDateLabel)}
-          </p>
-          <p style="color: #141312; line-height: 1.8; margin: 0 0 40px 0; font-size: 16px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-style: italic;">
-            ${t.giftMulti24hBody}
-          </p>
-
-
-          <div style="background: #FFFFFF; padding: 32px; margin-bottom: 32px; border: 1px solid #E6E0D8; border-radius: 20px;">
-            <p style="margin: 0 0 8px 0; color: #5F5A54; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 500;">
-              ${t.giftMulti24hNextTitle}
-            </p>
-            <p style="margin: 0 0 16px 0; color: #141312; font-size: 16px; line-height: 1.7; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400;">
-              ${t.giftMulti24hNextNote(remaining)}
-            </p>
-            <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E6E0D8; color: #5F5A54; font-size: 13px; line-height: 1.7;">
-              ${t.giftMulti24hProfileNote}
-            </p>
-            <div style="margin-top: 16px;">
-              <a href="https://sukoda.ee/minu" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">
-                ${t.giftMulti24hProfileBtn}
-              </a>
-            </div>
-          </div>
-
-          <p style="color: #5F5A54; font-size: 15px;">
-            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #141312; text-decoration: none; border-bottom: 1px solid #D1C9BF;">tere@sukoda.ee</a>
-          </p>
-        </div>
-        ${emailFooter(lang)}
-      </div>
-    </body>
-    </html>
-    `;
-  }
-
-  return `
-    <!DOCTYPE html>
-    <html>
-    ${emailUi.HEAD}
-    <body style="margin: 0; padding: 0; background: #FAF8F5; font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">
-      <div style="max-width: 560px; margin: 0 auto; background: #FAF8F5;">
-        ${emailHeader()}
-        <div style="padding: 28px 24px 32px;">
-          <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 32px; margin: 0 0 24px 0;">
-            ${t.followup24hTitle}
-          </h2>
-          <p style="color: #5F5A54; line-height: 1.8; margin: 0 0 20px 0; font-size: 15px;">
-            ${t.followup24hIntro(recipientName, visitDateLabel)}
-          </p>
-          <p style="color: #141312; line-height: 1.8; margin: 0 0 20px 0; font-size: 16px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-style: italic;">
-            ${t.followup24hBody}
-          </p>
-          <p style="color: #5F5A54; line-height: 1.8; margin: 0 0 44px 0; font-size: 15px;">
-            ${t.followup24hBody2}
-          </p>
-
-          <!-- Elegant divider -->
-          <div style="margin-bottom: 44px;">
-            
-          </div>
-
-          <!-- Special offer card — soft reveal, not a hard sell -->
-          <div style="background: #FFFFFF; padding: 44px 36px; margin-bottom: 32px; border: 1px solid #E6E0D8; border-radius: 20px;">
-            <p style="margin: 0 0 20px 0; color: #5F5A54; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 500;">
-              ${t.followup24hOfferTitle}
-            </p>
-            <p style="margin: 0 0 12px 0; color: #141312; font-size: 48px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; letter-spacing: -1px;">
-              -20%
-            </p>
-            <p style="margin: 0 0 28px 0; color: #5F5A54; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em;">
-              ${lang === 'et' ? 'esimesed 3 kuud' : 'first 3 months'}
-            </p>
-            <p style="margin: 0 0 28px 0; color: #5F5A54; font-size: 15px; line-height: 1.7; max-width: 380px; display: inline-block;">
-              ${t.followup24hOfferText}
-            </p>
-            <div style="background: #FFFFFF; padding: 14px 28px; display: inline-block; margin-bottom: 28px; border: 1px solid #E6E0D8; border-radius: 20px;">
-              <p style="margin: 0; color: #5F5A54; font-size: 18px; letter-spacing: 5px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;">
-                ${t.followup24hOfferCode}
-              </p>
-            </div>
-            <br>
-            <a href="${orderUrl}" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;margin-top: 4px;">
-              ${t.followup24hCta}
-            </a>
-            <p style="margin: 24px 0 0 0; color: #5F5A54; font-size: 12px;">
-              ${t.followup24hOfferNote}
-            </p>
-          </div>
-
-          <p style="color: #5F5A54; font-size: 15px;">
-            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #141312; text-decoration: none; border-bottom: 1px solid #D1C9BF;">tere@sukoda.ee</a>
-          </p>
-        </div>
-        ${emailFooter(lang)}
-      </div>
-    </body>
-    </html>
-  `;
-}
-
-/**
- * Generate follow-up email: 7 days after visit — "Sinu järgmine koristus ootab"
- * For multi-visit gifts: warm reminder with profile link instead of conversion offer
- */
-function generateFollowup7dEmail(followup, lang) {
-  const t = tx(lang);
-  const recipientName = followup.recipientName || '';
-  const orderUrl = getFollowupOrderUrl(lang, t.followup24hOfferCode);
-  const multiVisit = isMultiVisitGift(followup.giftPackage);
-
-  if (multiVisit) {
-    return `
-    <!DOCTYPE html>
-    <html>
-    ${emailUi.HEAD}
-    <body style="margin: 0; padding: 0; background: #FAF8F5; font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">
-      <div style="max-width: 560px; margin: 0 auto; background: #FAF8F5;">
-        ${emailHeader()}
-        <div style="padding: 28px 24px 32px;">
-          <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 32px; margin: 0 0 24px 0;">
-            ${t.giftMulti7dTitle}
-          </h2>
-          <p style="color: #5F5A54; line-height: 1.8; margin: 0 0 24px 0; font-size: 15px;">
-            ${t.giftMulti7dIntro(recipientName)}
-          </p>
-          <p style="color: #141312; line-height: 1.8; margin: 0 0 40px 0; font-size: 16px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-style: italic;">
-            ${t.giftMulti7dBody}
-          </p>
-
-          <div style="background: #FFFFFF; padding: 28px; margin-bottom: 32px; border: 1px solid #E6E0D8; border-radius: 20px;">
-            <p style="color: #5F5A54; font-size: 15px; line-height: 1.7; margin: 0 0 16px 0;">
-              ${t.giftMulti7dProfileNote}
-            </p>
-            <a href="https://sukoda.ee/minu" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">
-              ${t.giftMulti24hProfileBtn}
-            </a>
-          </div>
-
-          <p style="color: #5F5A54; font-size: 15px;">
-            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #141312; text-decoration: none; border-bottom: 1px solid #D1C9BF;">tere@sukoda.ee</a>
-          </p>
-        </div>
-        ${emailFooter(lang)}
-      </div>
-    </body>
-    </html>
-    `;
-  }
-
-  return `
-    <!DOCTYPE html>
-    <html>
-    ${emailUi.HEAD}
-    <body style="margin: 0; padding: 0; background: #FAF8F5; font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">
-      <div style="max-width: 560px; margin: 0 auto; background: #FAF8F5;">
-        ${emailHeader()}
-        <div style="padding: 28px 24px 32px;">
-          <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 32px; margin: 0 0 24px 0;">
-            ${t.followup7dTitle}
-          </h2>
-          <p style="color: #5F5A54; line-height: 1.8; margin: 0 0 24px 0; font-size: 15px;">
-            ${t.followup7dIntro(recipientName)}
-          </p>
-          <p style="color: #141312; line-height: 1.8; margin: 0 0 40px 0; font-size: 16px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-style: italic;">
-            ${t.followup7dBody}
-          </p>
-
-          <!-- Offer — warm, inviting, not pushy -->
-          <div style="background: #FFFFFF; padding: 32px; margin-bottom: 36px; border: 1px solid #E6E0D8; border-radius: 20px;">
-            <p style="margin: 0 0 16px 0; color: #5F5A54; font-size: 15px; line-height: 1.7;">
-              ${t.followup7dOfferReminder}
-            </p>
-            <div style="background: #FAF8F5; padding: 14px 24px; display: inline-block; margin-bottom: 20px;">
-              <p style="margin: 0; color: #5F5A54; font-size: 22px; letter-spacing: 5px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400;">
-                ${t.followup24hOfferCode}
-              </p>
-            </div>
-            <br>
-            <a href="${orderUrl}" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">
-              ${t.followup7dCta}
-            </a>
-          </div>
-
-          <p style="color: #5F5A54; font-size: 15px;">
-            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #141312; text-decoration: none; border-bottom: 1px solid #D1C9BF;">tere@sukoda.ee</a>
-          </p>
-        </div>
-        ${emailFooter(lang)}
-      </div>
-    </body>
-    </html>
-  `;
-}
-
-/**
- * Generate follow-up email: 30 days after visit — Final reminder / urgency
- * For multi-visit gifts: gentle reminder that more visits are coming
- */
-function generateFollowup30dEmail(followup, lang) {
-  const t = tx(lang);
-  const recipientName = followup.recipientName || '';
-  const orderUrl = getFollowupOrderUrl(lang, t.followup24hOfferCode);
-  const multiVisit = isMultiVisitGift(followup.giftPackage);
-
-  if (multiVisit) {
-    return `
-    <!DOCTYPE html>
-    <html>
-    ${emailUi.HEAD}
-    <body style="margin: 0; padding: 0; background: #FAF8F5; font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">
-      <div style="max-width: 560px; margin: 0 auto; background: #FAF8F5;">
-        ${emailHeader()}
-        <div style="padding: 28px 24px 32px;">
-          <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 32px; margin: 0 0 24px 0;">
-            ${t.giftMulti30dTitle}
-          </h2>
-          <p style="color: #5F5A54; line-height: 1.8; margin: 0 0 24px 0; font-size: 15px;">
-            ${t.giftMulti30dIntro(recipientName)}
-          </p>
-          <p style="color: #141312; line-height: 1.8; margin: 0 0 40px 0; font-size: 16px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-style: italic;">
-            ${t.giftMulti30dBody}
-          </p>
-
-          <p style="color: #5F5A54; font-size: 15px;">
-            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #141312; text-decoration: none; border-bottom: 1px solid #D1C9BF;">tere@sukoda.ee</a>
-          </p>
-        </div>
-        ${emailFooter(lang)}
-      </div>
-    </body>
-    </html>
-    `;
-  }
-
-  return `
-    <!DOCTYPE html>
-    <html>
-    ${emailUi.HEAD}
-    <body style="margin: 0; padding: 0; background: #FAF8F5; font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">
-      <div style="max-width: 560px; margin: 0 auto; background: #FAF8F5;">
-        ${emailHeader()}
-        <div style="padding: 28px 24px 32px;">
-          <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 32px; margin: 0 0 24px 0;">
-            ${t.followup30dTitle}
-          </h2>
-          <p style="color: #5F5A54; line-height: 1.8; margin: 0 0 24px 0; font-size: 15px;">
-            ${t.followup30dIntro(recipientName)}
-          </p>
-          <p style="color: #141312; line-height: 1.8; margin: 0 0 44px 0; font-size: 16px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-style: italic;">
-            ${t.followup30dBody}
-          </p>
-
-          <!-- Elegant divider -->
-          <div style="margin-bottom: 44px;">
-            
-          </div>
-
-          <!-- Final offer — elegant urgency, not pressure -->
-          <div style="background: #FFFFFF; padding: 44px 36px; margin-bottom: 28px; border: 1px solid #E6E0D8; border-radius: 20px;">
-            <p style="margin: 0 0 24px 0; color: #5F5A54; font-size: 15px; line-height: 1.7; max-width: 380px; display: inline-block;">
-              ${t.followup30dUrgency}
-            </p>
-            <div style="background: #FFFFFF; padding: 14px 28px; display: inline-block; margin-bottom: 28px; border: 1px solid #E6E0D8; border-radius: 20px;">
-              <p style="margin: 0; color: #5F5A54; font-size: 18px; letter-spacing: 5px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;">
-                ${t.followup24hOfferCode}
-              </p>
-            </div>
-            <br>
-            <a href="${orderUrl}" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">
-              ${t.followup30dCta}
-            </a>
-          </div>
-
-          <p style="color: #5F5A54; font-size: 15px; line-height: 1.7; margin-bottom: 24px;">
-            ${t.followup30dFinalNote}
-          </p>
-
-          <p style="color: #5F5A54; font-size: 15px;">
-            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #141312; text-decoration: none; border-bottom: 1px solid #D1C9BF;">tere@sukoda.ee</a>
-          </p>
-        </div>
-        ${emailFooter(lang)}
-      </div>
-    </body>
-    </html>
-  `;
-}
-
 /**
  * Generate subscriber first-visit follow-up email — "Kuidas meeldis esimene külastus?"
  * Warm, personal, no upsell — just relationship building
@@ -3244,65 +2687,6 @@ function generateSubscriberFirstVisitEmail(followup, lang) {
 }
 
 /**
- * Create follow-up sequence for a gift recipient after booking
- * Called when a gift recipient books their visit (bookGiftVisit)
- * Creates 3 follow-up entries in Firestore that will be processed by the scheduler
- * 
- * @param {Object} params
- * @param {string} params.orderId - The gift order ID
- * @param {string} params.recipientEmail - Gift recipient's email
- * @param {string} params.recipientName - Gift recipient's name
- * @param {string} params.bookingStartTime - ISO string of the booked visit time
- * @param {string} params.lang - Language (et/en)
- * @param {string} params.size - Home size
- * @param {string} [params.giftPackage] - Gift package type (moment/month/quarter)
- */
-async function createFollowupSequence({ orderId, recipientEmail, recipientName, bookingStartTime, lang, size, giftPackage }) {
-  if (!giftPackage) {
-    console.warn(`createFollowupSequence: giftPackage is ${giftPackage} for order ${orderId} — follow-ups will use single-visit template`);
-  }
-  const visitDate = new Date(bookingStartTime);
-
-  // Schedule: 24h, 7 days, 30 days after the VISIT (not after booking)
-  const stages = [
-    { stage: '24h', delayDays: 1 },
-    { stage: '7d', delayDays: 7 },
-    { stage: '30d', delayDays: 30 },
-  ];
-
-  const batch = db.batch();
-
-  for (const { stage, delayDays } of stages) {
-    const sendAt = new Date(visitDate);
-    sendAt.setDate(sendAt.getDate() + delayDays);
-    // Send at 10:00 Tallinn time — Cloud Functions run in UTC, so compute offset
-    const formatter = new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Tallinn', hour: 'numeric', hour12: false });
-    const tallinnNow = parseInt(formatter.format(sendAt), 10);
-    const utcNow = sendAt.getUTCHours();
-    const offset = tallinnNow - utcNow;
-    sendAt.setUTCHours(10 - offset, 0, 0, 0);
-
-    const ref = db.collection('followups').doc();
-    batch.set(ref, {
-      orderId,
-      recipientEmail,
-      recipientName: recipientName || '',
-      visitDate: admin.firestore.Timestamp.fromDate(visitDate),
-      sendAt: admin.firestore.Timestamp.fromDate(sendAt),
-      stage,
-      status: 'pending',  // pending → sent → converted / expired
-      lang: lang || 'et',
-      size: size || 'medium',
-      giftPackage: giftPackage || null,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-  }
-
-  await batch.commit();
-  console.log(`Follow-up sequence created for order ${orderId}: ${recipientEmail}`);
-}
-
-/**
  * Process follow-up emails — runs daily at 10:00 Europe/Tallinn
  * Checks for pending follow-ups whose sendAt has passed and sends them
  */
@@ -3337,55 +2721,12 @@ exports.processFollowups = functions
         const followup = doc.data();
 
         try {
-          // For gift conversion follow-ups (24h/7d/30d), check if recipient already subscribed
-          // Skip this check for subscriber_first_visit — they're already subscribers
-          if (followup.stage !== 'subscriber_first_visit') {
-            const existingOrderSnapshot = await db.collection('orders')
-              .where('customer.email', '==', followup.recipientEmail)
-              .where('type', '==', 'subscription')
-              .where('status', '==', 'paid')
-              .limit(1)
-              .get();
-
-            if (!existingOrderSnapshot.empty) {
-              // Recipient already converted! Mark all their gift conversion follow-ups as converted
-              console.log(`Recipient ${followup.recipientEmail} already converted, skipping follow-up`);
-              const allFollowups = await db.collection('followups')
-                .where('recipientEmail', '==', followup.recipientEmail)
-                .where('status', '==', 'pending')
-                .where('stage', 'in', ['24h', '7d', '30d'])
-                .get();
-
-              const batch = db.batch();
-              allFollowups.docs.forEach(d => {
-                batch.update(d.ref, {
-                  status: 'converted',
-                  convertedAt: admin.firestore.FieldValue.serverTimestamp(),
-                });
-              });
-              await batch.commit();
-              continue;
-            }
-          }
-
           // Generate and send the appropriate email
           const lang = followup.lang || 'et';
           const t = tx(lang);
           let subject, html;
 
           switch (followup.stage) {
-            case '24h':
-              subject = t.subjectFollowup24h;
-              html = generateFollowup24hEmail(followup, lang);
-              break;
-            case '7d':
-              subject = t.subjectFollowup7d;
-              html = generateFollowup7dEmail(followup, lang);
-              break;
-            case '30d':
-              subject = t.subjectFollowup30d;
-              html = generateFollowup30dEmail(followup, lang);
-              break;
             case 'subscriber_first_visit':
               subject = t.subjectSubscriberFirstVisit;
               html = generateSubscriberFirstVisitEmail(followup, lang);
@@ -5214,22 +4555,6 @@ exports.bookGiftVisit = functions
             createdAt: new Date().toISOString(),
           },
         });
-
-        // Create follow-up email sequence for conversion (24h, 7d, 30d after visit)
-        try {
-          await createFollowupSequence({
-            orderId: doc.id,
-            recipientEmail: email,
-            recipientName: order.recipient?.name || '',
-            bookingStartTime: bookingStartTime,
-            lang: order.lang || 'et',
-            size: order.size || 'medium',
-            giftPackage: order.package || order.packageType || null,
-          });
-        } catch (followupError) {
-          // Don't fail the booking if follow-up creation fails
-          console.error('Follow-up sequence creation failed (non-fatal):', followupError);
-        }
 
         // Notify admin about the new booking so they can arrange housekeepers
         await sendAdminBookingNotification({

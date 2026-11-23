@@ -92,35 +92,6 @@ async function startSubscriptionCheckout({
 }
 
 /**
- * Start gift checkout
- * Called from kingitus.html
- */
-async function startGiftCheckout({
-  giftType,        // 'moment', 'month', 'quarter'
-  size,            // 'small', 'medium', 'large'
-  customer,        // { name, email, phone }
-  recipient,       // { name, address, message }
-  deliveryMethod,  // 'email' or 'post'
-  lang = 'et',
-  promoCode,       // optional promo code
-}) {
-  const data = {
-    type: 'gift',
-    packageType: giftType,
-    size: size,
-    customer: customer,
-    recipient: recipient,
-    deliveryMethod: deliveryMethod,
-    lang: lang,
-  };
-  const promo = promoCode || new URLSearchParams(window.location.search).get('promo');
-  if (promo) {
-    data.promoCode = promo;
-  }
-  return createCheckout(data);
-}
-
-/**
  * Get order details (for success page)
  */
 async function getOrderDetails(orderId) {
@@ -156,7 +127,6 @@ function getUrlParams() {
 // Export functions for use in HTML
 window.SUKODA = {
   startSubscriptionCheckout,
-  startGiftCheckout,
   getOrderDetails,
   getUrlParams,
 };
