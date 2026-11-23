@@ -164,7 +164,7 @@
                 </div>
             </div>
 
-            <nav class="h-dock" :class="activeTab === 'account' || activeTab === 'calendar' ? 'is-away' : ''" :aria-label="t('deskWord')">
+            <nav class="h-dock" :class="['account', 'calendar', 'visit', 'done', 'month', 'services', 'addClient'].includes(activeTab) ? 'is-away' : ''" :aria-label="t('deskWord')">
                 <button type="button" class="h-dock-btn" :class="activeTab === 'today' ? 'is-active' : ''" :aria-current="activeTab === 'today' ? 'page' : null" @click="activeTab = 'today'; window.scrollTo({ top: 0, behavior: 'smooth' })">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path stroke-linecap="round" d="M4 10h16M8 3v4M16 3v4"/></svg>
                     <span x-text="t('tabToday')"></span>
@@ -218,62 +218,34 @@
                                 </template>
                             </div>
                         </div>
-                        <div class="space-y-4">
-                            <template x-for="b in todayVisits" :key="b.id">
-                                <article class="p-sheet p-5">
-                                    <p class="eyebrow" x-text="visitWhen(b)"></p>
-                                    <h3 class="p-sub-title" x-text="streetTitle(b)"></h3>
-                                    <p class="text-base font-medium mt-3" x-text="b.customerName"></p>
-                                    <p x-show="addressFor(b)" class="text-sm text-muted" x-text="addressFor(b)"></p>
-                                    <template x-if="accessVisible(b)">
-                                        <div class="mt-4">
-                                            <p class="eyebrow" x-text="t('access')"></p>
-                                            <p class="font-serif text-2xl font-light mt-1" x-text="entranceCode(b)"></p>
-                                        </div>
-                                    </template>
-                                    <p x-show="hasAccess(b) && !accessVisible(b)" class="text-sm text-muted font-sans mt-4" x-text="t('accessLater')"></p>
-                                    <div class="grid grid-cols-2 gap-2 mt-4" x-show="residentPhone(b) || addressFor(b)">
-                                        <a x-show="residentPhone(b)" :href="telHref(residentPhone(b))" class="p-sheet-btn mt-0" x-text="t('call')"></a>
-                                        <a x-show="addressFor(b)" :href="mapsHref(addressFor(b))" target="_blank" rel="noopener" class="p-sheet-btn mt-0" x-text="t('guideThere')"></a>
-                                    </div>
-                                    <div x-show="jobText(b)" class="mt-4">
-                                        <p class="eyebrow" x-text="t('jobLabel')"></p>
-                                        <p class="text-sm font-sans font-light mt-1" x-text="jobText(b)"></p>
-                                    </div>
-                                    <a x-show="jobPhoto(b)" :href="jobPhoto(b)" target="_blank" rel="noopener" class="text-sm font-sans underline underline-offset-4 mt-4 mr-4 inline-block" x-text="t('jobPhoto')"></a>
-                                    <a x-show="floorPlanFor(b)" :href="floorPlanFor(b)" target="_blank" rel="noopener" class="text-sm font-sans underline underline-offset-4 mt-4 inline-block" x-text="t('floorPlan')"></a>
-                                    <div x-show="passFact(b, 'water')" class="mt-4">
-                                        <p class="eyebrow" x-text="t('waterMain')"></p>
-                                        <p class="text-sm font-sans font-light mt-1" x-text="passFact(b, 'water')"></p>
-                                    </div>
-                                    <div x-show="passFact(b, 'panel')" class="mt-4">
-                                        <p class="eyebrow" x-text="t('breaker')"></p>
-                                        <p class="text-sm font-sans font-light mt-1" x-text="passFact(b, 'panel')"></p>
-                                    </div>
-                                    <div x-show="todayTasks(b).length" class="mt-4">
-                                        <p class="eyebrow" x-text="t('todayList')"></p>
-                                        <ul class="mt-2 space-y-1">
-                                            <template x-for="(line, i) in todayTasks(b)" :key="b.id + '-' + i">
-                                                <li class="text-sm font-sans font-light" x-text="line"></li>
-                                            </template>
-                                        </ul>
-                                    </div>
-                                    <div x-show="standingNote(b)" class="mt-4">
-                                        <p class="eyebrow" x-text="t('standing')"></p>
-                                        <p class="text-sm font-sans font-light mt-1" x-text="standingNote(b)"></p>
-                                    </div>
-                                    <p x-show="bringLine(b)" class="text-sm font-sans mt-4" x-text="bringLine(b)"></p>
-                                    <div class="mt-4">
-                                        <button type="button" x-show="!todayNoteOpen[b.id] && !(todayNotes[b.id] || '').trim()" @click="todayNoteOpen[b.id] = true" class="text-xs font-sans text-muted hover:text-black underline underline-offset-4" x-text="t('addNoteBtn')"></button>
-                                        <label class="block" x-show="todayNoteOpen[b.id] || (todayNotes[b.id] || '').trim()" x-cloak>
-                                            <span class="eyebrow" x-text="t('noteLabel')"></span>
-                                            <textarea rows="2" class="h-input resize-none font-sans mt-1" :placeholder="t('notePh')" :value="todayNotes[b.id] || ''" @input="todayNotes[b.id] = $event.target.value"></textarea>
-                                        </label>
-                                    </div>
-                                    <button type="button" class="p-btn w-full mt-4" :disabled="todaySavingId === b.id" @click="markTodayDone(b)" x-text="todaySavingId === b.id ? t('saving') : t('done')"></button>
-                                    <button type="button" class="h-link w-full mt-2 justify-center" :disabled="todaySavingId === b.id" @click="markNoEntry(b)" x-text="t('noEntry')"></button>
-                                </article>
-                            </template>
+                        <template x-for="b in todayVisits.slice(0, 1)" :key="'now-' + b.id">
+                            <article class="p-sheet p-5">
+                                <button type="button" class="block w-full text-left" @click="openVisit(b)">
+                                    <span class="eyebrow block" x-text="visitEyebrow(b)"></span>
+                                    <span class="p-sub-title block" x-text="streetTitle(b)"></span>
+                                    <span class="text-base font-medium mt-3 block" x-text="b.customerName"></span>
+                                    <span x-show="visitJobLine(b)" class="text-sm text-muted block mt-0.5" x-text="visitJobLine(b)"></span>
+                                </button>
+                                <button type="button" class="p-go is-wide mt-5" :disabled="todaySavingId === b.id" @click="markTodayDone(b)" x-text="todaySavingId === b.id ? t('saving') : t('done')"></button>
+                                <div class="grid grid-cols-2 gap-2 mt-2" x-show="residentPhone(b) || addressFor(b)">
+                                    <a x-show="residentPhone(b)" :href="telHref(residentPhone(b))" class="p-sheet-btn mt-0" x-text="t('call')"></a>
+                                    <a x-show="addressFor(b)" :href="mapsHref(addressFor(b))" target="_blank" rel="noopener" class="p-sheet-btn mt-0" x-text="t('guideThere')"></a>
+                                </div>
+                            </article>
+                        </template>
+                        <div x-show="todayVisits.length > 1" class="mt-8">
+                            <p class="eyebrow" x-text="t('laterToday')"></p>
+                            <div class="p-rows mt-2.5">
+                                <template x-for="b in todayVisits.slice(1)" :key="'later-' + b.id">
+                                    <button type="button" class="p-row" @click="openVisit(b)">
+                                        <span class="font-serif text-2xl w-16 shrink-0" x-text="fmtTime(b.scheduledAt)"></span>
+                                        <span class="min-w-0 flex-1 text-left">
+                                            <span class="p-row-name" x-text="streetTitle(b)"></span>
+                                            <span class="p-row-meta" x-text="[b.customerName, visitJobLine(b).toLocaleLowerCase()].filter(Boolean).join(' · ')"></span>
+                                        </span>
+                                    </button>
+                                </template>
+                            </div>
                         </div>
                         <button type="button" @click="openVisitModal({ date: todayStr })" class="h-link h-link-accent mt-4" x-text="t('addVisit')"></button>
                         <div x-show="tomorrowVisits.length" class="mt-8">
@@ -282,7 +254,7 @@
                                 <template x-for="b in tomorrowVisits" :key="'tm-' + b.id">
                                     <button type="button" class="p-row" @click="activeTab = 'calendar'; selectedDay = dateOf(b.scheduledAt); calMonth = (dateOf(b.scheduledAt) || calMonth).slice(0, 7)">
                                         <span class="font-serif text-2xl w-16 shrink-0" x-text="fmtTime(b.scheduledAt)"></span>
-                                        <span class="min-w-0 text-left">
+                                        <span class="min-w-0 flex-1 text-left">
                                             <span class="p-row-name" x-text="streetTitle(b)"></span>
                                             <span class="p-row-meta" x-text="b.customerName"></span>
                                         </span>
@@ -294,9 +266,72 @@
                     </div>
                 </div>
 
+                <!-- ─────────── VISIIT: one home today (docs/disain/ekraanid/Visiit.html) ─────────── -->
+                <div x-show="activeTab === 'visit'" x-cloak>
+                    <template x-if="openedVisit">
+                        <div class="max-w-xl pb-8">
+                            <button type="button" class="p-back" @click="activeTab = 'today'"><svg class="p-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6"/></svg><span x-text="t('tabToday')"></span></button>
+                            <p class="eyebrow mt-2" x-text="visitEyebrow(openedVisit)"></p>
+                            <h1 class="p-sub-title" x-text="streetTitle(openedVisit)"></h1>
+                            <p class="text-base font-medium mt-3" x-text="openedVisit.customerName"></p>
+                            <div class="grid grid-cols-2 gap-2 mt-5" x-show="residentPhone(openedVisit) || addressFor(openedVisit)">
+                                <a x-show="residentPhone(openedVisit)" :href="telHref(residentPhone(openedVisit))" class="p-sheet-btn mt-0" x-text="t('call')"></a>
+                                <a x-show="addressFor(openedVisit)" :href="mapsHref(addressFor(openedVisit))" target="_blank" rel="noopener" class="p-sheet-btn mt-0" x-text="t('guideThere')"></a>
+                            </div>
+                            <div class="p-rows mt-3">
+                                <template x-for="row in visitRows(openedVisit)" :key="row.key">
+                                    <div class="p-line h-pad">
+                                        <span class="text-muted shrink-0" x-text="row.label"></span>
+                                        <span class="text-right font-medium min-w-0" x-text="row.value"></span>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="flex flex-wrap gap-4 mt-3">
+                                <a x-show="jobPhoto(openedVisit)" :href="jobPhoto(openedVisit)" target="_blank" rel="noopener" class="text-sm underline underline-offset-4" x-text="t('jobPhoto')"></a>
+                                <a x-show="floorPlanFor(openedVisit)" :href="floorPlanFor(openedVisit)" target="_blank" rel="noopener" class="text-sm underline underline-offset-4" x-text="t('floorPlan')"></a>
+                            </div>
+                            <template x-if="dateOf(openedVisit.scheduledAt) <= todayStr">
+                                <div>
+                                    <label class="eyebrow block mt-6" :for="'visit-note-' + openedVisit.id" x-text="t('noteForClient')"></label>
+                                    <textarea :id="'visit-note-' + openedVisit.id" rows="2" maxlength="500" class="p-area" :placeholder="t('notePh')" :value="todayNotes[openedVisit.id] || ''" @input="todayNotes[openedVisit.id] = $event.target.value"></textarea>
+                                    <button type="button" class="p-go is-wide mt-6" :disabled="todaySavingId === openedVisit.id" @click="markTodayDone(openedVisit)" x-text="todaySavingId === openedVisit.id ? t('saving') : t('done')"></button>
+                                    <button type="button" class="block mx-auto text-sm underline underline-offset-4 mt-4 h-11" :disabled="todaySavingId === openedVisit.id" @click="markNoEntry(openedVisit)" x-text="t('noEntry')"></button>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- ─────────── TEHTUD: right after the Done tap (docs/disain/ekraanid/Tehtud.html) ─────────── -->
+                <div x-show="activeTab === 'done'" x-cloak>
+                    <template x-if="doneInfo">
+                        <div class="max-w-xl pb-8">
+                            <span class="h-done-mark mt-6" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+                            <h1 class="p-home-title mt-6" x-text="t('done')"></h1>
+                            <p class="text-muted mt-2" x-text="[doneInfo.street, doneInfo.name].filter(Boolean).join(' · ')"></p>
+                            <div class="p-rows mt-6">
+                                <div class="p-line h-pad">
+                                    <span x-text="doneInfo.notified ? t('doneNotified', { name: doneInfo.firstName }) : t('doneNoNotice')"></span>
+                                    <svg x-show="doneInfo.notified" class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+                                </div>
+                                <div class="p-line h-pad" x-show="doneInfo.next">
+                                    <span class="shrink-0" x-text="t('nextTime')"></span>
+                                    <span class="text-right font-medium" x-text="doneInfo.next"></span>
+                                </div>
+                                <div class="p-line h-pad" x-show="doneInfo.cents">
+                                    <span x-text="t('toMonthSummary')"></span>
+                                    <span class="font-medium shrink-0" x-text="'+' + euroShort(doneInfo.cents)"></span>
+                                </div>
+                            </div>
+                            <button type="button" x-show="nextHomeVisit" class="p-go is-wide mt-8" @click="openVisit(nextHomeVisit)" x-text="nextHomeVisit ? t('nextHome', { street: streetTitle(nextHomeVisit) }) : ''"></button>
+                            <button type="button" class="block mx-auto text-sm underline underline-offset-4 mt-4 h-11" @click="activeTab = 'today'" x-text="t('backToDay')"></button>
+                        </div>
+                    </template>
+                </div>
+
                 <!-- ─────────── KALENDER ─────────── -->
                 <div x-show="activeTab === 'calendar'">
-                    <button type="button" class="p-back mb-2" @click="activeTab = 'today'"><span x-text="t('tabToday')"></span></button>
+                    <button type="button" class="p-back mb-2" @click="activeTab = 'today'"><svg class="p-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6"/></svg><span x-text="t('tabToday')"></span></button>
                     <div class="flex items-center justify-between mb-6">
                         <button type="button" @click="calPrev()" class="w-11 h-11 flex items-center justify-center hover:bg-cream rounded-full" :aria-label="t('prevMonth')"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7"/></svg></button>
                         <h2 class="font-serif text-2xl font-light" x-text="calMonthLabel"></h2>
@@ -437,17 +472,111 @@
                     </div>
                 </div>
 
+                <!-- ─────────── KUU KOKKUVÕTE (docs/disain/ekraanid/TegijaKuu.html) ─────────── -->
+                <div x-show="activeTab === 'month'" x-cloak>
+                    <div class="max-w-xl pb-28">
+                        <button type="button" class="p-back" @click="activeTab = 'account'"><svg class="p-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6"/></svg><span x-text="t('tabAccount')"></span></button>
+                        <div class="flex items-center justify-between gap-3 mt-2">
+                            <button type="button" class="p-stepper-btn" :disabled="monthPos <= 0" @click="monthIndex = monthPos - 1" :aria-label="t('prevMonth')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6"/></svg></button>
+                            <h1 class="h-month-title capitalize text-center" x-text="invoiceMonthLabel(monthBlock.month)"></h1>
+                            <button type="button" class="p-stepper-btn" :disabled="monthPos >= monthChoices.length - 1" @click="monthIndex = monthPos + 1" :aria-label="t('nextMonth')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/></svg></button>
+                        </div>
+                        <div class="p-sheet p-6 mt-5">
+                            <p class="eyebrow" x-text="t('monthTotal')"></p>
+                            <p class="h-big-sum mt-2" x-text="euroShort(monthBlock.cents)"></p>
+                            <p class="text-muted mt-2" x-show="monthBlock.homes.length" x-text="monthCountLine(monthBlock)"></p>
+                        </div>
+                        <p x-show="!monthBlock.homes.length" class="text-sm text-muted mt-5" x-text="t('monthEmpty')"></p>
+                        <div class="p-rows mt-3" x-show="monthBlock.homes.length">
+                            <template x-for="home in monthBlock.homes" :key="home.orderId || home.customerName">
+                                <div class="p-line h-pad items-start">
+                                    <span class="min-w-0 flex-1">
+                                        <span class="p-row-name" x-text="home.customerName"></span>
+                                        <span class="p-row-meta" x-text="homeCountLine(home)"></span>
+                                    </span>
+                                    <span class="text-right shrink-0">
+                                        <span class="block font-medium" x-text="home.cents ? euroShort(home.cents) : t('agreedPrice')"></span>
+                                        <span x-show="home.orderId && isInvoiced(monthBlock.month, home.orderId)" class="block text-sm text-muted mt-0.5" x-text="t('invoiceSentDone')"></span>
+                                        <button type="button" x-show="home.orderId && !isInvoiced(monthBlock.month, home.orderId)" class="block ml-auto text-sm underline underline-offset-4 mt-0.5" @click="toggleInvoiceSent(monthBlock.month, home.orderId)" x-text="t('markInvoicedLong')"></button>
+                                    </span>
+                                </div>
+                            </template>
+                        </div>
+                        <div class="p-order-bar is-stack" x-show="monthBlock.homes.length">
+                            <button type="button" class="p-go is-wide" @click="downloadInvoiceCsv(monthBlock)" x-text="t('downloadStatement')"></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ─────────── TEENUSED JA HINNAD (docs/disain/ekraanid/TegijaTeenused.html) ─────────── -->
+                <div x-show="activeTab === 'services'" x-cloak>
+                    <form class="max-w-xl pb-28" @submit.prevent="saveAvailability()">
+                        <button type="button" class="p-back" @click="activeTab = 'account'"><svg class="p-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6"/></svg><span x-text="t('tabAccount')"></span></button>
+                        <h1 class="p-sub-title" x-text="t('servicesTitle')"></h1>
+                        <p class="text-muted mt-2" x-text="t('servicesLead')"></p>
+                        <div class="p-rows mt-5" x-show="offeredRows.length">
+                            <template x-for="ex in offeredRows" :key="ex.id">
+                                <div class="p-line h-pad">
+                                    <span class="min-w-0 flex-1" x-text="svcName(ex)"></span>
+                                    <input type="text" maxlength="40" class="h-price-in" :placeholder="svcHint(ex) || '45 €'" :aria-label="svcName(ex) + ' ' + t('priceLabel')" x-model="availForm.extraPrices[ex.id]">
+                                    <button type="button" class="w-11 h-11 flex items-center justify-center text-muted shrink-0" @click="toggleOfferedExtra(ex.id)" :aria-label="t('removeService', { name: svcName(ex) })"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+                                </div>
+                            </template>
+                        </div>
+                        <p x-show="!offeredRows.length" class="text-sm text-muted mt-5" x-text="t('servicesEmpty')"></p>
+                        <button type="button" x-show="addableRows.length" class="p-sheet-btn mt-3" @click="servicePickerOpen = !servicePickerOpen" x-text="'+ ' + t('addService')"></button>
+                        <div class="p-rows mt-2" x-show="servicePickerOpen && addableRows.length" x-cloak>
+                            <template x-for="ex in addableRows" :key="'add-' + ex.id">
+                                <button type="button" class="p-row" @click="toggleOfferedExtra(ex.id); servicePickerOpen = false">
+                                    <span class="p-row-name" x-text="svcName(ex)"></span>
+                                    <span class="p-row-side text-muted" x-text="svcHint(ex)"></span>
+                                </button>
+                            </template>
+                        </div>
+                        <p x-show="availError" x-cloak class="text-sm text-accent mt-3" x-text="availError"></p>
+                        <div class="p-order-bar is-stack">
+                            <button type="submit" class="p-go is-wide" :disabled="availSaving" x-text="availSaving ? t('savingProfile') : t('save')"></button>
+                        </div>
+                    </form>
+                </div>
+
                 <!-- ─────────── KONTO: kutselink, arveldus ja seaded ─────────── -->
                 <div x-show="activeTab === 'account'" x-cloak>
                     <div class="max-w-xl">
-                        <button type="button" class="p-back" @click="activeTab = 'today'"><span x-text="t('tabToday')"></span></button>
+                        <button type="button" class="p-back" @click="activeTab = 'today'"><svg class="p-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6"/></svg><span x-text="t('tabToday')"></span></button>
                         <h1 class="p-sub-title" x-text="t('tabAccount')"></h1>
-                        <div class="flex gap-4 mt-4" role="group" :aria-label="t('langLabel')">
-                            <button type="button" @click="setLang('et')" class="text-base" :class="{ 'font-medium': lang === 'et', 'text-muted': lang !== 'et' }" :aria-pressed="lang === 'et'">ET</button>
-                            <button type="button" @click="setLang('en')" class="text-base" :class="{ 'font-medium': lang === 'en', 'text-muted': lang !== 'en' }" :aria-pressed="lang === 'en'">EN</button>
-                            <button type="button" @click="setLang('ru')" class="text-base" :class="{ 'font-medium': lang === 'ru', 'text-muted': lang !== 'ru' }" :aria-pressed="lang === 'ru'">RU</button>
+                        <div class="p-sheet p-5 mt-5">
+                            <p class="p-row-name" x-text="provider?.name"></p>
+                            <p class="p-row-meta" x-text="[t('svcSignCleaning'), availForm.districtsText].filter(Boolean).join(' · ')" x-show="isCleaningProvider"></p>
                         </div>
-                        <button type="button" class="text-base mt-3 h-11" @click="logout()" x-text="t('logOut')"></button>
+                        <div class="p-rows mt-3">
+                            <button type="button" class="p-row" x-show="hasOwnClients" @click="monthIndex = -1; activeTab = 'month'; window.scrollTo({ top: 0 })">
+                                <span class="p-row-name" x-text="capFirst(t('monthRow', { month: monthGenitive(currentMonthKey) }))"></span>
+                                <span class="p-row-side text-muted"><span x-text="euroShort(currentMonthCents)"></span><svg class="p-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/></svg></span>
+                            </button>
+                            <button type="button" class="p-row" x-show="isCleaningProvider" @click="activeTab = 'services'; window.scrollTo({ top: 0 })">
+                                <span class="p-row-name" x-text="t('servicesTitle')"></span>
+                                <span class="p-row-side text-muted"><svg class="p-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/></svg></span>
+                            </button>
+                            <button type="button" class="p-row" @click="accountOpen = 'work'; $nextTick(() => document.getElementById('account-work')?.scrollIntoView({ behavior: 'smooth' }))">
+                                <span class="p-row-name" x-text="t('workTitle')"></span>
+                                <span class="p-row-side text-muted"><span x-text="availForm.hours.start + '–' + availForm.hours.end"></span><svg class="p-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/></svg></span>
+                            </button>
+                            <div class="p-line h-pad">
+                                <span class="p-row-name" x-text="t('newClientsRow')"></span>
+                                <button type="button" class="p-switch" :class="availForm.openForNewClients ? 'is-on' : ''" role="switch" :aria-checked="availForm.openForNewClients ? 'true' : 'false'" :aria-label="t('newClientsRow')" :disabled="availSaving" @click="availForm.openForNewClients = !availForm.openForNewClients; saveAvailability()"><i></i></button>
+                            </div>
+                        </div>
+                        <div class="p-rows mt-3">
+                            <div class="p-line h-pad">
+                                <span class="p-row-name" x-text="t('langLabel')"></span>
+                                <span class="flex gap-4" role="group" :aria-label="t('langLabel')">
+                                    <button type="button" @click="setLang('et')" class="text-base" :class="{ 'font-medium': lang === 'et', 'text-muted': lang !== 'et' }" :aria-pressed="lang === 'et'">ET</button>
+                                    <button type="button" @click="setLang('en')" class="text-base" :class="{ 'font-medium': lang === 'en', 'text-muted': lang !== 'en' }" :aria-pressed="lang === 'en'">EN</button>
+                                    <button type="button" @click="setLang('ru')" class="text-base" :class="{ 'font-medium': lang === 'ru', 'text-muted': lang !== 'ru' }" :aria-pressed="lang === 'ru'">RU</button>
+                                </span>
+                            </div>
+                        </div>
                     </div>
                     <div class="max-w-3xl space-y-6 mt-6">
 
@@ -472,38 +601,6 @@
                             </div>
                         </div>
 
-                        <!-- 2. Monthly client billing summary -->
-                        <div x-show="hasOwnClients && invoice.months.length" class="bg-white border border-line p-5">
-                            <p class="eyebrow" x-text="t('invoiceTitle')"></p>
-                            <template x-for="block in invoice.months" :key="block.month">
-                                <div class="mt-4 first:mt-3">
-                                    <div class="flex flex-wrap items-baseline justify-between gap-4">
-                                        <p class="font-sans capitalize" x-text="invoiceMonthLabel(block.month)"></p>
-                                        <div class="flex items-baseline gap-4">
-                                            <button type="button" @click="downloadInvoiceCsv(block)" class="h-link h-link-accent" x-text="t('exportCsv')"></button>
-                                            <p class="font-serif text-2xl font-light" x-show="block.cents" x-text="euroLabel(block.cents)"></p>
-                                        </div>
-                                    </div>
-                                    <div class="border border-line divide-y divide-line mt-3">
-                                        <template x-for="home in block.homes" :key="home.orderId">
-                                            <div class="px-4 py-3.5">
-                                                <div class="flex flex-wrap items-center justify-between gap-3">
-                                                    <p class="text-sm font-sans" x-text="home.customerName"></p>
-                                                    <div class="flex items-center gap-3">
-                                                        <p class="font-serif font-light" x-text="home.cents ? euroLabel(home.cents) : t('agreedPrice')"></p>
-                                                        <button type="button" x-show="home.orderId" @click="toggleInvoiceSent(block.month, home.orderId)" class="h-chip transition-colors" :class="isInvoiced(block.month, home.orderId) ? 'p-badge-ok' : 'p-badge-neutral hover:text-black'" x-text="isInvoiced(block.month, home.orderId) ? t('invoiceSentDone') : t('markInvoiced')"></button>
-                                                    </div>
-                                                </div>
-                                                <template x-for="line in home.lines" :key="line.id">
-                                                    <p class="text-xs text-muted font-sans font-light mt-1" x-text="invoiceLine(line)"></p>
-                                                </template>
-                                            </div>
-                                        </template>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
-
                         <div x-show="earnedCents > 0" class="bg-white border border-line p-5">
                             <p class="eyebrow" x-text="t('earned')"></p>
                             <p class="font-serif text-2xl font-light mt-1" x-text="earnedLabel()"></p>
@@ -512,8 +609,8 @@
                         <!-- 3. Clean Accordion Settings -->
                         <div class="bg-white border border-line divide-y divide-line">
 
-                            <!-- Working hours, extras & new clients -->
-                            <div>
+                            <!-- Working hours and new clients; services and prices have their own screen -->
+                            <div id="account-work">
                                 <button type="button" @click="accountOpen = accountOpen === 'work' ? '' : 'work'" class="w-full px-5 py-4 flex items-center justify-between gap-4 text-left hover:bg-cream/30 transition-colors">
                                     <div class="min-w-0">
                                         <p class="font-sans text-base" x-text="t('workTitle')"></p>
@@ -554,20 +651,6 @@
                                             <span class="h-label" x-text="t('priceNoteLabel')"></span>
                                             <input type="text" class="h-input" maxlength="240" x-model="availForm.priceNote" :placeholder="t('priceNotePh')">
                                         </label>
-                                    </div>
-                                    <div x-show="isCleaningProvider && cleanerExtraRows.length" class="mt-6 pt-5 border-t border-line">
-                                        <p class="eyebrow mb-3" x-text="t('extrasOfferTitle')"></p>
-                                        <div class="border border-line divide-y divide-line">
-                                            <template x-for="ex in cleanerExtraRows" :key="ex.id">
-                                                <div class="px-4 py-2.5 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3">
-                                                    <label class="flex items-center gap-3 cursor-pointer min-w-0 flex-1">
-                                                        <input type="checkbox" class="accent-black" :checked="availForm.offeredExtras.includes(ex.id)" @change="toggleOfferedExtra(ex.id)">
-                                                        <span class="text-sm font-sans font-light truncate" x-text="svcName(ex)"></span>
-                                                    </label>
-                                                    <input x-show="availForm.offeredExtras.includes(ex.id)" type="text" maxlength="40" :placeholder="svcHint(ex) || '45 €'" :aria-label="svcName(ex) + ' ' + t('priceLabel')" x-model="availForm.extraPrices[ex.id]" class="h-input sm:w-32 text-sm sm:text-right py-1">
-                                                </div>
-                                            </template>
-                                        </div>
                                     </div>
                                     <div class="mt-6 pt-5 border-t border-line">
                                         <label class="flex items-start gap-3 cursor-pointer">
@@ -736,6 +819,7 @@
                             </div>
 
                         </div>
+                        <button type="button" class="text-base underline underline-offset-4 h-11" @click="logout()" x-text="t('logOut')"></button>
                     </div>
                 </div>
 
@@ -804,12 +888,11 @@
             </div>
 
             <!-- ═══════════════ CUSTOMER MODAL (create) ═══════════════ -->
-            <div x-show="customerModal.open" x-cloak class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4 bg-black/40" @click.self="customerModal.open = false" @keydown.escape.window="customerModal.open = false">
-                <div class="bg-paper w-full sm:max-w-xl max-h-[92vh] overflow-y-auto border border-line p-6 md:p-8 shadow-lg" role="dialog" aria-modal="true" aria-labelledby="add-client-title">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 id="add-client-title" class="font-serif text-xl font-light" x-text="customerModal.done ? t('addedTitle', { name: customerModal.done.name }) : t('addClientTitle')"></h3>
-                        <button type="button" @click="customerModal.open = false" class="w-11 h-11 flex items-center justify-center hover:bg-cream rounded-full" :aria-label="t('close')"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/></svg></button>
-                    </div>
+            <!-- Lisa klient: a full screen on the phone (docs/disain/ekraanid/LisaKlient.html), a dialog on desktop -->
+            <div x-show="customerModal.open" x-cloak class="fixed inset-0 z-[100] overflow-y-auto bg-paper sm:bg-black/40 sm:flex sm:items-center sm:justify-center sm:p-4" @click.self="customerModal.open = false" @keydown.escape.window="customerModal.open = false">
+                <div class="bg-paper w-full min-h-full sm:min-h-0 sm:max-w-xl sm:max-h-[92vh] sm:overflow-y-auto sm:border sm:border-line px-4 pt-8 sm:p-8 sm:shadow-lg" role="dialog" aria-modal="true" aria-labelledby="add-client-title">
+                    <button type="button" class="p-back" @click="customerModal.open = false"><svg class="p-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6"/></svg><span x-text="t('tabHomes')"></span></button>
+                    <h3 id="add-client-title" class="p-sub-title mb-6" x-text="customerModal.done ? t('addedTitle', { name: customerModal.done.name }) : t('addClientTitle')"></h3>
 
                     <div x-show="customerModal.done" x-cloak class="space-y-5 font-sans">
                         <p class="text-sm font-light" x-text="customerModal.done && customerModal.done.when ? t('addedWhen', { when: customerModal.done.when }) : ''"></p>
@@ -830,19 +913,29 @@
                             <p class="text-xs text-muted font-light" x-text="t('quickInviteBanner')"></p>
                             <button type="button" @click="shareInvite(provider.inviteUrl)" class="p-btn-2 p-btn-sm shrink-0" x-text="t('shareInviteBtn')"></button>
                         </div>
-                        <div class="grid sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="h-label" x-text="t('nameReq')"></label>
-                                <input type="text" x-model="customerModal.form.name" required class="h-input" autocomplete="name">
-                            </div>
-                            <div>
-                                <label class="h-label" x-text="t('emailReq')"></label>
-                                <input type="email" x-model="customerModal.form.email" required class="h-input" autocomplete="email">
-                            </div>
+                        <div>
+                            <label class="eyebrow" for="add-client-name" x-text="t('nameReq')"></label>
+                            <input id="add-client-name" type="text" x-model="customerModal.form.name" required class="p-field" :placeholder="t('namePh')" autocomplete="name">
                         </div>
                         <div>
-                            <label class="h-label" x-text="t('addressReq')"></label>
-                            <input type="text" x-model="customerModal.form.address" required class="h-input" :placeholder="t('addressPh')" autocomplete="street-address">
+                            <label class="eyebrow" for="add-client-phone" x-text="t('phoneLabel')"></label>
+                            <input id="add-client-phone" type="tel" x-model="customerModal.form.phone" class="p-field" placeholder="+372 5555 5555" autocomplete="tel">
+                        </div>
+                        <div>
+                            <label class="eyebrow" for="add-client-email" x-text="t('emailReq')"></label>
+                            <input id="add-client-email" type="email" x-model="customerModal.form.email" required class="p-field" :placeholder="t('emailPh')" autocomplete="email">
+                        </div>
+                        <div>
+                            <label class="eyebrow" for="add-client-address" x-text="t('addressReq')"></label>
+                            <input id="add-client-address" type="text" x-model="customerModal.form.address" required class="p-field" :placeholder="t('addressPh')" autocomplete="street-address">
+                        </div>
+                        <div>
+                            <p class="eyebrow" x-text="t('rhythmLabel')"></p>
+                            <div class="grid grid-cols-2 gap-2 mt-2.5">
+                                <template x-for="r in rhythmChoices" :key="r.id">
+                                    <button type="button" @click="customerModal.form.frequency = r.id" class="p-seg" :class="customerModal.form.frequency === r.id ? 'is-on' : ''" :aria-pressed="customerModal.form.frequency === r.id" x-text="t(r.key)"></button>
+                                </template>
+                            </div>
                         </div>
 
                         <div>
@@ -850,15 +943,6 @@
                             <div class="flex flex-wrap gap-2">
                                 <template x-for="s in sizeChoices" :key="s.id">
                                     <button type="button" @click="customerModal.form.size = s.id" class="min-h-11 px-3 border text-sm font-light" :class="customerModal.form.size === s.id ? 'bg-black text-paper border-black' : 'border-line text-black'" :aria-pressed="customerModal.form.size === s.id" x-text="t(s.key)"></button>
-                                </template>
-                            </div>
-                        </div>
-
-                        <div>
-                            <p class="h-label" x-text="t('rhythmLabel')"></p>
-                            <div class="flex flex-wrap gap-2">
-                                <template x-for="r in rhythmChoices" :key="r.id">
-                                    <button type="button" @click="customerModal.form.frequency = r.id" class="min-h-11 px-3 border text-sm font-light" :class="customerModal.form.frequency === r.id ? 'bg-black text-paper border-black' : 'border-line text-black'" :aria-pressed="customerModal.form.frequency === r.id" x-text="t(r.key)"></button>
                                 </template>
                             </div>
                         </div>
@@ -899,10 +983,6 @@
                             <button type="button" @click="customerModal.moreOpen = !customerModal.moreOpen" class="text-xs font-sans text-muted hover:text-black underline underline-offset-4" x-text="customerModal.moreOpen ? t('lessOptions') : t('moreOptions')"></button>
                             <div x-show="customerModal.moreOpen" x-cloak class="mt-4 pt-4 border-t border-line space-y-5">
                                 <div>
-                                    <label class="h-label" x-text="t('phoneOpt')"></label>
-                                    <input type="tel" x-model="customerModal.form.phone" class="h-input" autocomplete="tel">
-                                </div>
-                                <div>
                                     <button type="button" x-show="!customerModal.form.showContact2" @click="customerModal.form.showContact2 = true" class="h-link h-link-accent" x-text="t('addFamilyMember')"></button>
                                     <div x-show="customerModal.form.showContact2" x-cloak class="space-y-3 border border-line bg-white p-4">
                                         <div class="flex items-center justify-between">
@@ -932,9 +1012,8 @@
                         </div>
                         <p x-show="customerModal.error" x-cloak class="text-sm text-accent font-light" x-text="customerModal.error"></p>
                         <button type="button" x-show="customerModal.upgrade" x-cloak @click="customerModal.open = false; activeTab = 'account'; accountOpen = 'plan'" class="p-btn-2" x-text="t('seePlans')"></button>
-                        <div class="flex gap-3 pt-2">
-                            <button type="button" @click="customerModal.open = false" class="p-btn-2" x-text="t('cancel')"></button>
-                            <button type="submit" :disabled="customerModal.saving" class="p-btn flex-1" x-text="customerModal.saving ? t('savingProfile') : t('addClientTitle')"></button>
+                        <div class="sticky bottom-0 bg-paper -mx-4 px-4 pt-3 pb-5 sm:static sm:mx-0 sm:px-0 sm:pb-0">
+                            <button type="submit" :disabled="customerModal.saving" class="p-go is-wide" x-text="customerModal.saving ? t('savingProfile') : t('addClientTitle')"></button>
                         </div>
                     </form>
                 </div>
@@ -1304,6 +1383,32 @@
 
             // ---- Täna ----
             tabToday: { et: 'Tööd', en: 'Jobs' },
+            nowWord: { et: 'Praegu', en: 'Now' },
+            todayWord: { et: 'Täna', en: 'Today' },
+            laterToday: { et: 'Hiljem täna', en: 'Later today' },
+            rowBring: { et: 'Võta kaasa', en: 'Bring' },
+            flowersWord: { et: 'Lilled', en: 'Flowers' },
+            accessLaterShort: { et: 'Näed 2 tundi enne', en: 'Shown 2 hours before' },
+            noteForClient: { et: 'Märkus kliendile', en: 'Note for the client' },
+            doneNotified: { et: '{name} sai teate', en: '{name} got the notice' },
+            doneNoNotice: { et: 'Klient teadet ei saanud', en: 'The client got no notice' },
+            nextTime: { et: 'Järgmine kord', en: 'Next time' },
+            toMonthSummary: { et: 'Kuu kokkuvõttesse', en: 'Into the month’s summary' },
+            nextHome: { et: 'Järgmine kodu: {street}', en: 'Next home: {street}' },
+            backToDay: { et: 'Tagasi päeva juurde', en: 'Back to the day' },
+            monthRow: { et: '{month} kokkuvõte', en: '{month} summary' },
+            monthTotal: { et: 'Kokku teenitud', en: 'Earned in total' },
+            monthEmpty: { et: 'Selles kuus ei ole veel tehtud töid.', en: 'No work done this month yet.' },
+            markInvoicedLong: { et: 'Märgi arve saadetuks', en: 'Mark as invoiced' },
+            downloadStatement: { et: 'Laadi väljavõte alla', en: 'Download the statement' },
+            servicesTitle: { et: 'Teenused ja hinnad', en: 'Services and prices' },
+            servicesLead: { et: 'Klient näeb neid oma äpis. Lillede summat saab klient tellides muuta.', en: 'Clients see these in their app. The client can change the flower amount when ordering.' },
+            servicesEmpty: { et: 'Lisa teenused, mida pakud. Klient näeb neid koos hinnaga.', en: 'Add the services you offer. The client sees them with the price.' },
+            addService: { et: 'Lisa teenus', en: 'Add a service' },
+            removeService: { et: 'Eemalda {name}', en: 'Remove {name}' },
+            newClientsRow: { et: 'Võtan uusi kliente', en: 'I take new clients' },
+            namePh: { et: 'Ees- ja perekonnanimi', en: 'First and last name' },
+            emailPh: { et: 'nimi@näide.ee', en: 'name@example.com' },
             guideThere: { et: 'Juhata kohale', en: 'Directions', ru: 'Маршрут' },
             tomorrowEyebrow: { et: 'Homme', en: 'Tomorrow', ru: 'Завтра' },
             todayEmpty: { et: 'Täna sul kodusid ei ole.', en: 'You have no homes today.' },
@@ -1771,6 +1876,10 @@
             providerAway: { from: '', to: '', busy: false, error: '', saved: false },
             todaySavingId: '',
             activeTab: 'today',
+            visitId: '',
+            doneInfo: null,
+            monthIndex: -1,
+            servicePickerOpen: false,
             tabs: [
                 { id: 'today', key: 'tabToday', icon: 'M12 8v4l2.5 2.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
                 { id: 'calendar', key: 'tabCalendar', icon: 'M8 3v3m8-3v3M4 9h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z' },
@@ -2003,7 +2112,11 @@
                 return this.customers.filter((c) => !q || c.name.toLowerCase().includes(q) || (c.address || '').toLowerCase().includes(q));
             },
             get liveBookings() { return this.bookings.filter((b) => ['scheduled', 'confirmed'].includes(b.status)); },
-            get todayVisits() { return this.liveBookings.filter((b) => this.dateOf(b.scheduledAt) === this.todayStr).sort(this.byTime); },
+            get todayVisits() {
+                const day = this.liveBookings.filter((b) => this.dateOf(b.scheduledAt) === this.todayStr);
+                // A flower visit next to the same home's clean is part of that clean (Võta kaasa); Tehtud closes both
+                return day.filter((b) => b.serviceId !== 'flowers' || !day.some((o) => o.orderId === b.orderId && o.serviceId !== 'flowers')).sort(this.byTime);
+            },
             get tomorrowVisits() {
                 if (!this.todayStr || !T()) return [];
                 const day = T().shiftDateString(this.todayStr, 1);
@@ -2287,7 +2400,7 @@
                     await this.loadData(this.range.from, this.range.to);
                 } catch (e) { v.error = e.message || this.t('saveFailed'); } finally { v.saving = false; }
             },
-            async completeVisit(b, note) {
+            async completeVisit(b, note, quiet) {
                 if (!b || this.todaySavingId) return;
                 this.todaySavingId = b.id;
                 this.globalError = '';
@@ -2300,15 +2413,77 @@
                     if (res.status === 401) { this.logout(); return; }
                     if (!res.ok) { this.globalError = this.errText(d); return; }
                     const moved = Array.isArray(d.rhythm) && d.rhythm.length > 0;
-                    if (d.already) this.showToast(this.t('alreadyDone'));
+                    if (quiet) { /* the Tehtud screen says it */ }
+                    else if (d.already) this.showToast(this.t('alreadyDone'));
                     else if (d.notified === false) this.showToast(this.t('doneQuiet'));
                     else this.showToast(moved ? this.t('markedDoneRhythm') : this.t('markedDone'));
                     if (text) this.todayNotes[b.id] = '';
                     await this.loadData(this.range.from, this.range.to);
+                    return d;
                 } catch (e) { this.globalError = this.t('saveFailed'); }
                 finally { this.todaySavingId = ''; }
             },
-            markTodayDone(b) { return this.completeVisit(b, this.todayNotes[b.id]); },
+            async markTodayDone(b) {
+                // Captured before the reload: the Tehtud screen names the home and what goes into the month
+                const day = this.dateOf(b.scheduledAt);
+                const sameDay = this.bookings.filter((o) => o.orderId === b.orderId && o.status !== 'cancelled' && this.dateOf(o.scheduledAt) === day);
+                const cents = sameDay.reduce((sum, o) => sum + (this.priceCents(o.price) || 0), 0);
+                const info = { id: b.id, orderId: b.orderId, street: this.streetTitle(b), name: b.customerName || '', firstName: String(b.customerName || '').trim().split(/\s+/)[0] || '', cents };
+                const d = await this.completeVisit(b, this.todayNotes[b.id], true);
+                if (!d) return;
+                const now = Date.now();
+                const next = this.liveBookings.filter((o) => o.orderId === b.orderId && o.serviceId !== 'flowers' && new Date(o.scheduledAt).getTime() > now).sort(this.byTime)[0];
+                this.doneInfo = { ...info, notified: d.notified !== false && !d.already, next: next ? this.fmtDateShort(next.scheduledAt) + ' ' + this.fmtTime(next.scheduledAt) : '' };
+                this.activeTab = 'done';
+                window.scrollTo({ top: 0 });
+            },
+            openVisit(b) {
+                if (!b) return;
+                this.visitId = b.id;
+                this.activeTab = 'visit';
+                window.scrollTo({ top: 0 });
+            },
+            get nextHomeVisit() { return this.todayVisits.find((o) => !this.doneInfo || o.orderId !== this.doneInfo.orderId) || null; },
+            get openedVisit() { return this.bookings.find((b) => b.id === this.visitId) || null; },
+            visitEyebrow(b) {
+                const start = new Date(b.scheduledAt).getTime();
+                const end = new Date(b.endTime || b.scheduledAt).getTime();
+                const now = this.nowTick || Date.now();
+                const day = this.dateOf(b.scheduledAt);
+                const when = now >= start && now <= end ? this.t('nowWord') : (day === this.todayStr ? this.t('todayWord') : this.fmtDateShort(b.scheduledAt));
+                return when + ' · ' + this.visitWhen(b);
+            },
+            // Flowers ride along with the clean: they are a "Võta kaasa" line, not a job of their own
+            visitJobLine(b) {
+                const flowerNames = new Set(this.bookings.filter((o) => o.serviceId === 'flowers').map((o) => o.serviceName));
+                const first = b.kind === 'extra' && b.serviceName ? b.serviceName : (this.isCleaningProvider ? this.t('svcSignCleaning') : '');
+                const parts = [...new Set([first, ...this.todayTasks(b)].filter((x) => x && !flowerNames.has(x)))];
+                return parts.map((p, i) => (i ? p.charAt(0).toLocaleLowerCase() + p.slice(1) : p)).join(' · ');
+            },
+            visitRows(b) {
+                const rows = [];
+                const add = (key, label, value) => { if (String(value || '').trim()) rows.push({ key, label, value }); };
+                add('access', this.t('access'), this.entranceCode(b) || (this.hasAccess(b) ? this.t('accessLaterShort') : ''));
+                add('job', this.t('jobLabel'), [this.visitJobLine(b), this.jobText(b)].filter(Boolean).join(' · '));
+                add('bring', this.t('rowBring'), this.bringValue(b));
+                add('standing', this.t('standing'), this.standingNote(b));
+                add('water', this.t('waterMain'), this.passFact(b, 'water'));
+                add('panel', this.t('breaker'), this.passFact(b, 'panel'));
+                return rows;
+            },
+            bringValue(b) {
+                const line = this.bringLine(b);
+                if (!line) return '';
+                return [this.t('flowersWord')].concat(line.split(' · ').slice(1)).join(' · ');
+            },
+            priceCents(text) {
+                const m = String(text || '').replace(/\s/g, '').match(/^(\d+(?:[.,]\d{1,2})?)(?:€|eur)?$/i);
+                return m ? Math.round(Number(m[1].replace(',', '.')) * 100) : 0;
+            },
+            euroShort(cents) {
+                const n = (Number(cents) || 0) / 100;
+                return (Number.isInteger(n) ? String(n) : n.toFixed(2).replace('.', ',')) + ' €';
+            },
             async markNoEntry(b) {
                 if (!b || this.todaySavingId) return;
                 this.todaySavingId = b.id;
@@ -2319,6 +2494,7 @@
                     if (res.status === 401) { this.logout(); return; }
                     if (!res.ok) { this.globalError = this.errText(d); return; }
                     this.showToast(this.t('noEntryDone'));
+                    if (this.activeTab === 'visit') this.activeTab = 'today';
                     await this.loadData(this.range.from, this.range.to);
                 } catch (e) { this.globalError = this.t('saveFailed'); }
                 finally { this.todaySavingId = ''; }
@@ -2516,7 +2692,9 @@
                 const extraFlowers = this.bookings.some((o) => o.orderId === b.orderId && o.status !== 'cancelled' && this.dateOf(o.scheduledAt) === this.dateOf(b.scheduledAt) && (o.serviceId === 'flowers' || o.flowersOrdered));
                 if (!b.flowersOrdered && !c?.flowers?.auto && !extraFlowers) return '';
                 const pref = c?.homeProfile?.flowerPreference;
-                const base = this.t('bringFlowers');
+                // The amount the client chose for this day's bouquet, so she knows what to spend
+                const priced = this.bookings.find((o) => o.orderId === b.orderId && o.status !== 'cancelled' && o.serviceId === 'flowers' && o.price && this.dateOf(o.scheduledAt) === this.dateOf(b.scheduledAt));
+                const base = this.t('bringFlowers') + (priced ? ' · ' + priced.price : '');
                 return pref ? base + ' · ' + pref : base;
             },
             cancelVisit(b) {
@@ -2882,6 +3060,56 @@
                 a.click();
                 URL.revokeObjectURL(url);
             },
+            capFirst(text) { const v = String(text || ''); return v.charAt(0).toLocaleUpperCase() + v.slice(1); },
+            get currentMonthKey() { return String(this.todayStr || '').slice(0, 7); },
+            get monthChoices() {
+                const keys = (this.invoice?.months || []).map((m) => m.month).concat(this.currentMonthKey).filter(Boolean);
+                return [...new Set(keys)].sort();
+            },
+            get monthPos() {
+                const n = this.monthChoices.length;
+                return this.monthIndex >= 0 && this.monthIndex < n ? this.monthIndex : n - 1;
+            },
+            get monthBlock() {
+                const month = this.monthChoices[this.monthPos] || this.currentMonthKey;
+                return (this.invoice?.months || []).find((m) => m.month === month) || { month, cents: 0, homes: [] };
+            },
+            get currentMonthCents() {
+                return ((this.invoice?.months || []).find((m) => m.month === this.currentMonthKey) || {}).cents || 0;
+            },
+            /** "Novembri kokkuvõte": Estonian needs the genitive, en and ru take the month as it stands */
+            monthGenitive(month) {
+                const n = Number(String(month || '').slice(5, 7));
+                if (!n) return '';
+                if (this.lang === 'et') return ['jaanuari', 'veebruari', 'märtsi', 'aprilli', 'mai', 'juuni', 'juuli', 'augusti', 'septembri', 'oktoobri', 'novembri', 'detsembri'][n - 1];
+                return T().formatDate(`${month}-01T12:00:00`, this.deskLocale(), { month: 'long' });
+            },
+            countWord(n, kind) {
+                const forms = {
+                    et: { visit: ['visiit', 'visiiti'], home: ['kodu', 'kodu'], time: ['kord', 'korda'] },
+                    en: { visit: ['visit', 'visits'], home: ['home', 'homes'], time: ['time', 'times'] },
+                    ru: { visit: ['визит', 'визита', 'визитов'], home: ['дом', 'дома', 'домов'], time: ['раз', 'раза', 'раз'] },
+                }[this.lang] || {};
+                const f = forms[kind] || ['', ''];
+                if (this.lang === 'ru') {
+                    const m10 = n % 10; const m100 = n % 100;
+                    const i = m10 === 1 && m100 !== 11 ? 0 : (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? 1 : 2);
+                    return n + ' ' + f[i];
+                }
+                return n + ' ' + (n === 1 ? f[0] : f[1]);
+            },
+            monthCountLine(block) {
+                const visits = (block.homes || []).reduce((sum, h) => sum + (h.lines || []).filter((l) => l.serviceId !== 'flowers').length, 0);
+                return this.countWord(visits, 'visit') + ' · ' + this.countWord((block.homes || []).length, 'home');
+            },
+            homeCountLine(home) {
+                const lines = home.lines || [];
+                const times = lines.filter((l) => l.serviceId !== 'flowers').length;
+                const flowers = lines.some((l) => l.serviceId === 'flowers');
+                return [times ? this.countWord(times, 'time') : '', flowers ? this.t('flowersWord').toLocaleLowerCase() : ''].filter(Boolean).join(' · ');
+            },
+            get offeredRows() { return this.cleanerExtraRows.filter((ex) => this.availForm.offeredExtras.includes(ex.id)); },
+            get addableRows() { return this.cleanerExtraRows.filter((ex) => !this.availForm.offeredExtras.includes(ex.id)); },
             invoiceLine(line) {
                 const name = line.name || this.t('svcSignCleaning');
                 const price = line.cents ? (line.price || this.euroLabel(line.cents)) : this.t('agreedPrice');
@@ -3036,15 +3264,17 @@
                 const tw = asked || cleanClock || ({ morning: '10:00', afternoon: '13:00' }[r.timeWindow] || '10:00');
                 let dur = r.type === 'reschedule' && r.targetBookingId ? (() => { const b = this.bookings.find((x) => x.id === r.targetBookingId); return b ? Math.round((new Date(b.endTime) - new Date(b.scheduledAt)) / 60000) : 180; })() : (svc?.durationMin || 60);
                 if (!this.durationOptions.includes(dur)) dur = 60;
-                const includedPrice = this.termsIncluded(r) && r.kind !== 'issue' && r.category !== 'warranty' ? this.t('termsIncluded') : '';
+                // Flowers carry the amount the client chose; that is what she spends and bills
+                const chosenFlowers = r.serviceId === 'flowers' && r.price ? r.price : '';
+                const includedPrice = !chosenFlowers && this.termsIncluded(r) && r.kind !== 'issue' && r.category !== 'warranty' ? this.t('termsIncluded') : '';
                 const customPrice = !includedPrice && r.serviceId && this.availForm?.extraPrices?.[r.serviceId] ? this.availForm.extraPrices[r.serviceId] : '';
-                this.confirmModal = { open: true, request: r, date, time: tw, durationMin: dur, price: includedPrice || customPrice, message: '', force: false, conflicts: [], error: '', saving: false };
+                this.confirmModal = { open: true, request: r, date, time: tw, durationMin: dur, price: chosenFlowers || includedPrice || customPrice, message: '', force: false, conflicts: [], error: '', saving: false };
             },
             async confirmRequest() {
                 const m = this.confirmModal; if (m.saving) return; m.saving = true; m.error = '';
                 try {
                     // Included by the home's terms → the client already sees "hinnas sees"; never send an invented price
-                    const res = await this.api('/api/haldus/requests/confirm', { method: 'POST', body: JSON.stringify({ requestId: m.request.id, date: m.date, time: m.time, durationMin: m.durationMin, price: this.termsIncluded(m.request) ? '' : m.price, message: m.message, force: m.force }) });
+                    const res = await this.api('/api/haldus/requests/confirm', { method: 'POST', body: JSON.stringify({ requestId: m.request.id, date: m.date, time: m.time, durationMin: m.durationMin, price: this.termsIncluded(m.request) && !(m.request.serviceId === 'flowers' && m.request.price) ? '' : m.price, message: m.message, force: m.force }) });
                     const d = await res.json().catch(() => ({}));
                     if (res.status === 409 && d.code === 'CONFLICT') { m.conflicts = d.conflicts || []; return; }
                     if (res.status === 401) { this.logout(); return; }

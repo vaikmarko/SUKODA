@@ -368,6 +368,45 @@ body {
 }
 .h-dock.is-away { display: none; }
 
+/* Cleaner sub-screens: Tehtud, Kuu kokkuvõte, Teenused (docs/disain/ekraanid) */
+.h-done-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 50%;
+  background: var(--color-black);
+  color: var(--color-paper);
+}
+.h-done-mark svg { width: 1.75rem; height: 1.75rem; }
+.h-big-sum {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 3.5rem;
+  line-height: 1;
+  font-variant-numeric: lining-nums;
+}
+.p-line.h-pad { padding: 0.875rem 1.25rem; }
+.h-month-title {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 2rem;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.h-price-in {
+  width: 6.5rem;
+  height: 2.75rem;
+  flex-shrink: 0;
+  padding: 0 0.875rem;
+  border: 1px solid var(--color-line-strong);
+  border-radius: 12px;
+  background: var(--color-paper);
+  font: inherit;
+  text-align: right;
+}
+
 /* Book and account screens: docs/disain/ekraanid/Telli.html, Koristus.html, Lilled.html, Minu.html */
 .p-sub-title {
   font-family: var(--font-serif);
@@ -600,6 +639,37 @@ body {
   font-family: var(--font-serif);
   font-weight: 500;
   font-size: 2.125rem;
+  line-height: 1;
+  font-variant-numeric: lining-nums;
+}
+/* Lilled: the amount the resident turns, one card with − and + */
+.p-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: #fff;
+  border: 1px solid var(--color-line);
+  border-radius: 20px;
+  padding: 0.875rem 1rem;
+}
+.p-stepper-btn {
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  border: 1px solid var(--color-line-strong);
+  background: #fff;
+  color: var(--color-black);
+}
+.p-stepper-btn svg { width: 1.25rem; height: 1.25rem; }
+.p-stepper-btn:disabled { opacity: 0.35; }
+.p-stepper-value {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 2.5rem;
   line-height: 1;
   font-variant-numeric: lining-nums;
 }
