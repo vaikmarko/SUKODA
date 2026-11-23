@@ -31,6 +31,15 @@ test('every { et, en } text on the landing and code pages has ru', () => {
   }
 });
 
+test('the monthly preview does not hard-code a masculine Russian ordinal', () => {
+  const ru = read('assets/js/haldus-ru.js');
+  const html = read('haldus.html');
+  assert.match(ru, /schedPreviewMonth: 'Каждый месяц, \{nth\} \{dow\} в \{time\}/);
+  assert.equal(ru.includes('{nth}-й'), false);
+  assert.match(html, /nth: this\.ruWeekdayOrdinal\(nth, jsDow\)/);
+  assert.match(html, /day === 0 \? 'е'/);
+});
+
 test('the desk Russian file has no leftover keys the desk no longer uses', () => {
   const html = read('haldus.html');
   const ru = read('assets/js/haldus-ru.js');

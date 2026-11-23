@@ -552,7 +552,7 @@
                                 <button type="button" @click="accountOpen = accountOpen === 'away' ? '' : 'away'" class="w-full px-5 py-4 flex items-center justify-between gap-4 text-left hover:bg-cream/30 transition-colors">
                                     <div class="min-w-0">
                                         <p class="font-sans text-base" x-text="t('awayTitle')"></p>
-                                        <p class="text-xs text-muted font-sans font-light mt-0.5 truncate" x-show="provider?.awayPeriods?.length" x-text="provider.awayPeriods.map((ap) => fmtDateShort(ap.from) + (ap.to && ap.to !== ap.from ? '–' + fmtDateShort(ap.to) : '')).join(', ')"></p>
+                                        <p class="text-xs text-muted font-sans font-light mt-0.5 truncate" x-show="provider?.awayPeriods?.length" x-text="(provider?.awayPeriods || []).map((ap) => fmtDateShort(ap.from) + (ap.to && ap.to !== ap.from ? '–' + fmtDateShort(ap.to) : '')).join(', ')"></p>
                                     </div>
                                     <span class="text-xs font-sans text-muted shrink-0" x-text="accountOpen === 'away' ? t('close') : t('edit')"></span>
                                 </button>
@@ -2028,6 +2028,14 @@
                 const base = `${f}, ${dow} ${this.t('atTime')} ${s.time} · ${s.durationMin} ${this.t('minutes')}`;
                 return s.price ? `${base} · ${s.price}` : base;
             },
+            // Same rule as ruWeekdayOrdinal in functions/lib/haldus-core.js. The desk cannot import that file.
+            ruWeekdayOrdinal(nth, weekday) {
+                const n = Math.trunc(Number(nth));
+                const day = Math.trunc(Number(weekday));
+                if (!Number.isFinite(n) || n < 1) return '';
+                const suffix = day === 0 ? 'е' : (day === 3 || day === 5 || day === 6) ? 'я' : 'й';
+                return `${n}-${suffix}`;
+            },
             schedulePreview(s) {
                 if (!s || !s.anchorDate || !s.time) return '';
                 const [y, m, d] = s.anchorDate.split('-').map(Number);
@@ -2041,7 +2049,7 @@
                 }
                 if (this.lang === 'ru') {
                     const dow = T().formatDate(`${s.anchorDate}T12:00:00`, 'ru-RU', { weekday: 'long' });
-                    if (s.frequency === 'monthly') return this.t('schedPreviewMonth', { nth, dow, time: s.time });
+                    if (s.frequency === 'monthly') return this.t('schedPreviewMonth', { nth: this.ruWeekdayOrdinal(nth, jsDow), dow, time: s.time });
                     return this.t(s.frequency === 'weekly' ? 'schedPreviewWeek' : 'schedPreviewTwo', { dow, time: s.time, from: this.fmtDateShort(s.anchorDate) });
                 }
                 const dow = WEEKDAYS[jsDow];

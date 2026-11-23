@@ -74,6 +74,17 @@ test('langOf keeps et, en and ru; anything else is Estonian', () => {
   assert.equal(core.langOf('EN'), 'et', 'codes are lowercase');
 });
 
+test('ruWeekdayOrdinal agrees with the weekday’s gender', () => {
+  assert.equal(core.ruWeekdayOrdinal(2, 3), '2-я');
+  assert.equal(core.ruWeekdayOrdinal(2, 5), '2-я');
+  assert.equal(core.ruWeekdayOrdinal(2, 6), '2-я');
+  assert.equal(core.ruWeekdayOrdinal(2, 0), '2-е');
+  assert.equal(core.ruWeekdayOrdinal(1, 1), '1-й');
+  assert.equal(core.ruWeekdayOrdinal(4, 2), '4-й');
+  assert.equal(core.ruWeekdayOrdinal(5, 4), '5-й');
+  assert.equal(core.ruWeekdayOrdinal(0, 3), '');
+});
+
 test('ruPlural follows Russian count forms', () => {
   assert.equal(core.ruPlural(1, 'дом', 'дома', 'домов'), 'дом');
   assert.equal(core.ruPlural(21, 'дело', 'дела', 'дел'), 'дело');

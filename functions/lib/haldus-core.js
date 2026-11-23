@@ -36,6 +36,19 @@ function pick(obj, lang) {
   return obj.et;
 }
 
+/**
+ * Nominative ordinal in front of a Russian weekday: «2-я среда», «2-е воскресенье», «2-й понедельник».
+ * weekday is Date.getUTCDay() (0 Sunday … 6 Saturday). A month has at most five of one weekday.
+ * Sunday is neuter, Wednesday, Friday and Saturday are feminine, the rest masculine.
+ */
+function ruWeekdayOrdinal(nth, weekday) {
+  const n = Math.trunc(Number(nth));
+  const day = Math.trunc(Number(weekday));
+  if (!Number.isFinite(n) || n < 1) return '';
+  const suffix = day === 0 ? 'е' : (day === 3 || day === 5 || day === 6) ? 'я' : 'й';
+  return `${n}-${suffix}`;
+}
+
 /** Russian noun after a count: 1 дом, 2 дома, 5 домов, 11 домов, 21 дом. */
 function ruPlural(n, one, few, many) {
   const value = Math.abs(Math.trunc(Number(n)));
@@ -1831,6 +1844,7 @@ module.exports = {
   LANGS,
   langOf,
   pick,
+  ruWeekdayOrdinal,
   ruPlural,
   PROVIDER_PLANS,
   PLAN_ACTIVE_STATUSES,
