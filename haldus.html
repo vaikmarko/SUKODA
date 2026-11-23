@@ -280,7 +280,7 @@
                             <p class="eyebrow" x-text="t('tomorrowEyebrow')"></p>
                             <div class="p-rows mt-2.5">
                                 <template x-for="b in tomorrowVisits" :key="'tm-' + b.id">
-                                    <button type="button" class="p-row" @click="activeTab = 'calendar'; selectDay(dateOf(b.scheduledAt))">
+                                    <button type="button" class="p-row" @click="activeTab = 'calendar'; selectedDay = dateOf(b.scheduledAt); calMonth = (dateOf(b.scheduledAt) || calMonth).slice(0, 7)">
                                         <span class="font-serif text-2xl w-16 shrink-0" x-text="fmtTime(b.scheduledAt)"></span>
                                         <span class="min-w-0 text-left">
                                             <span class="p-row-name" x-text="streetTitle(b)"></span>

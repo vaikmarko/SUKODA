@@ -24,6 +24,36 @@ test('last visit and done-on copy are in the served kodu script', () => {
   assert.match(served, /feedbackAction: \{ et: 'Jäta tagasiside või märkus'/);
 });
 
+test('the home actions open the screen they name', () => {
+  const html = read('minu.html');
+  const writeAt = html.indexOf("t('writeTo'");
+  assert.ok(writeAt > 0);
+  const writeChunk = html.slice(html.lastIndexOf('<button', writeAt), writeAt);
+  assert.match(writeChunk, /openVisitFeedback\(\)/);
+  assert.doesNotMatch(writeChunk, /lastVisit/);
+  assert.match(html, /kind === 'profile'\) \{ this\.activeTab = 'mine'; this\.openMine\('notes'\); this\.profileEditing = true; return; \}/);
+  assert.match(html, /x-show="nextThing\.away"/);
+  const dealAt = html.indexOf('get dealIncludes');
+  assert.doesNotMatch(html.slice(dealAt, dealAt + 450), /includedShort/);
+
+  const mine = read('assets/js/minu/minu.js');
+  assert.match(mine, /openTelli\('flowers'\)/);
+  assert.doesNotMatch(mine, /setTelliOpen\('flowers'\)/);
+  assert.match(mine, /x-show="dealIncludes"/);
+
+  const desk = read('haldus.html');
+  const tomorrowAt = desk.indexOf('tomorrowVisits');
+  const tomorrowChunk = desk.slice(tomorrowAt, tomorrowAt + 700);
+  assert.match(tomorrowChunk, /selectedDay = dateOf\(b\.scheduledAt\)/);
+  assert.doesNotMatch(tomorrowChunk, /selectDay\(/);
+
+  assert.doesNotMatch(read('assets/js/minu/kodu.js'), /«Дом»/);
+  assert.doesNotMatch(read('assets/js/minu/telli.js'), /«Дом»/);
+  assert.doesNotMatch(read('assets/js/minu/dict.js'), /«Дом»/);
+  assert.doesNotMatch(read('assets/js/minu/dict.js'), /Teenuste alt/);
+  assert.match(read('index.html'), /pvTabHome: \{ et: 'Kodu', en: 'Home', ru: 'Главная' \}/);
+});
+
 test('Alpine starts after the portal dictionary is merged', () => {
   const main = read('assets/js/main.js');
   assert.match(main, /queueMicrotask\(\(\) => Alpine\.start\(\)\)/);

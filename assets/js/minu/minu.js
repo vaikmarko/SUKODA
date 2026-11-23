@@ -215,14 +215,14 @@ export const minuHtml = `<div x-show="activeTab === 'mine'" x-transition:enter="
                                     <span class="text-muted" x-text="t('priceWord')"></span>
                                     <span class="font-medium text-right" x-text="dealPrice"></span>
                                 </div>
-                                <div class="px-5 py-4">
+                                <div class="px-5 py-4" x-show="dealIncludes">
                                     <p class="text-muted" x-text="t('includedLabel')"></p>
                                     <p class="mt-1.5" x-text="dealIncludes"></p>
                                 </div>
                             </div>
                             <p class="eyebrow mt-5" x-show="serviceById('flowers')" x-text="t('alsoEach')"></p>
                             <div class="p-rows mt-2.5" x-show="serviceById('flowers')">
-                                <button type="button" class="p-row" @click="activeTab = 'extras'; setTelliOpen('flowers')">
+                                <button type="button" class="p-row" @click="activeTab = 'extras'; openTelli('flowers')">
                                     <span class="p-row-name" x-text="t('addonFlowers')"></span>
                                     <span class="p-row-side"><span class="text-muted" x-text="t('addShort')"></span>${mineChev}</span>
                                 </button>

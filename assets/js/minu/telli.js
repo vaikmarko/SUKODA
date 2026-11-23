@@ -75,7 +75,7 @@ add({
   gatherLead: { et: 'Seda teenust veel ei ole. Kui soovid, paneme huvi kirja.', en: 'This service is not here yet. If you want it, we note your interest.', ru: 'Этой услуги пока нет. Если она вам нужна, мы запишем интерес.' },
   wantIt: { et: 'Soovin', en: 'I want this', ru: 'Хочу' },
   noPrice: { et: 'Sellel teenusel ei ole veel hinda, seepärast ei saa seda praegu tellida.', en: 'This service has no price yet, so it cannot be ordered right now.', ru: 'У этой услуги пока нет цены, поэтому заказать её сейчас нельзя.' },
-  paidBack: { et: 'Makse õnnestus. Aeg on näha Kodu vaates.', en: 'Payment done. The time is shown on the Home tab.', ru: 'Оплата прошла. Время видно на вкладке «Дом».' },
+  paidBack: { et: 'Makse õnnestus. Aeg on näha Kodu vaates.', en: 'Payment done. The time is shown on the Home tab.', ru: 'Оплата прошла. Время видно на вкладке «Главная».' },
   payCancelled: { et: 'Makse jäi pooleli. Koristust ei tellitud, proovi uuesti.', en: 'The payment was not completed. The clean was not ordered, try again.', ru: 'Оплата не завершена. Уборка не заказана, попробуйте снова.' },
   includedShort: {
     et: 'Voodipesu, rätikud ja masinate hooldus on sees.',

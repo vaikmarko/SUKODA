@@ -81,7 +81,7 @@ Object.assign(dict, {
   notedOpen: { et: 'Panime soovi kirja. Kui see teenus sinu kodule avaneb, anname ise teada.', en: 'We noted your wish. If this service opens for your home, we will let you know.', ru: 'Мы записали ваше пожелание. Если эта услуга откроется для вашего дома, мы сообщим.' },
   questionIn: { et: 'Küsimus on kirjas. Vastus tuleb siia.', en: 'The question is noted. The reply comes here.', ru: 'Вопрос записан. Ответ придёт сюда.' },
   issueIn: { et: 'Probleem on kirjas. Vastus tuleb siia.', en: 'The problem is noted. The reply comes here.', ru: 'Проблема записана. Ответ придёт сюда.' },
-  visitIn: { et: 'Soov on kirjas. Kui aeg on kinnitatud, näed aega Kodu vaates.', en: 'The request is noted. Once the time is confirmed, you will see it on the Home tab.', ru: 'Заявка записана. Когда время подтвердят, вы увидите его на вкладке «Дом».' },
+  visitIn: { et: 'Soov on kirjas. Kui aeg on kinnitatud, näed aega Kodu vaates.', en: 'The request is noted. Once the time is confirmed, you will see it on the Home tab.', ru: 'Заявка записана. Когда время подтвердят, вы увидите его на вкладке «Главная».' },
   questionNamed: { et: '{name} vastab kirjalikult. Vastus tuleb siia.', en: '{name} answers in writing. The reply comes here.', ru: '{name} ответит письменно. Ответ придёт сюда.' },
   issueNamed: { et: '{name} vaatab probleemi üle. Vastus tuleb siia.', en: '{name} reviews the problem. The reply comes here.', ru: '{name} рассмотрит проблему. Ответ придёт сюда.' },
   visitNamed: { et: '{name} kinnitab aja. Kinnitus tuleb siia.', en: '{name} confirms the time. The confirmation comes here.', ru: '{name} подтвердит время. Подтверждение придёт сюда.' },
@@ -195,8 +195,9 @@ function pickNextThing(vm) {
   const visit = upcoming[0];
   if (visit) {
     const whenBits = [vm.formatTime(visit.scheduledAt), vm.visitLabel(visit), vm.showProvider ? (visit.providerName || (vm.order && vm.order.provider && vm.order.provider.name) || '') : ''].filter(Boolean).join(' · ');
+    const away = awayCovers(vm.extras && vm.extras.away, dayOf(visit.scheduledAt));
     let body = whenBits ? whenBits + '. ' + t('visitDo') : t('visitDo');
-    if (awayCovers(vm.extras && vm.extras.away, dayOf(visit.scheduledAt))) body += ' ' + t('visitAway');
+    if (away) body += ' ' + t('visitAway');
     const waiting = vm.extrasLoaded && waitingQuestion(requests);
     return {
       kind: 'visit',
@@ -205,6 +206,7 @@ function pickNextThing(vm) {
       eyebrow: t('nextEyebrow'),
       title: vm.formatDate(visit.scheduledAt),
       body,
+      away,
       action: t('reschedule'),
       thenLine: waiting ? t('alsoWaiting', { name: reqTitle(vm, waiting) }) : '',
     };

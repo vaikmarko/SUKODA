@@ -72,6 +72,7 @@ test('the next visit is the card when nothing needs a decision', () => {
   assert.match(card.body, /Kristi/);
   assert.match(card.body, /muuda aega/);
   assert.equal(card.action, 'Muuda aega');
+  assert.equal(card.away, false);
 });
 
 test('a pending new time opens the calendar', () => {
@@ -148,6 +149,16 @@ test('no card uses jargon the resident should not see', () => {
     assert.ok(row.et && row.en && row.ru, key + ' has et, en and ru');
     assert.doesNotMatch((row.et || '') + (row.en || '') + (row.ru || ''), /[!]/, key + ' has no exclamation mark');
   }
+});
+
+test('a visit on an away day keeps the away line on the clock card', () => {
+  const card = pickNextThing(portal({
+    upcomingBookings: [visit],
+    extras: { requests: [], away: [{ from: '2026-03-24', to: '2026-03-26' }] },
+  }));
+  assert.equal(card.kind, 'visit');
+  assert.equal(card.away, true);
+  assert.match(card.body, /Visiidi päeval oled eemal/);
 });
 
 test('away is the card only when nothing else is waiting', () => {
