@@ -86,11 +86,14 @@
                     <a class="w-nv" href="koduomanikule.html" x-text="t('navOwner')">Koduomanikule</a>
                     <a class="w-nv" href="#hind" x-text="t('navPrice')">Hind</a>
                     </span>
-                    <span class="w-nav-langs" role="group" :aria-label="t('langLabel')">
-                    <button type="button" class="w-nv" @click="lang = 'et'" :class="{ 'is-off': lang !== 'et' }" :aria-pressed="lang === 'et'">ET</button>
-                    <button type="button" class="w-nv" @click="lang = 'en'" :class="{ 'is-off': lang !== 'en' }" :aria-pressed="lang === 'en'">EN</button>
-                    <button type="button" class="w-nv" @click="lang = 'ru'" :class="{ 'is-off': lang !== 'ru' }" :aria-pressed="lang === 'ru'">RU</button>
-                </span>
+                    <span class="w-lang" x-data="{ open: false }" @click.outside="open = false" @keydown.escape="open = false">
+                        <button type="button" class="w-nv w-lang-btn" @click="open = !open" :aria-expanded="open" :aria-label="t('langLabel')"><span x-text="lang.toUpperCase()">ET</span><svg viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                        <span class="w-lang-menu" x-show="open" x-cloak>
+                            <button type="button" @click="lang = 'et'; open = false" :aria-pressed="lang === 'et'">Eesti</button>
+                            <button type="button" @click="lang = 'en'; open = false" :aria-pressed="lang === 'en'">English</button>
+                            <button type="button" @click="lang = 'ru'; open = false" :aria-pressed="lang === 'ru'">Русский</button>
+                        </span>
+                    </span>
                     <a class="w-nv w-login" href="/too" x-text="t('login')">Sisene</a>
                 </nav>
             </header>

@@ -939,15 +939,27 @@ body {
 .w-logo { font-family: var(--font-serif); font-size: 30px; line-height: 1; letter-spacing: 0.08em; font-weight: 300; }
 .w-nav { display: flex; align-items: center; gap: 28px; }
 .w-nav-links { display: flex; gap: 36px; }
-.w-nav-langs { display: inline-flex; align-items: center; gap: 14px; }
+/* One language button instead of three: the header stays short and the choice opens on a tap. */
+.w-lang { position: relative; display: inline-flex; }
+.w-lang-btn { gap: 6px; }
+.w-lang-btn svg { width: 10px; height: 6px; }
+.w-lang-menu {
+  position: absolute; top: calc(100% + 4px); right: 0; z-index: 30;
+  display: flex; flex-direction: column; min-width: 148px; padding: 6px;
+  background: var(--color-paper); border: 1px solid var(--color-line); border-radius: 14px;
+}
+.w-lang-menu button {
+  height: 44px; padding: 0 12px; border-radius: 10px; text-align: left;
+  font-family: var(--font-sans); font-size: 15px; color: var(--color-muted);
+}
+.w-lang-menu button:hover { background: var(--color-cream); color: var(--color-black); }
+.w-lang-menu button[aria-pressed="true"] { color: var(--color-black); font-weight: 500; }
 .w-nv {
   display: inline-flex; align-items: center; height: 44px;
   font-family: var(--font-sans); font-size: 12px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase;
   color: var(--color-black);
 }
 .w-nv:hover { color: var(--color-muted); }
-.w-nv.is-off { color: var(--color-muted); }
-.w-nv.is-off:hover { color: var(--color-black); }
 .w-login { padding: 0 22px; background: var(--color-black); color: var(--color-paper); }
 .w-login:hover { color: var(--color-paper); background: var(--color-accent); }
 @media (max-width: 760px) {
@@ -955,7 +967,6 @@ body {
   .w-logo { font-size: 24px; }
   .w-nav { gap: 12px; }
   .w-nav-links { display: none; }
-  .w-nav-langs { gap: 10px; }
   .w-login { padding: 0 14px; }
 }
 
