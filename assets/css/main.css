@@ -309,6 +309,65 @@ body {
 }
 .p-dock.is-away { display: none; }
 
+/* Cleaner dock. Separate from .p-dock so the resident dock stays as it is. */
+.h-dock {
+  position: fixed;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: max(0.875rem, env(safe-area-inset-bottom, 0px));
+  z-index: 60;
+  display: flex;
+  gap: 0.375rem;
+  padding: 0.375rem;
+  background: #fff;
+  border: 1px solid var(--color-line);
+  border-radius: 26px;
+  box-shadow: 0 10px 28px rgba(20, 19, 18, 0.08);
+}
+@media (min-width: 768px) {
+  .h-dock { display: none; }
+}
+.h-dock-btn {
+  flex: 1 1 0%;
+  min-width: 0;
+  height: 3.5rem;
+  border-radius: 20px;
+  background: var(--color-cream);
+  color: var(--color-black);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+}
+.h-dock-btn.is-active,
+.h-dock-btn[aria-current="page"] {
+  background: var(--color-black);
+  color: var(--color-paper);
+}
+.h-has-dock {
+  padding-bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px));
+}
+@media (min-width: 768px) {
+  .h-has-dock { padding-bottom: 0; }
+}
+.h-account {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  background: var(--color-cream);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--color-black);
+}
+.h-dock.is-away { display: none; }
+
 /* Book and account screens: docs/disain/ekraanid/Telli.html, Koristus.html, Lilled.html, Minu.html */
 .p-sub-title {
   font-family: var(--font-serif);

@@ -121,9 +121,9 @@
         </div>
 
         <!-- ═══════════════ APP ═══════════════ -->
-        <div x-show="!loading && authenticated" x-cloak class="p-has-tabbar">
+        <div x-show="!loading && authenticated" x-cloak class="h-has-dock">
 
-            <nav class="sticky top-0 z-40 bg-paper/95 backdrop-blur-sm grid-line-b" aria-label="Main navigation">
+            <nav class="sticky top-0 z-40 bg-paper/95 backdrop-blur-sm grid-line-b hidden md:block" aria-label="Main navigation">
                 <div class="flex justify-between items-center h-16 md:h-20 px-4 md:px-12 gap-2">
                     <div class="flex items-center gap-3">
                         <a href="/" class="font-serif text-2xl md:text-3xl tracking-[0.08em] font-light">SUKODA</a>
@@ -136,13 +136,18 @@
                             <button type="button" @click="setLang('ru')" class="text-xs font-sans py-2 px-1.5" :class="{ 'text-black': lang === 'ru', 'text-muted': lang !== 'ru' }" :aria-pressed="lang === 'ru'">RU</button>
                         </div>
                         <button type="button" @click="loadData()" :disabled="refreshing" class="h-link hidden sm:inline-flex" x-text="refreshing ? t('refreshing') : t('refresh')"></button>
-                        <button type="button" @click="logout()" class="h-link" x-text="t('logOut')"></button>
+                        <button type="button" class="h-account" @click="activeTab = 'account'" :aria-label="t('tabAccount')">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path stroke-linecap="round" d="M4.5 20a7.5 7.5 0 0115 0"/></svg>
+                        </button>
                     </div>
                 </div>
             </nav>
 
-            <div x-show="activeTab === 'today'" class="px-4 md:px-12 py-4 grid-line-b">
-                <p class="font-serif text-2xl font-light" x-text="t('greet', { name: greetName() })"></p>
+            <div x-show="activeTab === 'today' || activeTab === 'requests' || activeTab === 'customers'" class="px-4 md:px-12 pt-8 flex items-center justify-between gap-3">
+                <h1 class="p-home-title" x-text="activeTab === 'today' ? t('tabToday') : (activeTab === 'requests' ? t('tabWishes') : t('tabHomes'))"></h1>
+                <button type="button" class="h-account md:hidden" @click="activeTab = 'account'" :aria-label="t('tabAccount')">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path stroke-linecap="round" d="M4.5 20a7.5 7.5 0 0115 0"/></svg>
+                </button>
             </div>
 
             <!-- Desktop Tabs (mobile uses bottom tabbar) -->
@@ -159,17 +164,22 @@
                 </div>
             </div>
 
-            <!-- Mobile Thumb-Friendly Bottom Tabbar -->
-            <nav class="p-tabbar" :aria-label="t('deskWord')">
-                <template x-for="tab in tabs" :key="'m-' + tab.id">
-                    <button type="button" @click="activeTab = tab.id; window.scrollTo({ top: 0, behavior: 'smooth' })" :class="activeTab === tab.id ? 'is-active' : ''" class="p-tabbar-btn" :aria-current="activeTab === tab.id ? 'page' : null">
-                        <span class="relative inline-flex">
-                            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" :d="tab.icon"></path></svg>
-                            <span x-show="tab.id === 'requests' && pendingRequests.length" class="absolute -top-1.5 -right-2.5 bg-accent text-paper text-xs rounded-full min-w-4 h-4 px-1 flex items-center justify-center leading-none" x-text="pendingRequests.length"></span>
-                        </span>
-                        <span x-text="t(tab.key)"></span>
-                    </button>
-                </template>
+            <nav class="h-dock" :class="activeTab === 'account' || activeTab === 'calendar' ? 'is-away' : ''" :aria-label="t('deskWord')">
+                <button type="button" class="h-dock-btn" :class="activeTab === 'today' ? 'is-active' : ''" :aria-current="activeTab === 'today' ? 'page' : null" @click="activeTab = 'today'; window.scrollTo({ top: 0, behavior: 'smooth' })">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path stroke-linecap="round" d="M4 10h16M8 3v4M16 3v4"/></svg>
+                    <span x-text="t('tabToday')"></span>
+                </button>
+                <button type="button" class="h-dock-btn" :class="activeTab === 'requests' ? 'is-active' : ''" :aria-current="activeTab === 'requests' ? 'page' : null" @click="activeTab = 'requests'; window.scrollTo({ top: 0, behavior: 'smooth' })">
+                    <span class="relative inline-flex">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 5h14a1 1 0 011 1v9a1 1 0 01-1 1h-7l-4 4v-4H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg>
+                        <span x-show="pendingRequests.length" class="absolute -top-1 -right-1.5 w-2 h-2 rounded-full bg-accent" aria-hidden="true"></span>
+                    </span>
+                    <span x-text="t('tabWishes')"></span>
+                </button>
+                <button type="button" class="h-dock-btn" :class="activeTab === 'customers' ? 'is-active' : ''" :aria-current="activeTab === 'customers' ? 'page' : null" @click="activeTab = 'customers'; window.scrollTo({ top: 0, behavior: 'smooth' })">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"/></svg>
+                    <span x-text="t('tabHomes')"></span>
+                </button>
             </nav>
 
             <main class="px-4 md:px-12 py-6 md:py-10">
@@ -210,10 +220,11 @@
                         </div>
                         <div class="space-y-4">
                             <template x-for="b in todayVisits" :key="b.id">
-                                <article class="border border-line bg-paper p-4">
-                                    <p class="font-sans text-sm text-muted" x-text="visitWhen(b)"></p>
-                                    <h3 class="font-serif text-2xl font-light mt-1" x-text="b.customerName"></h3>
-                                    <a x-show="addressFor(b)" :href="mapsHref(addressFor(b))" target="_blank" rel="noopener" class="text-sm font-sans text-black underline underline-offset-4 mt-1 inline-block" :aria-label="t('openMap')" x-text="addressFor(b)"></a>
+                                <article class="p-sheet p-5">
+                                    <p class="eyebrow" x-text="visitWhen(b)"></p>
+                                    <h3 class="p-sub-title" x-text="streetTitle(b)"></h3>
+                                    <p class="text-base font-medium mt-3" x-text="b.customerName"></p>
+                                    <p x-show="addressFor(b)" class="text-sm text-muted" x-text="addressFor(b)"></p>
                                     <template x-if="accessVisible(b)">
                                         <div class="mt-4">
                                             <p class="eyebrow" x-text="t('access')"></p>
@@ -221,7 +232,10 @@
                                         </div>
                                     </template>
                                     <p x-show="hasAccess(b) && !accessVisible(b)" class="text-sm text-muted font-sans mt-4" x-text="t('accessLater')"></p>
-                                    <a x-show="residentPhone(b)" :href="telHref(residentPhone(b))" class="p-btn-2 w-full mt-4" x-text="t('call') + ' · ' + residentPhone(b)"></a>
+                                    <div class="grid grid-cols-2 gap-2 mt-4" x-show="residentPhone(b) || addressFor(b)">
+                                        <a x-show="residentPhone(b)" :href="telHref(residentPhone(b))" class="p-sheet-btn mt-0" x-text="t('call')"></a>
+                                        <a x-show="addressFor(b)" :href="mapsHref(addressFor(b))" target="_blank" rel="noopener" class="p-sheet-btn mt-0" x-text="t('guideThere')"></a>
+                                    </div>
                                     <div x-show="jobText(b)" class="mt-4">
                                         <p class="eyebrow" x-text="t('jobLabel')"></p>
                                         <p class="text-sm font-sans font-light mt-1" x-text="jobText(b)"></p>
@@ -262,11 +276,27 @@
                             </template>
                         </div>
                         <button type="button" @click="openVisitModal({ date: todayStr })" class="h-link h-link-accent mt-4" x-text="t('addVisit')"></button>
+                        <div x-show="tomorrowVisits.length" class="mt-8">
+                            <p class="eyebrow" x-text="t('tomorrowEyebrow')"></p>
+                            <div class="p-rows mt-2.5">
+                                <template x-for="b in tomorrowVisits" :key="'tm-' + b.id">
+                                    <button type="button" class="p-row" @click="activeTab = 'calendar'; selectDay(dateOf(b.scheduledAt))">
+                                        <span class="font-serif text-2xl w-16 shrink-0" x-text="fmtTime(b.scheduledAt)"></span>
+                                        <span class="min-w-0 text-left">
+                                            <span class="p-row-name" x-text="streetTitle(b)"></span>
+                                            <span class="p-row-meta" x-text="b.customerName"></span>
+                                        </span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                        <button type="button" class="text-sm underline underline-offset-4 mt-6" @click="activeTab = 'calendar'" x-text="t('tabCalendar')"></button>
                     </div>
                 </div>
 
                 <!-- ─────────── KALENDER ─────────── -->
                 <div x-show="activeTab === 'calendar'">
+                    <button type="button" class="p-back mb-2" @click="activeTab = 'today'"><span x-text="t('tabToday')"></span></button>
                     <div class="flex items-center justify-between mb-6">
                         <button type="button" @click="calPrev()" class="w-11 h-11 flex items-center justify-center hover:bg-cream rounded-full" :aria-label="t('prevMonth')"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7"/></svg></button>
                         <h2 class="font-serif text-2xl font-light" x-text="calMonthLabel"></h2>
@@ -327,7 +357,7 @@
                     </div>
                     <div class="grid md:grid-cols-2 gap-3">
                         <template x-for="c in filteredCustomers" :key="c.id">
-                            <button type="button" @click="openCustomerDetail(c)" class="bg-white border border-line p-5 text-left w-full hover:bg-cream/40 transition-colors">
+                            <button type="button" @click="openCustomerDetail(c)" class="p-sheet p-5 text-left w-full">
                                 <p class="eyebrow mb-1" x-text="clientSource(c)"></p>
                                 <p class="font-serif text-lg font-light truncate" x-text="c.name"></p>
                                 <p class="text-sm text-muted font-sans font-light truncate" x-text="c.address"></p>
@@ -346,7 +376,7 @@
                             <div x-show="pendingRequests.length === 0" class="bg-cream/40 border border-line p-8 text-center text-sm text-muted font-sans font-light" x-text="t('wishesNone')"></div>
                             <div class="space-y-3">
                                 <template x-for="r in pendingRequests" :key="r.id">
-                                    <div class="bg-white border border-line p-5">
+                                    <div class="p-sheet p-5">
                                         <div class="flex items-start justify-between gap-3">
                                             <div class="min-w-0">
                                                 <p class="font-serif text-lg font-light" x-text="r.serviceName"></p>
@@ -409,7 +439,17 @@
 
                 <!-- ─────────── KONTO: kutselink, arveldus ja seaded ─────────── -->
                 <div x-show="activeTab === 'account'" x-cloak>
-                    <div class="max-w-3xl space-y-6">
+                    <div class="max-w-xl">
+                        <button type="button" class="p-back" @click="activeTab = 'today'"><span x-text="t('tabToday')"></span></button>
+                        <h1 class="p-sub-title" x-text="t('tabAccount')"></h1>
+                        <div class="flex gap-4 mt-4" role="group" :aria-label="t('langLabel')">
+                            <button type="button" @click="setLang('et')" class="text-base" :class="{ 'font-medium': lang === 'et', 'text-muted': lang !== 'et' }" :aria-pressed="lang === 'et'">ET</button>
+                            <button type="button" @click="setLang('en')" class="text-base" :class="{ 'font-medium': lang === 'en', 'text-muted': lang !== 'en' }" :aria-pressed="lang === 'en'">EN</button>
+                            <button type="button" @click="setLang('ru')" class="text-base" :class="{ 'font-medium': lang === 'ru', 'text-muted': lang !== 'ru' }" :aria-pressed="lang === 'ru'">RU</button>
+                        </div>
+                        <button type="button" class="text-base mt-3 h-11" @click="logout()" x-text="t('logOut')"></button>
+                    </div>
+                    <div class="max-w-3xl space-y-6 mt-6">
 
                         <!-- 1. Personal invite link & QR code (top priority for self-serve growth) -->
                         <div x-show="provider?.inviteUrl" class="bg-white border border-line p-5 space-y-4">
@@ -1263,7 +1303,9 @@
             planPaid: { et: 'Makse õnnestus. Pakett on aktiivne.', en: 'Payment succeeded. The plan is active.' },
 
             // ---- Täna ----
-            tabToday: { et: 'Täna', en: 'Today' },
+            tabToday: { et: 'Tööd', en: 'Jobs' },
+            guideThere: { et: 'Juhata kohale', en: 'Directions', ru: 'Маршрут' },
+            tomorrowEyebrow: { et: 'Homme', en: 'Tomorrow', ru: 'Завтра' },
             todayEmpty: { et: 'Täna sul kodusid ei ole.', en: 'You have no homes today.' },
             openCalendar: { et: 'Ava kalender', en: 'Open the calendar' },
             unmarkedTitle: { et: 'Märkimata visiidid', en: 'Visits not marked' },
@@ -1962,6 +2004,11 @@
             },
             get liveBookings() { return this.bookings.filter((b) => ['scheduled', 'confirmed'].includes(b.status)); },
             get todayVisits() { return this.liveBookings.filter((b) => this.dateOf(b.scheduledAt) === this.todayStr).sort(this.byTime); },
+            get tomorrowVisits() {
+                if (!this.todayStr || !T()) return [];
+                const day = T().shiftDateString(this.todayStr, 1);
+                return this.liveBookings.filter((b) => this.dateOf(b.scheduledAt) === day).sort(this.byTime);
+            },
             /** Past-day visits still "scheduled": shown at the top of Täna so nothing stays unmarked (today's visits have their own cards below) */
             get unmarkedPast() {
                 return this.liveBookings.filter((b) => this.dateOf(b.scheduledAt) < this.todayStr).sort(this.byTime);
@@ -2342,7 +2389,16 @@
                 const z = this.fmtTime(b.endTime);
                 return z ? a + '–' + z : a;
             },
-            mapsHref(address) { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(address || ''); },
+            mapsHref(address) {
+                const q = encodeURIComponent(address || '');
+                const apple = /iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+                return apple ? 'https://maps.apple.com/?q=' + q : 'https://www.google.com/maps/search/?api=1&query=' + q;
+            },
+            streetTitle(b) {
+                const address = this.addressFor(b);
+                if (!address) return b.customerName || '';
+                return address.split(',')[0].trim();
+            },
             telHref(phone) {
                 const n = String(phone || '').replace(/[^\d+]/g, '');
                 return n ? 'tel:' + n : '';

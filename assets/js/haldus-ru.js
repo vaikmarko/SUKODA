@@ -52,7 +52,9 @@ export const haldusRu = {
   planPaid: 'Оплата прошла. Тариф активен.',
 
   // ---- Täna ----
-  tabToday: 'Сегодня',
+  tabToday: 'Работы',
+  guideThere: 'Маршрут',
+  tomorrowEyebrow: 'Завтра',
   todayEmpty: 'На сегодня у вас нет визитов.',
   openCalendar: 'Открыть календарь',
   unmarkedTitle: 'Неотмеченные визиты',
