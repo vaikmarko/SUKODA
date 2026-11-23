@@ -12,6 +12,7 @@
 
 const crypto = require('crypto');
 const core = require('./lib/haldus-core');
+const ui = require('./lib/email-ui');
 const push = require('./push');
 
 module.exports = function createHaldus(deps) {
@@ -27,8 +28,6 @@ module.exports = function createHaldus(deps) {
     sendEmail,
     sendClientMagicLink,
     getStripe,
-    emailHeader,
-    emailFooter,
     formatDate,
     formatTime,
     tallinnLocalDateTimeToISOString,
@@ -183,7 +182,7 @@ module.exports = function createHaldus(deps) {
       google: 'Google Calendar',
       apple: 'Apple / Outlook',
       portalNote: 'Ajad, soovid ja dokumendid on rakenduses. Kui aeg ei sobi või tahad midagi lisada, kirjuta rakenduses.',
-      portalBtn: 'AVA RAKENDUS',
+      portalBtn: 'Ava rakendus',
       calTitle: 'SUKODA koristus',
       calTitleService: (s, brand) => `${brand || 'SUKODA'} · ${s}`,
 
@@ -287,7 +286,7 @@ module.exports = function createHaldus(deps) {
       google: 'Google Calendar',
       apple: 'Apple / Outlook',
       portalNote: 'Times, requests and documents are in the app. If a time does not suit or you want to add something, write in the app.',
-      portalBtn: 'OPEN THE APP',
+      portalBtn: 'Open the app',
       calTitle: 'SUKODA cleaning',
       calTitleService: (s, brand) => `${brand || 'SUKODA'} · ${s}`,
 
@@ -392,7 +391,7 @@ module.exports = function createHaldus(deps) {
       google: 'Google Calendar',
       apple: 'Apple / Outlook',
       portalNote: 'Время визитов, заявки и документы находятся в приложении. Если время не подходит или вы хотите что-то добавить, напишите в приложении.',
-      portalBtn: 'ОТКРЫТЬ ПРИЛОЖЕНИЕ',
+      portalBtn: 'Открыть приложение',
       calTitle: 'Уборка SUKODA',
       calTitleService: (s, brand) => `${brand || 'SUKODA'} · ${s}`,
 
@@ -519,68 +518,26 @@ module.exports = function createHaldus(deps) {
     const role = core.pick({ et: 'garantiimeeskond', en: 'warranty team', ru: 'гарантийная команда' }, langOf(order));
     return `${b.name} ${role} <tere@sukoda.ee>`;
   }
-  function brandHeader(brand, lang) {
-    const line = brand.project ? `${brand.name} · ${brand.project}` : brand.name;
-    const by = core.pick({ et: 'rakendust pakub SUKODA', en: 'app by SUKODA', ru: 'приложение от SUKODA' }, lang);
-    return `
-    <div style="padding:44px 40px 36px;text-align:center;border-bottom:1px solid #E8E3DD;">
-      <h1 style="color:#2C2824;font-size:24px;margin:0 0 8px 0;font-family:Georgia,'Times New Roman',serif;font-weight:300;letter-spacing:1px;">${escapeHtml(line)}</h1>
-      <p style="margin:0 0 12px 0;color:#8A8578;font-size:12px;letter-spacing:1px;">${by}</p>
-      <div style="width:40px;height:1px;background:#B8976A;margin:0 auto;"></div>
-    </div>`;
-  }
-  function brandFooter(brand, lang) {
-    const by = core.pick({ et: 'RAKENDUST PAKUB', en: 'APP BY', ru: 'ПРИЛОЖЕНИЕ ОТ' }, lang);
-    return `
-    <div style="padding:32px 40px 28px;text-align:center;border-top:1px solid #E8E3DD;">
-      <p style="color:#2C2824;font-size:16px;margin:0 0 6px 0;font-family:Georgia,'Times New Roman',serif;font-weight:300;letter-spacing:2px;">${escapeHtml(brand.name)}</p>
-      <div style="width:24px;height:1px;background:#B8976A;margin:0 auto 16px;"></div>
-      <p style="color:#B8976A;font-size:10px;margin:0;letter-spacing:2px;">${by} <a href="https://sukoda.ee" style="color:#B8976A;text-decoration:none;">SUKODA</a></p>
-    </div>`;
-  }
+  /** White label: the developer's name stands where the wordmark is; the footer says who runs the app. */
+  const brandLine = (brand) => (brand.project ? `${brand.name} · ${brand.project}` : brand.name);
 
-  /** index.js footer knows only et/en; Russian letters must not end on an Estonian line. */
-  function emailFooterRu() {
-    return `
-    <div style="padding: 36px 40px 28px; text-align: center; border-top: 1px solid #E8E3DD;">
-      <p style="color: #2C2824; font-size: 18px; margin: 0 0 6px 0; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; letter-spacing: 3px;">SUKODA</p>
-      <div style="width: 24px; height: 1px; background: #B8976A; margin: 0 auto 18px;"></div>
-      <p style="color: #8A8578; font-size: 12px; margin: 0 0 6px 0;">Если есть вопросы: <a href="mailto:tere@sukoda.ee" style="color: #2C2824; text-decoration: none; border-bottom: 1px solid #B8976A;">tere@sukoda.ee</a></p>
-      <p style="color: #B8976A; font-size: 10px; margin: 14px 0 0 0; letter-spacing: 2px;">
-        <a href="https://sukoda.ee" style="color: #B8976A; text-decoration: none;">sukoda.ee</a>
-      </p>
-    </div>`;
-  }
-
-  /** `brand` = brandOf(order) or omitted */
+  /** `brand` = brandOf(order) or omitted. The frame itself is lib/email-ui.js, shared with index.js. */
   function wrap(inner, lang, brand) {
-    const b = brand && brand.name ? brand : null;
-    return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
-<body style="margin:0;padding:24px 12px;background:#FAF8F5;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
-  <div style="max-width:600px;margin:0 auto;background:#F5F0EB;">
-    ${b ? brandHeader(b, lang) : emailHeader()}
-    <div style="padding:36px 24px;">${inner}</div>
-    ${b ? brandFooter(b, lang) : (lang === 'ru' ? emailFooterRu() : emailFooter(lang))}
-  </div>
-</body></html>`;
+    return ui.shell(inner, lang, brand && brand.name ? brandLine(brand) : '');
   }
 
-  const H2 = (text) => `<h2 style="color:#2C2824;font-family:Georgia,'Times New Roman',serif;font-weight:300;font-size:28px;margin:0 0 8px 0;">${text}</h2>`;
-  const P = (text, extra = '') => `<p style="color:#8A8578;font-size:14px;line-height:1.7;margin:0 0 20px 0;${extra}">${text}</p>`;
-  const LABEL = (text) => `<p style="margin:0 0 8px 0;color:#B8976A;font-size:10px;text-transform:uppercase;letter-spacing:3px;font-weight:500;">${text}</p>`;
-  const ROW = (label, value) => `<p style="margin:12px 0 0 0;padding-top:12px;border-top:1px solid #E8E3DD;color:#8A8578;font-size:14px;">${label}: <strong style="color:#2C2824;font-weight:400;">${value}</strong></p>`;
+  const { H2, P, LABEL, ROW } = ui;
 
   function timeBox({ label, start, end, address, lang, extraRows = '' }) {
     const tt = t(lang);
     const dur = start && end ? Math.round((end.getTime() - start.getTime()) / 60000) : null;
-    return `
-      <div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border-left:2px solid #B8976A;">
+    // The same card as the next visit on the resident's Kodu: the clock first, then the day.
+    return ui.CARD(`
         ${LABEL(label)}
-        <p style="margin:0 0 4px 0;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(formatWhen(start, lang))}</p>
-        <p style="margin:0;color:#8A8578;font-size:16px;">${tt.at} ${escapeHtml(formatTime(start))}${dur ? ` <span style="color:#B8976A;">· ${dur} ${tt.minutes}</span>` : ''}</p>
+        <p style="margin:0;color:${ui.C.black};font-family:${ui.SERIF};font-size:56px;line-height:1;">${escapeHtml(formatTime(start))}</p>
+        <p style="margin:8px 0 0 0;color:${ui.C.black};font-family:${ui.SANS};font-size:18px;line-height:1.4;">${escapeHtml(formatWhen(start, lang))}${dur ? ` <span style="color:${ui.C.muted};">· ${dur} ${tt.minutes}</span>` : ''}</p>
         ${address ? ROW(tt.address, escapeHtml(address)) : ''}
-        ${extraRows}
-      </div>`;
+        ${extraRows}`, 'margin-bottom:28px;');
   }
 
   function calendarLinks({ title, start, end, address, description, lang }) {
@@ -594,21 +551,21 @@ module.exports = function createHaldus(deps) {
       title, start: start.toISOString(), end: end.toISOString(),
       description: description || '', location: address || '',
     });
-    const btn = 'display:inline-block;padding:10px 20px;background:#FFFFFF;border:1px solid #E8E3DD;color:#2C2824;text-decoration:none;font-size:13px;margin-right:8px;margin-bottom:8px;';
+    const btn = `${ui.BTN2_STYLE}margin-right:8px;margin-bottom:8px;`;
     return `
-      <div style="margin-top:8px;padding-top:20px;border-top:1px solid #E8E3DD;">
+      <div style="margin-top:8px;padding-top:20px;border-top:1px solid #E6E0D8;">
         ${LABEL(tt.addToCalendar)}
-        <a href="https://calendar.google.com/calendar/render?${gParams}" target="_blank" rel="noopener" style="${btn}">${tt.google} &rarr;</a>
-        <a href="${SITE}/api/calendar?${icsParams}" style="${btn}">${tt.apple} &rarr;</a>
+        <a href="https://calendar.google.com/calendar/render?${gParams}" target="_blank" rel="noopener" style="${btn}">${tt.google}</a>
+        <a href="${SITE}/api/calendar?${icsParams}" style="${btn}">${tt.apple}</a>
       </div>`;
   }
 
   function portalBlock(lang, url = PORTAL_URL) {
     const tt = t(lang);
     return `
-      <div style="margin-top:28px;padding-top:24px;border-top:1px solid #E8E3DD;">
+      <div style="margin-top:28px;padding-top:24px;border-top:1px solid #E6E0D8;">
         ${P(tt.portalNote, 'margin-bottom:14px;')}
-        <a href="${url}" style="display:inline-block;background:#111111;color:#FFFFFF;padding:14px 32px;text-decoration:none;font-size:11px;text-transform:uppercase;letter-spacing:3px;font-weight:500;">${tt.portalBtn}</a>
+        <a href="${url}" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">${tt.portalBtn}</a>
       </div>`;
   }
   /** Portal link that opens one request's thread after login */
@@ -637,7 +594,7 @@ module.exports = function createHaldus(deps) {
   function providerLine(providerName, lang, category = 'cleaning') {
     const tt = t(lang);
     const text = category === 'cleaning' ? tt.yourCleaner(providerName) : tt.yourContact(providerName);
-    return providerName ? P(`<span style="color:#B8976A;">${escapeHtml(text)}</span>`, 'margin:0 0 24px 0;font-size:12px;letter-spacing:1px;') : '';
+    return providerName ? P(escapeHtml(text), 'margin:0 0 24px 0;font-size:14px;') : '';
   }
 
   /** One template for confirmed / rescheduled / cancelled / reminder */
@@ -671,7 +628,7 @@ module.exports = function createHaldus(deps) {
       heading = tt.rescheduledTitle;
       intro = tt.rescheduledIntro(providerName);
       const old = toDate(oldStart);
-      body = (old ? `<p style="margin:0 0 6px 0;color:#8A8578;font-size:13px;">${tt.oldTime}: <s>${escapeHtml(formatWhen(old, lang))}, ${escapeHtml(formatTime(old))}</s></p>` : '')
+      body = (old ? `<p style="margin:0 0 6px 0;color:#5F5A54;font-size:13px;">${tt.oldTime}: <s>${escapeHtml(formatWhen(old, lang))}, ${escapeHtml(formatTime(old))}</s></p>` : '')
         + timeBox({ label: tt.newTime, start, end, address: booking.address, lang, extraRows })
         + calendarLinks({ title, start, end, address: booking.address, description: calDesc, lang });
     } else if (kind === 'cancelled') {
@@ -710,15 +667,15 @@ module.exports = function createHaldus(deps) {
       const fmt = (d) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
       const g = new URLSearchParams({ action: 'TEMPLATE', text: tt.calTitle, dates: `${fmt(start)}/${fmt(end)}`, location: b.address || '' });
       const ics = new URLSearchParams({ title: tt.calTitle, start: start.toISOString(), end: end.toISOString(), location: b.address || '' });
-      const link = 'color:#2C2824;text-decoration:none;border-bottom:1px solid #B8976A;font-size:12px;margin-left:10px;';
+      const link = 'color:#141312;text-decoration:none;border-bottom:1px solid #D1C9BF;font-size:12px;margin-left:10px;';
       return `<tr>
-        <td style="padding:14px 0;border-bottom:1px solid #E8E3DD;color:#2C2824;font-family:Georgia,'Times New Roman',serif;font-size:17px;font-weight:300;">${escapeHtml(formatWhen(start, lang))}<span style="color:#8A8578;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:14px;"> · ${tt.at} ${escapeHtml(formatTime(start))}</span></td>
-        <td style="padding:14px 0;border-bottom:1px solid #E8E3DD;text-align:right;white-space:nowrap;"><a href="https://calendar.google.com/calendar/render?${g}" style="${link}">Google</a><a href="${SITE}/api/calendar?${ics}" style="${link}">Apple / Outlook</a></td>
+        <td style="padding:14px 0;border-bottom:1px solid #E6E0D8;color:#141312;font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;font-size:17px;font-weight: 400;">${escapeHtml(formatWhen(start, lang))}<span style="color:#5F5A54;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:15px;"> · ${tt.at} ${escapeHtml(formatTime(start))}</span></td>
+        <td style="padding:14px 0;border-bottom:1px solid #E6E0D8;text-align:right;white-space:nowrap;"><a href="https://calendar.google.com/calendar/render?${g}" style="${link}">Google</a><a href="${SITE}/api/calendar?${ics}" style="${link}">Apple / Outlook</a></td>
       </tr>`;
     }).join('');
     const html = wrap(
       H2(tt.scheduleTitle) + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(tt.scheduleIntro(providerName))}`) + providerLine(providerName, lang)
-      + `<div style="background:#FFFFFF;padding:8px 28px;margin-bottom:28px;border-left:2px solid #B8976A;"><table style="width:100%;border-collapse:collapse;">${rows}</table></div>`
+      + `<div style="background:#FFFFFF;padding:8px 28px;margin-bottom:28px;border: 1px solid #E6E0D8;border-radius: 20px;"><table style="width:100%;border-collapse:collapse;">${rows}</table></div>`
       + P(tt.scheduleNote) + portalBlock(lang),
       lang, brandOf(order),
     );
@@ -734,7 +691,7 @@ module.exports = function createHaldus(deps) {
     if (firstWhen) intro = `${intro} ${tt.welcomeFirst(firstWhen)}`;
     const html = wrap(
       H2(tt.welcomeTitle) + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(intro)}`)
-      + `<div style="text-align:center;margin:32px 0;"><a href="${portalUrl}" style="display:inline-block;background:#111111;color:#FFFFFF;padding:16px 40px;text-decoration:none;font-size:11px;text-transform:uppercase;letter-spacing:3px;font-weight:500;">${tt.welcomeBtn}</a></div>`
+      + `<div style="margin:32px 0;"><a href="${portalUrl}" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">${tt.welcomeBtn}</a></div>`
       + P(tt.welcomeContacts, 'font-size:13px;'),
       lang, brandOf(order),
     );
@@ -763,15 +720,15 @@ module.exports = function createHaldus(deps) {
     const name = firstName(primaryName(order));
     const rows = (cancelled || []).map((b) => {
       const s = toDate(b.scheduledAt);
-      return `<p style="margin:8px 0 0 0;color:#8A8578;font-size:14px;text-decoration:line-through;">${escapeHtml(formatWhen(s, lang))} · ${tt.at} ${escapeHtml(formatTime(s))}</p>`;
+      return `<p style="margin:8px 0 0 0;color:#5F5A54;font-size:15px;text-decoration:line-through;">${escapeHtml(formatWhen(s, lang))} · ${tt.at} ${escapeHtml(formatTime(s))}</p>`;
     }).join('');
     const html = wrap(
       H2(tt.awayTitle) + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(tt.awayIntro(providerName, by))}`) + providerLine(providerName, lang)
-      + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border-left:2px solid #B8976A;">
+      + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border: 1px solid #E6E0D8;border-radius: 20px;">
           ${LABEL(tt.awayPeriod)}
-          <p style="margin:0 0 4px 0;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(periodLabel(period, lang))}</p>
+          <p style="margin:0 0 4px 0;font-weight: 400;color:#141312;font-size:20px;font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;">${escapeHtml(periodLabel(period, lang))}</p>
           ${period.note ? ROW(tt.note, escapeHtml(period.note)) : ''}
-          <div style="margin-top:16px;padding-top:12px;border-top:1px solid #E8E3DD;">${LABEL(tt.awayCancelled)}${rows || `<p style="margin:0;color:#8A8578;font-size:14px;">${tt.awayNone}</p>`}</div>
+          <div style="margin-top:16px;padding-top:12px;border-top:1px solid #E6E0D8;">${LABEL(tt.awayCancelled)}${rows || `<p style="margin:0;color:#5F5A54;font-size:15px;">${tt.awayNone}</p>`}</div>
         </div>`
       + P(tt.awayResume) + portalBlock(lang),
       lang, brandOf(order),
@@ -784,7 +741,7 @@ module.exports = function createHaldus(deps) {
     const who = primaryName(order) || 'Klient';
     const rows = (cancelled || []).map((b) => {
       const s = toDate(b.scheduledAt);
-      return `<li style="padding:8px 0;border-bottom:1px solid #E8E3DD;color:#8A8578;font-size:14px;">${escapeHtml(formatWhen(s, 'et'))} · kell ${escapeHtml(formatTime(s))}</li>`;
+      return `<li style="padding:8px 0;border-bottom:1px solid #E6E0D8;color:#5F5A54;font-size:15px;">${escapeHtml(formatWhen(s, 'et'))} · kell ${escapeHtml(formatTime(s))}</li>`;
     }).join('');
     if (removed) {
       return {
@@ -794,8 +751,8 @@ module.exports = function createHaldus(deps) {
     }
     return {
       subject: `SUKODA | ${who} on eemal ${periodShort(period)}`,
-      html: providerWrap('Klient on eemal', `Tere, ${escapeHtml(greetName(provider))}. ${escapeHtml(who)} (${escapeHtml(primaryAddress(order) || '')}) on eemal <strong style="color:#2C2824;font-weight:400;">${escapeHtml(periodLabel(period, 'et'))}</strong>.${period.note ? ` Märkus: „${escapeHtml(period.note)}“.` : ''} Need ajad jäävad ära ja graafik jätkub pärast eemalolekut.`,
-        rows ? `<ul style="list-style:none;padding:0;margin:0;background:#FFFFFF;padding:12px 28px;border-left:2px solid #B8976A;">${rows}</ul>` : `<p style="color:#8A8578;font-size:14px;">Sellesse aega ei jäänud ühtegi visiiti.</p>`),
+      html: providerWrap('Klient on eemal', `Tere, ${escapeHtml(greetName(provider))}. ${escapeHtml(who)} (${escapeHtml(primaryAddress(order) || '')}) on eemal <strong style="color:#141312;font-weight:400;">${escapeHtml(periodLabel(period, 'et'))}</strong>.${period.note ? ` Märkus: „${escapeHtml(period.note)}“.` : ''} Need ajad jäävad ära ja graafik jätkub pärast eemalolekut.`,
+        rows ? `<ul style="list-style:none;padding:0;margin:0;background:#FFFFFF;padding:12px 28px;border: 1px solid #E6E0D8;border-radius: 20px;">${rows}</ul>` : `<p style="color:#5F5A54;font-size:15px;">Sellesse aega ei jäänud ühtegi visiiti.</p>`),
     };
   }
 
@@ -834,9 +791,9 @@ module.exports = function createHaldus(deps) {
     // The access note (door code, key holder) stays in the portal — never echoed into plain e-mail
     const html = wrap(
       H2(title) + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(intro)}`)
-      + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border-left:2px solid #B8976A;">
+      + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border: 1px solid #E6E0D8;border-radius: 20px;">
           ${LABEL(kindLabel)}
-          <p style="margin:0;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
+          <p style="margin:0;font-weight: 400;color:#141312;font-size:20px;font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;">${escapeHtml(svc)}</p>
           ${target ? ROW(isReschedule ? tt.droppedTime : tt.oldTime, `${escapeHtml(formatWhen(target, lang))}, ${escapeHtml(formatTime(target))}`) : ''}
           ${kind !== 'question' ? ROW(tt.preferredDate, escapeHtml(when)) : ''}
           ${kind !== 'question' && core.requestedTimeLabel(request.preferredTime, request.timeWindow, lang) ? ROW(tt.preferredTime, escapeHtml(core.requestedTimeLabel(request.preferredTime, request.timeWindow, lang))) : ''}
@@ -864,9 +821,9 @@ module.exports = function createHaldus(deps) {
     const html = wrap(
       H2(heading)
       + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(intro)}`)
-      + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border-left:2px solid #B8976A;">
+      + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border: 1px solid #E6E0D8;border-radius: 20px;">
           ${LABEL(tt.service)}
-          <p style="margin:0;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
+          <p style="margin:0;font-weight: 400;color:#141312;font-size:20px;font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;">${escapeHtml(svc)}</p>
           ${message ? ROW(issue ? tt.explanation : tt.message, escapeHtml(message).replace(/\n/g, '<br>')) : ''}
         </div>`
       + (issue ? P(tt.issueReviewedNote) : '')
@@ -901,13 +858,13 @@ module.exports = function createHaldus(deps) {
       : core.pick({ et: 'Vastus on allpool.', en: 'The reply is below.', ru: 'Ответ указан ниже.' }, lang);
     const html = wrap(
       H2(title) + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(replied)}`)
-      + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border-left:2px solid #B8976A;">
+      + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border: 1px solid #E6E0D8;border-radius: 20px;">
           ${LABEL(tt.service)}
-          <p style="margin:0 0 16px;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
+          <p style="margin:0 0 16px;font-weight: 400;color:#141312;font-size:20px;font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;">${escapeHtml(svc)}</p>
           ${asked ? ROW(yours, escapeHtml(asked).replace(/\n/g, '<br>')) : ''}
           ${ROW(core.pick({ et: 'Vastus', en: 'Answer', ru: 'Ответ' }, lang), escapeHtml(message).replace(/\n/g, '<br>'))}
         </div>`
-      + P(core.pick({ et: 'Sellele kirjale ei saa vastata. Kirjuta rakenduses.', en: 'You cannot reply to this e-mail. Write in the app.', ru: 'На это письмо нельзя ответить. Напишите в приложении.' }, lang), 'font-size:13px;color:#6B6560;')
+      + P(core.pick({ et: 'Sellele kirjale ei saa vastata. Kirjuta rakenduses.', en: 'You cannot reply to this e-mail. Write in the app.', ru: 'На это письмо нельзя ответить. Напишите в приложении.' }, lang), 'font-size:13px;color:#5F5A54;')
       + portalBlock(lang, requestUrl(requestId)),
       lang, brandOf(order),
     );
@@ -927,9 +884,9 @@ module.exports = function createHaldus(deps) {
     const title = lastClientText(request);
     const html = wrap(
       H2(`${tt.completedTitle}: ${escapeHtml(svc)}`) + P(`${tt.hello(escapeHtml(name))} ${escapeHtml(tt.completedIntro(providerName, svc))}`)
-      + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border-left:2px solid #B8976A;">
+      + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border: 1px solid #E6E0D8;border-radius: 20px;">
           ${LABEL(tt.service)}
-          <p style="margin:0;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
+          <p style="margin:0;font-weight: 400;color:#141312;font-size:20px;font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;">${escapeHtml(svc)}</p>
           ${title ? ROW(core.pick({ et: 'Sinu soov', en: 'Your request', ru: 'Ваша заявка' }, lang), escapeHtml(title)) : ''}
           ${note ? ROW(tt.note, escapeHtml(note).replace(/\n/g, '<br>')) : ''}
         </div>`
@@ -1000,9 +957,9 @@ module.exports = function createHaldus(deps) {
       const start = toDate(booking.scheduledAt);
       const pickup = FLOWER_PICKUP[settings.pickup]?.et || '';
       const who = settings.pickup === 'partner' && provider ? `${escapeHtml(provider.name)}${provider.phone ? ', ' + escapeHtml(provider.phone) : ''} võtab teel kaasa` : escapeHtml(pickup);
-      return `<div style="background:#FFFFFF;padding:24px 28px;margin-bottom:16px;border-left:2px solid #B8976A;">
+      return `<div style="background:#FFFFFF;padding:24px 28px;margin-bottom:16px;border: 1px solid #E6E0D8;border-radius: 20px;">
           ${LABEL('Sildile')}
-          <p style="margin:0 0 14px;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(flowerLabel(order, provider))}</p>
+          <p style="margin:0 0 14px;font-weight: 400;color:#141312;font-size:20px;font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;">${escapeHtml(flowerLabel(order, provider))}</p>
           ${ROW('Valmis', `<span style="text-transform:capitalize;">${escapeHtml(flowerReadyBy(start))}</span>`)}
           ${ROW('Visiit', `<span style="text-transform:capitalize;">${escapeHtml(formatWhen(start, 'et'))}</span>, ${escapeHtml(formatTime(start))}`)}
           ${settings.preference ? ROW('Lilled', escapeHtml(settings.preference)) : ROW('Lilled', 'Poe valik, hooajaline')}
@@ -1030,9 +987,9 @@ module.exports = function createHaldus(deps) {
   function partnerFlowersPickupEmail({ provider, items }) {
     const byShop = {};
     for (const it of items) { const k = it.florist.id; (byShop[k] = byShop[k] || { florist: it.florist, items: [] }).items.push(it); }
-    const body = Object.values(byShop).map(({ florist, items: list }) => `<div style="background:#FFFFFF;padding:20px 24px;margin-bottom:14px;border-left:2px solid #B8976A;">
+    const body = Object.values(byShop).map(({ florist, items: list }) => `<div style="background:#FFFFFF;padding:20px 24px;margin-bottom:14px;border: 1px solid #E6E0D8;border-radius: 20px;">
         ${LABEL(escapeHtml(florist.businessName || florist.name))}
-        ${list.map(({ order, booking, settings }) => `<p style="margin:8px 0 0;font-size:14px;color:#2C2824;font-weight:300;"><strong style="font-weight:400;">${escapeHtml(primaryName(order))}</strong> — <span style="text-transform:capitalize;">${escapeHtml(formatWhen(toDate(booking.scheduledAt), 'et'))}</span>, ${escapeHtml(formatTime(toDate(booking.scheduledAt)))}${settings.preference ? ' · ' + escapeHtml(settings.preference) : ''}</p>`).join('')}
+        ${list.map(({ order, booking, settings }) => `<p style="margin:8px 0 0;font-size:15px;color:#141312;font-weight:300;"><strong style="font-weight:400;">${escapeHtml(primaryName(order))}</strong> — <span style="text-transform:capitalize;">${escapeHtml(formatWhen(toDate(booking.scheduledAt), 'et'))}</span>, ${escapeHtml(formatTime(toDate(booking.scheduledAt)))}${settings.preference ? ' · ' + escapeHtml(settings.preference) : ''}</p>`).join('')}
       </div>`).join('');
     const dates = [...new Set(items.map((i) => tallinnDateStr(toDate(i.booking.scheduledAt))))].sort();
     const when = periodShort({ from: dates[0], to: dates[dates.length - 1] });
@@ -1054,7 +1011,7 @@ module.exports = function createHaldus(deps) {
     };
     const body = items.map(({ order, booking, wish }) => {
       const start = toDate(booking.scheduledAt);
-      return `<div style="background:#FFFFFF;padding:20px 24px;margin-bottom:14px;border-left:2px solid #B8976A;">
+      return `<div style="background:#FFFFFF;padding:20px 24px;margin-bottom:14px;border: 1px solid #E6E0D8;border-radius: 20px;">
         ${LABEL(escapeHtml(primaryName(order) || primaryEmail(order)))}
         ${ROW('Visiit', `<span style="text-transform:capitalize;">${escapeHtml(formatWhen(start, 'et'))}</span>, ${escapeHtml(formatTime(start))}`)}
         ${ROW('Lilled', escapeHtml(wish || 'Hooajaline kimp'))}
@@ -1084,7 +1041,7 @@ module.exports = function createHaldus(deps) {
     const when = `${formatWhen(start, 'et')}, ${formatTime(start)}`;
     return {
       subject: `SUKODA | Lilletellimus tühistatud — ${name}, ${periodShort({ from: tallinnDateStr(start), to: tallinnDateStr(start) })}`,
-      html: wrap(H2('Lilletellimus tühistatud') + P(`Kliendi ${escapeHtml(name)} visiit <strong style="color:#2C2824;font-weight:400;text-transform:capitalize;">${escapeHtml(when)}</strong> jääb ära. Kimpu selleks ajaks ei ole vaja. Vabandame hilise teate pärast.`), 'et'),
+      html: wrap(H2('Lilletellimus tühistatud') + P(`Kliendi ${escapeHtml(name)} visiit <strong style="color:#141312;font-weight:400;text-transform:capitalize;">${escapeHtml(when)}</strong> jääb ära. Kimpu selleks ajaks ei ole vaja. Vabandame hilise teate pärast.`), 'et'),
     };
   }
 
@@ -1235,10 +1192,10 @@ module.exports = function createHaldus(deps) {
   }
 
   // Provider-facing (ET)
-  function providerWrap(title, intro, bodyHtml, cta = { href: HALDUS_URL, label: 'AVA TÖÖLAUD' }) {
+  function providerWrap(title, intro, bodyHtml, cta = { href: HALDUS_URL, label: 'Ava töölaud' }) {
     return wrap(
       H2(title) + P(intro) + bodyHtml
-      + `<div style="margin-top:28px;"><a href="${cta.href}" style="display:inline-block;background:#111111;color:#FFFFFF;padding:14px 32px;text-decoration:none;font-size:11px;text-transform:uppercase;letter-spacing:3px;font-weight:500;">${cta.label}</a></div>`,
+      + `<div style="margin-top:28px;"><a href="${cta.href}" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">${cta.label}</a></div>`,
       'et',
     );
   }
@@ -1246,7 +1203,7 @@ module.exports = function createHaldus(deps) {
   function providerMagicLinkEmail(url) {
     return {
       subject: 'SUKODA Töölaud | Sinu sisenemislink',
-      html: providerWrap('Sinu sisenemislink', 'Vajuta nupule ja sisene oma töölauale. Link kehtib 30 päeva.', '', { href: url, label: 'AVA TÖÖLAUD' }),
+      html: providerWrap('Sinu sisenemislink', 'Vajuta nuppu ja ava oma töölaud. Link kehtib 30 päeva.', '', { href: url, label: 'Ava töölaud' }),
     };
   }
 
@@ -1276,9 +1233,9 @@ module.exports = function createHaldus(deps) {
         type: 'new_request', lang: 'et', title, body: intro, url: `${HALDUS_URL}?tab=requests`, audience: 'provider',
       }),
       html: providerWrap(title, intro,
-        `<div style="background:#FFFFFF;padding:28px;border-left:2px solid #B8976A;">
+        `<div style="background:#FFFFFF;padding:28px;border: 1px solid #E6E0D8;border-radius: 20px;">
           ${LABEL(isReschedule ? 'Visiit' : kind === 'question' ? 'Teema' : 'Teenus')}
-          <p style="margin:0;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
+          <p style="margin:0;font-weight: 400;color:#141312;font-size:20px;font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;">${escapeHtml(svc)}</p>
           ${target ? ROW(isReschedule ? 'Jääb ära' : 'Praegune aeg', `${escapeHtml(formatWhen(target, 'et'))}, ${escapeHtml(formatTime(target))}`) : ''}
           ${kind !== 'question' ? ROW('Soovitud päev', escapeHtml(when)) : ''}
           ${kind !== 'question' && core.requestedTimeLabel(request.preferredTime, request.timeWindow, 'et') ? ROW('Soovitud aeg', escapeHtml(core.requestedTimeLabel(request.preferredTime, request.timeWindow, 'et'))) : ''}
@@ -1291,16 +1248,16 @@ module.exports = function createHaldus(deps) {
           ${ROW('Aadress', escapeHtml(primaryAddress(order) || '-'))}
           ${ROW('Kontakt', `${escapeHtml(primaryEmail(order))}${order.customer?.phone ? ' · ' + escapeHtml(order.customer.phone) : ''}`)}
         </div>`,
-        { href: `${HALDUS_URL}?tab=requests`, label: 'AVA TÖÖLAUD' }),
+        { href: `${HALDUS_URL}?tab=requests`, label: 'Ava töölaud' }),
     };
   }
 
   function providerDigestEmail({ provider, skipped }) {
-    const rows = skipped.map((s) => `<li style="padding:8px 0;border-bottom:1px solid #E8E3DD;color:#8A8578;font-size:14px;"><strong style="color:#2C2824;font-weight:400;">${escapeHtml(s.customerName)}</strong> — ${escapeHtml(s.date)} (${escapeHtml(s.holiday)})</li>`).join('');
+    const rows = skipped.map((s) => `<li style="padding:8px 0;border-bottom:1px solid #E6E0D8;color:#5F5A54;font-size:15px;"><strong style="color:#141312;font-weight:400;">${escapeHtml(s.customerName)}</strong> — ${escapeHtml(s.date)} (${escapeHtml(s.holiday)})</li>`).join('');
     return {
       subject: 'SUKODA | Koristusajad langevad riigipühale',
       html: providerWrap('Vajab sinu otsust', `Tere, ${escapeHtml(greetName(provider))}. Need ajad langevad riigipühale ja me ei pannud neid kalendrisse. Lisa aeg käsitsi, kui tuled sel päeval siiski, või lepi kliendiga kokku uus aeg.`,
-        `<ul style="list-style:none;padding:0;margin:0;background:#FFFFFF;padding:12px 28px;border-left:2px solid #B8976A;">${rows}</ul>`),
+        `<ul style="list-style:none;padding:0;margin:0;background:#FFFFFF;padding:12px 28px;border: 1px solid #E6E0D8;border-radius: 20px;">${rows}</ul>`),
     };
   }
 
@@ -1830,7 +1787,7 @@ module.exports = function createHaldus(deps) {
           en: `${who} could not get into your home. The new time is ${when}. If it does not suit, change it in the app.`,
           ru: `${who} не смог(ла) попасть в дом. Новое время: ${when}. Если оно не подходит, измените его в приложении.`,
         }, L))
-        + `<div style="text-align:center;margin:32px 0;"><a href="${PORTAL_URL}" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">${core.pick({ et: 'Ava rakendus', en: 'Open the app', ru: 'Открыть приложение' }, L)}</a></div>`,
+        + `<div style="margin:32px 0;"><a href="${PORTAL_URL}" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">${core.pick({ et: 'Ava rakendus', en: 'Open the app', ru: 'Открыть приложение' }, L)}</a></div>`,
         L,
       ),
     };
@@ -2289,8 +2246,8 @@ module.exports = function createHaldus(deps) {
       return {
         subject: `SUKODA | Sõnum: ${requestName(request, 'et')} — ${primaryName(order) || primaryEmail(order)}`,
         html: providerWrap('Klient kirjutas', `${escapeHtml(fromName || primaryName(order) || 'Klient')} saatis sõnumi teemal „${escapeHtml(requestName(request, 'et'))}“. Vasta töölaual. Klient näeb vastust rakenduses.`,
-          `<div style="background:#FFFFFF;padding:20px 24px;border-left:2px solid #B8976A;margin:16px 0;font-size:14px;line-height:1.6;color:#2C2824;">${escapeHtml(text).replace(/\n/g, '<br>')}</div>`,
-          { href: `${HALDUS_URL}?tab=requests`, label: 'AVA TÖÖLAUD' }),
+          `<div style="background:#FFFFFF;padding:20px 24px;margin:16px 0;font-size:15px;line-height:1.6;color:#141312;border: 1px solid #E6E0D8;border-radius: 20px;">${escapeHtml(text).replace(/\n/g, '<br>')}</div>`,
+          { href: `${HALDUS_URL}?tab=requests`, label: 'Ava töölaud' }),
       };
     }
     const tt = t(lang);
@@ -2302,12 +2259,12 @@ module.exports = function createHaldus(deps) {
     }, lang);
     const html = wrap(
       H2(title) + P(`${tt.hello(escapeHtml(firstName(primaryName(order))))} ${escapeHtml(wrote)}`)
-      + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border-left:2px solid #B8976A;">
+      + `<div style="background:#FFFFFF;padding:28px;margin-bottom:28px;border: 1px solid #E6E0D8;border-radius: 20px;">
           ${LABEL(tt.service)}
-          <p style="margin:0 0 16px;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(svc)}</p>
-          <p style="margin:0;font-size:14px;line-height:1.6;color:#2C2824;">${escapeHtml(text).replace(/\n/g, '<br>')}</p>
+          <p style="margin:0 0 16px;font-weight: 400;color:#141312;font-size:20px;font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;">${escapeHtml(svc)}</p>
+          <p style="margin:0;font-size:15px;line-height:1.6;color:#141312;">${escapeHtml(text).replace(/\n/g, '<br>')}</p>
         </div>`
-      + P(core.pick({ et: 'Sellele kirjale ei saa vastata. Kirjuta rakenduses.', en: 'You cannot reply to this e-mail. Write in the app.', ru: 'На это письмо нельзя ответить. Напишите в приложении.' }, lang), 'font-size:13px;color:#6B6560;')
+      + P(core.pick({ et: 'Sellele kirjale ei saa vastata. Kirjuta rakenduses.', en: 'You cannot reply to this e-mail. Write in the app.', ru: 'На это письмо нельзя ответить. Напишите в приложении.' }, lang), 'font-size:13px;color:#5F5A54;')
       + portalBlock(lang, requestUrl(requestId)),
       lang,
       brandOf(order),
@@ -2395,8 +2352,8 @@ module.exports = function createHaldus(deps) {
       subject: `SUKODA | Pakett ${p.name} on aktiivne`,
       html: wrap(
         H2(`Pakett ${p.name}`)
-        + P(`${escapeHtml(provider.name)}, sinu töölaual on nüüd pakett <strong style="color:#2C2824;font-weight:normal;">${p.name}</strong>: ${p.price} €/kuus, ${p.homes ? `kuni ${p.homes} kodu` : 'piiramatult kodusid'}. Arve tuleb iga kuu e-postile. Paketi saad igal ajal töölaual lõpetada; pakett kehtib siis kuu lõpuni.`)
-        + `<div style="text-align:center;margin:32px 0;"><a href="${HALDUS_URL}?tab=account" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">Ava töölaud</a></div>`,
+        + P(`${escapeHtml(provider.name)}, sinu töölaual on nüüd pakett <strong style="color:#141312;font-weight:normal;">${p.name}</strong>: ${p.price} €/kuus, ${p.homes ? `kuni ${p.homes} kodu` : 'piiramatult kodusid'}. Arve tuleb iga kuu e-postile. Paketi saad igal ajal töölaual lõpetada; pakett kehtib siis kuu lõpuni.`)
+        + `<div style="margin:32px 0;"><a href="${HALDUS_URL}?tab=account" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">Ava töölaud</a></div>`,
         'et',
       ),
     };
@@ -2408,7 +2365,7 @@ module.exports = function createHaldus(deps) {
       html: wrap(
         H2('Tasuta pakett')
         + P(`${escapeHtml(provider.name)}, sinu tasuline pakett lõppes ja töölaud on nüüd tasuta paketis: kuni ${core.PROVIDER_PLANS.free.homes} kodu. Kliendid, ajad ja andmed jäävad alles. Uue kodu saad lisada, kui kodusid on alla ${core.PROVIDER_PLANS.free.homes} või kui valid paketi uuesti.`)
-        + `<div style="text-align:center;margin:32px 0;"><a href="${HALDUS_URL}?tab=account" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">Ava töölaud</a></div>`,
+        + `<div style="margin:32px 0;"><a href="${HALDUS_URL}?tab=account" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">Ava töölaud</a></div>`,
         'et',
       ),
     };
@@ -2421,7 +2378,7 @@ module.exports = function createHaldus(deps) {
       html: wrap(
         H2('Arve tasutud')
         + P(`${escapeHtml(provider.name)}, töölaua kuumakse ${amount} € on tasutud. Arve on allpool.`)
-        + `<div style="text-align:center;margin:32px 0;">${invoice.invoice_pdf ? `<a href="${invoice.invoice_pdf}" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">Laadi arve (PDF)</a>` : ''}${invoice.hosted_invoice_url ? `<p style="margin:16px 0 0 0;"><a href="${invoice.hosted_invoice_url}" style="color:#B8976A;font-size:13px;">Vaata arvet veebis</a></p>` : ''}</div>`,
+        + `<div style="margin:32px 0;">${invoice.invoice_pdf ? `<a href="${invoice.invoice_pdf}" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">Laadi arve (PDF)</a>` : ''}${invoice.hosted_invoice_url ? `<p style="margin:16px 0 0 0;"><a href="${invoice.hosted_invoice_url}" style="color:#5F5A54;font-size:13px;">Vaata arvet veebis</a></p>` : ''}</div>`,
         'et',
       ),
     };
@@ -2868,14 +2825,14 @@ module.exports = function createHaldus(deps) {
       subject: `SUKODA | Uus kodu kutsekaardiga: ${name}`,
       html: providerWrap('Uus kodu kutsekaardiga',
         `Tere, ${escapeHtml(greetName(provider))}. ${escapeHtml(name)} sisestas sinu kutsekaardi koodi. Kodu on nüüd sinu töölaual ja klient sai rakenduse lingi. Ava töölaud ja lisa graafik, siis saab klient kalendrikutsed kohe.`,
-        `<div style="background:#FFFFFF;padding:28px;border-left:2px solid #B8976A;">
+        `<div style="background:#FFFFFF;padding:28px;border: 1px solid #E6E0D8;border-radius: 20px;">
           ${LABEL('Kodu')}
-          <p style="margin:0;font-weight:300;color:#2C2824;font-size:20px;font-family:Georgia,'Times New Roman',serif;">${escapeHtml(name)}</p>
+          <p style="margin:0;font-weight: 400;color:#141312;font-size:20px;font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;">${escapeHtml(name)}</p>
           ${ROW('Aadress', escapeHtml(primaryAddress(order) || '-'))}
           ${ROW('Kontakt', `${escapeHtml(primaryEmail(order))}${order.customer?.phone ? ' · ' + escapeHtml(order.customer.phone) : ''}`)}
           ${ROW('Kutsekaart', escapeHtml(order.inviteCode || ''))}
         </div>`,
-        { href: `${HALDUS_URL}?tab=customers`, label: 'AVA TÖÖLAUD JA LISA GRAAFIK' }),
+        { href: `${HALDUS_URL}?tab=customers`, label: 'Ava töölaud ja lisa graafik' }),
     };
   }
 
@@ -3192,17 +3149,17 @@ module.exports = function createHaldus(deps) {
       ru: 'SUKODA Рабочий стол | Ваш код для входа',
     }, L);
     const intro = core.pick({
-      et: 'Sisesta see 6-kohaline kood töölauale või vajuta allolevale nupule. Kood kehtib 10 minutit.',
-      en: 'Enter this 6-digit code on the desk or tap the button below. The code is valid for 10 minutes.',
-      ru: 'Введите этот 6-значный код на рабочем столе или нажмите кнопку ниже. Код действует 10 минут.',
+      et: 'Sisesta see kood töölaual või vajuta nuppu. Kood kehtib 10 minutit.',
+      en: 'Enter this code on the desk or press the button. The code is valid for 10 minutes.',
+      ru: 'Введите этот код на рабочем столе или нажмите кнопку. Код действует 10 минут.',
     }, L);
-    const btn = core.pick({ et: 'AVA TÖÖLAUD', en: 'OPEN THE DESK', ru: 'ОТКРЫТЬ РАБОЧИЙ СТОЛ' }, L);
+    const btn = core.pick({ et: 'Ava töölaud', en: 'Open the desk', ru: 'Открыть рабочий стол' }, L);
     return {
       subject,
       html: wrap(
-        H2(escapeHtml(code))
+        ui.CODE(code)
         + P(intro)
-        + `<div style="margin-top:24px;"><a href="${url}" style="display:inline-block;background:#111111;color:#FFFFFF;padding:14px 32px;text-decoration:none;font-size:11px;text-transform:uppercase;letter-spacing:3px;font-weight:500;">${btn}</a></div>`,
+        + `<div style="margin-top:24px;"><a href="${url}" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">${btn}</a></div>`,
         L,
       ),
     };
@@ -3265,7 +3222,7 @@ module.exports = function createHaldus(deps) {
       en: 'Enter this code in the app. The code is valid for 10 minutes.',
       ru: 'Введите этот код в приложении. Код действует 10 минут.',
     }, L);
-    return { subject, html: wrap(H2(escapeHtml(code)) + P(intro), L) };
+    return { subject, html: wrap(ui.CODE(code) + P(intro), L) };
   }
 
   /** Same doors as the magic link: a paid home first, otherwise an active desk. Unknown e-mail is not an account. */
@@ -3347,7 +3304,7 @@ module.exports = function createHaldus(deps) {
       en: 'Enter this code in the app to delete the account for good. The code is valid for 10 minutes. If you did not ask for this, do nothing: the account stays.',
       ru: 'Введите этот код в приложении, чтобы окончательно удалить аккаунт. Код действует 10 минут. Если вы не просили об удалении, ничего не делайте: аккаунт останется.',
     }, L);
-    return { subject, html: wrap(H2(escapeHtml(code)) + P(intro), L) };
+    return { subject, html: wrap(ui.CODE(code) + P(intro), L) };
   }
 
   /** To each household a deleted specialist served: what changed and what to do next. */
@@ -3370,7 +3327,7 @@ module.exports = function createHaldus(deps) {
       html: wrap(
         H2(escapeHtml(core.pick({ et: 'Visiidid on tühistatud', en: 'Visits are cancelled', ru: 'Визиты отменены' }, L)))
         + P(body)
-        + `<div style="text-align:center;margin:32px 0;"><a href="${PORTAL_URL}" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">${button}</a></div>`,
+        + `<div style="margin:32px 0;"><a href="${PORTAL_URL}" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">${button}</a></div>`,
         L,
         order?.brand,
       ),
@@ -3884,7 +3841,7 @@ module.exports = function createHaldus(deps) {
             to: NOTIFICATION_EMAIL,
             subject: `SUKODA | Uus partner liitus — ${name}`,
             html: wrap(H2('Uus teenusepakkuja') + P(`${escapeHtml(name)}${b.businessName ? ' · ' + escapeHtml(str(b.businessName, 160)) : ''} avas endale töölaua.`)
-              + `<div style="background:#FFFFFF;padding:24px;margin-bottom:24px;border-left:2px solid #B8976A;">${ROW('E-post', escapeHtml(email))}${b.phone ? ROW('Telefon', escapeHtml(str(b.phone, 40))) : ''}${ROW('Teenused', escapeHtml((services.length ? services : ['cleaning']).map((s) => core.SERVICE_CATEGORIES[s]?.et || s).join(', ')))}${b.city ? ROW('Piirkond', escapeHtml(str(b.city, 80))) : ''}</div>`
+              + `<div style="background:#FFFFFF;padding:24px;margin-bottom:24px;border: 1px solid #E6E0D8;border-radius: 20px;">${ROW('E-post', escapeHtml(email))}${b.phone ? ROW('Telefon', escapeHtml(str(b.phone, 40))) : ''}${ROW('Teenused', escapeHtml((services.length ? services : ['cleaning']).map((s) => core.SERVICE_CATEGORIES[s]?.et || s).join(', ')))}${b.city ? ROW('Piirkond', escapeHtml(str(b.city, 80))) : ''}</div>`
               + P('Ta saab kohe kliente lisada.', 'font-size:12px;'), 'et'),
           });
         } catch (e) { console.error('signup operator mail failed', e); }
@@ -3931,12 +3888,12 @@ module.exports = function createHaldus(deps) {
       await sendEmail({
         to: partnerEmail,
         replyTo: email,
-        subject: `SUKODA | ${who} kutsub sind oma koduportaali`,
+        subject: `SUKODA | ${who} kutsub sind oma kodu rakendusse`,
         html: wrap(
           H2(`Tere${partnerName ? ', ' + escapeHtml(firstName(partnerName)) : ''}.`)
           + P(`${escapeHtml(who)} kasutab SUKODA rakendust ja soovib, et sinu visiidiajad, kalendrikutsed ja soovid liiguksid edaspidi rakenduse kaudu otse sinult.`)
           + P('Töölaual näed kodu, paned paika ajad või korduva graafiku ning pere saab kalendrikutsed ja meeldetuletused ise. Alustamine on tasuta (0% vahendustasu) ja võtab minuti.')
-          + `<div style="text-align:center;margin:32px 0;"><a href="${url}" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">Ava oma töölaud</a></div>`
+          + `<div style="margin:32px 0;"><a href="${url}" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">Ava oma töölaud</a></div>`
           + P(`Kui sul on küsimusi, vasta sellele kirjale. Vastus jõuab otse kutsujale (${escapeHtml(who)}).`, 'font-size:12px;'),
           'et',
         ),
@@ -4989,16 +4946,16 @@ module.exports = function createHaldus(deps) {
       html: wrap(
         H2(core.pick({ et: 'Tehtud', en: 'Done', ru: 'Сделано' }, lang))
         + P(core.pick({
-          et: `${who} märkis tehtuks: <strong style="color:#2C2824;font-weight:normal;">${safeName}</strong> · ${safeWhen}.`,
-          en: `${who} marked as done: <strong style="color:#2C2824;font-weight:normal;">${safeName}</strong> · ${safeWhen}.`,
-          ru: `Выполнено (${who}): <strong style="color:#2C2824;font-weight:normal;">${safeName}</strong> · ${safeWhen}.`,
+          et: `${who} märkis tehtuks: <strong style="color:#141312;font-weight:normal;">${safeName}</strong> · ${safeWhen}.`,
+          en: `${who} marked as done: <strong style="color:#141312;font-weight:normal;">${safeName}</strong> · ${safeWhen}.`,
+          ru: `Выполнено (${who}): <strong style="color:#141312;font-weight:normal;">${safeName}</strong> · ${safeWhen}.`,
         }, lang))
         + P(core.pick({
           et: `Järgmine kord on umbes ${escapeHtml(nextLabel)}. Sina ei pea midagi tegema, kodu rütm liikus edasi.`,
           en: `The next time is around ${escapeHtml(nextLabel)}. Nothing for you to do, the home rhythm moved on.`,
           ru: `Следующий раз примерно ${escapeHtml(nextLabel)}. Вам ничего делать не нужно, ритм дома сдвинулся дальше.`,
         }, lang))
-        + `<div style="text-align:center;margin:32px 0;"><a href="${PORTAL_URL}" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">${core.pick({ et: 'Ava rakendus', en: 'Open the app', ru: 'Открыть приложение' }, lang)}</a></div>`,
+        + `<div style="margin:32px 0;"><a href="${PORTAL_URL}" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">${core.pick({ et: 'Ava rakendus', en: 'Open the app', ru: 'Открыть приложение' }, lang)}</a></div>`,
         lang,
       ),
     };
@@ -5028,7 +4985,7 @@ module.exports = function createHaldus(deps) {
       const name = escapeHtml(core.maintenanceName(it, L));
       const due = it.nextDueAt ? core.parseDateStr(it.nextDueAt) : null;
       const when = due ? `${nextWord} ${escapeHtml(formatWhen(due, L))}` : '';
-      return `<p style="margin:0 0 8px 0;color:#2C2824;font-size:16px;font-family:Georgia,'Times New Roman',serif;font-weight:300;">${name}${when ? ` <span style="color:#8A8578;font-size:13px;font-family:Helvetica,Arial,sans-serif;">· ${when}</span>` : ''}</p>`;
+      return `<p style="margin:0 0 8px 0;color:#141312;font-size:16px;font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;font-weight: 400;">${name}${when ? ` <span style="color:#5F5A54;font-size:13px;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">· ${when}</span>` : ''}</p>`;
     }).join('');
   }
 
@@ -5054,7 +5011,7 @@ module.exports = function createHaldus(deps) {
     }[L];
     const tt = t(L);
     const list = (items || []).length
-      ? `<div style="background:#FFFFFF;padding:20px 28px;margin-bottom:20px;border-left:2px solid #B8976A;">${rhythmMovedLines(items, L)}</div>`
+      ? `<div style="background:#FFFFFF;padding:20px 28px;margin-bottom:20px;border: 1px solid #E6E0D8;border-radius: 20px;">${rhythmMovedLines(items, L)}</div>`
         + P(copy.moved)
       : '';
     const html = wrap(
@@ -5073,9 +5030,9 @@ module.exports = function createHaldus(deps) {
   /** To the provider: what is due at her clients' homes in the next two weeks, one mail, one line per item */
   function providerMaintenanceReminderEmail({ provider, entries }) {
     const lang = core.langOf(provider);
-    const rows = entries.map(({ order, item }) => `<div style="padding:14px 0;border-top:1px solid #E8E3DD;">
-        <p style="margin:0 0 2px 0;color:#2C2824;font-size:16px;font-family:Georgia,'Times New Roman',serif;font-weight:300;">${escapeHtml(core.maintenanceName(item, lang))} <span style="color:#B8976A;font-size:13px;font-family:Helvetica,Arial,sans-serif;">· ${escapeHtml(formatWhen(core.parseDateStr(item.nextDueAt), lang))}</span></p>
-        <p style="margin:0;color:#8A8578;font-size:13px;">${escapeHtml(primaryName(order) || '')} · ${escapeHtml(primaryAddress(order) || '')}</p>
+    const rows = entries.map(({ order, item }) => `<div style="padding:14px 0;border-top:1px solid #E6E0D8;">
+        <p style="margin:0 0 2px 0;color:#141312;font-size:16px;font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;font-weight: 400;">${escapeHtml(core.maintenanceName(item, lang))} <span style="color:#5F5A54;font-size:13px;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">· ${escapeHtml(formatWhen(core.parseDateStr(item.nextDueAt), lang))}</span></p>
+        <p style="margin:0;color:#5F5A54;font-size:13px;">${escapeHtml(primaryName(order) || '')} · ${escapeHtml(primaryAddress(order) || '')}</p>
       </div>`).join('');
     const n = entries.length;
     const one = n === 1 ? `${core.maintenanceName(entries[0].item, lang)} · ${primaryName(entries[0].order)}` : '';
@@ -5099,8 +5056,8 @@ module.exports = function createHaldus(deps) {
           en: `${escapeHtml(provider.name)}, these jobs are yours and are due within the next two weeks. When a job is done, tick it on the desk. The client gets a one-line notice.`,
           ru: `${escapeHtml(provider.name)}, эти дела за вами, срок в ближайшие две недели. Когда дело сделано, отметьте на рабочем столе. Клиент получит короткое уведомление.`,
         }, lang))
-        + `<div style="background:#FFFFFF;padding:8px 28px 12px;margin-bottom:28px;border-left:2px solid #B8976A;">${rows}</div>`
-        + `<div style="text-align:center;margin:32px 0;"><a href="${HALDUS_URL}?tab=customers" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">${core.pick({ et: 'Ava töölaud', en: 'Open the desk', ru: 'Открыть рабочий стол' }, lang)}</a></div>`
+        + `<div style="background:#FFFFFF;padding:8px 28px 12px;margin-bottom:28px;border: 1px solid #E6E0D8;border-radius: 20px;">${rows}</div>`
+        + `<div style="margin:32px 0;"><a href="${HALDUS_URL}?tab=customers" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">${core.pick({ et: 'Ava töölaud', en: 'Open the desk', ru: 'Открыть рабочий стол' }, lang)}</a></div>`
         + P(core.pick({ et: 'Iga töö kohta tuleb üks meeldetuletus.', en: 'You get one reminder per job.', ru: 'По каждому делу приходит одно напоминание.' }, lang), 'font-size:12px;'),
         lang,
       ),
@@ -5133,7 +5090,7 @@ module.exports = function createHaldus(deps) {
       html: wrap(
         H2(escapeHtml(core.pick({ et: 'Kodu on sinu', en: 'The home is yours', ru: 'Дом ваш' }, L)))
         + P(body)
-        + `<div style="text-align:center;margin:32px 0;"><a href="${url}" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">${button}</a></div>`,
+        + `<div style="margin:32px 0;"><a href="${url}" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">${button}</a></div>`,
         L,
       ),
     };
@@ -5182,9 +5139,9 @@ module.exports = function createHaldus(deps) {
       const due = core.parseDateStr(it.nextDueAt);
       const cat = it.catalogId ? core.MAINTENANCE_CATALOGUE.find((m) => m.id === it.catalogId) : null;
       const hint = cat ? core.pick(cat.hint, lang) : (it.note || '');
-      return `<div style="padding:16px 0;border-top:1px solid #E8E3DD;">
-        <p style="margin:0 0 4px 0;color:#2C2824;font-size:16px;font-family:Georgia,'Times New Roman',serif;font-weight:300;">${escapeHtml(name)} <span style="color:#B8976A;font-size:13px;font-family:Helvetica,Arial,sans-serif;">· ${escapeHtml(formatWhen(due, lang))}</span></p>
-        ${hint ? `<p style="margin:0;color:#8A8578;font-size:13px;line-height:1.6;">${escapeHtml(hint)}</p>` : ''}
+      return `<div style="padding:16px 0;border-top:1px solid #E6E0D8;">
+        <p style="margin:0 0 4px 0;color:#141312;font-size:16px;font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;font-weight: 400;">${escapeHtml(name)} <span style="color:#5F5A54;font-size:13px;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">· ${escapeHtml(formatWhen(due, lang))}</span></p>
+        ${hint ? `<p style="margin:0;color:#5F5A54;font-size:13px;line-height:1.6;">${escapeHtml(hint)}</p>` : ''}
       </div>`;
     }).join('');
     const n = items.length;
@@ -5205,8 +5162,8 @@ module.exports = function createHaldus(deps) {
           en: `${escapeHtml(primaryAddress(order) || 'Your home')}: these jobs are due within the next two weeks. Do them yourself and tick them off in the app, or order the job in the app.`,
           ru: `${escapeHtml(primaryAddress(order) || 'Ваш дом')}: эти дела нужно сделать в ближайшие две недели. Сделайте сами и отметьте в приложении или закажите работу в приложении.`,
         }, lang))
-        + `<div style="background:#FFFFFF;padding:8px 28px 12px;margin-bottom:28px;border-left:2px solid #B8976A;">${rows}</div>`
-        + `<div style="text-align:center;margin:32px 0;"><a href="${PORTAL_URL}" style="display:inline-block;background:#2C2824;color:#FAF8F5;padding:16px 36px;text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;">${core.pick({ et: 'Ava rakendus', en: 'Open the app', ru: 'Открыть приложение' }, lang)}</a></div>`
+        + `<div style="background:#FFFFFF;padding:8px 28px 12px;margin-bottom:28px;border: 1px solid #E6E0D8;border-radius: 20px;">${rows}</div>`
+        + `<div style="margin:32px 0;"><a href="${PORTAL_URL}" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">${core.pick({ et: 'Ava rakendus', en: 'Open the app', ru: 'Открыть приложение' }, lang)}</a></div>`
         + P(core.pick({
           et: 'Iga töö kohta tuleb üks meeldetuletus. Sagedust saad rakenduses muuta või töö nimekirjast eemaldada.',
           en: 'You get one reminder per job. Change how often it repeats or remove the job in the app.',
@@ -6542,6 +6499,8 @@ module.exports = function createHaldus(deps) {
     billing,
     completeHomePayment,
     sendProviderMagicLink,
+    // Templates, for the look test and the local preview (scripts/email-preview.js). Nothing here sends.
+    emails: { visitEmail, scheduleEmail, welcomeEmail, requestReceivedEmail, requestAnsweredEmail, requestDeclinedEmail, requestMessageEmail, providerNewRequestEmail, providerSignupAccessEmail, loginCodeEmail, providerMagicLinkEmail, planActivatedEmail, visitDoneEmail },
     functions: {
       haldusApi: router(haldusHandlers, { rateLimitName: 'haldus', rateLimitMax: 120 }),
       portalExtrasApi: router(portalHandlers, { rateLimitName: 'portal-extras', rateLimitMax: 60 }),

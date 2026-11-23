@@ -14,6 +14,7 @@ const {
 const calService = require('./cal-service');
 const { checkoutSchema, waitlistSchema, bookGiftSchema, bookSubscriptionSchema, giftUpgradeSchema, estateInquirySchema, salesInquirySchema, validate } = require('./lib/schemas');
 const haldusCore = require('./lib/haldus-core');
+const emailUi = require('./lib/email-ui');
 // Provider portal module — initialised at the bottom of this file once shared helpers exist
 let haldus;
 
@@ -50,29 +51,29 @@ const EMAIL_TEXTS = {
 
     // Gift buyer email (extended)
     giftBuyerPreviewTitle: 'Kingisaaja saab sellise kirja',
-    giftBuyerCodeLabel: 'KINGITUSE KOOD',
-    giftBuyerCodeNote: 'Hoia koodi alles — saad selle kaudu kingituse staatust jälgida.',
+    giftBuyerCodeLabel: 'Kingituse kood',
+    giftBuyerCodeNote: 'Hoia kood alles. Selle järgi näed, mis seisus kingitus on.',
     giftBuyerYourMessage: 'Sinu sõnum kaardil',
     giftBuyerWhatHappens: 'Mis nüüd juhtub?',
     giftBuyerStep1: (recipientName) => `${recipientName || 'Kingisaaja'} saab ilusa kingituskaardi e-postile`,
     giftBuyerStep2: 'Kingisaaja valib ise sobiva aja meie kalendrist',
-    giftBuyerStep3: 'Meie hoolitseme kogu ülejäänu eest — lilled, kaart, üllatus',
+    giftBuyerStep3: 'Ülejäänu eest hoolitseme meie: lilled, kaart ja üllatus',
     giftBuyerForwardNote: 'Soovid kingituse ise üle anda? Edasta see kiri kingisaajale või prindi välja.',
 
     // Gift card email
-    giftCardLabel: 'KINGIKAART',
-    giftRecipientLabel: 'KINGISAAJA',
-    giftIncludesLabel: 'KINGITUS SISALDAB',
-    giftCodeLabel: 'KINGITUSE KOOD',
+    giftCardLabel: 'Kinkekaart',
+    giftRecipientLabel: 'Kingisaaja',
+    giftIncludesLabel: 'Kingitus sisaldab',
+    giftCodeLabel: 'Kingituse kood',
     giftChooseTime: 'Vali endale sobiv aeg:',
-    giftBookBtn: 'BRONEERI AEG',
+    giftBookBtn: 'Broneeri aeg',
 
     // Cancel email
     subjectCancelled: 'SUKODA | Sinu visiit on tühistatud',
     cancelledTitle: 'Visiit tühistatud',
-    cancelledIntro: 'Kahjuks peame sinu planeeritud visiidi tühistama.',
+    cancelledIntro: 'Sinu visiit jääb ära.',
     cancelledReasonLabel: 'Põhjus',
-    cancelledRebookNote: 'Soovi korral broneeri uus aeg meie lehel või kirjuta meile.',
+    cancelledRebookNote: 'Kui soovid uut aega, kirjuta meile.',
 
     // Reschedule email
     subjectRescheduled: 'SUKODA | Sinu visiidi aeg on muudetud',
@@ -80,7 +81,7 @@ const EMAIL_TEXTS = {
     rescheduledIntro: (name) => name ? `Tere, ${name}. Sinu visiidi aeg on muudetud.` : 'Sinu visiidi aeg on muudetud.',
     rescheduledOldTime: 'Eelmine aeg',
     rescheduledNewTime: 'Uus aeg',
-    rescheduledContactNote: 'Kui uus aeg ei sobi, palun kirjuta meile ja leiame parema.',
+    rescheduledContactNote: 'Kui uus aeg ei sobi, kirjuta meile ja leiame parema.',
 
     // Reminder email
     reminderTitle: 'Homme ootab sind puhas kodu',
@@ -89,9 +90,9 @@ const EMAIL_TEXTS = {
     reminderAt: 'kell',
     reminderExpectLabel: 'Mida oodata',
     reminderItems: ['Põhjalik koristus', 'Värsked lilled vaasi', 'Käsitsi kirjutatud tervitus', 'Väike magus üllatus'],
-    reminderAccessNote: 'Palun jäta meile ligipääs kodule. Kui vajad aega muuta, kirjuta meile aadressil tere@sukoda.ee või halda oma broneeringut aadressil sukoda.ee/minu.',
-    homeProfileNote: 'Täida oma koduprofiil — sissepääsu info, lemmikloomad, allergeenid, lillede eelistus ja erisoovid. Nii saame pakkuda just sulle sobivat teenust:',
-    homeProfileBtn: 'TÄIDA KODUPROFIIL',
+    reminderAccessNote: 'Palun vaata, et koju saab sisse. Kui aeg ei sobi, muuda aega rakenduses või kirjuta tere@sukoda.ee.',
+    homeProfileNote: 'Täida koduprofiil: kuidas sisse saab, lemmikloomad, allergiad, lillede eelistus ja erisoovid.',
+    homeProfileBtn: 'Täida koduprofiil',
 
     // Next visit email
     nextVisitTitle: 'Järgmine külastus on paigas',
@@ -109,10 +110,10 @@ const EMAIL_TEXTS = {
       ? `Tere, ${name}. Sinu koduhoolitsuse aeg on broneeritud.`
       : 'Sinu koduhoolitsuse aeg on broneeritud.',
     bookingConfirmedTimeLabel: 'Sinu külastus',
-    bookingConfirmedNote: 'Saadame meeldetuletuse päev enne külastust. Palun jäta meile ligipääs kodule.',
-    bookingConfirmedChangeNote: 'Kui vajad aega muuta, kirjuta meile aadressil tere@sukoda.ee.',
-    bookingConfirmedPortalNote: 'Sinu isiklikus portaalis saad hallata broneeringuid, muuta aega ja täita koduprofiili — sissepääsu info, lemmikloomad, allergeenid, lillede eelistus ja erisoovid. Nii saame pakkuda just sulle sobivat teenust.',
-    bookingConfirmedPortalBtn: 'MINU SUKODA',
+    bookingConfirmedNote: 'Päev enne visiiti saadame meeldetuletuse. Palun vaata, et koju saab sisse.',
+    bookingConfirmedChangeNote: 'Kui aeg ei sobi, muuda aega rakenduses või kirjuta tere@sukoda.ee.',
+    bookingConfirmedPortalNote: 'Rakenduses näed oma aegu, saad aega muuta ja täita koduprofiili: kuidas sisse saab, lemmikloomad, allergiad, lillede eelistus ja erisoovid.',
+    bookingConfirmedPortalBtn: 'Ava rakendus',
 
     // Calendar buttons
     calendarAddLabel: 'Lisa kalendrisse',
@@ -157,7 +158,7 @@ const EMAIL_TEXTS = {
     followup24hOfferText: 'Esimesed 3 kuud SUKODA püsiteenust -20%. Sest see tunne ei pea olema ühekordne.',
     followup24hOfferCode: 'KINGITUS20',
     followup24hOfferNote: 'Pakkumine kehtib 30 päeva.',
-    followup24hCta: 'ALUSTA SIIT',
+    followup24hCta: 'Alusta siit',
 
     // Multi-visit gift: 24h/7d/30d — no conversion, just warmth + next visit info
     giftMulti24hIntro: (name, visitDateStr) => {
@@ -170,7 +171,7 @@ const EMAIL_TEXTS = {
     giftMulti24hNextTitle: 'Sinu kingitus jätkub',
     giftMulti24hNextNote: (remaining) => `Sul on veel ${remaining} külastus${remaining > 1 ? 't' : ''} ees. Järgmine kord on sama eriline.`,
     giftMulti24hProfileNote: 'Kui soovid järgmisel korral midagi teisiti, lisa oma soovid ja eelistused siia:',
-    giftMulti24hProfileBtn: 'MINU KODU',
+    giftMulti24hProfileBtn: 'Ava oma kodu',
     giftMulti7dTitle: 'Kas mäletad seda tunnet?',
     giftMulti7dIntro: (name) => name
       ? `${name}, nädal tagasi oli sinu kodu teistsugune.`
@@ -190,7 +191,7 @@ const EMAIL_TEXTS = {
       : 'Nädal tagasi oli sinu kodu teistsugune.',
     followup7dBody: 'Puhas. Lilled vaasis. Väike üllatus laual. See pole lihtsalt koristus — see on hoolitsus. Ja sa väärid seda rohkem kui korra.',
     followup7dOfferReminder: 'Sinu isiklik -20% pakkumine ootab endiselt:',
-    followup7dCta: 'JAH, MA TAHAN SEDA',
+    followup7dCta: 'Jah, tahan seda',
 
     // Gift recipient → subscriber follow-up: 30 days after visit
     followup30dTitle: 'Mõtlesime sinu peale.',
@@ -199,7 +200,7 @@ const EMAIL_TEXTS = {
       : 'Kuu on möödas sellest päevast, mil tulid koju ja kõik oli paigas.',
     followup30dBody: 'Lilled on ammu närtsinud. Aga see tunne — seda mäletad sa veel. Puhas kodu, mis sind ootas. Keegi, kes hoolib.',
     followup30dUrgency: 'Sinu isiklik -20% pakkumine lõppeb peagi. Seejärel kehtib tavahind.',
-    followup30dCta: 'VALI OMA PAKETT',
+    followup30dCta: 'Vali oma pakett',
     followup30dFinalNote: 'Kirjuta meile — aitame leida paketi, mis sobib just sinu elurütmiga.',
 
     // Referral program — "Jaga seda tunnet"
@@ -256,28 +257,28 @@ const EMAIL_TEXTS = {
 
     // Gift buyer email (extended)
     giftBuyerPreviewTitle: 'What the recipient will receive',
-    giftBuyerCodeLabel: 'GIFT CODE',
-    giftBuyerCodeNote: 'Keep this code — you can use it to track the gift status.',
+    giftBuyerCodeLabel: 'Gift code',
+    giftBuyerCodeNote: 'Keep this code. It shows where the gift stands.',
     giftBuyerYourMessage: 'Your message on the card',
     giftBuyerWhatHappens: 'What happens next?',
     giftBuyerStep1: (recipientName) => `${recipientName || 'The recipient'} receives a beautiful gift card by email`,
     giftBuyerStep2: 'They choose their preferred time from our calendar',
-    giftBuyerStep3: 'We take care of the rest — flowers, card, surprise',
+    giftBuyerStep3: 'We take care of the rest: flowers, a card and a surprise',
     giftBuyerForwardNote: 'Want to hand over the gift yourself? Forward this email to the recipient or print it out.',
 
-    giftCardLabel: 'GIFT CARD',
-    giftRecipientLabel: 'RECIPIENT',
-    giftIncludesLabel: 'YOUR GIFT INCLUDES',
-    giftCodeLabel: 'GIFT CODE',
+    giftCardLabel: 'Gift card',
+    giftRecipientLabel: 'Recipient',
+    giftIncludesLabel: 'Your gift includes',
+    giftCodeLabel: 'Gift code',
     giftChooseTime: 'Choose a time that suits you:',
-    giftBookBtn: 'BOOK A TIME',
+    giftBookBtn: 'Book a time',
 
     // Cancel email
     subjectCancelled: 'SUKODA | Your visit has been cancelled',
     cancelledTitle: 'Visit cancelled',
-    cancelledIntro: 'Unfortunately we need to cancel your scheduled visit.',
+    cancelledIntro: 'Your visit is cancelled.',
     cancelledReasonLabel: 'Reason',
-    cancelledRebookNote: 'Please book a new time on our website or contact us.',
+    cancelledRebookNote: 'If you would like a new time, write to us.',
 
     // Reschedule email
     subjectRescheduled: 'SUKODA | Your visit time has been changed',
@@ -293,9 +294,9 @@ const EMAIL_TEXTS = {
     reminderAt: 'at',
     reminderExpectLabel: 'What to expect',
     reminderItems: ['Thorough cleaning', 'Fresh flowers in a vase', 'Handwritten greeting', 'A sweet surprise'],
-    reminderAccessNote: 'Please ensure we have access to your home. If you need to change the time, contact us at tere@sukoda.ee or manage your booking at sukoda.ee/minu.',
-    homeProfileNote: 'Fill in your home profile — access info, pets, allergies, flower preferences and special requests. This helps us provide the best service for you:',
-    homeProfileBtn: 'FILL HOME PROFILE',
+    reminderAccessNote: 'Please make sure we can get in. If the time does not suit, change it in the app or write to tere@sukoda.ee.',
+    homeProfileNote: 'Fill in the home profile: how to get in, pets, allergies, flower preferences and special requests.',
+    homeProfileBtn: 'Fill in the home profile',
 
     nextVisitTitle: 'Your next visit is scheduled',
     nextVisitIntro: (name) => name
@@ -312,10 +313,10 @@ const EMAIL_TEXTS = {
       ? `Hello, ${name}. Your home care visit has been booked.`
       : 'Your home care visit has been booked.',
     bookingConfirmedTimeLabel: 'Your visit',
-    bookingConfirmedNote: 'We\'ll send a reminder the day before your visit. Please ensure we have access to your home.',
-    bookingConfirmedChangeNote: 'If you need to change the time, contact us at tere@sukoda.ee.',
-    bookingConfirmedPortalNote: 'In your personal portal you can manage bookings, reschedule visits and fill in your home profile — access info, pets, allergies, flower preferences and special requests. This helps us provide the best service for you.',
-    bookingConfirmedPortalBtn: 'MY SUKODA',
+    bookingConfirmedNote: 'We send a reminder the day before the visit. Please make sure we can get in.',
+    bookingConfirmedChangeNote: 'If the time does not suit, change it in the app or write to tere@sukoda.ee.',
+    bookingConfirmedPortalNote: 'In the app you see your visits, can change a time and fill in the home profile: how to get in, pets, allergies, flower preferences and special requests.',
+    bookingConfirmedPortalBtn: 'Open the app',
 
     // Calendar buttons
     calendarAddLabel: 'Add to calendar',
@@ -359,7 +360,7 @@ const EMAIL_TEXTS = {
     followup24hOfferText: 'Your first 3 months of SUKODA at 20% off. Because that feeling doesn\'t have to be a one-time thing.',
     followup24hOfferCode: 'KINGITUS20',
     followup24hOfferNote: 'Offer valid for 30 days.',
-    followup24hCta: 'START HERE',
+    followup24hCta: 'Start here',
 
     // Multi-visit gift: 24h/7d/30d — no conversion, just warmth + next visit info
     giftMulti24hIntro: (name, visitDateStr) => {
@@ -372,7 +373,7 @@ const EMAIL_TEXTS = {
     giftMulti24hNextTitle: 'Your gift continues',
     giftMulti24hNextNote: (remaining) => `You still have ${remaining} visit${remaining > 1 ? 's' : ''} ahead. The next one will be just as special.`,
     giftMulti24hProfileNote: 'If you\'d like something different next time, add your preferences here:',
-    giftMulti24hProfileBtn: 'MY HOME',
+    giftMulti24hProfileBtn: 'Open your home',
     giftMulti7dTitle: 'Do you remember that feeling?',
     giftMulti7dIntro: (name) => name
       ? `${name}, a week ago your home was different.`
@@ -392,7 +393,7 @@ const EMAIL_TEXTS = {
       : 'A week ago, your home was different.',
     followup7dBody: 'Clean. Flowers in a vase. A little surprise on the table. It\'s not just cleaning — it\'s care. And you deserve it more than once.',
     followup7dOfferReminder: 'Your personal 20% offer is still waiting:',
-    followup7dCta: 'YES, I WANT THIS',
+    followup7dCta: 'Yes, I want this',
 
     // Gift recipient → subscriber follow-up: 30 days after visit
     followup30dTitle: 'We were thinking of you.',
@@ -401,7 +402,7 @@ const EMAIL_TEXTS = {
       : 'A month has passed since the day you came home and everything was in place.',
     followup30dBody: 'The flowers have long faded. But you still remember that feeling. A clean home waiting for you. Someone who cares.',
     followup30dUrgency: 'Your personal 20% offer ends soon. After that, regular pricing applies.',
-    followup30dCta: 'CHOOSE YOUR PLAN',
+    followup30dCta: 'Choose your plan',
     followup30dFinalNote: 'Write to us — we\'ll help you find a plan that fits your rhythm.',
 
     // Referral program — "Share this feeling"
@@ -629,14 +630,14 @@ function generateCalendarLinksHtml({ scheduledAt, endTime, address, lang }) {
   const icsUrl = `https://sukoda.ee/api/calendar?${icsParams.toString()}`;
 
   return `
-    <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #E8E3DD;">
-      <p style="color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500; margin: 0 0 14px 0;">${t.calendarAddLabel}</p>
+    <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #E6E0D8;">
+      <p style="color: #5F5A54; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 500; margin: 0 0 14px 0;">${t.calendarAddLabel}</p>
       <div>
-        <a href="${googleUrl}" target="_blank" rel="noopener" style="display: inline-block; padding: 10px 20px; background: #FFFFFF; border: 1px solid #E8E3DD; color: #2C2824; text-decoration: none; font-size: 13px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin-right: 8px; margin-bottom: 8px;">
-          ${t.calendarGoogle} &rarr;
+        <a href="${googleUrl}" target="_blank" rel="noopener" style="display:inline-block;background:#FFFFFF;color:#141312;padding:12px 20px;border:1px solid #D1C9BF;border-radius:14px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:15px;font-weight:500;line-height:1.2;margin-right: 8px;margin-bottom: 8px;">
+          ${t.calendarGoogle}
         </a>
-        <a href="${icsUrl}" style="display: inline-block; padding: 10px 20px; background: #FFFFFF; border: 1px solid #E8E3DD; color: #2C2824; text-decoration: none; font-size: 13px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin-bottom: 8px;">
-          ${t.calendarApple} / Outlook &rarr;
+        <a href="${icsUrl}" style="display:inline-block;background:#FFFFFF;color:#141312;padding:12px 20px;border:1px solid #D1C9BF;border-radius:14px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:15px;font-weight:500;line-height:1.2;margin-bottom: 8px;">
+          ${t.calendarApple}
         </a>
       </div>
     </div>
@@ -1402,33 +1403,33 @@ async function sendEmail({ to, subject, html, replyTo, from }) {
  */
 function generateAdminEmail(order, orderId, packageName, sizeName, isGift) {
   return `
-    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h1 style="color: #2C2824; border-bottom: 2px solid #B8976A; padding-bottom: 10px; font-weight: 300; font-family: Georgia, 'Times New Roman', serif;">
+    <div style="font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h1 style="color: #141312; border-bottom: 2px solid #D1C9BF; padding-bottom: 10px; font-weight: 400; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;">
         Uus ${isGift ? 'kingitus' : 'tellimus'}
       </h1>
       
       <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
         <tr style="background: #FAF8F5;">
-          <td style="padding: 12px; border: 1px solid #E8E3DD;"><strong>ID</strong></td>
-          <td style="padding: 12px; border: 1px solid #E8E3DD;">${orderId}</td>
+          <td style="padding: 12px; border: 1px solid #E6E0D8;"><strong>ID</strong></td>
+          <td style="padding: 12px; border: 1px solid #E6E0D8;">${orderId}</td>
         </tr>
         <tr>
-          <td style="padding: 12px; border: 1px solid #E8E3DD;"><strong>Tüüp</strong></td>
-          <td style="padding: 12px; border: 1px solid #E8E3DD;">${isGift ? 'Kingitus' : 'Püsitellimus'}</td>
+          <td style="padding: 12px; border: 1px solid #E6E0D8;"><strong>Tüüp</strong></td>
+          <td style="padding: 12px; border: 1px solid #E6E0D8;">${isGift ? 'Kingitus' : 'Püsitellimus'}</td>
         </tr>
         <tr style="background: #FAF8F5;">
-          <td style="padding: 12px; border: 1px solid #E8E3DD;"><strong>Pakett</strong></td>
-          <td style="padding: 12px; border: 1px solid #E8E3DD;">${packageName} (${sizeName})</td>
+          <td style="padding: 12px; border: 1px solid #E6E0D8;"><strong>Pakett</strong></td>
+          <td style="padding: 12px; border: 1px solid #E6E0D8;">${packageName} (${sizeName})</td>
         </tr>
         ${order.giftCode ? `
         <tr>
-          <td style="padding: 12px; border: 1px solid #E8E3DD;"><strong>Kingituse kood</strong></td>
-          <td style="padding: 12px; border: 1px solid #E8E3DD; font-family: monospace; font-size: 16px; color: #B8976A;">${order.giftCode}</td>
+          <td style="padding: 12px; border: 1px solid #E6E0D8;"><strong>Kingituse kood</strong></td>
+          <td style="padding: 12px; border: 1px solid #E6E0D8; font-family: monospace; font-size: 16px; color: #5F5A54;">${order.giftCode}</td>
         </tr>
         ` : ''}
       </table>
 
-      <h2 style="color: #2C2824; margin-top: 30px; font-weight: 300; font-family: Georgia, 'Times New Roman', serif;">Tellija</h2>
+      <h2 style="color: #141312; margin-top: 30px; font-weight: 400; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;">Tellija</h2>
       <table style="width: 100%; border-collapse: collapse;">
         <tr><td style="padding: 8px 0;"><strong>Nimi:</strong> ${escapeHtml(order.customer?.name || '-')}</td></tr>
         <tr><td style="padding: 8px 0;"><strong>E-post:</strong> ${escapeHtml(order.customer?.email || '-')}</td></tr>
@@ -1437,7 +1438,7 @@ function generateAdminEmail(order, orderId, packageName, sizeName, isGift) {
       </table>
 
       ${isGift ? `
-      <h2 style="color: #2C2824; margin-top: 30px; font-weight: 300; font-family: Georgia, 'Times New Roman', serif;">Kingisaaja</h2>
+      <h2 style="color: #141312; margin-top: 30px; font-weight: 400; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;">Kingisaaja</h2>
       <table style="width: 100%; border-collapse: collapse;">
         <tr><td style="padding: 8px 0;"><strong>Nimi:</strong> ${escapeHtml(order.recipient?.name || '-')}</td></tr>
         <tr><td style="padding: 8px 0;"><strong>E-post:</strong> ${escapeHtml(order.recipient?.email || '-')}</td></tr>
@@ -1445,9 +1446,9 @@ function generateAdminEmail(order, orderId, packageName, sizeName, isGift) {
       </table>
       ` : ''}
 
-      <p style="margin-top: 30px; padding: 15px; background: #FAF8F5; border-left: 2px solid #B8976A;">
+      <p style="margin-top: 30px; padding: 15px; background: #FFFFFF; border: 1px solid #E6E0D8; border-radius: 20px;">
         <a href="https://console.firebase.google.com/project/sukoda-77b52/firestore/data/~2Forders~2F${orderId}" 
-           style="color: #2C2824;">Vaata Firebase Console'is</a>
+           style="color: #141312;">Vaata Firebase Console'is</a>
       </p>
     </div>
   `;
@@ -1476,67 +1477,67 @@ function generateAdminBookingEmail({ customerName, customerEmail, customerPhone,
   const typeLabel = type === 'gift' ? 'Kinkekaart' : 'Püsitellimus';
 
   return `
-    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h1 style="color: #2C2824; border-bottom: 2px solid #B8976A; padding-bottom: 10px; font-weight: 300; font-family: Georgia, 'Times New Roman', serif;">
+    <div style="font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h1 style="color: #141312; border-bottom: 2px solid #D1C9BF; padding-bottom: 10px; font-weight: 400; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;">
         🗓️ Uus broneering
       </h1>
 
-      <div style="background: #FAF8F5; padding: 20px; margin: 20px 0; border-left: 3px solid #B8976A;">
-        <p style="margin: 0 0 8px; font-size: 22px; color: #2C2824; font-family: Georgia, serif;">
+      <div style="background: #FFFFFF; padding: 20px; margin: 20px 0; border: 1px solid #E6E0D8; border-radius: 20px;">
+        <p style="margin: 0 0 8px; font-size: 22px; color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;">
           ${dateStr}
         </p>
-        <p style="margin: 0; font-size: 28px; color: #B8976A; font-weight: bold;">
+        <p style="margin: 0; font-size: 28px; color: #5F5A54; font-weight: bold;">
           kell ${timeStr}
         </p>
       </div>
 
       <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
         <tr style="background: #FAF8F5;">
-          <td style="padding: 12px; border: 1px solid #E8E3DD;"><strong>Klient</strong></td>
-          <td style="padding: 12px; border: 1px solid #E8E3DD;">${escapeHtml(customerName || '-')}</td>
+          <td style="padding: 12px; border: 1px solid #E6E0D8;"><strong>Klient</strong></td>
+          <td style="padding: 12px; border: 1px solid #E6E0D8;">${escapeHtml(customerName || '-')}</td>
         </tr>
         <tr>
-          <td style="padding: 12px; border: 1px solid #E8E3DD;"><strong>E-post</strong></td>
-          <td style="padding: 12px; border: 1px solid #E8E3DD;">${escapeHtml(customerEmail || '-')}</td>
+          <td style="padding: 12px; border: 1px solid #E6E0D8;"><strong>E-post</strong></td>
+          <td style="padding: 12px; border: 1px solid #E6E0D8;">${escapeHtml(customerEmail || '-')}</td>
         </tr>
         <tr style="background: #FAF8F5;">
-          <td style="padding: 12px; border: 1px solid #E8E3DD;"><strong>Telefon</strong></td>
-          <td style="padding: 12px; border: 1px solid #E8E3DD;">${escapeHtml(customerPhone || '-')}</td>
+          <td style="padding: 12px; border: 1px solid #E6E0D8;"><strong>Telefon</strong></td>
+          <td style="padding: 12px; border: 1px solid #E6E0D8;">${escapeHtml(customerPhone || '-')}</td>
         </tr>
         <tr>
-          <td style="padding: 12px; border: 1px solid #E8E3DD;"><strong>Aadress</strong></td>
-          <td style="padding: 12px; border: 1px solid #E8E3DD;">${escapeHtml(address || '-')}</td>
+          <td style="padding: 12px; border: 1px solid #E6E0D8;"><strong>Aadress</strong></td>
+          <td style="padding: 12px; border: 1px solid #E6E0D8;">${escapeHtml(address || '-')}</td>
         </tr>
         <tr style="background: #FAF8F5;">
-          <td style="padding: 12px; border: 1px solid #E8E3DD;"><strong>Suurus</strong></td>
-          <td style="padding: 12px; border: 1px solid #E8E3DD;">${sizeName}</td>
+          <td style="padding: 12px; border: 1px solid #E6E0D8;"><strong>Suurus</strong></td>
+          <td style="padding: 12px; border: 1px solid #E6E0D8;">${sizeName}</td>
         </tr>
         <tr>
-          <td style="padding: 12px; border: 1px solid #E8E3DD;"><strong>Tüüp</strong></td>
-          <td style="padding: 12px; border: 1px solid #E8E3DD;">${typeLabel}</td>
+          <td style="padding: 12px; border: 1px solid #E6E0D8;"><strong>Tüüp</strong></td>
+          <td style="padding: 12px; border: 1px solid #E6E0D8;">${typeLabel}</td>
         </tr>
         ${giftCode ? `
         <tr style="background: #FAF8F5;">
-          <td style="padding: 12px; border: 1px solid #E8E3DD;"><strong>Kinkekaardi kood</strong></td>
-          <td style="padding: 12px; border: 1px solid #E8E3DD; font-family: monospace; color: #B8976A;">${giftCode}</td>
+          <td style="padding: 12px; border: 1px solid #E6E0D8;"><strong>Kinkekaardi kood</strong></td>
+          <td style="padding: 12px; border: 1px solid #E6E0D8; font-family: monospace; color: #5F5A54;">${giftCode}</td>
         </tr>
         ` : ''}
         ${additionalInfo ? `
         <tr>
-          <td style="padding: 12px; border: 1px solid #E8E3DD;"><strong>Lisainfo</strong></td>
-          <td style="padding: 12px; border: 1px solid #E8E3DD;">${escapeHtml(additionalInfo)}</td>
+          <td style="padding: 12px; border: 1px solid #E6E0D8;"><strong>Lisainfo</strong></td>
+          <td style="padding: 12px; border: 1px solid #E6E0D8;">${escapeHtml(additionalInfo)}</td>
         </tr>
         ` : ''}
       </table>
 
       ${orderId ? `
-      <p style="margin-top: 20px; padding: 15px; background: #FAF8F5; border-left: 2px solid #B8976A;">
+      <p style="margin-top: 20px; padding: 15px; background: #FFFFFF; border: 1px solid #E6E0D8; border-radius: 20px;">
         <a href="https://console.firebase.google.com/project/sukoda-77b52/firestore/data/~2Forders~2F${orderId}" 
-           style="color: #2C2824;">Vaata tellimust Firebase'is →</a>
+           style="color: #141312;">Vaata tellimust Firebase'is →</a>
       </p>
       ` : ''}
 
-      <p style="color: #8A8578; font-size: 12px; margin-top: 30px;">
+      <p style="color: #5F5A54; font-size: 12px; margin-top: 30px;">
         ⚡ Korraldage koduhooldaja: ${dateStr} kell ${timeStr} · ${escapeHtml(address || 'aadress puudub')} · ${sizeName}
       </p>
     </div>
@@ -1587,42 +1588,42 @@ function generateCustomerEmail(order, orderId, packageName, sizeName, isGift, la
     return `
       <!DOCTYPE html>
       <html>
-      <head><meta charset="utf-8"></head>
-      <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-        <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+      ${emailUi.HEAD}
+      <body style="margin: 0; padding: 0; background: #FAF8F5; font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">
+        <div style="max-width: 560px; margin: 0 auto; background: #FAF8F5;">
           ${emailHeader()}
-          <div style="padding: 44px 40px;">
-            <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 20px 0;">
+          <div style="padding: 28px 24px 32px;">
+            <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 32px; margin: 0 0 20px 0;">
               ${t.customerTitle(false)}
             </h2>
-            <p style="color: #8A8578; line-height: 1.7; margin: 0 0 32px 0; font-size: 15px;">
+            <p style="color: #5F5A54; line-height: 1.7; margin: 0 0 32px 0; font-size: 15px;">
               ${t.customerIntro(false)}
             </p>
-            <div style="background: #FFFFFF; padding: 28px; margin-bottom: 32px; border-left: 2px solid #B8976A;">
-              <p style="margin: 0 0 8px 0; color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">${t.orderLabel}</p>
-              <p style="margin: 0 0 4px 0; font-weight: 300; color: #2C2824; font-size: 18px; font-family: Georgia, 'Times New Roman', serif;">${packageName}</p>
-              <p style="margin: 0; color: #8A8578; font-size: 14px;">${sizeName}</p>
+            <div style="background: #FFFFFF; padding: 28px; margin-bottom: 32px; border: 1px solid #E6E0D8; border-radius: 20px;">
+              <p style="margin: 0 0 8px 0; color: #5F5A54; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 500;">${t.orderLabel}</p>
+              <p style="margin: 0 0 4px 0; font-weight: 400; color: #141312; font-size: 18px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;">${packageName}</p>
+              <p style="margin: 0; color: #5F5A54; font-size: 15px;">${sizeName}</p>
               ${order.customer?.address ? `
-                <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E8E3DD; color: #8A8578; font-size: 14px;">
-                  ${t.addressLabel}: <strong style="color: #2C2824; font-weight: 400;">${escapeHtml(order.customer.address)}</strong>
+                <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E6E0D8; color: #5F5A54; font-size: 15px;">
+                  ${t.addressLabel}: <strong style="color: #141312; font-weight: 400;">${escapeHtml(order.customer.address)}</strong>
                 </p>
               ` : ''}
             </div>
             ${portalToken ? `
-            <div style="background: #111111; padding: 28px; margin-bottom: 32px; text-align: center;">
-              <p style="margin: 0 0 12px 0; color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">
-                ${lang === 'et' ? 'SINU ISIKLIK PORTAAL' : 'YOUR PERSONAL PORTAL'}
+            <div style="background: #FFFFFF; padding: 28px; margin-bottom: 32px; border: 1px solid #E6E0D8; border-radius: 20px;">
+              <p style="margin: 0 0 12px 0; color: #5F5A54; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 500;">
+                ${lang === 'et' ? 'Sinu rakendus' : 'Your app'}
               </p>
-              <p style="margin: 0 0 20px 0; color: #8A8578; font-size: 13px; line-height: 1.6;">
+              <p style="margin: 0 0 20px 0; color: #5F5A54; font-size: 13px; line-height: 1.6;">
                 ${lang === 'et' ? 'Halda oma tellimust, täida koduprofiil ja vaata visiite.' : 'Manage your order, fill in your home profile and view visits.'}
               </p>
-              <a href="https://sukoda.ee/minu?token=${portalToken}" style="display: inline-block; background: #B8976A; color: #FFFFFF; padding: 14px 32px; text-decoration: none; font-size: 11px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">
-                ${lang === 'et' ? 'MINU SUKODA' : 'MY SUKODA'}
+              <a href="https://sukoda.ee/minu?token=${portalToken}" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">
+                ${lang === 'et' ? 'Ava rakendus' : 'Open the app'}
               </a>
             </div>
             ` : ''}
-            <p style="color: #8A8578; font-size: 14px;">
-              ${t.questionsAt}: <a href="mailto:tere@sukoda.ee" style="color: #2C2824; text-decoration: none; border-bottom: 1px solid #B8976A;">tere@sukoda.ee</a>
+            <p style="color: #5F5A54; font-size: 15px;">
+              ${t.questionsAt}: <a href="mailto:tere@sukoda.ee" style="color: #141312; text-decoration: none; border-bottom: 1px solid #D1C9BF;">tere@sukoda.ee</a>
             </p>
           </div>
           ${emailFooter(lang)}
@@ -1637,45 +1638,45 @@ function generateCustomerEmail(order, orderId, packageName, sizeName, isGift, la
   // =====================================================
   const pkg = getPackageInfo(order.package, lang);
   const includesList = (pkg.includes || []).map(item =>
-    `<li style="padding: 8px 0; color: #8A8578; font-size: 13px; border-bottom: 1px solid #E8E3DD;">${item}</li>`
+    `<li style="padding: 8px 0; color: #5F5A54; font-size: 13px; border-bottom: 1px solid #E6E0D8;">${item}</li>`
   ).join('');
 
   return `
     <!DOCTYPE html>
     <html>
-    <head><meta charset="utf-8"></head>
-    <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-      <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+    ${emailUi.HEAD}
+    <body style="margin: 0; padding: 0; background: #FAF8F5; font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">
+      <div style="max-width: 560px; margin: 0 auto; background: #FAF8F5;">
         
         ${emailHeader()}
 
         <!-- Title & intro -->
         <div style="padding: 44px 40px 0;">
-          <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 20px 0;">
+          <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 32px; margin: 0 0 20px 0;">
             ${t.customerTitle(true)}
           </h2>
-          <p style="color: #8A8578; line-height: 1.7; margin: 0 0 32px 0; font-size: 15px;">
+          <p style="color: #5F5A54; line-height: 1.7; margin: 0 0 32px 0; font-size: 15px;">
             ${t.customerIntro(true, escapeHtml(order.recipient?.name))}
           </p>
         </div>
 
         <!-- Gift Code (prominent) -->
-        <div style="margin: 0 40px 32px; background: #111111; padding: 32px; text-align: center;">
-          <p style="margin: 0 0 12px 0; color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 4px; font-weight: 500;">${t.giftBuyerCodeLabel}</p>
-          <p style="margin: 0 0 16px 0; color: #FFFFFF; font-size: 24px; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; letter-spacing: 5px;">
+        <div style="margin: 0 40px 32px; background: #FFFFFF; padding: 32px; border: 1px solid #E6E0D8; border-radius: 20px;">
+          <p style="margin: 0 0 12px 0; color: #5F5A54; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 500;">${t.giftBuyerCodeLabel}</p>
+          <p style="margin: 0 0 16px 0; color: #141312; font-size: 24px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; letter-spacing: 5px;">
             ${order.giftCode || 'SUKO-XXXX-XXXX'}
           </p>
-          <p style="margin: 0; color: #8A8578; font-size: 12px;">${t.giftBuyerCodeNote}</p>
+          <p style="margin: 0; color: #5F5A54; font-size: 12px;">${t.giftBuyerCodeNote}</p>
         </div>
 
         <!-- Order summary -->
-        <div style="margin: 0 40px 32px; background: #FFFFFF; padding: 28px; border-left: 2px solid #B8976A;">
-          <p style="margin: 0 0 8px 0; color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">${t.orderLabel}</p>
-          <p style="margin: 0 0 4px 0; font-weight: 300; color: #2C2824; font-size: 18px; font-family: Georgia, 'Times New Roman', serif;">${packageName}</p>
-          <p style="margin: 0; color: #8A8578; font-size: 14px;">${sizeName}</p>
+        <div style="margin: 0 40px 32px; background: #FFFFFF; padding: 28px; border: 1px solid #E6E0D8; border-radius: 20px;">
+          <p style="margin: 0 0 8px 0; color: #5F5A54; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 500;">${t.orderLabel}</p>
+          <p style="margin: 0 0 4px 0; font-weight: 400; color: #141312; font-size: 18px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;">${packageName}</p>
+          <p style="margin: 0; color: #5F5A54; font-size: 15px;">${sizeName}</p>
           ${order.recipient ? `
-            <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E8E3DD; color: #8A8578; font-size: 14px;">
-              ${t.recipientLabel}: <strong style="color: #2C2824; font-weight: 400;">${escapeHtml(order.recipient.name)}</strong>
+            <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E6E0D8; color: #5F5A54; font-size: 15px;">
+              ${t.recipientLabel}: <strong style="color: #141312; font-weight: 400;">${escapeHtml(order.recipient.name)}</strong>
             </p>
           ` : ''}
         </div>
@@ -1683,9 +1684,9 @@ function generateCustomerEmail(order, orderId, packageName, sizeName, isGift, la
         <!-- Message preview (if they wrote one) -->
         ${order.recipient?.message ? `
         <div style="margin: 0 40px 32px;">
-          <p style="margin: 0 0 12px 0; color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">${t.giftBuyerYourMessage}</p>
-          <div style="background: #FAF8F5; padding: 24px; border-left: 2px solid #B8976A;">
-            <p style="font-style: italic; color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-size: 16px; margin: 0; line-height: 1.7;">
+          <p style="margin: 0 0 12px 0; color: #5F5A54; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 500;">${t.giftBuyerYourMessage}</p>
+          <div style="background: #FFFFFF; padding: 24px; border: 1px solid #E6E0D8; border-radius: 20px;">
+            <p style="font-style: italic; color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-size: 16px; margin: 0; line-height: 1.7;">
               "${escapeHtml(order.recipient.message)}"
             </p>
           </div>
@@ -1694,22 +1695,20 @@ function generateCustomerEmail(order, orderId, packageName, sizeName, isGift, la
 
         <!-- Mini preview of gift card -->
         <div style="margin: 0 40px 32px;">
-          <p style="margin: 0 0 16px 0; color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">${t.giftBuyerPreviewTitle}</p>
-          <div style="background: #FFFFFF; border: 1px solid #E8E3DD; padding: 32px; text-align: center;">
-            <p style="color: #2C2824; font-size: 20px; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; letter-spacing: 2px; margin: 0 0 8px 0;">SUKODA</p>
-            <div style="width: 30px; height: 1px; background: #B8976A; margin: 0 auto 20px;"></div>
-            <p style="color: #B8976A; font-size: 9px; text-transform: uppercase; letter-spacing: 3px; margin: 0 0 12px 0;">${t.giftCardLabel}</p>
-            <p style="color: #2C2824; font-size: 24px; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; margin: 0 0 8px 0;">${pkg.name || packageName}</p>
-            <p style="color: #8A8578; font-size: 13px; margin: 0 0 16px 0;">${pkg.description || ''}</p>
-            <div style="width: 30px; height: 1px; background: #B8976A; margin: 0 auto 16px;"></div>
-            <p style="color: #8A8578; font-size: 12px; margin: 0;">${escapeHtml(order.recipient?.name || '')}</p>
+          <p style="margin: 0 0 16px 0; color: #5F5A54; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 500;">${t.giftBuyerPreviewTitle}</p>
+          <div style="background: #FFFFFF; border: 1px solid #E6E0D8; padding: 32px; border-radius: 20px;">
+            <p style="color: #141312; font-size: 20px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; letter-spacing: 0.08em; margin: 0 0 8px 0;">SUKODA</p>
+            <p style="color: #5F5A54; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; margin: 0 0 12px 0;">${t.giftCardLabel}</p>
+            <p style="color: #141312; font-size: 24px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; margin: 0 0 8px 0;">${pkg.name || packageName}</p>
+            <p style="color: #5F5A54; font-size: 13px; margin: 0 0 16px 0;">${pkg.description || ''}</p>
+            <p style="color: #5F5A54; font-size: 12px; margin: 0;">${escapeHtml(order.recipient?.name || '')}</p>
           </div>
         </div>
 
         <!-- What's included -->
         ${includesList ? `
-        <div style="margin: 0 40px 32px; background: #FAF8F5; padding: 24px;">
-          <p style="font-size: 10px; letter-spacing: 3px; color: #B8976A; margin: 0 0 12px 0; text-align: center; text-transform: uppercase; font-weight: 500;">${t.giftIncludesLabel}</p>
+        <div style="margin: 0 40px 32px; background: #FFFFFF; padding: 24px; border: 1px solid #E6E0D8; border-radius: 20px;">
+          <p style="font-size: 11px; letter-spacing: 0.16em; color: #5F5A54; margin: 0 0 12px 0; text-transform: uppercase; font-weight: 500;">${t.giftIncludesLabel}</p>
           <ul style="list-style: none; padding: 0; margin: 0;">
             ${includesList}
           </ul>
@@ -1717,29 +1716,29 @@ function generateCustomerEmail(order, orderId, packageName, sizeName, isGift, la
         ` : ''}
 
         <!-- What happens next -->
-        <div style="margin: 0 40px 32px; padding: 28px; background: #FFFFFF; border: 1px solid #E8E3DD;">
-          <p style="margin: 0 0 20px 0; color: #2C2824; font-size: 14px; font-weight: 500;">${t.giftBuyerWhatHappens}</p>
+        <div style="margin: 0 40px 32px; padding: 28px; background: #FFFFFF; border: 1px solid #E6E0D8; border-radius: 20px;">
+          <p style="margin: 0 0 20px 0; color: #141312; font-size: 15px; font-weight: 500;">${t.giftBuyerWhatHappens}</p>
           <div style="margin: 0 0 12px 0; display: flex;">
-            <span style="color: #B8976A; font-weight: 500; margin-right: 12px; font-size: 14px;">1.</span>
-            <span style="color: #8A8578; font-size: 14px; line-height: 1.5;">${t.giftBuyerStep1(escapeHtml(order.recipient?.name))}</span>
+            <span style="color: #5F5A54; font-weight: 500; margin-right: 12px; font-size: 15px;">1.</span>
+            <span style="color: #5F5A54; font-size: 15px; line-height: 1.5;">${t.giftBuyerStep1(escapeHtml(order.recipient?.name))}</span>
           </div>
           <div style="margin: 0 0 12px 0; display: flex;">
-            <span style="color: #B8976A; font-weight: 500; margin-right: 12px; font-size: 14px;">2.</span>
-            <span style="color: #8A8578; font-size: 14px; line-height: 1.5;">${t.giftBuyerStep2}</span>
+            <span style="color: #5F5A54; font-weight: 500; margin-right: 12px; font-size: 15px;">2.</span>
+            <span style="color: #5F5A54; font-size: 15px; line-height: 1.5;">${t.giftBuyerStep2}</span>
           </div>
           <div style="margin: 0; display: flex;">
-            <span style="color: #B8976A; font-weight: 500; margin-right: 12px; font-size: 14px;">3.</span>
-            <span style="color: #8A8578; font-size: 14px; line-height: 1.5;">${t.giftBuyerStep3}</span>
+            <span style="color: #5F5A54; font-weight: 500; margin-right: 12px; font-size: 15px;">3.</span>
+            <span style="color: #5F5A54; font-size: 15px; line-height: 1.5;">${t.giftBuyerStep3}</span>
           </div>
         </div>
 
         <!-- Forward note -->
         <div style="padding: 0 40px 44px;">
-          <p style="color: #8A8578; font-size: 13px; line-height: 1.6; font-style: italic; border-top: 1px solid #E8E3DD; padding-top: 20px;">
+          <p style="color: #5F5A54; font-size: 13px; line-height: 1.6; font-style: italic; border-top: 1px solid #E6E0D8; padding-top: 20px;">
             ${t.giftBuyerForwardNote}
           </p>
-          <p style="color: #8A8578; font-size: 14px; margin-top: 20px;">
-            ${t.questionsAt}: <a href="mailto:tere@sukoda.ee" style="color: #2C2824; text-decoration: none; border-bottom: 1px solid #B8976A;">tere@sukoda.ee</a>
+          <p style="color: #5F5A54; font-size: 15px; margin-top: 20px;">
+            ${t.questionsAt}: <a href="mailto:tere@sukoda.ee" style="color: #141312; text-decoration: none; border-bottom: 1px solid #D1C9BF;">tere@sukoda.ee</a>
           </p>
         </div>
 
@@ -1756,77 +1755,74 @@ function generateCustomerEmail(order, orderId, packageName, sizeName, isGift, la
 function generateGiftCardEmail(order, pkg, lang) {
   const t = tx(lang);
   const includesList = (pkg.includes || []).map(item => 
-    `<li style="padding: 10px 0; color: #8A8578; border-bottom: 1px solid #E8E3DD; font-size: 14px;">${item}</li>`
+    `<li style="padding: 10px 0; color: #5F5A54; border-bottom: 1px solid #E6E0D8; font-size: 15px;">${item}</li>`
   ).join('');
 
   return `
     <!DOCTYPE html>
     <html>
-    <head><meta charset="utf-8"></head>
-    <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-      <div style="max-width: 520px; margin: 0 auto; background: #F5F0EB; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.08);">
+    ${emailUi.HEAD}
+    <body style="margin: 0; padding: 0; background: #FAF8F5; font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">
+      <div style="max-width: 520px; margin: 0 auto; background: #FAF8F5; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.08);">
         
         <!-- Header -->
-        <div style="padding: 48px 40px 40px; text-align: center; border-bottom: 1px solid #E8E3DD;">
-          <h1 style="color: #2C2824; font-size: 28px; margin: 0 0 10px 0; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; letter-spacing: 4px;">SUKODA</h1>
-          <div style="width: 40px; height: 1px; background: #B8976A; margin: 0 auto;"></div>
+        <div style="padding: 48px 40px 40px; border-bottom: 1px solid #E6E0D8;">
+          <h1 style="color: #141312; font-size: 32px; margin: 0 0 10px 0; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; letter-spacing: 0.08em;">SUKODA</h1>
         </div>
 
         <!-- Content -->
-        <div style="background: #FFFFFF; margin: 28px; padding: 44px 36px; text-align: center;">
-          <p style="font-size: 10px; letter-spacing: 4px; color: #B8976A; margin: 0 0 20px 0; font-weight: 500;">${t.giftCardLabel}</p>
+        <div style="background: #FFFFFF; margin: 28px; padding: 44px 36px; border: 1px solid #E6E0D8; border-radius: 20px;">
+          <p style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #5F5A54; margin: 0 0 20px 0; font-weight: 500;">${t.giftCardLabel}</p>
           
-          <h2 style="font-size: 34px; color: #2C2824; margin: 0 0 12px 0; font-family: Georgia, 'Times New Roman', serif; font-weight: 300;">${pkg.name}</h2>
-          <p style="color: #8A8578; font-size: 14px; margin: 0 0 32px 0; line-height: 1.6;">${pkg.description}</p>
+          <h2 style="font-size: 34px; color: #141312; margin: 0 0 12px 0; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400;">${pkg.name}</h2>
+          <p style="color: #5F5A54; font-size: 15px; margin: 0 0 32px 0; line-height: 1.6;">${pkg.description}</p>
           
-          <div style="width: 40px; height: 1px; background: #B8976A; margin: 0 auto 32px;"></div>
           
-          <p style="font-size: 10px; letter-spacing: 3px; color: #B8976A; margin: 0 0 12px 0; font-weight: 500;">${t.giftRecipientLabel}</p>
-          <h3 style="font-size: 26px; color: #2C2824; margin: 0 0 32px 0; font-family: Georgia, 'Times New Roman', serif; font-weight: 300;">${escapeHtml(order.recipient?.name || '')}</h3>
+          <p style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #5F5A54; margin: 0 0 12px 0; font-weight: 500;">${t.giftRecipientLabel}</p>
+          <h3 style="font-size: 26px; color: #141312; margin: 0 0 32px 0; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400;">${escapeHtml(order.recipient?.name || '')}</h3>
           
           ${order.recipient?.message ? `
-          <div style="background: #FAF8F5; padding: 28px; margin: 0 0 32px 0; border-left: 2px solid #B8976A;">
-            <p style="font-style: italic; color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-size: 16px; margin: 0 0 12px 0; line-height: 1.7;">
+          <div style="background: #FFFFFF; padding: 28px; margin: 0 0 32px 0; border: 1px solid #E6E0D8; border-radius: 20px;">
+            <p style="font-style: italic; color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-size: 16px; margin: 0 0 12px 0; line-height: 1.7;">
               "${escapeHtml(order.recipient.message)}"
             </p>
-            <p style="color: #8A8578; font-size: 12px; margin: 0; letter-spacing: 1px;">– ${escapeHtml(order.customer?.name || '')}</p>
+            <p style="color: #5F5A54; font-size: 12px; margin: 0; letter-spacing: 1px;">– ${escapeHtml(order.customer?.name || '')}</p>
           </div>
           ` : ''}
           
           ${includesList ? `
-          <div style="background: #FAF8F5; padding: 28px; margin: 0 0 32px 0; text-align: left;">
-            <p style="font-size: 10px; letter-spacing: 3px; color: #B8976A; margin: 0 0 16px 0; text-align: center; font-weight: 500;">${t.giftIncludesLabel}</p>
+          <div style="background: #FFFFFF; padding: 28px; margin: 0 0 32px 0; text-align: left; border: 1px solid #E6E0D8; border-radius: 20px;">
+            <p style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #5F5A54; margin: 0 0 16px 0; font-weight: 500;">${t.giftIncludesLabel}</p>
             <ul style="list-style: none; padding: 0; margin: 0;">
               ${includesList}
             </ul>
           </div>
           ` : ''}
           
-          <div style="margin-top: 32px; padding-top: 32px; border-top: 1px solid #E8E3DD;">
-            <p style="font-size: 10px; letter-spacing: 3px; color: #B8976A; margin: 0 0 14px 0; font-weight: 500;">${t.giftCodeLabel}</p>
-            <p style="font-size: 20px; font-weight: 300; letter-spacing: 5px; color: #2C2824; background: #FAF8F5; padding: 18px 28px; display: inline-block; margin: 0; font-family: Georgia, 'Times New Roman', serif;">
+          <div style="margin-top: 32px; padding-top: 32px; border-top: 1px solid #E6E0D8;">
+            <p style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #5F5A54; margin: 0 0 14px 0; font-weight: 500;">${t.giftCodeLabel}</p>
+            <p style="font-size: 20px; font-weight: 400; letter-spacing: 5px; color: #141312; background: #FAF8F5; padding: 18px 28px; display: inline-block; margin: 0; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;">
               ${order.giftCode || 'SUKO-XXXX-XXXX'}
             </p>
           </div>
         </div>
 
         <!-- Book Now Button -->
-        <div style="background: #FFFFFF; margin: 0 28px; padding: 32px; text-align: center; border-top: 1px solid #E8E3DD;">
-          <p style="color: #8A8578; font-size: 14px; margin: 0 0 20px 0;">${t.giftChooseTime}</p>
+        <div style="background: #FFFFFF; margin: 0 28px; padding: 32px; border-top: 1px solid #E6E0D8; border: 1px solid #E6E0D8; border-radius: 20px;">
+          <p style="color: #5F5A54; font-size: 15px; margin: 0 0 20px 0;">${t.giftChooseTime}</p>
           <a href="https://sukoda.ee/lunasta?code=${encodeURIComponent(order.giftCode || '')}" 
-             style="display: inline-block; background: #B8976A; color: #FFFFFF; padding: 16px 44px; text-decoration: none; font-size: 12px; letter-spacing: 3px; font-weight: 500;">
+             style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">
             ${t.giftBookBtn}
           </a>
         </div>
 
         <!-- Footer -->
-        <div style="padding: 36px 28px 28px; text-align: center; border-top: 1px solid #E8E3DD;">
-          <p style="color: #2C2824; font-size: 18px; margin: 0 0 6px 0; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; letter-spacing: 3px;">SUKODA</p>
-          <div style="width: 24px; height: 1px; background: #B8976A; margin: 0 auto 18px;"></div>
-          <p style="color: #8A8578; font-size: 12px; margin: 0 0 6px 0;">${t.questionsAt}:</p>
-          <a href="mailto:tere@sukoda.ee" style="color: #2C2824; font-size: 13px; text-decoration: none; font-weight: 400; border-bottom: 1px solid #B8976A;">tere@sukoda.ee</a>
-          <p style="color: #B8976A; font-size: 10px; margin: 14px 0 0 0; letter-spacing: 2px;">
-            <a href="https://sukoda.ee" style="color: #B8976A; text-decoration: none;">sukoda.ee</a>
+        <div style="padding: 36px 28px 28px; border-top: 1px solid #E6E0D8;">
+          <p style="color: #141312; font-size: 18px; margin: 0 0 6px 0; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; letter-spacing: 0.08em;">SUKODA</p>
+          <p style="color: #5F5A54; font-size: 12px; margin: 0 0 6px 0;">${t.questionsAt}:</p>
+          <a href="mailto:tere@sukoda.ee" style="color: #141312; font-size: 13px; text-decoration: none; font-weight: 400; border-bottom: 1px solid #D1C9BF;">tere@sukoda.ee</a>
+          <p style="color: #5F5A54; font-size: 13px; margin: 14px 0 0 0;">
+            <a href="https://sukoda.ee" style="color: #5F5A54; text-decoration: none;">sukoda.ee</a>
           </p>
         </div>
       </div>
@@ -2418,41 +2414,22 @@ exports.sendVisitReminders = functions
 function homeProfileBlock(lang) {
   const t = tx(lang);
   return `
-    <div style="background: #FAF8F5; padding: 28px; margin-bottom: 32px; margin-top: 32px; border-left: 2px solid #E8E3DD;">
-      <p style="color: #8A8578; font-size: 14px; line-height: 1.7; margin: 0 0 16px 0;">
+    <div style="background: #FFFFFF; padding: 28px; margin-bottom: 32px; margin-top: 32px; border: 1px solid #E6E0D8; border-radius: 20px;">
+      <p style="color: #5F5A54; font-size: 15px; line-height: 1.7; margin: 0 0 16px 0;">
         ${t.homeProfileNote}
       </p>
-      <a href="https://sukoda.ee/minu" style="display: inline-block; background: #111111; color: #FFFFFF; padding: 12px 28px; text-decoration: none; font-size: 11px; letter-spacing: 3px; font-weight: 500;">
+      <a href="https://sukoda.ee/minu" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">
         ${t.homeProfileBtn}
       </a>
     </div>`;
 }
 
-/**
- * Email header component (reusable)
- */
+/** The frame of every letter lives in lib/email-ui.js, shared with haldus.js. */
 function emailHeader() {
-  return `
-    <div style="padding: 44px 40px; text-align: center; border-bottom: 1px solid #E8E3DD;">
-      <h1 style="color: #2C2824; font-size: 26px; margin: 0 0 10px 0; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; letter-spacing: 4px;">SUKODA</h1>
-      <div style="width: 40px; height: 1px; background: #B8976A; margin: 0 auto;"></div>
-    </div>`;
+  return emailUi.header();
 }
-
-/**
- * Email footer component (reusable, i18n)
- */
 function emailFooter(lang) {
-  const t = tx(lang);
-  return `
-    <div style="padding: 36px 40px 28px; text-align: center; border-top: 1px solid #E8E3DD;">
-      <p style="color: #2C2824; font-size: 18px; margin: 0 0 6px 0; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; letter-spacing: 3px;">SUKODA</p>
-      <div style="width: 24px; height: 1px; background: #B8976A; margin: 0 auto 18px;"></div>
-      <p style="color: #8A8578; font-size: 12px; margin: 0 0 6px 0;">${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #2C2824; text-decoration: none; border-bottom: 1px solid #B8976A;">tere@sukoda.ee</a></p>
-      <p style="color: #B8976A; font-size: 10px; margin: 14px 0 0 0; letter-spacing: 2px;">
-        <a href="https://sukoda.ee" style="color: #B8976A; text-decoration: none;">sukoda.ee</a>
-      </p>
-    </div>`;
+  return emailUi.footer(lang);
 }
 
 /* formatDate() and formatTime() are defined above, near the EMAIL_TEXTS block */
@@ -2467,43 +2444,43 @@ function generateReminderEmail(booking, lang) {
   const scheduledAt = booking.scheduledAt?.toDate ? booking.scheduledAt.toDate() : new Date(booking.scheduledAt);
 
   const itemsHtml = t.reminderItems.map((item, i) => {
-    const border = i < t.reminderItems.length - 1 ? 'border-bottom: 1px solid #E8E3DD;' : '';
-    return `<li style="padding: 8px 0; color: #8A8578; font-size: 14px; ${border}">${item}</li>`;
+    const border = i < t.reminderItems.length - 1 ? 'border-bottom: 1px solid #E6E0D8;' : '';
+    return `<li style="padding: 8px 0; color: #5F5A54; font-size: 15px; ${border};">${item}</li>`;
   }).join('');
 
   return `
     <!DOCTYPE html>
     <html>
-    <head><meta charset="utf-8"></head>
-    <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-      <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+    ${emailUi.HEAD}
+    <body style="margin: 0; padding: 0; background: #FAF8F5; font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">
+      <div style="max-width: 560px; margin: 0 auto; background: #FAF8F5;">
         ${emailHeader()}
 
-        <div style="padding: 44px 40px;">
-          <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 8px 0;">
+        <div style="padding: 28px 24px 32px;">
+          <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 32px; margin: 0 0 8px 0;">
             ${t.reminderTitle}
           </h2>
-          <p style="color: #8A8578; font-size: 14px; margin: 0 0 32px 0;">
+          <p style="color: #5F5A54; font-size: 15px; margin: 0 0 32px 0;">
             ${t.reminderSubtitle}
           </p>
 
-          <div style="background: #FFFFFF; padding: 28px; margin-bottom: 32px; border-left: 2px solid #B8976A;">
-            <p style="margin: 0 0 8px 0; color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">${t.reminderVisitLabel}</p>
-            <p style="margin: 0 0 4px 0; font-weight: 300; color: #2C2824; font-size: 20px; font-family: Georgia, 'Times New Roman', serif;">
+          <div style="background: #FFFFFF; padding: 28px; margin-bottom: 32px; border: 1px solid #E6E0D8; border-radius: 20px;">
+            <p style="margin: 0 0 8px 0; color: #5F5A54; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 500;">${t.reminderVisitLabel}</p>
+            <p style="margin: 0 0 4px 0; font-weight: 400; color: #141312; font-size: 20px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;">
               ${formatDate(scheduledAt, lang)}
             </p>
-            <p style="margin: 0 0 16px 0; color: #8A8578; font-size: 16px;">
+            <p style="margin: 0 0 16px 0; color: #5F5A54; font-size: 16px;">
               ${t.reminderAt} ${formatTime(scheduledAt)}
             </p>
             ${booking.address ? `
-            <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E8E3DD; color: #8A8578; font-size: 14px;">
-              ${t.addressLabel}: <strong style="color: #2C2824; font-weight: 400;">${booking.address}</strong>
+            <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E6E0D8; color: #5F5A54; font-size: 15px;">
+              ${t.addressLabel}: <strong style="color: #141312; font-weight: 400;">${booking.address}</strong>
             </p>
             ` : ''}
           </div>
 
-          <div style="background: #FAF8F5; padding: 24px; margin-bottom: 32px;">
-            <p style="color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500; margin: 0 0 16px 0;">${t.reminderExpectLabel}</p>
+          <div style="background: #FFFFFF; padding: 24px; margin-bottom: 32px; border: 1px solid #E6E0D8; border-radius: 20px;">
+            <p style="color: #5F5A54; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 500; margin: 0 0 16px 0;">${t.reminderExpectLabel}</p>
             <ul style="list-style: none; padding: 0; margin: 0;">
               ${itemsHtml}
             </ul>
@@ -2511,7 +2488,7 @@ function generateReminderEmail(booking, lang) {
 
           ${generateCalendarLinksHtml({ scheduledAt, endTime: booking.endTime, address: booking.address, lang })}
 
-          <p style="color: #8A8578; font-size: 13px; line-height: 1.6; margin-top: 24px;">
+          <p style="color: #5F5A54; font-size: 13px; line-height: 1.6; margin-top: 24px;">
             ${t.reminderAccessNote}
           </p>
 
@@ -2535,56 +2512,56 @@ function generateBookingConfirmationEmail({ customerName, scheduledAt, endTime, 
   const dt = scheduledAt instanceof Date ? scheduledAt : new Date(scheduledAt);
 
   const itemsHtml = t.reminderItems.map((item, i) => {
-    const border = i < t.reminderItems.length - 1 ? 'border-bottom: 1px solid #E8E3DD;' : '';
-    return `<li style="padding: 8px 0; color: #8A8578; font-size: 14px; ${border}">${item}</li>`;
+    const border = i < t.reminderItems.length - 1 ? 'border-bottom: 1px solid #E6E0D8;' : '';
+    return `<li style="padding: 8px 0; color: #5F5A54; font-size: 15px; ${border};">${item}</li>`;
   }).join('');
 
   const changeHtml = portalUrl
-    ? `<p style="color: #8A8578; font-size: 13px; line-height: 1.6; margin-top: 8px;">
+    ? `<p style="color: #5F5A54; font-size: 13px; line-height: 1.6; margin-top: 8px;">
             ${t.bookingConfirmedPortalNote}
           </p>
-          <div style="text-align: center; margin-top: 16px;">
-            <a href="${portalUrl}" style="display: inline-block; background: #111111; color: #FFFFFF; padding: 14px 32px; text-decoration: none; font-size: 11px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">
+          <div style="margin-top: 16px;">
+            <a href="${portalUrl}" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">
               ${t.bookingConfirmedPortalBtn}
             </a>
           </div>`
-    : `<p style="color: #8A8578; font-size: 13px; line-height: 1.6; margin-top: 8px;">
+    : `<p style="color: #5F5A54; font-size: 13px; line-height: 1.6; margin-top: 8px;">
             ${t.bookingConfirmedChangeNote}
           </p>`;
 
   return `
     <!DOCTYPE html>
     <html>
-    <head><meta charset="utf-8"></head>
-    <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-      <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+    ${emailUi.HEAD}
+    <body style="margin: 0; padding: 0; background: #FAF8F5; font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">
+      <div style="max-width: 560px; margin: 0 auto; background: #FAF8F5;">
         ${emailHeader()}
 
-        <div style="padding: 44px 40px;">
-          <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 8px 0;">
+        <div style="padding: 28px 24px 32px;">
+          <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 32px; margin: 0 0 8px 0;">
             ${t.bookingConfirmedTitle}
           </h2>
-          <p style="color: #8A8578; font-size: 14px; margin: 0 0 32px 0; line-height: 1.6;">
+          <p style="color: #5F5A54; font-size: 15px; margin: 0 0 32px 0; line-height: 1.6;">
             ${t.bookingConfirmedIntro(customerName)}
           </p>
 
-          <div style="background: #FFFFFF; padding: 28px; margin-bottom: 32px; border-left: 2px solid #B8976A;">
-            <p style="margin: 0 0 8px 0; color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">${t.bookingConfirmedTimeLabel}</p>
-            <p style="margin: 0 0 4px 0; font-weight: 300; color: #2C2824; font-size: 20px; font-family: Georgia, 'Times New Roman', serif;">
+          <div style="background: #FFFFFF; padding: 28px; margin-bottom: 32px; border: 1px solid #E6E0D8; border-radius: 20px;">
+            <p style="margin: 0 0 8px 0; color: #5F5A54; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 500;">${t.bookingConfirmedTimeLabel}</p>
+            <p style="margin: 0 0 4px 0; font-weight: 400; color: #141312; font-size: 20px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;">
               ${formatDate(dt, lang)}
             </p>
-            <p style="margin: 0 0 16px 0; color: #8A8578; font-size: 16px;">
+            <p style="margin: 0 0 16px 0; color: #5F5A54; font-size: 16px;">
               ${t.reminderAt} ${formatTime(dt)}
             </p>
             ${address ? `
-            <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E8E3DD; color: #8A8578; font-size: 14px;">
-              ${t.addressLabel}: <strong style="color: #2C2824; font-weight: 400;">${escapeHtml(address)}</strong>
+            <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E6E0D8; color: #5F5A54; font-size: 15px;">
+              ${t.addressLabel}: <strong style="color: #141312; font-weight: 400;">${escapeHtml(address)}</strong>
             </p>
             ` : ''}
           </div>
 
-          <div style="background: #FAF8F5; padding: 24px; margin-bottom: 32px;">
-            <p style="color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500; margin: 0 0 16px 0;">${t.reminderExpectLabel}</p>
+          <div style="background: #FFFFFF; padding: 24px; margin-bottom: 32px; border: 1px solid #E6E0D8; border-radius: 20px;">
+            <p style="color: #5F5A54; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 500; margin: 0 0 16px 0;">${t.reminderExpectLabel}</p>
             <ul style="list-style: none; padding: 0; margin: 0;">
               ${itemsHtml}
             </ul>
@@ -2592,7 +2569,7 @@ function generateBookingConfirmationEmail({ customerName, scheduledAt, endTime, 
 
           ${generateCalendarLinksHtml({ scheduledAt: dt, endTime, address, lang })}
 
-          <p style="color: #8A8578; font-size: 13px; line-height: 1.6; margin-top: 24px;">
+          <p style="color: #5F5A54; font-size: 13px; line-height: 1.6; margin-top: 24px;">
             ${t.bookingConfirmedNote}
           </p>
 
@@ -2620,52 +2597,52 @@ function generateNextVisitEmail(booking, order, lang) {
   return `
     <!DOCTYPE html>
     <html>
-    <head><meta charset="utf-8"></head>
-    <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-      <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+    ${emailUi.HEAD}
+    <body style="margin: 0; padding: 0; background: #FAF8F5; font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">
+      <div style="max-width: 560px; margin: 0 auto; background: #FAF8F5;">
         ${emailHeader()}
 
-        <div style="padding: 44px 40px;">
-          <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 8px 0;">
+        <div style="padding: 28px 24px 32px;">
+          <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 32px; margin: 0 0 8px 0;">
             ${t.nextVisitTitle}
           </h2>
-          <p style="color: #8A8578; font-size: 14px; margin: 0 0 32px 0; line-height: 1.6;">
+          <p style="color: #5F5A54; font-size: 15px; margin: 0 0 32px 0; line-height: 1.6;">
             ${t.nextVisitIntro(booking.customerName)}
           </p>
 
-          <div style="background: #FFFFFF; padding: 28px; margin-bottom: 32px; border-left: 2px solid #B8976A;">
-            <p style="margin: 0 0 8px 0; color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">${t.nextVisitTimeLabel}</p>
-            <p style="margin: 0 0 4px 0; font-weight: 300; color: #2C2824; font-size: 20px; font-family: Georgia, 'Times New Roman', serif;">
+          <div style="background: #FFFFFF; padding: 28px; margin-bottom: 32px; border: 1px solid #E6E0D8; border-radius: 20px;">
+            <p style="margin: 0 0 8px 0; color: #5F5A54; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 500;">${t.nextVisitTimeLabel}</p>
+            <p style="margin: 0 0 4px 0; font-weight: 400; color: #141312; font-size: 20px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;">
               ${formatDate(scheduledAt, lang)}
             </p>
-            <p style="margin: 0 0 0 0; color: #8A8578; font-size: 16px;">
+            <p style="margin: 0 0 0 0; color: #5F5A54; font-size: 16px;">
               ${t.reminderAt} ${formatTime(scheduledAt)}
             </p>
             ${booking.address ? `
-            <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E8E3DD; color: #8A8578; font-size: 14px;">
+            <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E6E0D8; color: #5F5A54; font-size: 15px;">
               ${booking.address}
             </p>
             ` : ''}
             ${packageName ? `
-            <p style="margin: 12px 0 0 0; color: #8A8578; font-size: 13px;">
-              ${t.nextVisitPackageLabel}: <strong style="color: #2C2824; font-weight: 400;">${packageName}</strong> (${sizeName || ''})
+            <p style="margin: 12px 0 0 0; color: #5F5A54; font-size: 13px;">
+              ${t.nextVisitPackageLabel}: <strong style="color: #141312; font-weight: 400;">${packageName}</strong> (${sizeName || ''})
             </p>
             ` : ''}
           </div>
 
           ${generateCalendarLinksHtml({ scheduledAt, endTime: booking.endTime, address: booking.address, lang })}
 
-          <p style="color: #8A8578; font-size: 13px; line-height: 1.6; margin-top: 24px;">
+          <p style="color: #5F5A54; font-size: 13px; line-height: 1.6; margin-top: 24px;">
             ${t.nextVisitReschedule}
           </p>
 
           ${homeProfileBlock(lang)}
 
-          <div style="background: #111111; padding: 24px; margin-top: 24px; text-align: center;">
-            <p style="margin: 0 0 14px 0; color: #8A8578; font-size: 13px;">
+          <div style="background: #FFFFFF; padding: 24px; margin-top: 24px; border: 1px solid #E6E0D8; border-radius: 20px;">
+            <p style="margin: 0 0 14px 0; color: #5F5A54; font-size: 13px;">
               ${t.bookingConfirmedPortalNote}
             </p>
-            <a href="https://sukoda.ee/minu" style="display: inline-block; background: #B8976A; color: #FFFFFF; padding: 12px 28px; text-decoration: none; font-size: 11px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">
+            <a href="https://sukoda.ee/minu" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">
               ${t.bookingConfirmedPortalBtn}
             </a>
           </div>
@@ -2692,40 +2669,40 @@ function generateCancelEmail(booking, reason, lang) {
   return `
     <!DOCTYPE html>
     <html>
-    <head><meta charset="utf-8"></head>
-    <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-      <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+    ${emailUi.HEAD}
+    <body style="margin: 0; padding: 0; background: #FAF8F5; font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">
+      <div style="max-width: 560px; margin: 0 auto; background: #FAF8F5;">
         ${emailHeader()}
 
-        <div style="padding: 44px 40px;">
-          <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 8px 0;">
+        <div style="padding: 28px 24px 32px;">
+          <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 32px; margin: 0 0 8px 0;">
             ${t.cancelledTitle}
           </h2>
-          <p style="color: #8A8578; font-size: 14px; margin: 0 0 32px 0; line-height: 1.6;">
+          <p style="color: #5F5A54; font-size: 15px; margin: 0 0 32px 0; line-height: 1.6;">
             ${t.cancelledIntro}
           </p>
 
-          <div style="background: #FFFFFF; padding: 28px; margin-bottom: 32px; border-left: 2px solid #c9302c;">
-            <p style="margin: 0 0 8px 0; color: #c9302c; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">${t.cancelledTitle}</p>
-            <p style="margin: 0 0 4px 0; font-weight: 300; color: #2C2824; font-size: 20px; font-family: Georgia, 'Times New Roman', serif; text-decoration: line-through;">
+          <div style="background: #FFFFFF; padding: 28px; margin-bottom: 32px; border: 1px solid #E6E0D8; border-radius: 20px;">
+            <p style="margin: 0 0 8px 0; color: #c9302c; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 500;">${t.cancelledTitle}</p>
+            <p style="margin: 0 0 4px 0; font-weight: 400; color: #141312; font-size: 20px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; text-decoration: line-through;">
               ${formatDate(scheduledAt, lang)}
             </p>
-            <p style="margin: 0 0 0 0; color: #8A8578; font-size: 16px; text-decoration: line-through;">
+            <p style="margin: 0 0 0 0; color: #5F5A54; font-size: 16px; text-decoration: line-through;">
               ${t.reminderAt} ${formatTime(scheduledAt)}
             </p>
             ${booking.address ? `
-            <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E8E3DD; color: #8A8578; font-size: 14px;">
+            <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E6E0D8; color: #5F5A54; font-size: 15px;">
               ${booking.address}
             </p>
             ` : ''}
             ${reason ? `
-            <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E8E3DD; color: #8A8578; font-size: 14px;">
-              ${t.cancelledReasonLabel}: <strong style="color: #2C2824; font-weight: 400;">${reason}</strong>
+            <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E6E0D8; color: #5F5A54; font-size: 15px;">
+              ${t.cancelledReasonLabel}: <strong style="color: #141312; font-weight: 400;">${reason}</strong>
             </p>
             ` : ''}
           </div>
 
-          <p style="color: #8A8578; font-size: 13px; line-height: 1.6;">
+          <p style="color: #5F5A54; font-size: 13px; line-height: 1.6;">
             ${t.cancelledRebookNote}
           </p>
         </div>
@@ -2746,33 +2723,33 @@ function generateOrderCancelEmail(order, packageName, sizeName, reason, lang) {
   return `
     <!DOCTYPE html>
     <html>
-    <head><meta charset="utf-8"></head>
-    <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-      <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+    ${emailUi.HEAD}
+    <body style="margin: 0; padding: 0; background: #FAF8F5; font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">
+      <div style="max-width: 560px; margin: 0 auto; background: #FAF8F5;">
         ${emailHeader()}
 
-        <div style="padding: 44px 40px;">
-          <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 8px 0;">
+        <div style="padding: 28px 24px 32px;">
+          <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 32px; margin: 0 0 8px 0;">
             ${t.cancelledTitle}
           </h2>
-          <p style="color: #8A8578; font-size: 14px; margin: 0 0 32px 0; line-height: 1.6;">
+          <p style="color: #5F5A54; font-size: 15px; margin: 0 0 32px 0; line-height: 1.6;">
             ${t.cancelledIntro}
           </p>
 
-          <div style="background: #FFFFFF; padding: 28px; margin-bottom: 32px; border-left: 2px solid #c9302c;">
-            <p style="margin: 0 0 8px 0; color: #c9302c; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">${t.cancelledTitle}</p>
-            <p style="margin: 0 0 4px 0; font-weight: 300; color: #2C2824; font-size: 18px; font-family: Georgia, 'Times New Roman', serif;">
+          <div style="background: #FFFFFF; padding: 28px; margin-bottom: 32px; border: 1px solid #E6E0D8; border-radius: 20px;">
+            <p style="margin: 0 0 8px 0; color: #c9302c; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 500;">${t.cancelledTitle}</p>
+            <p style="margin: 0 0 4px 0; font-weight: 400; color: #141312; font-size: 18px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;">
               ${packageName}
             </p>
-            <p style="margin: 0; color: #8A8578; font-size: 14px;">${sizeName}</p>
+            <p style="margin: 0; color: #5F5A54; font-size: 15px;">${sizeName}</p>
             ${reason ? `
-            <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E8E3DD; color: #8A8578; font-size: 14px;">
-              ${t.cancelledReasonLabel}: <strong style="color: #2C2824; font-weight: 400;">${reason}</strong>
+            <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E6E0D8; color: #5F5A54; font-size: 15px;">
+              ${t.cancelledReasonLabel}: <strong style="color: #141312; font-weight: 400;">${reason}</strong>
             </p>
             ` : ''}
           </div>
 
-          <p style="color: #8A8578; font-size: 13px; line-height: 1.6;">
+          <p style="color: #5F5A54; font-size: 13px; line-height: 1.6;">
             ${t.cancelledRebookNote}
           </p>
         </div>
@@ -2795,38 +2772,38 @@ function generateRescheduleEmail(booking, oldScheduledAt, newScheduledAt, lang) 
   return `
     <!DOCTYPE html>
     <html>
-    <head><meta charset="utf-8"></head>
-    <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-      <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+    ${emailUi.HEAD}
+    <body style="margin: 0; padding: 0; background: #FAF8F5; font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">
+      <div style="max-width: 560px; margin: 0 auto; background: #FAF8F5;">
         ${emailHeader()}
 
-        <div style="padding: 44px 40px;">
-          <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 8px 0;">
+        <div style="padding: 28px 24px 32px;">
+          <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 32px; margin: 0 0 8px 0;">
             ${t.rescheduledTitle}
           </h2>
-          <p style="color: #8A8578; font-size: 14px; margin: 0 0 32px 0; line-height: 1.6;">
+          <p style="color: #5F5A54; font-size: 15px; margin: 0 0 32px 0; line-height: 1.6;">
             ${t.rescheduledIntro(booking.customerName)}
           </p>
 
           <!-- Old time (crossed out) -->
-          <div style="background: #FFFFFF; padding: 20px 28px; margin-bottom: 4px; border-left: 2px solid #ccc; opacity: 0.6;">
-            <p style="margin: 0 0 6px 0; color: #999; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">${t.rescheduledOldTime}</p>
-            <p style="margin: 0; font-weight: 300; color: #999; font-size: 16px; font-family: Georgia, 'Times New Roman', serif; text-decoration: line-through;">
+          <div style="background: #FFFFFF; padding: 20px 28px; margin-bottom: 4px; opacity: 0.6; border: 1px solid #E6E0D8; border-radius: 20px;">
+            <p style="margin: 0 0 6px 0; color: #5F5A54; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 500;">${t.rescheduledOldTime}</p>
+            <p style="margin: 0; font-weight: 400; color: #5F5A54; font-size: 16px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; text-decoration: line-through;">
               ${formatDate(oldDate, lang)}, ${t.reminderAt} ${formatTime(oldDate)}
             </p>
           </div>
 
           <!-- New time (highlighted) -->
-          <div style="background: #FFFFFF; padding: 28px; margin-bottom: 32px; border-left: 2px solid #B8976A;">
-            <p style="margin: 0 0 8px 0; color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">${t.rescheduledNewTime}</p>
-            <p style="margin: 0 0 4px 0; font-weight: 300; color: #2C2824; font-size: 20px; font-family: Georgia, 'Times New Roman', serif;">
+          <div style="background: #FFFFFF; padding: 28px; margin-bottom: 32px; border: 1px solid #E6E0D8; border-radius: 20px;">
+            <p style="margin: 0 0 8px 0; color: #5F5A54; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 500;">${t.rescheduledNewTime}</p>
+            <p style="margin: 0 0 4px 0; font-weight: 400; color: #141312; font-size: 20px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;">
               ${formatDate(newDate, lang)}
             </p>
-            <p style="margin: 0; color: #8A8578; font-size: 16px;">
+            <p style="margin: 0; color: #5F5A54; font-size: 16px;">
               ${t.reminderAt} ${formatTime(newDate)}
             </p>
             ${booking.address ? `
-            <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E8E3DD; color: #8A8578; font-size: 14px;">
+            <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E6E0D8; color: #5F5A54; font-size: 15px;">
               ${booking.address}
             </p>
             ` : ''}
@@ -2834,7 +2811,7 @@ function generateRescheduleEmail(booking, oldScheduledAt, newScheduledAt, lang) 
 
           ${generateCalendarLinksHtml({ scheduledAt: newDate, endTime: booking.endTime, address: booking.address, lang })}
 
-          <p style="color: #8A8578; font-size: 13px; line-height: 1.6; margin-top: 24px;">
+          <p style="color: #5F5A54; font-size: 13px; line-height: 1.6; margin-top: 24px;">
             ${t.rescheduledContactNote}
           </p>
         </div>
@@ -2876,44 +2853,41 @@ function generateFollowup24hEmail(followup, lang) {
     return `
     <!DOCTYPE html>
     <html>
-    <head><meta charset="utf-8"></head>
-    <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-      <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+    ${emailUi.HEAD}
+    <body style="margin: 0; padding: 0; background: #FAF8F5; font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">
+      <div style="max-width: 560px; margin: 0 auto; background: #FAF8F5;">
         ${emailHeader()}
-        <div style="padding: 44px 40px;">
-          <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 24px 0;">
+        <div style="padding: 28px 24px 32px;">
+          <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 32px; margin: 0 0 24px 0;">
             ${t.followup24hTitle}
           </h2>
-          <p style="color: #8A8578; line-height: 1.8; margin: 0 0 20px 0; font-size: 15px;">
+          <p style="color: #5F5A54; line-height: 1.8; margin: 0 0 20px 0; font-size: 15px;">
             ${t.giftMulti24hIntro(recipientName, visitDateLabel)}
           </p>
-          <p style="color: #2C2824; line-height: 1.8; margin: 0 0 40px 0; font-size: 16px; font-family: Georgia, 'Times New Roman', serif; font-style: italic;">
+          <p style="color: #141312; line-height: 1.8; margin: 0 0 40px 0; font-size: 16px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-style: italic;">
             ${t.giftMulti24hBody}
           </p>
 
-          <div style="text-align: center; margin-bottom: 40px;">
-            <span style="display: inline-block; width: 40px; height: 1px; background: #B8976A;"></span>
-          </div>
 
-          <div style="background: #FFFFFF; padding: 32px; border-left: 3px solid #B8976A; margin-bottom: 32px;">
-            <p style="margin: 0 0 8px 0; color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">
+          <div style="background: #FFFFFF; padding: 32px; margin-bottom: 32px; border: 1px solid #E6E0D8; border-radius: 20px;">
+            <p style="margin: 0 0 8px 0; color: #5F5A54; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 500;">
               ${t.giftMulti24hNextTitle}
             </p>
-            <p style="margin: 0 0 16px 0; color: #2C2824; font-size: 16px; line-height: 1.7; font-family: Georgia, 'Times New Roman', serif; font-weight: 300;">
+            <p style="margin: 0 0 16px 0; color: #141312; font-size: 16px; line-height: 1.7; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400;">
               ${t.giftMulti24hNextNote(remaining)}
             </p>
-            <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E8E3DD; color: #8A8578; font-size: 13px; line-height: 1.7;">
+            <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E6E0D8; color: #5F5A54; font-size: 13px; line-height: 1.7;">
               ${t.giftMulti24hProfileNote}
             </p>
             <div style="margin-top: 16px;">
-              <a href="https://sukoda.ee/minu" style="display: inline-block; background: #111111; color: #FFFFFF; padding: 12px 28px; text-decoration: none; font-size: 11px; letter-spacing: 3px; font-weight: 500;">
+              <a href="https://sukoda.ee/minu" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">
                 ${t.giftMulti24hProfileBtn}
               </a>
             </div>
           </div>
 
-          <p style="color: #8A8578; font-size: 14px;">
-            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #2C2824; text-decoration: none; border-bottom: 1px solid #B8976A;">tere@sukoda.ee</a>
+          <p style="color: #5F5A54; font-size: 15px;">
+            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #141312; text-decoration: none; border-bottom: 1px solid #D1C9BF;">tere@sukoda.ee</a>
           </p>
         </div>
         ${emailFooter(lang)}
@@ -2926,59 +2900,59 @@ function generateFollowup24hEmail(followup, lang) {
   return `
     <!DOCTYPE html>
     <html>
-    <head><meta charset="utf-8"></head>
-    <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-      <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+    ${emailUi.HEAD}
+    <body style="margin: 0; padding: 0; background: #FAF8F5; font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">
+      <div style="max-width: 560px; margin: 0 auto; background: #FAF8F5;">
         ${emailHeader()}
-        <div style="padding: 44px 40px;">
-          <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 24px 0;">
+        <div style="padding: 28px 24px 32px;">
+          <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 32px; margin: 0 0 24px 0;">
             ${t.followup24hTitle}
           </h2>
-          <p style="color: #8A8578; line-height: 1.8; margin: 0 0 20px 0; font-size: 15px;">
+          <p style="color: #5F5A54; line-height: 1.8; margin: 0 0 20px 0; font-size: 15px;">
             ${t.followup24hIntro(recipientName, visitDateLabel)}
           </p>
-          <p style="color: #2C2824; line-height: 1.8; margin: 0 0 20px 0; font-size: 16px; font-family: Georgia, 'Times New Roman', serif; font-style: italic;">
+          <p style="color: #141312; line-height: 1.8; margin: 0 0 20px 0; font-size: 16px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-style: italic;">
             ${t.followup24hBody}
           </p>
-          <p style="color: #8A8578; line-height: 1.8; margin: 0 0 44px 0; font-size: 15px;">
+          <p style="color: #5F5A54; line-height: 1.8; margin: 0 0 44px 0; font-size: 15px;">
             ${t.followup24hBody2}
           </p>
 
           <!-- Elegant divider -->
-          <div style="text-align: center; margin-bottom: 44px;">
-            <span style="display: inline-block; width: 40px; height: 1px; background: #B8976A;"></span>
+          <div style="margin-bottom: 44px;">
+            
           </div>
 
           <!-- Special offer card — soft reveal, not a hard sell -->
-          <div style="background: #111111; padding: 44px 36px; text-align: center; margin-bottom: 32px;">
-            <p style="margin: 0 0 20px 0; color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 4px; font-weight: 500;">
+          <div style="background: #FFFFFF; padding: 44px 36px; margin-bottom: 32px; border: 1px solid #E6E0D8; border-radius: 20px;">
+            <p style="margin: 0 0 20px 0; color: #5F5A54; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 500;">
               ${t.followup24hOfferTitle}
             </p>
-            <p style="margin: 0 0 12px 0; color: #FFFFFF; font-size: 48px; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; letter-spacing: -1px;">
+            <p style="margin: 0 0 12px 0; color: #141312; font-size: 48px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; letter-spacing: -1px;">
               -20%
             </p>
-            <p style="margin: 0 0 28px 0; color: #999; font-size: 11px; text-transform: uppercase; letter-spacing: 3px;">
+            <p style="margin: 0 0 28px 0; color: #5F5A54; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em;">
               ${lang === 'et' ? 'esimesed 3 kuud' : 'first 3 months'}
             </p>
-            <p style="margin: 0 0 28px 0; color: #CCCCCC; font-size: 14px; line-height: 1.7; max-width: 380px; display: inline-block;">
+            <p style="margin: 0 0 28px 0; color: #5F5A54; font-size: 15px; line-height: 1.7; max-width: 380px; display: inline-block;">
               ${t.followup24hOfferText}
             </p>
-            <div style="background: #222222; padding: 14px 28px; display: inline-block; margin-bottom: 28px;">
-              <p style="margin: 0; color: #B8976A; font-size: 18px; letter-spacing: 5px; font-family: Georgia, 'Times New Roman', serif;">
+            <div style="background: #FFFFFF; padding: 14px 28px; display: inline-block; margin-bottom: 28px; border: 1px solid #E6E0D8; border-radius: 20px;">
+              <p style="margin: 0; color: #5F5A54; font-size: 18px; letter-spacing: 5px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;">
                 ${t.followup24hOfferCode}
               </p>
             </div>
             <br>
-            <a href="${orderUrl}" style="display: inline-block; background: #B8976A; color: #FFFFFF; padding: 16px 48px; text-decoration: none; font-size: 12px; letter-spacing: 3px; font-weight: 500; margin-top: 4px;">
+            <a href="${orderUrl}" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;margin-top: 4px;">
               ${t.followup24hCta}
             </a>
-            <p style="margin: 24px 0 0 0; color: #555555; font-size: 12px;">
+            <p style="margin: 24px 0 0 0; color: #5F5A54; font-size: 12px;">
               ${t.followup24hOfferNote}
             </p>
           </div>
 
-          <p style="color: #8A8578; font-size: 14px;">
-            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #2C2824; text-decoration: none; border-bottom: 1px solid #B8976A;">tere@sukoda.ee</a>
+          <p style="color: #5F5A54; font-size: 15px;">
+            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #141312; text-decoration: none; border-bottom: 1px solid #D1C9BF;">tere@sukoda.ee</a>
           </p>
         </div>
         ${emailFooter(lang)}
@@ -3002,32 +2976,32 @@ function generateFollowup7dEmail(followup, lang) {
     return `
     <!DOCTYPE html>
     <html>
-    <head><meta charset="utf-8"></head>
-    <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-      <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+    ${emailUi.HEAD}
+    <body style="margin: 0; padding: 0; background: #FAF8F5; font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">
+      <div style="max-width: 560px; margin: 0 auto; background: #FAF8F5;">
         ${emailHeader()}
-        <div style="padding: 44px 40px;">
-          <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 24px 0;">
+        <div style="padding: 28px 24px 32px;">
+          <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 32px; margin: 0 0 24px 0;">
             ${t.giftMulti7dTitle}
           </h2>
-          <p style="color: #8A8578; line-height: 1.8; margin: 0 0 24px 0; font-size: 15px;">
+          <p style="color: #5F5A54; line-height: 1.8; margin: 0 0 24px 0; font-size: 15px;">
             ${t.giftMulti7dIntro(recipientName)}
           </p>
-          <p style="color: #2C2824; line-height: 1.8; margin: 0 0 40px 0; font-size: 16px; font-family: Georgia, 'Times New Roman', serif; font-style: italic;">
+          <p style="color: #141312; line-height: 1.8; margin: 0 0 40px 0; font-size: 16px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-style: italic;">
             ${t.giftMulti7dBody}
           </p>
 
-          <div style="background: #FAF8F5; padding: 28px; margin-bottom: 32px; border-left: 2px solid #E8E3DD;">
-            <p style="color: #8A8578; font-size: 14px; line-height: 1.7; margin: 0 0 16px 0;">
+          <div style="background: #FFFFFF; padding: 28px; margin-bottom: 32px; border: 1px solid #E6E0D8; border-radius: 20px;">
+            <p style="color: #5F5A54; font-size: 15px; line-height: 1.7; margin: 0 0 16px 0;">
               ${t.giftMulti7dProfileNote}
             </p>
-            <a href="https://sukoda.ee/minu" style="display: inline-block; background: #111111; color: #FFFFFF; padding: 12px 28px; text-decoration: none; font-size: 11px; letter-spacing: 3px; font-weight: 500;">
+            <a href="https://sukoda.ee/minu" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">
               ${t.giftMulti24hProfileBtn}
             </a>
           </div>
 
-          <p style="color: #8A8578; font-size: 14px;">
-            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #2C2824; text-decoration: none; border-bottom: 1px solid #B8976A;">tere@sukoda.ee</a>
+          <p style="color: #5F5A54; font-size: 15px;">
+            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #141312; text-decoration: none; border-bottom: 1px solid #D1C9BF;">tere@sukoda.ee</a>
           </p>
         </div>
         ${emailFooter(lang)}
@@ -3040,39 +3014,39 @@ function generateFollowup7dEmail(followup, lang) {
   return `
     <!DOCTYPE html>
     <html>
-    <head><meta charset="utf-8"></head>
-    <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-      <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+    ${emailUi.HEAD}
+    <body style="margin: 0; padding: 0; background: #FAF8F5; font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">
+      <div style="max-width: 560px; margin: 0 auto; background: #FAF8F5;">
         ${emailHeader()}
-        <div style="padding: 44px 40px;">
-          <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 24px 0;">
+        <div style="padding: 28px 24px 32px;">
+          <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 32px; margin: 0 0 24px 0;">
             ${t.followup7dTitle}
           </h2>
-          <p style="color: #8A8578; line-height: 1.8; margin: 0 0 24px 0; font-size: 15px;">
+          <p style="color: #5F5A54; line-height: 1.8; margin: 0 0 24px 0; font-size: 15px;">
             ${t.followup7dIntro(recipientName)}
           </p>
-          <p style="color: #2C2824; line-height: 1.8; margin: 0 0 40px 0; font-size: 16px; font-family: Georgia, 'Times New Roman', serif; font-style: italic;">
+          <p style="color: #141312; line-height: 1.8; margin: 0 0 40px 0; font-size: 16px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-style: italic;">
             ${t.followup7dBody}
           </p>
 
           <!-- Offer — warm, inviting, not pushy -->
-          <div style="background: #FFFFFF; padding: 32px; border-left: 3px solid #B8976A; margin-bottom: 36px;">
-            <p style="margin: 0 0 16px 0; color: #8A8578; font-size: 14px; line-height: 1.7;">
+          <div style="background: #FFFFFF; padding: 32px; margin-bottom: 36px; border: 1px solid #E6E0D8; border-radius: 20px;">
+            <p style="margin: 0 0 16px 0; color: #5F5A54; font-size: 15px; line-height: 1.7;">
               ${t.followup7dOfferReminder}
             </p>
             <div style="background: #FAF8F5; padding: 14px 24px; display: inline-block; margin-bottom: 20px;">
-              <p style="margin: 0; color: #B8976A; font-size: 22px; letter-spacing: 5px; font-family: Georgia, 'Times New Roman', serif; font-weight: 300;">
+              <p style="margin: 0; color: #5F5A54; font-size: 22px; letter-spacing: 5px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400;">
                 ${t.followup24hOfferCode}
               </p>
             </div>
             <br>
-            <a href="${orderUrl}" style="display: inline-block; background: #111111; color: #FFFFFF; padding: 16px 44px; text-decoration: none; font-size: 12px; letter-spacing: 3px; font-weight: 500;">
+            <a href="${orderUrl}" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">
               ${t.followup7dCta}
             </a>
           </div>
 
-          <p style="color: #8A8578; font-size: 14px;">
-            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #2C2824; text-decoration: none; border-bottom: 1px solid #B8976A;">tere@sukoda.ee</a>
+          <p style="color: #5F5A54; font-size: 15px;">
+            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #141312; text-decoration: none; border-bottom: 1px solid #D1C9BF;">tere@sukoda.ee</a>
           </p>
         </div>
         ${emailFooter(lang)}
@@ -3096,23 +3070,23 @@ function generateFollowup30dEmail(followup, lang) {
     return `
     <!DOCTYPE html>
     <html>
-    <head><meta charset="utf-8"></head>
-    <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-      <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+    ${emailUi.HEAD}
+    <body style="margin: 0; padding: 0; background: #FAF8F5; font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">
+      <div style="max-width: 560px; margin: 0 auto; background: #FAF8F5;">
         ${emailHeader()}
-        <div style="padding: 44px 40px;">
-          <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 24px 0;">
+        <div style="padding: 28px 24px 32px;">
+          <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 32px; margin: 0 0 24px 0;">
             ${t.giftMulti30dTitle}
           </h2>
-          <p style="color: #8A8578; line-height: 1.8; margin: 0 0 24px 0; font-size: 15px;">
+          <p style="color: #5F5A54; line-height: 1.8; margin: 0 0 24px 0; font-size: 15px;">
             ${t.giftMulti30dIntro(recipientName)}
           </p>
-          <p style="color: #2C2824; line-height: 1.8; margin: 0 0 40px 0; font-size: 16px; font-family: Georgia, 'Times New Roman', serif; font-style: italic;">
+          <p style="color: #141312; line-height: 1.8; margin: 0 0 40px 0; font-size: 16px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-style: italic;">
             ${t.giftMulti30dBody}
           </p>
 
-          <p style="color: #8A8578; font-size: 14px;">
-            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #2C2824; text-decoration: none; border-bottom: 1px solid #B8976A;">tere@sukoda.ee</a>
+          <p style="color: #5F5A54; font-size: 15px;">
+            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #141312; text-decoration: none; border-bottom: 1px solid #D1C9BF;">tere@sukoda.ee</a>
           </p>
         </div>
         ${emailFooter(lang)}
@@ -3125,48 +3099,48 @@ function generateFollowup30dEmail(followup, lang) {
   return `
     <!DOCTYPE html>
     <html>
-    <head><meta charset="utf-8"></head>
-    <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-      <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+    ${emailUi.HEAD}
+    <body style="margin: 0; padding: 0; background: #FAF8F5; font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">
+      <div style="max-width: 560px; margin: 0 auto; background: #FAF8F5;">
         ${emailHeader()}
-        <div style="padding: 44px 40px;">
-          <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 24px 0;">
+        <div style="padding: 28px 24px 32px;">
+          <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 32px; margin: 0 0 24px 0;">
             ${t.followup30dTitle}
           </h2>
-          <p style="color: #8A8578; line-height: 1.8; margin: 0 0 24px 0; font-size: 15px;">
+          <p style="color: #5F5A54; line-height: 1.8; margin: 0 0 24px 0; font-size: 15px;">
             ${t.followup30dIntro(recipientName)}
           </p>
-          <p style="color: #2C2824; line-height: 1.8; margin: 0 0 44px 0; font-size: 16px; font-family: Georgia, 'Times New Roman', serif; font-style: italic;">
+          <p style="color: #141312; line-height: 1.8; margin: 0 0 44px 0; font-size: 16px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-style: italic;">
             ${t.followup30dBody}
           </p>
 
           <!-- Elegant divider -->
-          <div style="text-align: center; margin-bottom: 44px;">
-            <span style="display: inline-block; width: 40px; height: 1px; background: #B8976A;"></span>
+          <div style="margin-bottom: 44px;">
+            
           </div>
 
           <!-- Final offer — elegant urgency, not pressure -->
-          <div style="background: #111111; padding: 44px 36px; text-align: center; margin-bottom: 28px;">
-            <p style="margin: 0 0 24px 0; color: #CCCCCC; font-size: 15px; line-height: 1.7; max-width: 380px; display: inline-block;">
+          <div style="background: #FFFFFF; padding: 44px 36px; margin-bottom: 28px; border: 1px solid #E6E0D8; border-radius: 20px;">
+            <p style="margin: 0 0 24px 0; color: #5F5A54; font-size: 15px; line-height: 1.7; max-width: 380px; display: inline-block;">
               ${t.followup30dUrgency}
             </p>
-            <div style="background: #222222; padding: 14px 28px; display: inline-block; margin-bottom: 28px;">
-              <p style="margin: 0; color: #B8976A; font-size: 18px; letter-spacing: 5px; font-family: Georgia, 'Times New Roman', serif;">
+            <div style="background: #FFFFFF; padding: 14px 28px; display: inline-block; margin-bottom: 28px; border: 1px solid #E6E0D8; border-radius: 20px;">
+              <p style="margin: 0; color: #5F5A54; font-size: 18px; letter-spacing: 5px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;">
                 ${t.followup24hOfferCode}
               </p>
             </div>
             <br>
-            <a href="${orderUrl}" style="display: inline-block; background: #B8976A; color: #FFFFFF; padding: 16px 48px; text-decoration: none; font-size: 12px; letter-spacing: 3px; font-weight: 500;">
+            <a href="${orderUrl}" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">
               ${t.followup30dCta}
             </a>
           </div>
 
-          <p style="color: #8A8578; font-size: 14px; line-height: 1.7; margin-bottom: 24px;">
+          <p style="color: #5F5A54; font-size: 15px; line-height: 1.7; margin-bottom: 24px;">
             ${t.followup30dFinalNote}
           </p>
 
-          <p style="color: #8A8578; font-size: 14px;">
-            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #2C2824; text-decoration: none; border-bottom: 1px solid #B8976A;">tere@sukoda.ee</a>
+          <p style="color: #5F5A54; font-size: 15px;">
+            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #141312; text-decoration: none; border-bottom: 1px solid #D1C9BF;">tere@sukoda.ee</a>
           </p>
         </div>
         ${emailFooter(lang)}
@@ -3189,42 +3163,39 @@ function generateSubscriberFirstVisitEmail(followup, lang) {
   return `
     <!DOCTYPE html>
     <html>
-    <head><meta charset="utf-8"></head>
-    <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-      <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+    ${emailUi.HEAD}
+    <body style="margin: 0; padding: 0; background: #FAF8F5; font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">
+      <div style="max-width: 560px; margin: 0 auto; background: #FAF8F5;">
         ${emailHeader()}
-        <div style="padding: 44px 40px;">
-          <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 24px 0;">
+        <div style="padding: 28px 24px 32px;">
+          <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 32px; margin: 0 0 24px 0;">
             ${t.subscriberFirstVisitTitle}
           </h2>
-          <p style="color: #8A8578; line-height: 1.8; margin: 0 0 24px 0; font-size: 15px;">
+          <p style="color: #5F5A54; line-height: 1.8; margin: 0 0 24px 0; font-size: 15px;">
             ${t.subscriberFirstVisitIntro(recipientName, visitDateLabel)}
           </p>
-          <p style="color: #2C2824; line-height: 1.8; margin: 0 0 40px 0; font-size: 16px; font-family: Georgia, 'Times New Roman', serif; font-style: italic;">
+          <p style="color: #141312; line-height: 1.8; margin: 0 0 40px 0; font-size: 16px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-style: italic;">
             ${t.subscriberFirstVisitBody}
           </p>
 
           <!-- Elegant divider -->
-          <div style="text-align: center; margin-bottom: 40px;">
-            <span style="display: inline-block; width: 40px; height: 1px; background: #B8976A;"></span>
-          </div>
 
           <!-- Package info — reinforcing their good decision -->
-          <div style="background: #FFFFFF; padding: 32px; border-left: 3px solid #B8976A; margin-bottom: 32px;">
-            <p style="margin: 0 0 8px 0; color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">
+          <div style="background: #FFFFFF; padding: 32px; margin-bottom: 32px; border: 1px solid #E6E0D8; border-radius: 20px;">
+            <p style="margin: 0 0 8px 0; color: #5F5A54; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 500;">
               ${t.subscriberFirstVisitNextLabel}
             </p>
-            <p style="margin: 0 0 4px 0; font-weight: 300; color: #2C2824; font-size: 18px; font-family: Georgia, 'Times New Roman', serif;">
+            <p style="margin: 0 0 4px 0; font-weight: 400; color: #141312; font-size: 18px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;">
               ${packageName}
             </p>
-            <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E8E3DD; color: #8A8578; font-size: 13px; line-height: 1.7;">
+            <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid #E6E0D8; color: #5F5A54; font-size: 13px; line-height: 1.7;">
               ${t.subscriberFirstVisitNextNote}
             </p>
           </div>
 
           <!-- Feedback prompt — inviting, warm -->
-          <div style="background: #FAF8F5; padding: 28px; margin-bottom: 32px; border-left: 2px solid #E8E3DD;">
-            <p style="color: #8A8578; font-size: 14px; line-height: 1.7; font-style: italic; margin: 0;">
+          <div style="background: #FFFFFF; padding: 28px; margin-bottom: 32px; border: 1px solid #E6E0D8; border-radius: 20px;">
+            <p style="color: #5F5A54; font-size: 15px; line-height: 1.7; font-style: italic; margin: 0;">
               ${t.subscriberFirstVisitFeedback}
             </p>
           </div>
@@ -3233,39 +3204,36 @@ function generateSubscriberFirstVisitEmail(followup, lang) {
 
           ${followup.referralCode ? `
           <!-- Elegant divider -->
-          <div style="text-align: center; margin-bottom: 40px;">
-            <span style="display: inline-block; width: 40px; height: 1px; background: #B8976A;"></span>
-          </div>
 
           <!-- Referral block — share the feeling -->
-          <div style="background: #111111; padding: 40px 32px; text-align: center; margin-bottom: 32px;">
-            <p style="margin: 0 0 16px 0; color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 4px; font-weight: 500;">
+          <div style="background: #FFFFFF; padding: 40px 32px; margin-bottom: 32px; border: 1px solid #E6E0D8; border-radius: 20px;">
+            <p style="margin: 0 0 16px 0; color: #5F5A54; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 500;">
               ${t.referralTitle}
             </p>
-            <p style="margin: 0 0 28px 0; color: #CCCCCC; font-size: 14px; line-height: 1.7; max-width: 380px; display: inline-block;">
+            <p style="margin: 0 0 28px 0; color: #5F5A54; font-size: 15px; line-height: 1.7; max-width: 380px; display: inline-block;">
               ${t.referralIntro}
             </p>
-            <p style="margin: 0 0 8px 0; color: #666666; font-size: 10px; text-transform: uppercase; letter-spacing: 3px;">
+            <p style="margin: 0 0 8px 0; color: #5F5A54; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em;">
               ${t.referralYourCode}
             </p>
-            <div style="background: #222222; padding: 16px 32px; display: inline-block; margin-bottom: 24px;">
-              <p style="margin: 0; color: #B8976A; font-size: 22px; letter-spacing: 5px; font-family: Georgia, 'Times New Roman', serif;">
+            <div style="background: #FFFFFF; padding: 16px 32px; display: inline-block; margin-bottom: 24px; border: 1px solid #E6E0D8; border-radius: 20px;">
+              <p style="margin: 0; color: #5F5A54; font-size: 22px; letter-spacing: 5px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;">
                 ${followup.referralCode}
               </p>
             </div>
             <br>
-            <a href="https://sukoda.ee/?ref=${encodeURIComponent(followup.referralCode)}" style="display: inline-block; background: #B8976A; color: #FFFFFF; padding: 14px 40px; text-decoration: none; font-size: 11px; letter-spacing: 3px; font-weight: 500;">
+            <a href="https://sukoda.ee/?ref=${encodeURIComponent(followup.referralCode)}" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">
               ${t.referralShareLink}
             </a>
             <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #333333;">
-              <p style="margin: 0 0 4px 0; color: #888888; font-size: 12px;">${t.referralFriendGets}</p>
-              <p style="margin: 0; color: #888888; font-size: 12px;">${t.referralYouGet}</p>
+              <p style="margin: 0 0 4px 0; color: #5F5A54; font-size: 12px;">${t.referralFriendGets}</p>
+              <p style="margin: 0; color: #5F5A54; font-size: 12px;">${t.referralYouGet}</p>
             </div>
           </div>
           ` : ''}
 
-          <p style="color: #8A8578; font-size: 14px;">
-            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #2C2824; text-decoration: none; border-bottom: 1px solid #B8976A;">tere@sukoda.ee</a>
+          <p style="color: #5F5A54; font-size: 15px;">
+            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #141312; text-decoration: none; border-bottom: 1px solid #D1C9BF;">tere@sukoda.ee</a>
           </p>
         </div>
         ${emailFooter(lang)}
@@ -3617,48 +3585,45 @@ function generateReferralSuccessEmail(referrerOrder, friendOrder, lang) {
   return `
     <!DOCTYPE html>
     <html>
-    <head><meta charset="utf-8"></head>
-    <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-      <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+    ${emailUi.HEAD}
+    <body style="margin: 0; padding: 0; background: #FAF8F5; font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">
+      <div style="max-width: 560px; margin: 0 auto; background: #FAF8F5;">
         ${emailHeader()}
-        <div style="padding: 44px 40px;">
-          <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 24px 0;">
+        <div style="padding: 28px 24px 32px;">
+          <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 32px; margin: 0 0 24px 0;">
             ${t.referralSuccessTitle}
           </h2>
-          <p style="color: #8A8578; line-height: 1.8; margin: 0 0 24px 0; font-size: 15px;">
+          <p style="color: #5F5A54; line-height: 1.8; margin: 0 0 24px 0; font-size: 15px;">
             ${t.referralSuccessIntro(friendFirstName)}
           </p>
-          <p style="color: #2C2824; line-height: 1.8; margin: 0 0 40px 0; font-size: 16px; font-family: Georgia, 'Times New Roman', serif; font-style: italic;">
+          <p style="color: #141312; line-height: 1.8; margin: 0 0 40px 0; font-size: 16px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-style: italic;">
             ${t.referralSuccessBody}
           </p>
 
           <!-- Elegant divider -->
-          <div style="text-align: center; margin-bottom: 40px;">
-            <span style="display: inline-block; width: 40px; height: 1px; background: #B8976A;"></span>
-          </div>
 
           <!-- Reward card -->
-          <div style="background: #111111; padding: 36px 32px; text-align: center; margin-bottom: 32px;">
-            <p style="margin: 0 0 12px 0; color: #B8976A; font-size: 10px; text-transform: uppercase; letter-spacing: 4px; font-weight: 500;">
+          <div style="background: #FFFFFF; padding: 36px 32px; margin-bottom: 32px; border: 1px solid #E6E0D8; border-radius: 20px;">
+            <p style="margin: 0 0 12px 0; color: #5F5A54; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 500;">
               ${lang === 'et' ? 'Sinu tasu' : 'Your reward'}
             </p>
-            <p style="margin: 0 0 16px 0; color: #FFFFFF; font-size: 40px; font-family: Georgia, 'Times New Roman', serif; font-weight: 300;">
+            <p style="margin: 0 0 16px 0; color: #141312; font-size: 40px; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400;">
               -20%
             </p>
-            <p style="margin: 0 0 8px 0; color: #CCCCCC; font-size: 14px; line-height: 1.6;">
+            <p style="margin: 0 0 8px 0; color: #5F5A54; font-size: 15px; line-height: 1.6;">
               ${t.referralSuccessReward}
             </p>
-            <p style="margin: 0; color: #666666; font-size: 12px;">
+            <p style="margin: 0; color: #5F5A54; font-size: 12px;">
               ${t.referralSuccessRewardNote}
             </p>
           </div>
 
-          <p style="color: #8A8578; font-size: 14px; line-height: 1.7; margin-bottom: 24px;">
+          <p style="color: #5F5A54; font-size: 15px; line-height: 1.7; margin-bottom: 24px;">
             ${t.referralSuccessOutro}
           </p>
 
-          <p style="color: #8A8578; font-size: 14px;">
-            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #2C2824; text-decoration: none; border-bottom: 1px solid #B8976A;">tere@sukoda.ee</a>
+          <p style="color: #5F5A54; font-size: 15px;">
+            ${t.footerQuestions}: <a href="mailto:tere@sukoda.ee" style="color: #141312; text-decoration: none; border-bottom: 1px solid #D1C9BF;">tere@sukoda.ee</a>
           </p>
         </div>
         ${emailFooter(lang)}
@@ -4774,16 +4739,16 @@ exports.estateInquiry = functions
           to: NOTIFICATION_EMAIL,
           subject: `SUKODA | Rätseplahendus — ${name}`,
           html: `
-            <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 500px; padding: 20px;">
-              <h2 style="color: #2C2824; font-family: Georgia, serif; font-weight: 300; border-bottom: 1px solid #B8976A; padding-bottom: 10px;">Uus rätseplahenduse päring</h2>
+            <div style="font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; max-width: 500px; padding: 20px;">
+              <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; border-bottom: 1px solid #D1C9BF; padding-bottom: 10px;">Uus rätseplahenduse päring</h2>
               <table style="width: 100%; margin: 16px 0;">
-                <tr><td style="padding: 6px 0; color: #8A8578;">Nimi:</td><td style="padding: 6px 0;"><strong>${escapeHtml(name)}</strong></td></tr>
-                <tr><td style="padding: 6px 0; color: #8A8578;">E-post:</td><td style="padding: 6px 0;"><strong>${escapeHtml(email)}</strong></td></tr>
-                ${phone ? `<tr><td style="padding: 6px 0; color: #8A8578;">Telefon:</td><td style="padding: 6px 0;">${escapeHtml(phone)}</td></tr>` : ''}
-                ${selectedRhythm ? `<tr><td style="padding: 6px 0; color: #8A8578;">Rütm:</td><td style="padding: 6px 0;">${escapeHtml(selectedRhythm)}</td></tr>` : ''}
-                ${additionalInfo ? `<tr><td style="padding: 6px 0; color: #8A8578;">Lisainfo:</td><td style="padding: 6px 0;">${escapeHtml(additionalInfo)}</td></tr>` : ''}
+                <tr><td style="padding: 6px 0; color: #5F5A54;">Nimi:</td><td style="padding: 6px 0;"><strong>${escapeHtml(name)}</strong></td></tr>
+                <tr><td style="padding: 6px 0; color: #5F5A54;">E-post:</td><td style="padding: 6px 0;"><strong>${escapeHtml(email)}</strong></td></tr>
+                ${phone ? `<tr><td style="padding: 6px 0; color: #5F5A54;">Telefon:</td><td style="padding: 6px 0;">${escapeHtml(phone)}</td></tr>` : ''}
+                ${selectedRhythm ? `<tr><td style="padding: 6px 0; color: #5F5A54;">Rütm:</td><td style="padding: 6px 0;">${escapeHtml(selectedRhythm)}</td></tr>` : ''}
+                ${additionalInfo ? `<tr><td style="padding: 6px 0; color: #5F5A54;">Lisainfo:</td><td style="padding: 6px 0;">${escapeHtml(additionalInfo)}</td></tr>` : ''}
               </table>
-              <p style="color: #B8976A; font-size: 13px; font-style: italic;">Palun vasta 24 tunni jooksul.</p>
+              <p style="color: #5F5A54; font-size: 13px; font-style: italic;">Palun vasta 24 tunni jooksul.</p>
             </div>
           `,
         });
@@ -4792,17 +4757,17 @@ exports.estateInquiry = functions
           to: email,
           subject: lang === 'en' ? 'SUKODA | Your inquiry has been received' : 'SUKODA | Sinu päring on vastu võetud',
           html: `
-            <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 500px; padding: 20px;">
-              <h2 style="color: #2C2824; font-family: Georgia, serif; font-weight: 300; border-bottom: 1px solid #B8976A; padding-bottom: 10px;">
+            <div style="font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; max-width: 500px; padding: 20px;">
+              <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; border-bottom: 1px solid #D1C9BF; padding-bottom: 10px;">
                 ${lang === 'en' ? 'Thank you for your inquiry' : 'Täname päringu eest'}
               </h2>
-              <p style="color: #6B6560; line-height: 1.6;">
+              <p style="color: #5F5A54; line-height: 1.6;">
                 ${lang === 'en'
                   ? `Dear ${escapeHtml(name)}, we have received your bespoke home care inquiry. A member of our team will be in touch within 24 hours to discuss your needs.`
                   : `${escapeHtml(name)}, oleme sinu rätseplahenduse päringu kätte saanud. Võtame sinuga ühendust 24 tunni jooksul, et arutada sinu soove.`
                 }
               </p>
-              <p style="color: #8A8578; font-size: 13px; margin-top: 20px;">SUKODA — tere@sukoda.ee</p>
+              <p style="color: #5F5A54; font-size: 13px; margin-top: 20px;">SUKODA — tere@sukoda.ee</p>
             </div>
           `,
         });
@@ -4854,17 +4819,17 @@ exports.salesInquiry = functions
           to: NOTIFICATION_EMAIL,
           subject: `SUKODA | Müügikaardi päring — ${name}`,
           html: `
-            <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 500px; padding: 20px;">
-              <h2 style="color: #2C2824; font-family: Georgia, serif; font-weight: 300; border-bottom: 1px solid #B8976A; padding-bottom: 10px;">Uus müügikaardi päring</h2>
+            <div style="font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; max-width: 500px; padding: 20px;">
+              <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; border-bottom: 1px solid #D1C9BF; padding-bottom: 10px;">Uus müügikaardi päring</h2>
               <table style="width: 100%; margin: 16px 0;">
-                <tr><td style="padding: 6px 0; color: #8A8578;">Nimi:</td><td style="padding: 6px 0;"><strong>${escapeHtml(name)}</strong></td></tr>
-                <tr><td style="padding: 6px 0; color: #8A8578;">E-post:</td><td style="padding: 6px 0;"><strong>${escapeHtml(email)}</strong></td></tr>
-                ${phone ? `<tr><td style="padding: 6px 0; color: #8A8578;">Telefon:</td><td style="padding: 6px 0;">${escapeHtml(phone)}</td></tr>` : ''}
-                ${company ? `<tr><td style="padding: 6px 0; color: #8A8578;">Ettevõte:</td><td style="padding: 6px 0;">${escapeHtml(company)}</td></tr>` : ''}
-                ${giftCode ? `<tr><td style="padding: 6px 0; color: #8A8578;">Kaardi kood:</td><td style="padding: 6px 0;">${escapeHtml(giftCode)}</td></tr>` : ''}
-                ${message ? `<tr><td style="padding: 6px 0; color: #8A8578;">Sõnum:</td><td style="padding: 6px 0;">${escapeHtml(message)}</td></tr>` : ''}
+                <tr><td style="padding: 6px 0; color: #5F5A54;">Nimi:</td><td style="padding: 6px 0;"><strong>${escapeHtml(name)}</strong></td></tr>
+                <tr><td style="padding: 6px 0; color: #5F5A54;">E-post:</td><td style="padding: 6px 0;"><strong>${escapeHtml(email)}</strong></td></tr>
+                ${phone ? `<tr><td style="padding: 6px 0; color: #5F5A54;">Telefon:</td><td style="padding: 6px 0;">${escapeHtml(phone)}</td></tr>` : ''}
+                ${company ? `<tr><td style="padding: 6px 0; color: #5F5A54;">Ettevõte:</td><td style="padding: 6px 0;">${escapeHtml(company)}</td></tr>` : ''}
+                ${giftCode ? `<tr><td style="padding: 6px 0; color: #5F5A54;">Kaardi kood:</td><td style="padding: 6px 0;">${escapeHtml(giftCode)}</td></tr>` : ''}
+                ${message ? `<tr><td style="padding: 6px 0; color: #5F5A54;">Sõnum:</td><td style="padding: 6px 0;">${escapeHtml(message)}</td></tr>` : ''}
               </table>
-              <p style="color: #B8976A; font-size: 13px; font-style: italic;">Palun vasta 24 tunni jooksul.</p>
+              <p style="color: #5F5A54; font-size: 13px; font-style: italic;">Palun vasta 24 tunni jooksul.</p>
             </div>
           `,
         });
@@ -4873,12 +4838,12 @@ exports.salesInquiry = functions
           to: email,
           subject: 'SUKODA | Täname huvi eest',
           html: `
-            <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 500px; padding: 20px;">
-              <h2 style="color: #2C2824; font-family: Georgia, serif; font-weight: 300; border-bottom: 1px solid #B8976A; padding-bottom: 10px;">Täname huvi eest</h2>
-              <p style="color: #6B6560; line-height: 1.6;">
+            <div style="font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; max-width: 500px; padding: 20px;">
+              <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; border-bottom: 1px solid #D1C9BF; padding-bottom: 10px;">Täname huvi eest</h2>
+              <p style="color: #5F5A54; line-height: 1.6;">
                 ${escapeHtml(name)}, oleme Teie päringu kätte saanud. Võtame Teiega ühendust 24 tunni jooksul, et arutada koostöövõimalusi.
               </p>
-              <p style="color: #8A8578; font-size: 13px; margin-top: 20px;">SUKODA — partner@sukoda.ee</p>
+              <p style="color: #5F5A54; font-size: 13px; margin-top: 20px;">SUKODA — partner@sukoda.ee</p>
             </div>
           `,
         });
@@ -4936,16 +4901,16 @@ exports.waitlist = functions
           to: NOTIFICATION_EMAIL,
           subject: `SUKODA | Ootejärjekord: ${city}`,
           html: `
-            <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 500px; padding: 20px;">
-              <h2 style="color: #2C2824; font-family: Georgia, serif; font-weight: 300; border-bottom: 1px solid #B8976A; padding-bottom: 10px;">Uus huviline väljastpoolt Tallinna</h2>
+            <div style="font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; max-width: 500px; padding: 20px;">
+              <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; border-bottom: 1px solid #D1C9BF; padding-bottom: 10px;">Uus huviline väljastpoolt Tallinna</h2>
               <table style="width: 100%; margin: 16px 0;">
-                <tr><td style="padding: 6px 0; color: #8A8578;">Nimi:</td><td style="padding: 6px 0;"><strong>${escapeHtml(name || '-')}</strong></td></tr>
-                <tr><td style="padding: 6px 0; color: #8A8578;">E-post:</td><td style="padding: 6px 0;"><strong>${escapeHtml(email)}</strong></td></tr>
-                <tr><td style="padding: 6px 0; color: #8A8578;">Linn:</td><td style="padding: 6px 0;"><strong style="color: #B8976A;">${escapeHtml(city)}</strong></td></tr>
-                ${address ? `<tr><td style="padding: 6px 0; color: #8A8578;">Aadress:</td><td style="padding: 6px 0;">${escapeHtml(address)}</td></tr>` : ''}
+                <tr><td style="padding: 6px 0; color: #5F5A54;">Nimi:</td><td style="padding: 6px 0;"><strong>${escapeHtml(name || '-')}</strong></td></tr>
+                <tr><td style="padding: 6px 0; color: #5F5A54;">E-post:</td><td style="padding: 6px 0;"><strong>${escapeHtml(email)}</strong></td></tr>
+                <tr><td style="padding: 6px 0; color: #5F5A54;">Linn:</td><td style="padding: 6px 0;"><strong style="color: #5F5A54;">${escapeHtml(city)}</strong></td></tr>
+                ${address ? `<tr><td style="padding: 6px 0; color: #5F5A54;">Aadress:</td><td style="padding: 6px 0;">${escapeHtml(address)}</td></tr>` : ''}
               </table>
-              <p style="color: #8A8578; font-size: 13px; margin-top: 20px;">
-                <a href="https://console.firebase.google.com/project/sukoda-77b52/firestore/data/~2Fwaitlist" style="color: #2C2824;">Vaata kõiki ootejärjekorras →</a>
+              <p style="color: #5F5A54; font-size: 13px; margin-top: 20px;">
+                <a href="https://console.firebase.google.com/project/sukoda-77b52/firestore/data/~2Fwaitlist" style="color: #141312;">Vaata kõiki ootejärjekorras →</a>
               </p>
             </div>
           `,
@@ -6026,25 +5991,25 @@ async function sendClientMagicLink(normalizedEmail) {
     const portalUrl = `https://sukoda.ee/minu?token=${rawToken}`;
     await sendEmail({
       to: normalizedEmail,
-      subject: lang === 'et' ? 'SUKODA | Sinu portaali link' : 'SUKODA | Your portal link',
+      subject: lang === 'et' ? 'SUKODA | Sinu sisenemislink' : 'SUKODA | Your sign-in link',
       html: `
         <!DOCTYPE html>
         <html>
-        <head><meta charset="utf-8"></head>
-        <body style="margin: 0; padding: 40px 20px; background: #FAF8F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-          <div style="max-width: 600px; margin: 0 auto; background: #F5F0EB;">
+        ${emailUi.HEAD}
+        <body style="margin: 0; padding: 0; background: #FAF8F5; font-family: Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">
+          <div style="max-width: 560px; margin: 0 auto; background: #FAF8F5;">
             ${emailHeader()}
-            <div style="padding: 44px 40px; text-align: center;">
-              <h2 style="color: #2C2824; font-family: Georgia, 'Times New Roman', serif; font-weight: 300; font-size: 28px; margin: 0 0 20px 0;">
-                ${lang === 'et' ? 'Sinu portaali link' : 'Your portal link'}
+            <div style="padding: 44px 40px; ">
+              <h2 style="color: #141312; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 32px; margin: 0 0 20px 0;">
+                ${lang === 'et' ? 'Sinu sisenemislink' : 'Your sign-in link'}
               </h2>
-              <p style="color: #8A8578; line-height: 1.7; margin: 0 0 32px 0; font-size: 15px;">
-                ${lang === 'et' ? 'Kliki allpool olevat nuppu, et siseneda oma SUKODA portaali.' : 'Click the button below to access your SUKODA portal.'}
+              <p style="color: #5F5A54; line-height: 1.7; margin: 0 0 32px 0; font-size: 15px;">
+                ${lang === 'et' ? 'Vajuta nuppu ja ava oma kodu rakendus.' : 'Press the button to open your home app.'}
               </p>
-              <a href="${portalUrl}" style="display: inline-block; background: #111111; color: #FFFFFF; padding: 16px 40px; text-decoration: none; font-size: 11px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500;">
-                ${lang === 'et' ? 'SISENE PORTAALI' : 'ENTER PORTAL'}
+              <a href="${portalUrl}" style="display:inline-block;background:#141312;color:#FAF8F5;padding:16px 32px;border-radius:16px;text-decoration:none;font-family:Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;font-size:16px;font-weight:600;line-height:1.2;">
+                ${lang === 'et' ? 'Ava rakendus' : 'Open the app'}
               </a>
-              <p style="color: #8A8578; font-size: 12px; margin: 24px 0 0 0;">
+              <p style="color: #5F5A54; font-size: 12px; margin: 24px 0 0 0;">
                 ${lang === 'et' ? 'Link kehtib 30 päeva.' : 'This link is valid for 30 days.'}
               </p>
             </div>
@@ -6543,8 +6508,6 @@ haldus = require('./haldus')({
   sendEmail,
   sendClientMagicLink,
   getStripe,
-  emailHeader,
-  emailFooter,
   formatDate,
   formatTime,
   tallinnLocalDateTimeToISOString,
