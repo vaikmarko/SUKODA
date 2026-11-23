@@ -35,6 +35,7 @@
     })();
     </script>
     <script src="/push.js"></script>
+    <script src="/assets/js/et-name.js?v=1"></script>
     <script src="/assets/js/minu/kodu.js?v=19"></script>
     <script type="module" src="/assets/js/minu/mount.js"></script>
     <script type="module" src="/assets/js/main.js"></script>
@@ -202,6 +203,7 @@
     upkeepOpen: false,
     telliAddons: { flowers: false, windows: false, linens: false, 'appliance-care': false },
     telliOpen: '',
+    telliCalOpen: false,
     telliPay: false,
     flowerMode: 'season',
     flowerTone: '',
@@ -853,6 +855,34 @@
         }
         return this.t('confirmOrder');
     },
+    get telliScreenTitle() {
+        if (this.telliOpen === 'clean') return this.nextCleanVisit ? this.t('extraCleanRow') : this.t('cleanOnce');
+        if (this.telliOpen === 'fix') return this.t('orderFix');
+        if (this.telliOpen === 'note') return this.t('otherWish');
+        const row = this.serviceById(this.telliOpen);
+        return (row && row.name) || this.t('tabServices');
+    },
+    get cleanShownPrice() {
+        if (this.telliSumAmount && !this.quoteHasFloor) return this.telliSumAmount;
+        return this.cleanShelfPrice || '';
+    },
+    get flowerShownPrice() {
+        if (this.telliSumAmount && !this.quoteHasFloor) return this.telliSumAmount;
+        return this.addonPrice('flowers') || '';
+    },
+    get cleanButtonText() {
+        if (this.telliBusy) return this.t('telliSending');
+        if (this.telliGathering) return this.t('wantIt');
+        if (this.telliQuote && this.telliQuote.cardRequired && this.telliSumAmount) return this.t('confirmPay', { amount: this.telliSumAmount });
+        return this.t('confirmTime');
+    },
+    get flowerButtonText() {
+        if (this.telliBusy) return this.t('telliSending');
+        if (this.telliGathering) return this.t('wantIt');
+        if (this.telliQuote && this.telliQuote.cardRequired && this.telliSumAmount) return this.t('confirmPay', { amount: this.telliSumAmount });
+        const shown = this.flowerShownPrice;
+        return shown ? this.t('orderFlowersPriced', { amount: shown }) : this.t('confirmOrder');
+    },
     setTelliPanel(id) {
         this.setTelliOpen(id);
     },
@@ -880,11 +910,13 @@
         if (!this.flowerTone) this.flowerTone = (this.homeProfile && this.homeProfile.flowerPreference) || '';
         if (this.telliOpen === 'clean' && (this.includedCleanLine || this.telliPay)) this.telliRhythm = 'once';
         if (this.telliOpen && this.telliOpen !== 'warranty' && this.telliOpen !== 'note') this.refreshTelliQuote();
+        this.telliCalOpen = false;
         if (this.telliOpen) {
             const svc = this.serviceById(this.telliServiceId);
             const cleanLead = this.telliOpen === 'clean' || (svc && svc.category === 'cleaning');
             const base = this.telliDate || (cleanLead ? this.telliDateMin : this.minRequestDate);
             if (!this.telliCursor) this.telliCursor = String(base || '').slice(0, 7);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     },
     addonName(id) {
@@ -905,6 +937,16 @@
         const row = this.serviceById(id);
         const raw = (row && (row.priceLabel && row.priceLabel.text || row.priceHint)) || '';
         return this.plainMoney(raw);
+    },
+    offerBlurb(id) {
+        if (id === 'note' || id === 'other') {
+            const name = this.cleanerTo();
+            return name ? this.t('blurbOther', { name }) : this.t('blurbOtherPlain');
+        }
+        const key = { 'extra-clean': 'blurbClean', windows: 'blurbWindows', flowers: 'blurbFlowers' }[id];
+        if (key) return this.t(key);
+        const row = this.serviceById(id);
+        return (row && row.description) || '';
     },
     flowerChoice() {
         if (this.flowerMode === 'tone') return (this.flowerTone || '').trim();
@@ -954,6 +996,24 @@
             cells.push({ key: iso, label: String(day), iso, disabled: !!(min && iso < min && iso !== this.nextCleanDay), pad: false });
         }
         return cells;
+    },
+    get telliSoonDays() {
+        const svc = this.serviceById(this.telliServiceId);
+        const cleanLead = this.telliOpen === 'clean' || (svc && svc.category === 'cleaning');
+        const min = cleanLead ? this.telliDateMin : this.minRequestDate;
+        const shift = window.SUKODA_TIME && window.SUKODA_TIME.shiftDateString;
+        if (!min || !shift) return [];
+        const letters = this.t('weekDays').split(' ');
+        const out = [];
+        let iso = min;
+        for (let i = 0; i < 28 && out.length < 5; i++) {
+            const bits = iso.split('-').map(Number);
+            const dt = new Date(bits[0], (bits[1] || 1) - 1, bits[2] || 1);
+            const wd = (dt.getDay() + 6) % 7;
+            out.push({ key: iso, iso, label: String(bits[2] || ''), letter: letters[wd] || '', disabled: false });
+            iso = shift(iso, 1);
+        }
+        return out;
     },
     pickTelliDay(cell) {
         if (!cell || !cell.iso || cell.disabled) return;
@@ -1998,11 +2058,12 @@
         const name = (b && b.providerName) || this.order?.provider?.name || '';
         return String(name).trim().split(/\s+/)[0] || '';
     },
-    /** Estonian „Kirjuta Kristile“. A vowel takes -le, anything else -ile. Other languages keep the name as it is. */
+    /** Estonian allative, from the genitive stem. Other languages keep the name as written. */
     cleanerTo() {
         const name = this.cleanerFirst(this.homeVisit()) || this.cleanerFirst(null);
         if (!name || this.lang !== 'et') return name;
-        return /[aeiouõäöü]$/i.test(name) ? name + 'le' : name + 'ile';
+        const decline = window.SUKODA_ET && window.SUKODA_ET.etAllative;
+        return decline ? decline(name) : name;
     },
     /** Requests that wait on the resident's own decision (a declined time, a reply to act on) — the only thing worth a badge */
     get needsYou() {
@@ -2191,7 +2252,7 @@
             </div>
 
             <!-- Mobile bottom tab bar -->
-            <nav class="p-dock" aria-label="Mobile navigation">
+            <nav class="p-dock" :class="activeTab === 'extras' && telliOpen ? 'is-away' : ''" aria-label="Mobile navigation">
                 <button type="button" @click="activeTab = 'overview'; window.scrollTo({ top: 0, behavior: 'smooth' })" :class="(activeTab === 'overview' || activeTab === 'visits') ? 'is-active' : ''" :aria-current="(activeTab === 'overview' || activeTab === 'visits') ? 'page' : null" class="p-dock-btn">
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"/></svg>
                     <span x-text="t('tabKodu')"></span>

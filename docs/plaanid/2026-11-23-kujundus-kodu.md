@@ -10,7 +10,7 @@ Mida testida: ava elaniku Kodu telefonilaiuses, kui visiit on olemas ja kui seda
 
 ## Lõigud
 1. Elaniku jalus ja Kodu vaade. Ehitatud. Keelevalik ja väljalogimine jäävad ülemisse riba, kuni Konto ekraan need üle võtab.
-2. Telli ja selle alamekraanid (koristus, lilled). Vajab lõigu 1 jalust.
+2. Telli ja selle alamekraanid (koristus, lilled). Ehitatud. Nimekiri on „Töös“ ja „{nimi} pakub“. Koristus, lilled ja muu soov avanevad tagasilingiga, ilma jaluseta. Lillede summa on olemasolev hind, astet ei ole, sest see muudaks raha. Kui rida läheb maksele, on rütm „Üks kord“ ja seda ei saa vahetada. Teised rütmid jäävad alles siis, kui makset ei küsita.
 3. Konto ja selle read (kokkulepe, soovita, keel, väljalogimine). Vajab lõigu 1 jalust. Keelevalik ja väljalogimine jäävad seniks ülemisse riba, sest Konto ekraan tuleb alles lõigus 3.
 4. Koristaja jalus ja Töölaud. Oma lõik, elaniku klassi ei jaga.
 5. Veebi avaleht (`index.html`), et telefonipilt ei näitaks enam Kausta.
