@@ -10,7 +10,7 @@ Authority: `assets/css/main.css` (`@theme` tokens + `.p-*` portal classes). `src
 
 ## The standard (read before writing any screen)
 
-SUKODA must be a simple, logical, beautiful, modern app that makes a resident, a cleaner and a developer's sales lead each say on first open: *"wow, how well thought out — this makes my life so much easier."* That is the acceptance criterion, not a slogan. Full version: `PLATVORMIPLAAN_2026.md` → "Standard". A screen is not done when it works; it is done when:
+SUKODA must be a simple, logical, beautiful, modern app that makes a resident and a cleaner each say on first open: *"wow, how well thought out — this makes my life so much easier."* That is the acceptance criterion, not a slogan. Full version: `PLATVORMIPLAAN_2026.md` → "Standard". A screen is not done when it works; it is done when:
 
 1. **Understood in 5 seconds.** One title, one primary action, no term the user has to learn. Never two equal buttons side by side.
 2. **It thought ahead.** The next thing is at the top, forms are pre-filled with everything we already know, dates offered inside the provider's notice window. More than 3 fields to type by hand → ask where we already know the rest.
@@ -19,7 +19,7 @@ SUKODA must be a simple, logical, beautiful, modern app that makes a resident, a
 5. **It removes a chore.** Every new screen can be described as "because of this, X no longer has to Y". If that sentence cannot be written, do not build the screen.
 6. **It just works.** Opens in a second on a weak network, never loses typed text, never shows a technical error, never asks the same thing twice.
 
-Before deploying any screen ask: can it be simpler without losing anything needed? Would Arco's sales lead show it to a buyer at key handover? Could Cristelle use it with gloves on in a stairwell? Three yeses or it is not done. Reference points are Apple Wallet and the Airbnb host app — then do less.
+Before deploying any screen ask: can it be simpler without losing anything needed? Would a cleaner in another country understand it without a manual? Could Cristelle use it with gloves on in a stairwell? Three yeses or it is not done. Reference points are Apple Wallet and the Airbnb host app — then do less.
 
 ## Voice (why yesterday's fixes were needed)
 
@@ -50,7 +50,7 @@ Body text: `text-sm` (14px) for content, `text-xs` (12px) for meta. Serif headin
 
 ## Three languages: et · en · ru
 
-Residents of Arco homes speak Estonian, English and Russian. Every user-visible string on the resident side (`minu.html`, `lunasta.html`, `index.html`, `arendajale.html`) exists in all three. The desk (`haldus.html`) is et + en now, ru when a provider needs it.
+Residents speak Estonian, English and Russian. Every user-visible string on the resident side (`minu.html`, `lunasta.html`, `index.html`) exists in all three. The desk (`haldus.html`) is et + en now, ru when a provider needs it.
 
 **The inline ternary does not scale to three languages.** 589 `lang === 'et' ? … : …` exist today; they are frozen (the lint counts them per file and the count may only fall). New strings go through a per-page dictionary:
 

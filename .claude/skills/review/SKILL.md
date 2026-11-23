@@ -63,7 +63,7 @@ dropped; keep the count.
 Väravad: kontrollid ✅ <n> leidu · läätsed <k>/5 · kinnitamine <n leidu → c kinnitatud, p lahtist, r ümber lükatud>
 ```
 
-Each finding on its own line, impact on the resident, the provider or Arco first, 🚨 / ⚠️ / ℹ️, with
+Each finding on its own line, impact on the resident or the provider first, 🚨 / ⚠️ / ℹ️, with
 its verdict, and for PLAUSIBLE what would settle it. Then two lists:
 - **Mechanical:** CONFIRMED, one correct fix, no product judgement, plus the regression test to add.
 - **Decisions for Marko** (CLAUDE.md § Who decides and the stop conditions in `sukoda.mdc` §4), each

@@ -49,10 +49,10 @@ is available (otherwise list the manual steps for Marko), with the demo account:
 1. **Pick the environment.** The emulator for anything that writes:
    ```bash
    firebase emulators:start --only functions,firestore   # functions :5001, firestore :8080
-   node scripts/seed-arco-demo.js                         # when the flow needs the Arco demo home
+   (cd functions && node ../scripts/seed-demo-account.js)  # when the flow needs a demo home
    ```
    API base: `http://127.0.0.1:5001/<project-id>/europe-west1/<functionName>`; the project id is in
-   `.firebaserc`. Production is read-only and only with the demo accounts (the Arco demo home, the
+   `.firebaserc`. Production is read-only and only with the demo accounts (the demo home, the
    demo desk). Never write to a real customer's order from this skill.
 2. **Find the exact endpoint.** In the HTML, the handler on the button and the `fetch('/api/…')` it
    calls: copy the path and the body shape. Then the key `'METHOD /api/…'` in `functions/haldus.js`

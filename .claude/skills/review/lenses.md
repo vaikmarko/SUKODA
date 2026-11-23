@@ -9,7 +9,7 @@ cannot be verified.
 ```
 You are reviewing a change in the SUKODA repository (a home care platform: static HTML pages with
 Alpine and Tailwind v4, Firebase Functions and Firestore, Stripe; a resident portal minu.html, a
-provider desk haldus.html, plus lunasta, admin, arendajale and the landing page). Working tree:
+provider desk haldus.html, plus lunasta, admin and the landing page). Working tree:
 <absolute path>. Diff: <scratchpad path>. Changed files: <list>.
 Read CLAUDE.md and .cursor/rules/sukoda.mdc, portal-html.mdc and functions.mdc first; they are the
 rules. Read the parts of PLATVORMIPLAAN_2026.md that govern the changed area. Read beyond the diff
@@ -45,7 +45,7 @@ One block per finding:
   Output a table: UI action → fetch → handler → collections written → mails sent.
 - **All mutation paths.** For every Firestore field the change touches:
   `grep -n "<field>" functions/index.js functions/haldus.js functions/lib/*.js scripts/*.js`.
-  `orders` is written from both function files and seeded from `scripts/seed-arco-demo.js`. List
+  `orders` is written from both function files and seeded from `scripts/seed-demo-account.js`. List
   every writer and reader with line numbers. Does the change update all of them, the seed included?
 - **Ordering and stale data.** Where a handler modifies an order and then decides on an e-mail, a
   reminder, a conflict or a credit: does it evaluate the updated data? Watch for `order` (fetched) vs
@@ -58,7 +58,7 @@ One block per finding:
 | Category | Scenario |
 |---|---|
 | Null / legacy | Orders created before this field existed (no `maintenance`, no `contacts`, no `buildingId`) |
-| Roles | Resident vs provider vs developer vs admin: can a role reach data that is not theirs? |
+| Roles | Resident vs provider vs admin: can a role reach data that is not theirs? |
 | Language | Order in EN, provider in ET: which language does each mail and screen get? |
 | Time | Tallinn date vs UTC; holiday; away period; `leadDays`; DST week |
 | Money | Sponsored fully / partly / not at all; refund; card fails; double submit |

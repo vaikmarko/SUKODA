@@ -31,7 +31,7 @@ npm run lint:ui            # counts vs baseline
 ```bash
 cd "$(git rev-parse --show-toplevel)"
 # raw hex in HTML (should only appear in main.css)
-grep -nE '#[0-9A-Fa-f]{6}\b' minu.html haldus.html lunasta.html index.html admin.html arendajale.html | grep -v 'main.css'
+grep -nE '#[0-9A-Fa-f]{6}\b' minu.html haldus.html lunasta.html index.html admin.html | grep -v 'main.css'
 # hand-rolled eyebrows — should be .eyebrow
 grep -nE 'text-\[1[01]px\][^"]*uppercase' *.html
 # arbitrary sizes
@@ -42,7 +42,7 @@ grep -noE 'font-serif text-(xs|sm|base|4xl|5xl|\[)' *.html
 
 ## Step 3: Information density (manual, per page)
 
-Open each portal page with the demo account (`/minu`, `/haldus`, `/lunasta`, `/arendajale`). For every screen:
+Open each portal page with the demo account (`/minu`, `/haldus`, `/lunasta`). For every screen:
 
 - What is the **first** thing the eye lands on? Is it the next thing the person must do?
 - Count numbers on screen that the person does not act on (counters, stats). Each one is a finding.
@@ -58,7 +58,7 @@ Then the standard (`portal-html.mdc` → "The standard"), per screen, each a fin
 - Does `code → first order` or `morning push → Done` need more than 4 taps or a back button?
 - More than 3 font sizes or more than 2 text colours besides black on one screen?
 - Can you write "because of this screen, X no longer has to Y"?
-- Would Arco's sales lead show this screen to a buyer at key handover?
+- Would a cleaner in another country understand this screen without a manual?
 
 ## Step 4: Language parity (et · en · ru)
 

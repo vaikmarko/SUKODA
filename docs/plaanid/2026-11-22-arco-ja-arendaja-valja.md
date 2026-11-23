@@ -17,7 +17,7 @@ Mida testida: 1) Cristelle töölaud avaneb ja tänane päev on sama mis enne. 2
 | 3 ✅ | Töölaud: liitumisel valikud „Garantii ja maja“ ja „Maja haldus“, maja üleandmine | `haldus.html`, `assets/js/haldus-ru.js` | lõik 2 |
 | 4 ✅ | Koodi lunastamine: Arco üleandmiskaardi haru | `lunasta.html` | otsus 3 |
 | 5 | Taust: maja üleandmise ja kausta käsitlejad, Arco kirjad, garantii meeldetuletused, kataloogi garantiiread, hooldusrütmi garantiiread, testid | `functions/haldus.js`, `functions/index.js`, `functions/lib/haldus-core.js`, `functions/test/*` | lõigud 2 kuni 4, otsus 4, andmete kontroll |
-| 6 | Näidisandmed ja dokumendid | `scripts/seed-arco-demo.js`, `scripts/demo-doc-text.js`, `scripts/make-demo-docs.py`, `scripts/demo-docs/`, `PLATVORMIPLAAN_2026.md`, `.cursor/rules/sukoda.mdc`, `CLAUDE.md`, `TEST_GUIDE.md` | lõik 5 |
+| 6 ✅ | Näidisandmed ja dokumendid | `scripts/seed-arco-demo.js`, `scripts/demo-doc-text.js`, `scripts/make-demo-docs.py`, `scripts/demo-docs/`, `PLATVORMIPLAAN_2026.md`, `.cursor/rules/sukoda.mdc`, `CLAUDE.md`, `TEST_GUIDE.md` | lõik 5 |
 
 Järjekord on väljast sisse: kõigepealt kaob see, mida inimene näeb, ja alles siis kood selle taga. Nii ei teki hetke, kus nupp on alles, aga tema käsitlejat enam ei ole.
 
@@ -85,3 +85,10 @@ Marko vastused 22.11.2026:
 - `sales.html`, `muuk.html` ja `deck.html` mainivad arendajaid vanade müügimaterjalide tekstis. Need on vanad lehed, neid ma ei puuduta. Kui tahad need üldse eemaldada, on see eraldi otsus.
 - Lillede automaattellimus (`sendFlowerOrders`) on koodis olemas. See ei ole Arco osa ja jääb puutumata.
 - Uus kujundus (lõuend „SUKODA äpp ja veeb: uus kujundus“) on eraldi töö. See plaan ainult eemaldab.
+
+### Lõik 6 (ehitatud 23.11.2026)
+- Kustutatud Arco näidiskodu külvaja `scripts/seed-arco-demo.js`, selle tekstid `scripts/demo-doc-text.js`, PDF-ide tegija `scripts/make-demo-docs.py` ja kümme näidis-PDF-i kaustas `scripts/demo-docs/`. Andmebaasi see ei puuduta: varem külvatud näidiskodu jääb Firestore'i alles.
+- Reeglid ja oskused (`CLAUDE.md`, `.cursor/rules/sukoda.mdc`, `.cursor/rules/portal-html.mdc`, `/review`, `/verify`, `/design-review`) ei viita enam arendaja vaatele ega Arcole. Näidiskonto jaoks viitavad nad skriptile `scripts/seed-demo-account.js`.
+- `PLATVORMIPLAAN_2026.md` algusse on lisatud seisu märkus; plaani ennast ma ümber ei kirjutanud, see on Marko otsus.
+- Tegemata: `.cursor/README.md` sprindiagentide jaotus viitab veel Arco pakkumisele ja Kausta vaatele; see fail kirjeldab vana sprinti ja vajab Marko otsust, kas see üldse alles jääb.
+

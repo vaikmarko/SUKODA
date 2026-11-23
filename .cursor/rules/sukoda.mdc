@@ -9,7 +9,7 @@ How a change is made, checked and handed over is in `CLAUDE.md`. This file holds
 
 ## What this is
 
-SUKODA (sukoda.ee) is a home care platform: one home, four views. The resident (`minu.html`), the provider's desk (`haldus.html`), the developer (`arendajale.html`) and the operator (`admin.html`), plus the landing page (`index.html`) and gift redemption (`lunasta.html`). Stack: static HTML with Alpine and Tailwind v4 built by Vite, Firebase Functions and Firestore (project `sukoda-77b52`), Stripe, Resend. No TypeScript, no ORM; tests run on `node:test` with zero dependencies.
+SUKODA (sukoda.ee) is a home care platform: one home, three views. The resident (`minu.html`), the provider's desk (`haldus.html`) and the operator (`admin.html`), plus the landing page (`index.html`) and gift redemption (`lunasta.html`). Stack: static HTML with Alpine and Tailwind v4 built by Vite, Firebase Functions and Firestore (project `sukoda-77b52`), Stripe, Resend. No TypeScript, no ORM; tests run on `node:test` with zero dependencies.
 
 ## 1. Documentation authority
 
@@ -33,13 +33,13 @@ SUKODA (sukoda.ee) is a home care platform: one home, four views. The resident (
 
 ## 4. Stop conditions
 
-Ask before proceeding when a decision affects: money (Stripe amounts, splits, refunds), who receives an e-mail or push, deletion of Firestore data, auth/session behaviour, Firestore rules, or anything that changes the Arco/Cristelle journeys defined in `PLATVORMIPLAAN_2026.md` §4.
+Ask before proceeding when a decision affects: money (Stripe amounts, splits, refunds), who receives an e-mail or push, deletion of Firestore data, auth/session behaviour, Firestore rules, or anything that changes the resident's and Cristelle's journeys defined in `PLATVORMIPLAAN_2026.md` §4.
 
 ## 5. Where logic and tests live
 
 - **Pure logic lives in `functions/lib/haldus-core.js`** (no Firebase imports) and is tested in `functions/test/*.test.js` with `node:test`. New scheduling, pricing, sanitizing, reminder or catalogue logic goes there first, with a test.
 - **Bug fix = regression test** when the bug is in pure logic. Reproduce, then fix.
-- Handlers that need Firestore are verified with `/verify` against the emulator (`firebase emulators:start`) or with a demo account (`scripts/seed-arco-demo.js`), not with unit tests.
+- Handlers that need Firestore are verified with `/verify` against the emulator (`firebase emulators:start`) or with a demo account (`scripts/seed-demo-account.js`), not with unit tests.
 - Catalogue parity is a test: every text entry in `SERVICE_CATALOGUE`, `MAINTENANCE_CATALOGUE`, `DOCUMENT_CATEGORIES`, `TIME_WINDOWS`, `PROVIDER_PLANS` must have `et` and `en`, and `ru` where present must be non-empty. The lint counts entries still missing `ru`; that count may only fall.
 
 ## 6. Languages and voice

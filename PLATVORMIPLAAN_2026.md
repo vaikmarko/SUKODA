@@ -1,6 +1,8 @@
 # SUKODA platvormiplaan 2026 — üks kodu, neli kätt
 
 **Kuupäev:** 22.09.2026
+
+> **Seis 23.11.2026:** Arco Varaga koostöö jäi lõplikult ära. Kõik selle plaani Arco, arendaja, garantii ja kodu kausta osad on kehtetud ja eemaldatakse koodist plaani `docs/plaanid/2026-11-22-arco-ja-arendaja-valja.md` järgi. Kehtima jäävad „Standard“, §0 põhimõtted, §3.8 tehniline hügieen ning koristaja ja elaniku teekond. Uus suund: koristaja pakub teenust oma klientidele, igas riigis, eesti, inglise ja vene keeles.
 **Eesmärk:** platvorm, millega Arco Vara annab Kodulahe (Iili 6/8/10) ja Spordi 3a/3b kodud üle SUKODA kaudu, Cristelle juhib oma tööd ja kliente telefonist, elanik saab kõik koduasjad ühest kohast. Valmimisel sõlmime esimese arendajalepingu.
 **Tähtaeg, mis loeb:** Arco võtmed novembris–detsembris 2026. Leping/LOI tuleb allkirjastada oktoobri keskel, pilootkodud peavad töötama esimeste võtmete ajaks.
 
@@ -56,7 +58,7 @@ Võrdlusalus on Apple’i Wallet ja Airbnb võõrustaja äpp, mitte Dobu ega hal
 | Meeldetuletused (rütm esmaspäeviti e-kirjaga, lilled 09:00) | Olemas, ainult e-kiri | `sendMaintenanceReminders`, `sendFlowerOrders` |
 | Kood/kinkekaart → kodu (`/lunasta`), tegija kutsekaardid | Olemas | `lunasta.html`, lunastaHandlers |
 | Stripe: pere püsitellimus, tegija plaanid 0/19/39 €, kinkekaardid | Olemas | `functions/index.js`, billing |
-| Arco demo: Kodulahe kodu, garantiimeeskond töölaual (`enterprise` plaan), PDF-id | Olemas | `scripts/seed-arco-demo.js` |
+| Arco demo: Kodulahe kodu, garantiimeeskond töölaual (`enterprise` plaan), PDF-id | Eemaldatud 23.11.2026 | |
 | Hausingu liides (Keycloak client-credentials, `POST /v1/general-tickets/ai-categorized`, staatuse pollimine) | Olemas teises projektis, TypeScript | `../the-list-services/functions/api/_hausing.ts` |
 | Magic-link sisenemine, token localStorage’is | Olemas; PWA-s iOS-il ei tööta (vt 3.1) | `minu.html`, `haldus.html`, `portalSessions` |
 

@@ -32,7 +32,7 @@ Below is the way of working: how a change is made, checked and handed over. If i
 
 | Who | Decides |
 |---|---|
-| **Marko** | Product and behaviour, UI and UX, every text a resident, a provider or a developer sees, the stop conditions in `sukoda.mdc` §4 (money, who gets an e-mail or push, deleting data, auth, Firestore rules, the Arco and Cristelle journeys), costs, and every deploy |
+| **Marko** | Product and behaviour, UI and UX, every text a resident or a provider sees, the stop conditions in `sukoda.mdc` §4 (money, who gets an e-mail or push, deleting data, auth, Firestore rules, the resident's and Cristelle's journeys), costs, and every deploy |
 | **Claude** | Technical choices the code or the plan answers: where code goes, names, query shape, tests. With no rule, take the simpler and safer choice and name it in the summary |
 
 Ask all questions at once, recommended option first.
@@ -70,7 +70,7 @@ Väravad: /review ✅ 2 leidu, mõlemad parandatud · /verify ✅ data, emulaato
 
 ## Git and deploying
 
-- Commit when a unit of work is complete. The message is in Estonian and says what changed for the resident, the provider or Arco, in the voice of `git log`. Never mix unrelated changes in one commit. Stage files by name.
+- Commit when a unit of work is complete. The message is in Estonian and says what changed for the resident or the provider, in the voice of `git log`. Never mix unrelated changes in one commit. Stage files by name.
 - A push to `main` runs CI and deploys nothing. Never force-push. If the session cannot push to `main`, push a branch and open a PR; the merge is Marko's click.
 - **Never `firebase deploy` without Marko's instruction.** When asked: `npm run deploy` (hosting) or `npm run deploy:functions`. Deploy single functions when possible: `firebase deploy --only functions:haldusApi`, then confirm with `firebase functions:log --only <name>` that it cold-starts without errors. Do not deploy and "see what happens". Fix first.
 - Never deploy `firestore:rules` as a side effect.
@@ -95,7 +95,7 @@ Both work from the same files, so it makes no difference which one Marko is in.
 
 ## Summary for Marko
 
-Every completed task ends with this, in Estonian, written so that Cristelle or Arco's after-sales could understand it:
+Every completed task ends with this, in Estonian, written so that Cristelle could understand it:
 
 ```
 ────────────────────────
